@@ -334,7 +334,7 @@ void showAboutSheet(BuildContext context) {
             const SizedBox(height: 20),
             _AboutLink(
               icon: Icons.language_rounded,
-              label: 'wazy.app — website',
+              label: 'finavig.app — website',
               onTap: () => _openLink(AppLinks.website),
             ),
             _AboutLink(
@@ -423,7 +423,7 @@ void showSupportSheet(BuildContext context) {
             ),
             _AboutLink(
               icon: Icons.language_rounded,
-              label: 'wazy.app',
+              label: 'finavig.app',
               sub: 'Guides & FAQ',
               onTap: () => _openLink(AppLinks.website),
             ),

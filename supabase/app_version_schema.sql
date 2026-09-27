@@ -10,7 +10,7 @@ create table if not exists public.app_versions (
   min_required_version text not null default '1.0.0',
   latest_version text not null default '1.0.0',
   is_force_update boolean not null default false,
-  download_url text default 'https://github.com/razique20/wazy-app/releases',
+  download_url text default 'https://github.com/razique20/finavig/releases',
   release_notes text default 'Performance enhancements and bug fixes.',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -42,7 +42,7 @@ select
   '1.0.0',
   '1.0.0',
   false,
-  'https://github.com/razique20/wazy-app/releases',
+  'https://github.com/razique20/finavig/releases',
   'Finavig version 1.0.0 — Financial budgeting & cash-flow intelligence with document expiry tracking.'
 where not exists (select 1 from public.app_versions limit 1);
 

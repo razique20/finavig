@@ -62,10 +62,33 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final w = constraints.maxWidth;
-                final imageWidth = w < 480 ? w : 380.0;
+                final h = constraints.maxHeight;
+                final headlineSize = w < 400 ? 30.0 : 36.0;
+
+                // The phone mockup is a fixed-aspect poster (9:18.5 inner
+                // screen plus bezel), so its final height is ~1.94× its
+                // width. Size it against BOTH axes: cap the width on narrow
+                // screens, and cap the height so the headline and the CTA
+                // stay visible without scrolling.
+                final widthCap = w < 480 ? w * 0.62 : 380.0;
+                final fixedVertical = 40 // top padding
+                    +
+                    headlineSize * 1.15 * 2 // two-line headline
+                    +
+                    28 +
+                    28 // gaps above/below the mockup
+                    +
+                    56 +
+                    28; // CTA height + bottom padding
+                final heightCap = (h - fixedVertical) / 1.94;
+                final mockupWidth =
+                    math.max(150.0, math.min(widthCap, heightCap));
+                // In-phone UI scale relative to the 380px design width.
+                final s = (mockupWidth / 380).clamp(0.5, 1.2);
+
                 return SingleChildScrollView(
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                    constraints: BoxConstraints(minHeight: h),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -74,7 +97,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                           child: Text(
                             'Modern Fintech for\nPersonal Finance',
                             style: TextStyle(
-                              fontSize: w < 400 ? 30 : 36,
+                              fontSize: headlineSize,
                               height: 1.15,
                               fontWeight: FontWeight.w800,
                               letterSpacing: -1.2,
@@ -82,14 +105,15 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                             ),
                           ),
                         ),
-                        const SizedBox(height: 40),
+                        const SizedBox(height: 28),
                         Center(
                           child: _PhoneMockup(
-                            width: imageWidth,
+                            width: mockupWidth,
+                            scale: s,
                             onTap: _getStarted,
                           ),
                         ),
-                        const SizedBox(height: 40),
+                        const SizedBox(height: 28),
                         Padding(
                           padding: const EdgeInsets.fromLTRB(24, 0, 24, 28),
                           child: SizedBox(
@@ -131,14 +155,23 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 /// Poster-style phone frame on the violet field, matching the reference art:
 /// a white screen with playful shapes, a blue blob with the wordmark, and a
 /// "Easy ways to manage your finances" card with a Get Started pill.
+///
+/// [scale] shrinks the fixed-size in-phone art (corner shapes, blob, sparkles,
+/// headline, pill) proportionally so nothing overflows the smaller frame.
 class _PhoneMockup extends StatelessWidget {
   final double width;
+  final double scale;
   final VoidCallback onTap;
 
-  const _PhoneMockup({required this.width, required this.onTap});
+  const _PhoneMockup({
+    required this.width,
+    required this.scale,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final s = scale;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -157,7 +190,8 @@ class _PhoneMockup extends StatelessWidget {
               border: Border.all(color: const Color(0xFF111111), width: 3),
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(width * 0.075 - 3),
+              borderRadius:
+                  BorderRadius.circular(math.max(0, width * 0.075 - 3)),
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -165,23 +199,24 @@ class _PhoneMockup extends StatelessWidget {
                   Positioned(
                     top: 0,
                     right: 0,
-                    child: _CornerShapes(),
+                    child: _ScaledArt(s, 110, 90, const _CornerShapes()),
                   ),
                   // Sparkle top-left
                   Positioned(
-                    top: 26,
-                    left: 30,
-                    child: _Sparkle(size: 15, color: Color(0xFF111111)),
+                    top: 26 * s,
+                    left: 30 * s,
+                    child: _Sparkle(
+                        size: 15 * s, color: const Color(0xFF111111)),
                   ),
                   // Floating rings around the blob
                   Center(
-                    child: _BlobWithRings(),
+                    child: _ScaledArt(s, 210, 210, const _BlobWithRings()),
                   ),
                   // Headline + pill pinned to the bottom
                   Positioned(
-                    left: 18,
-                    right: 18,
-                    bottom: 18,
+                    left: math.max(10, 18 * s),
+                    right: math.max(10, 18 * s),
+                    bottom: math.max(10, 18 * s),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
@@ -192,7 +227,7 @@ class _PhoneMockup extends StatelessWidget {
                               child: Text(
                                 'Easy ways to manage your finances',
                                 style: TextStyle(
-                                  fontSize: 19,
+                                  fontSize: math.max(13, 19 * s),
                                   height: 1.2,
                                   fontWeight: FontWeight.w800,
                                   letterSpacing: -0.5,
@@ -200,25 +235,32 @@ class _PhoneMockup extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 6),
-                            const _Sparkle(size: 10, color: Color(0xFFD9B8FF)),
+                            SizedBox(width: math.max(4, 6 * s)),
+                            _Sparkle(
+                                size: math.max(7, 10 * s),
+                                color: const Color(0xFFD9B8FF)),
                           ],
                         ),
-                        const SizedBox(height: 12),
+                        SizedBox(height: math.max(8, 12 * s)),
                         // Get Started pill inside the phone
                         Container(
-                          height: 34,
+                          height: math.max(24, 34 * s),
                           decoration: BoxDecoration(
                             color: FinavigColors.navyPrimary,
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius:
+                                BorderRadius.circular(math.max(7, 10 * s)),
                           ),
                           alignment: Alignment.center,
-                          child: const Text(
-                            'Get Started  →',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: const FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              'Get Started  →',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ),
@@ -230,6 +272,29 @@ class _PhoneMockup extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Renders fixed-design-size art at [w]×[h] × [s] via a uniform FittedBox,
+/// so poster elements shrink cleanly with the mockup instead of overflowing.
+class _ScaledArt extends StatelessWidget {
+  final double s;
+  final double w;
+  final double h;
+  final Widget child;
+
+  const _ScaledArt(this.s, this.w, this.h, this.child);
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: w * s,
+      height: h * s,
+      child: FittedBox(
+        fit: BoxFit.fill,
+        child: SizedBox(width: w, height: h, child: child),
       ),
     );
   }

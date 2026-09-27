@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,7 +6,6 @@ import '../services/app_version_service.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/dialogs/app_version_dialog.dart';
-import '../widgets/widgets.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -142,70 +139,3 @@ class _SplashScreenState extends State<SplashScreen>
   }
 }
 
-class _RadarPainter extends CustomPainter {
-  final double progress;
-  final Color color;
-
-  _RadarPainter({required this.progress, required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2;
-
-    // Outer ring
-    final outerPaint = Paint()
-      ..color = color.withOpacity(0.15)
-      ..strokeWidth = 1.5
-      ..style = PaintingStyle.stroke;
-    canvas.drawCircle(center, radius, outerPaint);
-
-    // Inner Rings
-    for (int i = 1; i <= 3; i++) {
-      final r = radius * (i / 3);
-      final paint = Paint()
-        ..color = color.withOpacity(0.2)
-        ..strokeWidth = 1.2
-        ..style = PaintingStyle.stroke;
-      canvas.drawCircle(center, r, paint);
-    }
-
-    // Sweep
-    final sweep = Paint()
-      ..shader = RadialGradient(
-        colors: [
-          color.withOpacity(0.6),
-          color.withOpacity(0.1),
-          Colors.transparent,
-        ],
-        stops: const [0.0, 0.5, 1.0],
-      ).createShader(
-        Rect.fromCircle(center: center, radius: radius),
-      )
-      ..style = PaintingStyle.fill;
-
-    canvas.save();
-    canvas.translate(center.dx, center.dy);
-    canvas.rotate(progress * 2 * math.pi);
-    canvas.translate(-center.dx, -center.dy);
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      -0.5 * math.pi,
-      math.pi * 0.6,
-      true,
-      sweep,
-    );
-    canvas.restore();
-
-    // Center glowing dot
-    final glowPaint = Paint()
-      ..color = color.withOpacity(0.4)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
-    canvas.drawCircle(center, 8, glowPaint);
-    canvas.drawCircle(center, 5, Paint()..color = color);
-  }
-
-  @override
-  bool shouldRepaint(covariant _RadarPainter oldDelegate) =>
-      oldDelegate.progress != progress;
-}

@@ -91,7 +91,7 @@ class SupportService {
     required String requestType,
   }) async {
     final userId = AuthService.instance.currentUserId;
-    final userEmail = AuthService.instance.userEmail ?? 'guest@wazy.app';
+    final userEmail = AuthService.instance.userEmail ?? 'guest@finavig.app';
     final now = DateTime.now();
 
     final newItem = SupportRequestItem(

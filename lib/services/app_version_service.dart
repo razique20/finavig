@@ -49,7 +49,7 @@ class AppVersionService {
 
   /// Fallback release URL.
   static const String dummyReleaseUrl =
-      'https://github.com/razique20/wazy-app/releases';
+      'https://github.com/razique20/finavig/releases';
 
   /// Returns user-facing operating system name (e.g. "iOS", "Android", "Web", "macOS").
   static String get osName {

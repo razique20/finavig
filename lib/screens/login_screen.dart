@@ -12,12 +12,16 @@ import '../services/finance_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/dialogs/legal_info_dialogs.dart';
 
-/// Redesigned Login & Sign-up screen adhering to Finavig's Bento Design System.
+/// Login & Sign-up — styled after the Home screen's visual language:
 ///
-/// Features a dark navy hero header with logo & GCC capabilities, over a smooth
-/// rounded surface sheet containing the sign-in / sign-up mode switcher,
-/// styled form inputs with password visibility toggle, GCC country picker,
-/// legal consent links, and app version badge.
+/// ink/obsidian backdrop with a white-text hero (like Home's hero header),
+/// then a rounded surface sheet holding the quiz flow. Violet is the single
+/// accent: toggle, progress, CTAs and links all use [FinavigColors.violet],
+/// exactly like the app's bento tiles and FilledButtons. The screen follows
+/// the app's light/dark theme like every other screen.
+///
+/// Flow is a quiz: one question per step, per-step validation, keyboard
+/// submit advances. Sign-in = 2 steps; sign-up adds country + phone.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -26,27 +30,121 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _phoneController = TextEditingController();
+
+  final _emailFocus = FocusNode();
+  final _passwordFocus = FocusNode();
+  final _phoneFocus = FocusNode();
+
   GccCountry _selectedCountry = GccCountry.uae;
 
   bool _isSignUp = false;
   bool _busy = false;
   bool _obscurePassword = true;
   String? _error;
+  String? _stepError;
+
+  int _step = 0;
+  int _dir = 1; // +1 forward, -1 backward (slide direction)
+
+  int get _totalSteps => _isSignUp ? 4 : 2;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     _phoneController.dispose();
+    _emailFocus.dispose();
+    _passwordFocus.dispose();
+    _phoneFocus.dispose();
     super.dispose();
   }
 
+  // ── Navigation between steps ──────────────────────────────────────────────
+
+  void _onModeChanged(bool signUp) {
+    if (signUp == _isSignUp || _busy) return;
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _isSignUp = signUp;
+      _step = 0;
+      _dir = 1;
+      _error = null;
+      _stepError = null;
+    });
+    _focusCurrent();
+  }
+
+  void _gotoStep(int step) {
+    if (_busy) return;
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _dir = step >= _step ? 1 : -1;
+      _step = step;
+      _error = null;
+      _stepError = null;
+    });
+    _focusCurrent();
+  }
+
+  void _back() => _gotoStep(_step - 1);
+
+  void _continue() {
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _stepError = null;
+      _error = null;
+    });
+    if (!_validateStep(_step)) return;
+    if (_step < _totalSteps - 1) {
+      _gotoStep(_step + 1);
+    } else {
+      _submit();
+    }
+  }
+
+  bool _validateStep(int step) {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    if (step == 0) {
+      if (email.isEmpty) return _failStep('Enter your email');
+      if (!email.contains('@') || !email.contains('.')) {
+        return _failStep('Enter a valid email');
+      }
+    } else if (step == 1) {
+      if (password.isEmpty) return _failStep('Enter your password');
+      if (password.length < 6) return _failStep('At least 6 characters');
+    }
+    return true;
+  }
+
+  bool _failStep(String message) {
+    setState(() => _stepError = message);
+    return false;
+  }
+
+  void _focusCurrent() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final FocusNode? node;
+      if (_step == 0) {
+        node = _emailFocus;
+      } else if (_step == 1) {
+        node = _passwordFocus;
+      } else if (_isSignUp && _step == 3) {
+        node = _phoneFocus;
+      } else {
+        node = null; // country picker — keep keyboard closed
+      }
+      node?.requestFocus();
+    });
+  }
+
+  // ── Auth submission ──────────────────────────────────────────────────────
+
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
     setState(() {
       _busy = true;
       _error = null;
@@ -76,8 +174,10 @@ class _LoginScreenState extends State<LoginScreen> {
             );
             setState(() {
               _isSignUp = false;
+              _step = 0;
               _busy = false;
             });
+            _focusCurrent();
           }
           return;
         }
@@ -141,7 +241,6 @@ class _LoginScreenState extends State<LoginScreen> {
     final resetEmailController = TextEditingController(
       text: _emailController.text.trim(),
     );
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -149,36 +248,26 @@ class _LoginScreenState extends State<LoginScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(FinavigRadius.dialog),
         ),
-        backgroundColor: isDark ? FinavigColors.charcoal : Colors.white,
-        title: Text(
+        title: const Text(
           'Reset Password',
-          style: TextStyle(
-            color: isDark ? FinavigColors.textPrimary : FinavigColors.textPrimaryLight,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Enter your email address and we\'ll send you a link to reset your password.',
-              style: TextStyle(
-                fontSize: 13.5,
-                color: isDark ? FinavigColors.textSecondary : FinavigColors.textSecondaryLight,
-              ),
+            const Text(
+              'Enter your email address and we\'ll send you a link to reset '
+              'your password.',
+              style: TextStyle(fontSize: 13.5),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: resetEmailController,
               keyboardType: TextInputType.emailAddress,
-              style: TextStyle(
-                color: isDark ? FinavigColors.textPrimary : FinavigColors.textPrimaryLight,
-              ),
-              decoration: _fieldDecoration(
-                isDark,
-                label: 'Email',
-                icon: Icons.alternate_email_rounded,
+              decoration: const InputDecoration(
+                labelText: 'Email',
+                prefixIcon: Icon(Icons.alternate_email_rounded),
               ),
             ),
           ],
@@ -186,21 +275,10 @@ class _LoginScreenState extends State<LoginScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(
-              'Cancel',
-              style: TextStyle(
-                color: isDark ? FinavigColors.textSecondary : FinavigColors.textSecondaryLight,
-              ),
-            ),
+            child: const Text('Cancel'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: FilledButton.styleFrom(
-              backgroundColor: FinavigColors.violet,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(FinavigRadius.button),
-              ),
-            ),
             child: const Text('Send Reset Link'),
           ),
         ],
@@ -245,457 +323,610 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  // ── Build ────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final surface = isDark ? FinavigColors.charcoal : Colors.white;
-    final subColor =
-        isDark ? FinavigColors.textSecondary : FinavigColors.textSecondaryLight;
-    final ctaColor = FinavigColors.violet;
-    final primaryAccent = isDark ? FinavigColors.textPrimary : FinavigColors.ink;
 
     return Scaffold(
+      // Same backdrop recipe as Home: ink in light mode, obsidian in dark.
       backgroundColor: isDark ? FinavigColors.obsidian : FinavigColors.ink,
-      body: Column(
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _hero(theme, isDark),
+            Expanded(
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(28),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    _chrome(theme, isDark),
+                    Expanded(child: _stepsArea(theme, isDark)),
+                    _footer(theme, isDark),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Hero (on the ink backdrop, like Home's hero header) ──────────────────
+
+  Widget _hero(ThemeData theme, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 22),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Brand hero header ──────────────────────────────────────────
-          SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-              child: Stack(
+          Row(
+            children: [
+              const Text(
+                'Finavig',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.6,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: FinavigColors.violet.withOpacity(0.25),
+                  borderRadius: BorderRadius.circular(99),
+                  border: Border.all(
+                    color: FinavigColors.violet.withOpacity(0.55),
+                  ),
+                ),
+                child: const Text(
+                  'GCC Edition',
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.3,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Track document expiries, manage cash flow, and stay compliant '
+            'across the GCC.',
+            style: TextStyle(
+              fontSize: 12.5,
+              height: 1.5,
+              color: Colors.white.withOpacity(0.70),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Chrome: mode toggle + progress (on the surface sheet) ────────────────
+
+  Widget _chrome(ThemeData theme, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+      child: Column(
+        children: [
+          _ModeToggle(
+            isSignUp: _isSignUp,
+            enabled: !_busy,
+            isDark: isDark,
+            onChanged: _onModeChanged,
+          ),
+          const SizedBox(height: 16),
+          _StepProgress(step: _step, total: _totalSteps, isDark: isDark),
+        ],
+      ),
+    );
+  }
+
+  // ── Steps: centered group of question + field + CTA ─────────────────────
+
+  Widget _stepsArea(ThemeData theme, bool isDark) {
+    return LayoutBuilder(
+      builder: (context, viewport) {
+        return SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: viewport.maxHeight),
+            child: IntrinsicHeight(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Positioned(
-                    top: 0,
-                    right: 0,
-                    child: _HeaderDecor(),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 320),
+                    switchInCurve: Curves.easeOutCubic,
+                    switchOutCurve: Curves.easeInCubic,
+                    transitionBuilder: (child, animation) {
+                      final slide = Tween<Offset>(
+                        begin: Offset(_dir * 0.06, 0),
+                        end: Offset.zero,
+                      ).animate(animation);
+                      return FadeTransition(
+                        opacity: animation,
+                        child: SlideTransition(position: slide, child: child),
+                      );
+                    },
+                    layoutBuilder: (currentChild, previousChildren) {
+                      return Stack(
+                        alignment: Alignment.topLeft,
                         children: [
-                          const Text(
-                            'Finavig',
-                            style: TextStyle(
-                              fontSize: 30,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -0.8,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: FinavigColors.accentBright.withOpacity(0.18),
-                              borderRadius: BorderRadius.circular(FinavigRadius.tile),
-                              border: Border.all(
-                                color: FinavigColors.accentBright.withOpacity(0.35),
-                              ),
-                            ),
-                            child: const Text(
-                              'GCC Edition',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: FinavigColors.accentBright,
-                              ),
-                            ),
-                          ),
+                          ...previousChildren,
+                          if (currentChild != null) currentChild,
                         ],
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Financial & document intelligence for GCC businesses.',
-                        style: TextStyle(
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white.withOpacity(0.92),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'Track document expiries, manage cash flow, and stay compliant across UAE, KSA, Kuwait, Qatar, Bahrain & Oman.',
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          height: 1.45,
-                          color: Colors.white.withOpacity(0.72),
-                        ),
-                      ),
-                    ],
+                      );
+                    },
+                    child: KeyedSubtree(
+                      key: ValueKey('step-$_isSignUp-$_step'),
+                      child: _buildStep(isDark),
+                    ),
                   ),
+                  if (_error != null) ...[
+                    const SizedBox(height: 14),
+                    _errorBanner(isDark),
+                  ],
+                  const SizedBox(height: 20),
+                  _actionRow(isDark),
                 ],
               ),
             ),
           ),
+        );
+      },
+    );
+  }
 
-          // ── Form sheet (rounded top, theme surface) ─────────────────────
+  Widget _errorBanner(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDark ? FinavigColors.dangerBg : FinavigColors.dangerBgLight,
+        borderRadius: BorderRadius.circular(FinavigRadius.tile),
+        border: Border.all(color: FinavigColors.danger.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.error_outline_rounded,
+            size: 18,
+            color: FinavigColors.danger,
+          ),
+          const SizedBox(width: 8),
           Expanded(
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: surface,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(FinavigRadius.sheet),
-                ),
-                boxShadow: FinavigShadows.adaptive(isDark),
+            child: Text(
+              _error!,
+              style: const TextStyle(
+                fontSize: 13,
+                color: FinavigColors.danger,
+                fontWeight: FontWeight.w500,
               ),
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Sheet drag-handle bar
-                      Center(
-                        child: Container(
-                          width: 36,
-                          height: 4,
-                          margin: const EdgeInsets.only(bottom: 18),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? Colors.white.withOpacity(0.18)
-                                : Colors.black.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _actionRow(bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            if (_step > 0) ...[
+              _BackButton(isDark: isDark, onTap: _busy ? null : _back),
+              const SizedBox(width: 10),
+            ],
+            Expanded(
+              child: _PrimaryButton(
+                label: _step < _totalSteps - 1
+                    ? 'Continue'
+                    : (_isSignUp ? 'Create account' : 'Sign in'),
+                busy: _busy,
+                onPressed: _continue,
+              ),
+            ),
+          ],
+        ),
+        if (_isSignUp && _step == _totalSteps - 1)
+          TextButton(
+            onPressed: _busy ? null : _submit,
+            child: Text(
+              'Skip for now',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isDark
+                    ? FinavigColors.textSecondary
+                    : FinavigColors.textSecondaryLight,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  // ── Footer: links + legal (inside the surface sheet) ─────────────────────
+
+  Widget _footer(ThemeData theme, bool isDark) {
+    final subColor = isDark
+        ? FinavigColors.textSecondary
+        : FinavigColors.textSecondaryLight;
+    final accentText =
+        isDark ? FinavigColors.textPrimary : FinavigColors.textPrimaryLight;
+
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 10, 24, 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Wrap(
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 4,
+              children: [
+                Text(
+                  'By continuing you agree to our',
+                  style: TextStyle(fontSize: 12, color: subColor, height: 1.5),
+                ),
+                _LegalLink(
+                  label: 'Terms & Conditions',
+                  color: accentText,
+                  onTap: () => showTermsDialog(context),
+                ),
+                Text(
+                  'and',
+                  style: TextStyle(fontSize: 12, color: subColor, height: 1.5),
+                ),
+                _LegalLink(
+                  label: 'Privacy Policy',
+                  color: accentText,
+                  onTap: () => showPrivacyDialog(context),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _TextLink(
+                    label: 'About',
+                    color: subColor,
+                    onTap: () => showAboutSheet(context)),
+                _DotSeparator(color: subColor),
+                _TextLink(
+                    label: 'Terms',
+                    color: subColor,
+                    onTap: () => showTermsDialog(context)),
+                _DotSeparator(color: subColor),
+                _TextLink(
+                    label: 'Privacy',
+                    color: subColor,
+                    onTap: () => showPrivacyDialog(context)),
+                _DotSeparator(color: subColor),
+                _TextLink(
+                    label: 'Support',
+                    color: subColor,
+                    onTap: () => showSupportSheet(context)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '${AppVersionBadge.version} · Made for the GCC',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 11,
+                color: isDark
+                    ? FinavigColors.textMuted
+                    : FinavigColors.textMutedLight,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Step content ─────────────────────────────────────────────────────────
+
+  Widget _buildStep(bool isDark) {
+    if (!_isSignUp) {
+      switch (_step) {
+        case 0:
+          return _emailStep(isDark, isSignUp: false);
+        default:
+          return _passwordStep(isDark, isSignUp: false);
+      }
+    }
+    switch (_step) {
+      case 0:
+        return _emailStep(isDark, isSignUp: true);
+      case 1:
+        return _passwordStep(isDark, isSignUp: true);
+      case 2:
+        return _countryStep(isDark);
+      default:
+        return _phoneStep(isDark);
+    }
+  }
+
+  /// "you're signing up as …" review chip on later steps.
+  Widget _emailReviewChip(bool isDark) {
+    final subColor = isDark
+        ? FinavigColors.textSecondary
+        : FinavigColors.textSecondaryLight;
+    final email = _emailController.text.trim();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        children: [
+          Icon(Icons.mark_email_read_outlined, size: 14, color: subColor),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              email.isEmpty ? '—' : email,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 12.5, color: subColor),
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () => _gotoStep(0),
+            behavior: HitTestBehavior.opaque,
+            child: const Text(
+              'Change',
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                color: FinavigColors.violet,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _emailStep(bool isDark, {required bool isSignUp}) {
+    return AutofillGroup(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _QuizQuestion(
+            isDark: isDark,
+            title:
+                isSignUp ? "First — what's your email?" : "What's your email?",
+            subtitle: isSignUp
+                ? "We'll create your Finavig account with it."
+                : "Welcome back! Let's get you signed in.",
+          ),
+          TextFormField(
+            controller: _emailController,
+            focusNode: _emailFocus,
+            keyboardType: TextInputType.emailAddress,
+            autofillHints: const [AutofillHints.email],
+            textInputAction: TextInputAction.next,
+            onFieldSubmitted: (_) => _continue(),
+            style: TextStyle(color: _fieldTextColor(isDark), fontSize: 15),
+            decoration: _fieldDecoration(
+              isDark,
+              label: 'Email Address',
+              icon: Icons.alternate_email_rounded,
+              errorText: _stepError,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _passwordStep(bool isDark, {required bool isSignUp}) {
+    return AutofillGroup(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _emailReviewChip(isDark),
+          _QuizQuestion(
+            isDark: isDark,
+            title: isSignUp ? 'Create a password' : 'Enter your password',
+            subtitle: isSignUp
+                ? 'At least 6 characters. You can change it later.'
+                : null,
+          ),
+          TextFormField(
+            controller: _passwordController,
+            focusNode: _passwordFocus,
+            obscureText: _obscurePassword,
+            autofillHints: const [AutofillHints.password],
+            textInputAction:
+                isSignUp ? TextInputAction.next : TextInputAction.done,
+            onFieldSubmitted: (_) => _continue(),
+            style: TextStyle(color: _fieldTextColor(isDark), fontSize: 15),
+            decoration: _fieldDecoration(
+              isDark,
+              label: 'Password',
+              icon: Icons.lock_outline_rounded,
+              errorText: _stepError,
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscurePassword
+                      ? Icons.visibility_off_rounded
+                      : Icons.visibility_rounded,
+                  size: 20,
+                  color: isDark
+                      ? FinavigColors.textSecondary
+                      : FinavigColors.textSecondaryLight,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _obscurePassword = !_obscurePassword;
+                  });
+                },
+              ),
+            ),
+          ),
+          if (!isSignUp) ...[
+            const SizedBox(height: 6),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: _busy ? null : _showForgotPassword,
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  visualDensity: VisualDensity.compact,
+                ),
+                child: const Text(
+                  'Forgot password?',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: FinavigColors.violet,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _countryStep(bool isDark) {
+    // Two chips per row inside the 24px-padded steps area.
+    final chipW =
+        ((MediaQuery.of(context).size.width - 48 - 10) / 2)
+            .clamp(140.0, 200.0);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _QuizQuestion(
+          isDark: isDark,
+          title: 'Where are you based?',
+          subtitle:
+              "We'll default your document types — IDs, licences, tenancy — to $_selectedCountry.displayName.",
+        ),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: GccCountry.values.map((c) {
+            final selected = c == _selectedCountry;
+            return GestureDetector(
+              onTap: _busy ? null : () => setState(() => _selectedCountry = c),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                width: chipW,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                decoration: BoxDecoration(
+                  color: selected
+                      ? FinavigColors.violet.withOpacity(0.10)
+                      : (isDark
+                          ? Colors.white.withOpacity(0.06)
+                          : FinavigColors.cloud),
+                  borderRadius: BorderRadius.circular(FinavigRadius.field),
+                  border: Border.all(
+                    color: selected
+                        ? FinavigColors.violet
+                        : (isDark
+                            ? Colors.white.withOpacity(0.10)
+                            : Colors.black.withOpacity(0.05)),
+                    width: selected ? 1.5 : 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Text(c.flag, style: const TextStyle(fontSize: 20)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            c.displayName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                              color: _fieldTextColor(isDark),
+                            ),
                           ),
-                        ),
-                      ),
-
-                      // ── Sign in / Sign up mode toggle ──────────────────
-                      _ModeToggle(
-                        isSignUp: _isSignUp,
-                        enabled: !_busy,
-                        activeColor: ctaColor,
-                        activeTextColor: Colors.white,
-                        onChanged: (v) => setState(() => _isSignUp = v),
-                      ),
-                      const SizedBox(height: 22),
-
-                      // Email input
-                      TextFormField(
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        autofillHints: const [AutofillHints.email],
-                        style: TextStyle(color: _fieldTextColor(isDark)),
-                        decoration: _fieldDecoration(
-                          isDark,
-                          label: 'Email Address',
-                          icon: Icons.alternate_email_rounded,
-                        ),
-                        validator: (v) {
-                          final value = v?.trim() ?? '';
-                          if (value.isEmpty) return 'Enter your email';
-                          if (!value.contains('@') || !value.contains('.')) {
-                            return 'Enter a valid email';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 14),
-
-                      // Password input with visibility toggle
-                      TextFormField(
-                        controller: _passwordController,
-                        obscureText: _obscurePassword,
-                        autofillHints: const [AutofillHints.password],
-                        style: TextStyle(color: _fieldTextColor(isDark)),
-                        decoration: _fieldDecoration(
-                          isDark,
-                          label: 'Password',
-                          icon: Icons.lock_outline_rounded,
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscurePassword
-                                  ? Icons.visibility_off_rounded
-                                  : Icons.visibility_rounded,
-                              size: 20,
+                          Text(
+                            c.currency,
+                            style: TextStyle(
+                              fontSize: 11,
                               color: isDark
                                   ? FinavigColors.textSecondary
                                   : FinavigColors.textSecondaryLight,
                             ),
-                            onPressed: () {
-                              setState(() {
-                                _obscurePassword = !_obscurePassword;
-                              });
-                            },
-                          ),
-                        ),
-                        validator: (v) {
-                          final value = v ?? '';
-                          if (value.isEmpty) return 'Enter your password';
-                          if (value.length < 6) {
-                            return 'At least 6 characters';
-                          }
-                          return null;
-                        },
-                      ),
-
-                      if (!_isSignUp) ...[
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: _busy ? null : _showForgotPassword,
-                            style: TextButton.styleFrom(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 4),
-                              visualDensity: VisualDensity.compact,
-                            ),
-                            child: Text(
-                              'Forgot password?',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: primaryAccent,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-
-                      if (_isSignUp) ...[
-                        const SizedBox(height: 14),
-                        DropdownButtonFormField<GccCountry>(
-                          initialValue: _selectedCountry,
-                          isExpanded: true,
-                          dropdownColor:
-                              isDark ? FinavigColors.slate : Colors.white,
-                          style: TextStyle(color: _fieldTextColor(isDark)),
-                          decoration: _fieldDecoration(
-                            isDark,
-                            label: 'Residence / Base GCC Country',
-                            icon: Icons.public_rounded,
-                            helperText:
-                                'Sets your primary personal document defaults',
-                          ),
-                          items: GccCountry.values.map((c) {
-                            return DropdownMenuItem<GccCountry>(
-                              value: c,
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 7,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: primaryAccent.withOpacity(0.10),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      c.code,
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w800,
-                                        color: primaryAccent,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(
-                                      '${c.displayName} (${c.currency})',
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        color: _fieldTextColor(isDark),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }).toList(),
-                          onChanged: (val) {
-                            if (val != null) {
-                              setState(() => _selectedCountry = val);
-                            }
-                          },
-                        ),
-                        const SizedBox(height: 14),
-                        TextFormField(
-                          controller: _phoneController,
-                          keyboardType: TextInputType.phone,
-                          autofillHints: const [
-                            AutofillHints.telephoneNumber
-                          ],
-                          style: TextStyle(color: _fieldTextColor(isDark)),
-                          decoration: _fieldDecoration(
-                            isDark,
-                            label: 'Phone Number (Optional)',
-                            icon: Icons.phone_iphone_rounded,
-                            helperText: 'For renewal & cash alerts',
-                          ),
-                        ),
-                      ],
-
-                      if (_error != null) ...[
-                        const SizedBox(height: 16),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? FinavigColors.dangerBg
-                                : FinavigColors.dangerBgLight,
-                            borderRadius: BorderRadius.circular(FinavigRadius.tile),
-                            border: Border.all(
-                              color: FinavigColors.danger.withOpacity(0.3),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.error_outline_rounded,
-                                size: 18,
-                                color: FinavigColors.danger,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  _error!,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    color: FinavigColors.danger,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-
-                      const SizedBox(height: 22),
-
-                      // Form Submit CTA Button
-                      SizedBox(
-                        height: 52,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(FinavigRadius.button),
-                            boxShadow: FinavigShadows.adaptive(isDark),
-                          ),
-                          child: FilledButton(
-                            onPressed: _busy ? null : _submit,
-                            style: FilledButton.styleFrom(
-                              backgroundColor: ctaColor,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(FinavigRadius.button),
-                              ),
-                            ),
-                            child: _busy
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.white,
-                                      ),
-                                    ),
-                                  )
-                                : Text(
-                                    _isSignUp ? 'Create account' : 'Sign in',
-                                    style: const TextStyle(
-                                      fontSize: 15.5,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 0.2,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // ── Legal consent line ──────────────────────────────
-                      Wrap(
-                        alignment: WrapAlignment.center,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        spacing: 4,
-                        children: [
-                          Text(
-                            'By continuing you agree to our',
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              color: subColor,
-                              height: 1.5,
-                            ),
-                          ),
-                          _LegalLink(
-                            label: 'Terms & Conditions',
-                            color: primaryAccent,
-                            onTap: () => showTermsDialog(context),
-                          ),
-                          Text(
-                            'and',
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              color: subColor,
-                              height: 1.5,
-                            ),
-                          ),
-                          _LegalLink(
-                            label: 'Privacy Policy',
-                            color: primaryAccent,
-                            onTap: () => showPrivacyDialog(context),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-
-                      // ── Info links row ─────────────────────────────────
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          _TextLink(
-                            label: 'About',
-                            color: subColor,
-                            onTap: () => showAboutSheet(context),
-                          ),
-                          _DotSeparator(color: subColor),
-                          _TextLink(
-                            label: 'Terms',
-                            color: subColor,
-                            onTap: () => showTermsDialog(context),
-                          ),
-                          _DotSeparator(color: subColor),
-                          _TextLink(
-                            label: 'Privacy',
-                            color: subColor,
-                            onTap: () => showPrivacyDialog(context),
-                          ),
-                          _DotSeparator(color: subColor),
-                          _TextLink(
-                            label: 'Support',
-                            color: subColor,
-                            onTap: () => showSupportSheet(context),
-                          ),
-                        ],
+                    ),
+                    if (selected)
+                      const Icon(
+                        Icons.check_circle_rounded,
+                        size: 18,
+                        color: FinavigColors.violet,
                       ),
-                      const SizedBox(height: 18),
-                      Text(
-                        '${AppVersionBadge.version} · Made for the GCC',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          color: isDark
-                              ? FinavigColors.textMuted
-                              : FinavigColors.textMutedLight,
-                        ),
-                      ),
-                    ],
-                  ),
+                  ],
                 ),
               ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _phoneStep(bool isDark) {
+    return AutofillGroup(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _emailReviewChip(isDark),
+          _QuizQuestion(
+            isDark: isDark,
+            title: 'Add your phone',
+            subtitle:
+                'Optional — used for renewal reminders and cash-flow alerts. You can skip this.',
+          ),
+          TextFormField(
+            controller: _phoneController,
+            focusNode: _phoneFocus,
+            keyboardType: TextInputType.phone,
+            autofillHints: const [AutofillHints.telephoneNumber],
+            textInputAction: TextInputAction.done,
+            onFieldSubmitted: (_) => _continue(),
+            style: TextStyle(color: _fieldTextColor(isDark), fontSize: 15),
+            decoration: _fieldDecoration(
+              isDark,
+              label: 'Phone — $_selectedCountry.phoneCode (Optional)',
+              icon: Icons.phone_iphone_rounded,
             ),
           ),
         ],
@@ -706,24 +937,32 @@ class _LoginScreenState extends State<LoginScreen> {
   Color _fieldTextColor(bool isDark) =>
       isDark ? FinavigColors.textPrimary : FinavigColors.textPrimaryLight;
 
+  /// Field style mirrors the app-wide InputDecorationTheme
+  /// (slate/cloud fill, violet focus ring) so login feels native.
   InputDecoration _fieldDecoration(
     bool isDark, {
     required String label,
     required IconData icon,
-    String? helperText,
+    String? errorText,
     Widget? suffixIcon,
   }) {
-    final accent = isDark ? FinavigColors.textPrimary : FinavigColors.ink;
     return InputDecoration(
       labelText: label,
-      helperText: helperText,
-      prefixIcon: Icon(icon, size: 20, color: accent),
+      labelStyle: TextStyle(
+        color: isDark
+            ? FinavigColors.textSecondary
+            : FinavigColors.textSecondaryLight,
+        fontSize: 13,
+      ),
+      errorText: errorText,
+      prefixIcon: Icon(icon, size: 20, color: FinavigColors.violet),
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: isDark
-          ? Colors.white.withOpacity(0.06)
+          ? FinavigColors.slate.withOpacity(0.55)
           : FinavigColors.cloud,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(FinavigRadius.field),
         borderSide: BorderSide.none,
@@ -734,103 +973,221 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(FinavigRadius.field),
-        borderSide: BorderSide(color: accent, width: 1.5),
+        borderSide:
+            const BorderSide(color: FinavigColors.violet, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(FinavigRadius.field),
+        borderSide:
+            const BorderSide(color: FinavigColors.danger, width: 1.2),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(FinavigRadius.field),
+        borderSide:
+            const BorderSide(color: FinavigColors.danger, width: 1.5),
       ),
     );
   }
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Header decorative shapes
+// Building blocks — violet & dark, matching Home's bento style
 // ──────────────────────────────────────────────────────────────────────────────
 
-class _HeaderDecor extends StatelessWidget {
+/// Big question heading for the current step.
+class _QuizQuestion extends StatelessWidget {
+  final bool isDark;
+  final String title;
+  final String? subtitle;
+
+  const _QuizQuestion({
+    required this.isDark,
+    required this.title,
+    this.subtitle,
+  });
+
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 90,
-      height: 70,
-      child: Stack(
-        children: [
-          Positioned(
-            right: 0,
-            top: 6,
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.18),
-                  width: 1.5,
-                ),
-              ),
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 24,
+            height: 1.15,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.6,
+            color: isDark
+                ? FinavigColors.textPrimary
+                : FinavigColors.textPrimaryLight,
           ),
-          const Positioned(
-            left: 0,
-            top: 0,
-            child: _Sparkle(size: 13, color: FinavigColors.accentBright),
-          ),
-          Positioned(
-            right: 34,
-            bottom: 2,
-            child: Container(
-              width: 10,
-              height: 10,
-              decoration: const BoxDecoration(
-                color: Color(0xFF9AF2C6),
-                shape: BoxShape.circle,
-              ),
+        ),
+        if (subtitle != null) ...[
+          const SizedBox(height: 6),
+          Text(
+            subtitle!,
+            style: TextStyle(
+              fontSize: 13,
+              height: 1.45,
+              color: isDark
+                  ? FinavigColors.textSecondary
+                  : FinavigColors.textSecondaryLight,
             ),
           ),
         ],
+        const SizedBox(height: 18),
+      ],
+    );
+  }
+}
+
+/// Segmented progress bar: one violet segment per quiz step.
+class _StepProgress extends StatelessWidget {
+  final int step;
+  final int total;
+  final bool isDark;
+
+  const _StepProgress({
+    required this.step,
+    required this.total,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Row(
+            children: List.generate(total, (i) {
+              final done = i <= step;
+              return Expanded(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 240),
+                  curve: Curves.easeOut,
+                  height: 4,
+                  margin: EdgeInsets.only(right: i == total - 1 ? 0 : 5),
+                  decoration: BoxDecoration(
+                    color: done
+                        ? FinavigColors.violet
+                        : (isDark
+                            ? Colors.white.withOpacity(0.12)
+                            : Colors.black.withOpacity(0.08)),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          'Step ${step + 1} of $total',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: isDark
+                ? FinavigColors.textMuted
+                : FinavigColors.textMutedLight,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Primary action — flat violet, same as the app's FilledButtons.
+class _PrimaryButton extends StatelessWidget {
+  final String label;
+  final bool busy;
+  final VoidCallback onPressed;
+
+  const _PrimaryButton({
+    required this.label,
+    required this.busy,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return SizedBox(
+      height: 52,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(FinavigRadius.button),
+          boxShadow: FinavigShadows.adaptive(isDark),
+        ),
+        child: FilledButton(
+          onPressed: busy ? null : onPressed,
+          style: FilledButton.styleFrom(
+            backgroundColor: FinavigColors.violet,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(FinavigRadius.button),
+            ),
+          ),
+          child: busy
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+        ),
       ),
     );
   }
 }
 
-class _Sparkle extends StatelessWidget {
-  final double size;
-  final Color color;
+/// Circular back button for the action row.
+class _BackButton extends StatelessWidget {
+  final bool isDark;
+  final VoidCallback? onTap;
 
-  const _Sparkle({required this.size, required this.color});
+  const _BackButton({required this.isDark, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: size,
-      height: size,
-      child: CustomPaint(painter: _SparklePainter(color: color)),
+      width: 52,
+      height: 52,
+      child: OutlinedButton(
+        onPressed: onTap,
+        style: OutlinedButton.styleFrom(
+          padding: EdgeInsets.zero,
+          side: BorderSide(
+            color: isDark
+                ? Colors.white.withOpacity(0.14)
+                : Colors.black.withOpacity(0.10),
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(FinavigRadius.button),
+          ),
+        ),
+        child: Icon(
+          Icons.arrow_back_rounded,
+          size: 20,
+          color: isDark
+              ? FinavigColors.textPrimary
+              : FinavigColors.textPrimaryLight,
+        ),
+      ),
     );
   }
 }
-
-class _SparklePainter extends CustomPainter {
-  final Color color;
-
-  _SparklePainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final c = Offset(size.width / 2, size.height / 2);
-    final r = size.width / 2;
-    final path = Path()
-      ..moveTo(c.dx, c.dy - r)
-      ..quadraticBezierTo(c.dx, c.dy, c.dx + r, c.dy)
-      ..quadraticBezierTo(c.dx, c.dy, c.dx, c.dy + r)
-      ..quadraticBezierTo(c.dx, c.dy, c.dx - r, c.dy)
-      ..quadraticBezierTo(c.dx, c.dy, c.dx, c.dy - r)
-      ..close();
-    canvas.drawPath(path, Paint()..color = color);
-  }
-
-  @override
-  bool shouldRepaint(covariant _SparklePainter oldDelegate) =>
-      oldDelegate.color != color;
-}
-
-
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Sign in / Sign up segmented pill toggle
@@ -839,24 +1196,20 @@ class _SparklePainter extends CustomPainter {
 class _ModeToggle extends StatelessWidget {
   final bool isSignUp;
   final bool enabled;
-  final Color activeColor;
-  final Color activeTextColor;
+  final bool isDark;
   final ValueChanged<bool> onChanged;
 
   const _ModeToggle({
     required this.isSignUp,
     required this.enabled,
-    required this.activeColor,
-    required this.activeTextColor,
+    required this.isDark,
     required this.onChanged,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final trackColor = isDark
-        ? Colors.white.withOpacity(0.06)
-        : FinavigColors.cloud;
+    final trackColor =
+        isDark ? Colors.white.withOpacity(0.06) : FinavigColors.cloud;
     final inactiveColor =
         isDark ? FinavigColors.textSecondary : FinavigColors.textSecondaryLight;
 
@@ -872,7 +1225,7 @@ class _ModeToggle extends StatelessWidget {
             height: 44,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: selected ? activeColor : Colors.transparent,
+              color: selected ? FinavigColors.violet : Colors.transparent,
               borderRadius: BorderRadius.circular(FinavigRadius.tile),
               boxShadow: selected ? FinavigShadows.soft : null,
             ),
@@ -882,7 +1235,7 @@ class _ModeToggle extends StatelessWidget {
                 Icon(
                   icon,
                   size: 16,
-                  color: selected ? activeTextColor : inactiveColor,
+                  color: selected ? Colors.white : inactiveColor,
                 ),
                 const SizedBox(width: 6),
                 Text(
@@ -890,7 +1243,7 @@ class _ModeToggle extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
-                    color: selected ? activeTextColor : inactiveColor,
+                    color: selected ? Colors.white : inactiveColor,
                   ),
                 ),
               ],
@@ -961,14 +1314,11 @@ class _DotSeparator extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       '·',
-      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: color),
+      style: TextStyle(
+          fontSize: 12.5, fontWeight: FontWeight.w800, color: color),
     );
   }
 }
-
-// ──────────────────────────────────────────────────────────────────────────────
-// Legal consent link
-// ──────────────────────────────────────────────────────────────────────────────
 
 class _LegalLink extends StatelessWidget {
   final String label;
@@ -991,7 +1341,7 @@ class _LegalLink extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 12.5,
+            fontSize: 12,
             fontWeight: FontWeight.w700,
             color: color,
             decoration: TextDecoration.underline,

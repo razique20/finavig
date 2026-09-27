@@ -608,7 +608,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      email ?? 'local@wazy.app',
+                      email ?? 'local@finavig.app',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: Colors.white.withOpacity(0.65),
                       ),
