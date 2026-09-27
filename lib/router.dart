@@ -326,9 +326,11 @@ class _AppShellState extends State<_AppShell> {
                 ),
                 // Universal quick action (+): scan a document, log money,
                 // voice AI log, or create an envelope from any tab.
+                // Long-press skips the menu and opens Ask Finavig AI.
                 _QuickActionButton(
                   isDark: isDark,
                   onTap: () => showQuickActionSheet(context),
+                  onLongPress: () => showAskFinavigFlow(context),
                 ),
                 _NavPillItem(
                   icon: widget.navigationShell.currentIndex == 2
@@ -372,10 +374,12 @@ class _AppShellState extends State<_AppShell> {
 class _QuickActionButton extends StatelessWidget {
   final bool isDark;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
   const _QuickActionButton({
     required this.isDark,
     required this.onTap,
+    this.onLongPress,
   });
 
   @override
@@ -383,12 +387,13 @@ class _QuickActionButton extends StatelessWidget {
     return Expanded(
       child: Center(
         child: Tooltip(
-          message: 'Quick actions',
+          message: 'Quick actions\nHold for Ask Finavig AI',
           waitDuration: const Duration(milliseconds: 600),
           child: Material(
             color: Colors.transparent,
             child: InkWell(
               onTap: onTap,
+              onLongPress: onLongPress,
               borderRadius: BorderRadius.circular(19),
               child: Container(
                 width: 38,

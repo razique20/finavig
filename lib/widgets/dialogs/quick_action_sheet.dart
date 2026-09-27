@@ -8,6 +8,21 @@ import '../../theme/app_theme.dart';
 import 'ask_finavig_sheet.dart';
 import 'upgrade_dialog.dart';
 
+/// Opens the unified "Ask Finavig AI" sheet and persists money results
+/// exactly once. Shared by the quick action menu tile and the nav "+"
+/// button's long-press shortcut. Documents are already saved inside the
+/// sheet (quota-gated).
+Future<void> showAskFinavigFlow(BuildContext context) async {
+  final result = await AskFinavigSheet.show(context);
+  if (result is AskMoneyResult) {
+    await FinanceService.instance.addTransaction(result.transaction);
+    final recurring = result.recurringTemplate;
+    if (recurring != null) {
+      await FinanceService.instance.addRecurring(recurring);
+    }
+  }
+}
+
 /// Universal Quick Action sheet — the "+" speed dial menu on the main nav
 /// shell. One tap from any tab reaches the core creation flows:
 /// scan/add a document, log an expense or income (smart category matching
@@ -64,17 +79,8 @@ class _QuickActionSheet extends StatelessWidget {
         break;
       case _QuickAction.voiceAiLog:
         // "Ask Finavig AI": one universal voice/text sheet for both flows.
-        // Money results come back unpersisted — add them here exactly once.
-        // Documents are already saved inside the sheet (quota-gated).
         if (!context.mounted) return;
-        final result = await AskFinavigSheet.show(context);
-        if (result is AskMoneyResult) {
-          await FinanceService.instance.addTransaction(result.transaction);
-          final recurring = result.recurringTemplate;
-          if (recurring != null) {
-            await FinanceService.instance.addRecurring(recurring);
-          }
-        }
+        await showAskFinavigFlow(context);
         break;
     }
 
