@@ -9,6 +9,7 @@ import '../models/expiry_item.dart';
 import '../models/finance.dart';
 import '../services/document_scanner_service.dart';
 import '../services/collection_service.dart';
+import '../services/tab_scroll_registry.dart';
 import '../services/urgency_engine.dart';
 import '../theme/app_theme.dart';
 import '../widgets/bento_icon_tile.dart';
@@ -67,6 +68,10 @@ extension _DocSortX on _DocSort {
 }
 
 class _DocumentsScreenState extends State<DocumentsScreen> {
+  // Root scrollable of this tab — registered so a bottom-nav tap scrolls
+  // the tab back to the top (see TabScrollRegistry).
+  final ScrollController _scrollController = ScrollController();
+
   List<ExpiryItem> _items = [];
   bool _loading = true;
   String _query = '';
@@ -77,6 +82,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   @override
   void initState() {
     super.initState();
+    TabScrollRegistry.register(2, _scrollController);
     if (DocumentScannerService.instance.isInitialized) {
       _items = DocumentScannerService.instance.activeItems;
       _loading = false;
@@ -87,6 +93,8 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
 
   @override
   void dispose() {
+    TabScrollRegistry.unregister(2, _scrollController);
+    _scrollController.dispose();
     DocumentScannerService.instance.removeListener(_onServiceChanged);
     super.dispose();
   }
@@ -210,6 +218,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                 color: theme.colorScheme.secondary,
                 onRefresh: _loadData,
                 child: CustomScrollView(
+                  controller: _scrollController,
                   physics: const AlwaysScrollableScrollPhysics(),
                   slivers: [
                     SliverToBoxAdapter(

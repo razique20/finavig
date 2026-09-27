@@ -15,6 +15,7 @@ import '../services/notification_service.dart';
 import '../services/entitlement_service.dart';
 import '../services/supabase_service.dart';
 import '../services/support_service.dart';
+import '../services/tab_scroll_registry.dart';
 import '../services/theme_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/widgets.dart';
@@ -43,6 +44,10 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  // Root scrollable of this tab — registered so a bottom-nav tap scrolls
+  // the tab back to the top (see TabScrollRegistry).
+  final ScrollController _scrollController = ScrollController();
+
   List<DocumentCollection> _collections = [];
   String _activeId = DocumentCollection.personalId;
   bool _loading = true;
@@ -60,6 +65,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
+    TabScrollRegistry.register(3, _scrollController);
     final service = DocumentCollectionService.instance;
     if (service.collections.isNotEmpty) {
       _collections = service.collections;
@@ -73,6 +79,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   void dispose() {
+    TabScrollRegistry.unregister(3, _scrollController);
+    _scrollController.dispose();
     DocumentCollectionService.instance.removeListener(_onCollectionsChanged);
     super.dispose();
   }
@@ -453,6 +461,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 color: theme.colorScheme.secondary,
                 onRefresh: _loadSettings,
                 child: CustomScrollView(
+                  controller: _scrollController,
                   physics: const AlwaysScrollableScrollPhysics(),
                   slivers: [
                     SliverToBoxAdapter(child: _buildHeroHeader(theme)),

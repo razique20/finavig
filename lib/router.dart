@@ -28,6 +28,7 @@ import 'screens/ai_summary_screen.dart';
 import 'screens/ai_budget_plan_screen.dart';
 import 'screens/alerts_reminders_screen.dart';
 import 'services/auth_service.dart';
+import 'services/tab_scroll_registry.dart';
 import 'widgets/dialogs/quick_action_sheet.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -355,10 +356,15 @@ class _AppShellState extends State<_AppShell> {
     );
   }
 
-  void _goBranch(int index) => widget.navigationShell.goBranch(
-        index,
-        initialLocation: index == widget.navigationShell.currentIndex,
-      );
+  void _goBranch(int index) {
+    // Every tab tap lands at the top of that tab's screen. Tapping the
+    // already-active tab also resets its scroll (standard mobile pattern).
+    TabScrollRegistry.scrollToTop(index);
+    widget.navigationShell.goBranch(
+      index,
+      initialLocation: index == widget.navigationShell.currentIndex,
+    );
+  }
 }
 
 /// Center "universal quick action" (+) button inside the nav pill: a raised

@@ -14,6 +14,7 @@ import '../services/collection_service.dart';
 import '../services/document_scanner_service.dart';
 import '../services/entitlement_service.dart';
 import '../services/finance_service.dart';
+import '../services/tab_scroll_registry.dart';
 import '../services/theme_service.dart';
 import '../services/urgency_engine.dart';
 import '../theme/app_theme.dart';
@@ -34,6 +35,10 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  // Root scrollable of this tab — registered so a bottom-nav tap scrolls
+  // the tab back to the top (see TabScrollRegistry).
+  final ScrollController _scrollController = ScrollController();
+
   DocumentCollection? _activeCollection;
   List<ExpiryItem> _items = [];
   bool _loading = true;
@@ -54,6 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     _loadData();
     _checkFirstTimeGuide();
+    TabScrollRegistry.register(0, _scrollController);
     FinanceService.instance.addListener(_reloadMoney);
     DocumentScannerService.instance.addListener(_onServiceChanged);
   }
@@ -71,6 +77,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    TabScrollRegistry.unregister(0, _scrollController);
+    _scrollController.dispose();
     FinanceService.instance.removeListener(_reloadMoney);
     DocumentScannerService.instance.removeListener(_onServiceChanged);
     super.dispose();
@@ -285,6 +293,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: theme.colorScheme.secondary,
                 onRefresh: _loadData,
                 child: CustomScrollView(
+                  controller: _scrollController,
                   physics: const AlwaysScrollableScrollPhysics(),
                   slivers: [
                     SliverToBoxAdapter(
