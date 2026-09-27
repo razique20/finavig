@@ -19,13 +19,13 @@ This document outlines key architectural, visual, and interaction enhancements d
 * **Implemented:** A violet **Universal Action Button (`+`)** sits at the center of the floating nav pill (`_QuickActionButton` in `lib/router.dart`). It opens `showQuickActionSheet` (`lib/widgets/dialogs/quick_action_sheet.dart`), a 1-tap quick menu:
   * 📄 **Scan / Add Document** — Free-tier quota enforced, then the full-screen scanner.
   * 💸 **Log Expense or Income** — `TransactionFormSheet` with smart category matching.
-  * 🎙️ **Voice AI Log (Talk to Finavig)** — Natural language + voice input, auto-categorized.
+  * 🎙️ **Ask Finavig AI** — one universal voice/text sheet for both flows (`AskFinavigSheet`); money results are persisted by the sheet caller exactly once, documents are saved inside the sheet (quota-gated).
   * ✉️ **Create Savings Envelope** — Instant target allocation via `EnvelopeFormSheet`.
 * **Impact:** 1-tap access to every core feature from anywhere in the app; entitlement gates stay enforced by reusing the same flows as the tabs.
 
 ---
 
-## 3. 📄 Document Details: Full-Screen Pinch-to-Zoom & Quick Share *(implemented)*
+## 3. ✅ Document Details: Full-Screen Pinch-to-Zoom & Quick Share *(implemented)*
 * **Was:** Uploaded document scans and PDF receipts rendered inside a fixed rectangular preview box in `DocumentDetailScreen`.
 * **Implemented:**
   * **Interactive Full-Screen Viewer:** Tapping *View* (or *Details*) opens `_FullScreenImageViewer` (`lib/screens/document_detail_screen.dart`) — a black-out full-screen modal with pinch-to-zoom (1×–5×), double-tap-to-zoom at the tapped point, and smooth fade-in.
