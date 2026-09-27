@@ -190,6 +190,24 @@ class VoiceInputService {
   }
 
   // --------------------------------------------------------------------------
+  // Test hooks — emit synthetic status/transcript events without a platform
+  // recognizer, so widget tests can drive voice flows hermetically.
+  // --------------------------------------------------------------------------
+
+  @visibleForTesting
+  void debugEmitStatus(VoiceStatus status) {
+    // Keep internal state consistent with the emitted event, mirroring what
+    // the platform callbacks would do.
+    _currentStatus = status;
+    if (!_statusController.isClosed) _statusController.add(status);
+  }
+
+  @visibleForTesting
+  void debugEmitTranscript(VoiceUpdate update) {
+    if (!_transcriptController.isClosed) _transcriptController.add(update);
+  }
+
+  // --------------------------------------------------------------------------
   // Transcript normalization: spoken numbers & currency → parser-friendly text
   // --------------------------------------------------------------------------
 

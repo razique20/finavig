@@ -12,11 +12,11 @@ class AppCredentials {
 
   // ── Supabase ────────────────────────────────────────────────────────────
   /// Your Supabase project URL, e.g. 'https://YOUR-PROJECT-ref.supabase.co'.
-  static const String supabaseUrl = 'https://jxyzmnaqukxvrcwolkil.supabase.co';
+  static const String supabaseUrl = 'https://YOUR-PROJECT.supabase.co';
 
   /// Your Supabase anon (publishable) key.
   static const String supabaseAnonKey =
-      'sb_publishable_GgyDJs0On_xdoFr4QLxlWA_wyRlktjf';
+      'your-anon-key-placeholder';
 
   // ── Future credentials go here ──────────────────────────────────────────
   // Add new credentials below following the same pattern.

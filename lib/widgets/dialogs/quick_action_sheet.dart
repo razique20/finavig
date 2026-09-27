@@ -5,7 +5,7 @@ import '../../models/finance.dart';
 import '../../services/finance_service.dart';
 import '../../screens/money_screen.dart';
 import '../../theme/app_theme.dart';
-import 'natural_language_money_add_dialog.dart';
+import 'ask_finavig_sheet.dart';
 import 'upgrade_dialog.dart';
 
 /// Universal Quick Action sheet — the "+" speed dial menu on the main nav
@@ -63,12 +63,17 @@ class _QuickActionSheet extends StatelessWidget {
         }
         break;
       case _QuickAction.voiceAiLog:
-        // "Talk to Finavig": type or speak natural language; the parser
-        // auto-categorizes and returns the created record, if any.
+        // "Ask Finavig AI": one universal voice/text sheet for both flows.
+        // Money results come back unpersisted — add them here exactly once.
+        // Documents are already saved inside the sheet (quota-gated).
         if (!context.mounted) return;
-        final created = await NaturalLanguageMoneyAddDialog.show(context);
-        if (created != null) {
-          await FinanceService.instance.addTransaction(created);
+        final result = await AskFinavigSheet.show(context);
+        if (result is AskMoneyResult) {
+          await FinanceService.instance.addTransaction(result.transaction);
+          final recurring = result.recurringTemplate;
+          if (recurring != null) {
+            await FinanceService.instance.addRecurring(recurring);
+          }
         }
         break;
     }
@@ -163,7 +168,7 @@ extension _QuickActionX on _QuickAction {
       case _QuickAction.logMoney:
         return Icons.receipt_long_rounded;
       case _QuickAction.voiceAiLog:
-        return Icons.mic_rounded;
+        return Icons.auto_awesome_rounded;
     }
   }
 
@@ -174,7 +179,7 @@ extension _QuickActionX on _QuickAction {
       case _QuickAction.logMoney:
         return 'Log Expense or Income';
       case _QuickAction.voiceAiLog:
-        return 'Voice AI Log';
+        return 'Ask Finavig AI';
     }
   }
 
@@ -185,7 +190,7 @@ extension _QuickActionX on _QuickAction {
       case _QuickAction.logMoney:
         return 'Smart category matching included';
       case _QuickAction.voiceAiLog:
-        return 'Talk to Finavig — it does the typing';
+        return 'Say it once — money or documents, hands-free';
     }
   }
 
@@ -196,7 +201,7 @@ extension _QuickActionX on _QuickAction {
       case _QuickAction.logMoney:
         return FinavigColors.violetAccent;
       case _QuickAction.voiceAiLog:
-        return FinavigColors.ink;
+        return FinavigColors.accentBright;
     }
   }
 }

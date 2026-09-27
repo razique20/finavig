@@ -20,7 +20,7 @@ import '../services/smart_category_engine.dart';
 import '../services/tab_scroll_registry.dart';
 import '../theme/app_theme.dart';
 import '../widgets/dialogs/ai_budget_plan_sheet.dart';
-import '../widgets/dialogs/natural_language_money_add_dialog.dart';
+import '../widgets/dialogs/ask_finavig_sheet.dart';
 import '../widgets/dialogs/upgrade_dialog.dart';
 import '../widgets/cards/monthly_summary_card.dart';
 import '../widgets/shimmer_skeleton.dart';
@@ -335,19 +335,28 @@ class _MoneyScreenState extends State<MoneyScreen> {
               ),
               const Spacer(),
               _MoneyHeroIconButton(
-                icon: Icons.auto_awesome_rounded,
+                icon: Icons.auto_fix_high_rounded,
                 tooltip: 'Auto-Categorize with AI',
                 onTap: _runAutoCategorizationAI,
               ),
               const SizedBox(width: 8),
               _MoneyHeroIconButton(
-                icon: Icons.bolt_rounded,
-                tooltip: 'Quick Add with Natural Language',
+                icon: Icons.auto_awesome_rounded,
+                tooltip: 'Ask Finavig AI',
                 onTap: () async {
-                  final created = await NaturalLanguageMoneyAddDialog.show(
-                    context,
-                  );
-                  if (created != null) _reload();
+                  final result = await AskFinavigSheet.show(context);
+                  if (result is AskMoneyResult) {
+                    await FinanceService.instance.addTransaction(
+                      result.transaction,
+                    );
+                    final recurring = result.recurringTemplate;
+                    if (recurring != null) {
+                      await FinanceService.instance.addRecurring(recurring);
+                    }
+                  }
+                  // Documents saved inside the sheet notify listeners; the
+                  // recurring side-list is also already updated. `_reload`
+                  // would double-fire and rebuild needlessly here.
                 },
               ),
               const SizedBox(width: 8),

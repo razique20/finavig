@@ -4,9 +4,12 @@ This document outlines key architectural, visual, and interaction enhancements d
 
 ---
 
-## 1. ⚡ Initial Loading & Shimmer Skeletons (Zero-Lag Experience)
-* **Current Experience:** When opening the app or navigating to a tab (*Documents* or *Money*) for the first time, data hydrates asynchronously.
-* **Optimization:** Introduce modern **Shimmer Skeleton Loaders** on `HomeScreen`, `DocumentsScreen`, and `MoneyScreen`. Instead of any frame delay, users instantly see an elegant pulsating card outline that seamlessly transitions into their real data.
+## 1. ✅ Initial Loading & Shimmer Skeletons (Zero-Lag Experience) *(implemented)*
+* **Was:** When opening the app or navigating to a tab (*Documents* or *Money*) for the first time, data hydrated asynchronously with a blank frame first.
+* **Implemented:** Modern **Shimmer Skeleton Loaders** on `HomeScreen`, `DocumentsScreen`, and `MoneyScreen` (`lib/widgets/shimmer_skeleton.dart`). While data hydrates, users instantly see an elegant pulsating card outline that seamlessly transitions into their real data:
+  * Reusable `ShimmerSkeleton` primitive + ready-made `TileSkeletonLoader`.
+  * Full-page layouts: `HomeSkeletonView`, `DocumentsSkeletonView`, `MoneySkeletonView` — each mirroring the real screen's structure.
+  * Covered by `test/shimmer_skeleton_test.dart`.
 * **Impact:** Eliminates perceived loading delay and ensures continuous visual feedback.
 
 ---
@@ -31,26 +34,44 @@ This document outlines key architectural, visual, and interaction enhancements d
 
 ---
 
-## 4. 💡 Money Tab Modularization & Smooth Frame-Rates
-* **Current Experience:** `money_screen.dart` is a heavy file (117 KB) rendering charts, envelope cards, recurring payment ladders, and transaction lists in a single widget tree.
-* **Optimization:** Refactor into modular, memoized component cards. This drastically reduces widget rebuilds, keeping scroll performance locked at 60–120 FPS even with hundreds of transactions.
+## 4. ✅ Money Tab Modularization & Smooth Frame-Rates *(implemented)*
+* **Was:** `money_screen.dart` was a heavy file (117 KB) rendering charts, envelope cards, recurring payment ladders, and transaction lists in a single widget tree.
+* **Implemented:** Refactored into modular, `const`-constructible component cards under `lib/screens/money/`:
+  * `money_sections.dart` — shared `SectionHeader`, `HintCard`, `TintedCardBox`, `InsetDivider`.
+  * `money_summary_cards.dart` — analytics cards (bill-spike alerts, renewal outlook, cash-flow teaser, spending pace, weekly-spend chart, category breakdown, top expenses, renewal breakdown).
+  * `money_planning_cards.dart` — `BudgetsSection`, `RecurringSection`, `EnvelopesSection`, `TransactionsSection`.
+  * `money_rows.dart` — `BudgetRow`, `EnvelopeCard`, `TransactionTile`, `RecurringCard`.
+  * `money/forms/` — `TransactionFormSheet`, `RecurringFormSheet`, `EnvelopeFormSheet`, budget form sheets.
+  * The screen file itself is down from 117 KB to ~32 KB (860 lines), and each section widget rebuilds independently.
 * **Impact:** Ultra-smooth 60–120 FPS scrolling and instant tab switching.
 
 ---
 
-## 5. 🎙️ Unified "Ask Finavig AI" Universal Voice Assistant
-* **Current Experience:** Separate dialogs exist for Document Natural Language add and Money Natural Language add.
-* **Optimization:** Merge into one **Universal AI Voice Sheet**. Users can speak naturally:
+## 5. ✅ Unified "Ask Finavig AI" Universal Voice Assistant *(implemented)*
+* **Was:** Separate dialogs existed for Document Natural Language add (`NaturalLanguageAddDialog`) and Money Natural Language add (`NaturalLanguageMoneyAddDialog`) — two sheets, two parsers, duplicated save logic, and a double-add bug on money records.
+* **Implemented:** Merged into one **Universal AI Voice Sheet** (`lib/widgets/dialogs/ask_finavig_sheet.dart`). Users speak or type naturally:
   * *"Log DEWA bill of 450 AED"* $\rightarrow$ auto-categorized into Utilities.
-  * *"Add Emirates ID expiring 14 Oct 2027"* $\rightarrow$ auto-fills document scanner fields with expiry alerts.
-* **Impact:** Hands-free management powered by Groq AI.
+  * *"Add Emirates ID expiring 14 Oct 2027"* $\rightarrow$ auto-fills document fields with the 90·60·30·7-day expiry alert ladder.
+* **Token-consumption optimization (Groq cost controls):**
+  * **Local-first routing** (`lib/services/ai_intent_router_service.dart`): a deterministic keyword lexicon resolves the overwhelming majority of utterances offline — $0 tokens. Groq is escalated **only** for the ambiguous remainder.
+  * **Cheapest escalation model:** classification runs on `openai/gpt-oss-20b` (~8× cheaper per token than the 120B workhorse used for prose features); the router needs a 3-way label pick, not reasoning.
+  * **Compact prompt:** ~90-token system prompt (down from ~330) requesting one small JSON object.
+  * **Tight completion cap:** `max_tokens: 60` — the reply is one JSON object, so runaway reasoning is cut off.
+  * **Exact-input memo:** re-analyzing the same utterance (debounce re-fire, sheet re-open, chip re-tap) replays the previous verdict instead of paying for a second identical request. Transport failures are *not* memoized, so a transient network drop never pins a dead verdict.
+  * **Per-session escalation budget:** max 4 Groq escalations per sheet session; past the budget the router degrades gracefully to the manual flow-choice card ("AI assist paused for this session").
+  * **Trimmed payload:** user input is capped at the first 160 characters before it is sent — intent signals (keywords, amount, date) live up front.
+  * **Hermetic test seam:** `escalationOverride` lets the test suite exercise the full escalation path (memo, budget, JSON parsing) with zero network and zero token spend.
+* **Impact:** Hands-free management powered by Groq AI with near-zero token usage: the common case is free, the ambiguous case is cheap, and bursts are capped.
 
 ---
 
 ## Next Action Plan
 
 Select an optimization to implement:
-1. **Shimmer Skeleton Loaders** for Home, Documents, and Money tabs.
+1. ~~**Shimmer Skeleton Loaders** for Home, Documents, and Money tabs.~~ ✅ Done — see feature #1 above.
 2. ~~**Universal Quick Action Speed Dial (`+`)** button.~~ ✅ Done — see feature #2 above.
 3. ~~**Full-Screen Pinch-to-Zoom Viewer & Quick Share** in Document Details.~~ ✅ Done — see feature #3 above.
-4. **Money Tab Performance Modularization**.
+4. ~~**Money Tab Performance Modularization**.~~ ✅ Done — see feature #4 above.
+5. ~~**Unified "Ask Finavig AI" Universal Voice Assistant** (with Groq token-consumption optimization).~~ ✅ Done — see feature #5 above.
+
+**All roadmap optimizations are implemented.** Next: pick a follow-up from `FEATURE_IDEAS.md` or add a new roadmap item.

@@ -15,7 +15,7 @@ import '../theme/app_theme.dart';
 import '../widgets/bento_icon_tile.dart';
 import '../widgets/indicators/department_logo.dart';
 import '../widgets/indicators/empty_state_illustration.dart';
-import '../widgets/dialogs/natural_language_add_dialog.dart';
+import '../widgets/dialogs/ask_finavig_sheet.dart';
 import '../widgets/dialogs/renew_document_dialog.dart';
 import '../widgets/dialogs/upgrade_dialog.dart';
 import '../widgets/shimmer_skeleton.dart';
@@ -326,14 +326,11 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                 ),
               ),
               const Spacer(),
-              // Quick Add with Natural Language (AI-assisted add).
+              // Ask Finavig AI: universal voice/text add (money or docs).
               _HeroIconButton(
-                icon: Icons.bolt_rounded,
-                tooltip: 'Quick Add with Natural Language',
-                onTap: () async {
-                  final created = await NaturalLanguageAddDialog.show(context);
-                  if (created != null) _loadData();
-                },
+                icon: Icons.auto_awesome_rounded,
+                tooltip: 'Ask Finavig AI',
+                onTap: () => AskFinavigSheet.show(context),
               ),
               const SizedBox(width: 8),
               _HeroIconButton(
