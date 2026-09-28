@@ -40,6 +40,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   GccCountry _selectedCountry = GccCountry.uae;
 
+  /// Self-reported date of birth, captured at signup for fintech KYC /
+  /// age-gate readiness. Optional — null when the user skips it.
+  DateTime? _selectedDob;
+
   bool _isSignUp = false;
   bool _busy = false;
   bool _obscurePassword = true;
@@ -49,7 +53,7 @@ class _LoginScreenState extends State<LoginScreen> {
   int _step = 0;
   int _dir = 1; // +1 forward, -1 backward (slide direction)
 
-  int get _totalSteps => _isSignUp ? 4 : 2;
+  int get _totalSteps => _isSignUp ? 5 : 2;
 
   @override
   void dispose() {
@@ -116,6 +120,27 @@ class _LoginScreenState extends State<LoginScreen> {
     } else if (step == 1) {
       if (password.isEmpty) return _failStep('Enter your password');
       if (password.length < 6) return _failStep('At least 6 characters');
+    } else if (_isSignUp && step == 2) {
+      // DOB is optional (self-reported), but if given it must be a real
+      // date of the past and the user must be 16+ (see the T&C).
+      if (_selectedDob != null) {
+        final now = DateTime.now();
+        if (_selectedDob!.isAfter(now)) {
+          return _failStep('Date of birth cannot be in the future');
+        }
+        if (_selectedDob!.isBefore(DateTime(1900))) {
+          return _failStep('Enter a realistic date of birth');
+        }
+        var age = now.year - _selectedDob!.year;
+        if (now.month < _selectedDob!.month ||
+            (now.month == _selectedDob!.month &&
+                now.day < _selectedDob!.day)) {
+          age--;
+        }
+        if (age < 16) {
+          return _failStep('You must be at least 16 to use Finavig');
+        }
+      }
     }
     return true;
   }
@@ -133,10 +158,10 @@ class _LoginScreenState extends State<LoginScreen> {
         node = _emailFocus;
       } else if (_step == 1) {
         node = _passwordFocus;
-      } else if (_isSignUp && _step == 3) {
+      } else if (_isSignUp && _step == 4) {
         node = _phoneFocus;
       } else {
-        node = null; // country picker — keep keyboard closed
+        node = null; // DOB picker / country picker — keep keyboard closed
       }
       node?.requestFocus();
     });
@@ -155,6 +180,10 @@ class _LoginScreenState extends State<LoginScreen> {
       if (_isSignUp) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('userCountry', _selectedCountry.code);
+        if (_selectedDob != null) {
+          await prefs.setString(
+              'userDateOfBirth', _selectedDob!.toIso8601String().substring(0, 10));
+        }
         final phone = _phoneController.text.trim();
         if (phone.isNotEmpty) {
           await prefs.setString('userPhone', phone);
@@ -162,6 +191,7 @@ class _LoginScreenState extends State<LoginScreen> {
         await auth.signUp(
           email: _emailController.text.trim(),
           password: _passwordController.text,
+          dateOfBirth: _selectedDob,
         );
         if (!auth.isSignedIn) {
           if (mounted) {
@@ -668,6 +698,8 @@ class _LoginScreenState extends State<LoginScreen> {
       case 1:
         return _passwordStep(isDark, isSignUp: true);
       case 2:
+        return _dobStep(isDark);
+      case 3:
         return _countryStep(isDark);
       default:
         return _phoneStep(isDark);
@@ -815,11 +847,110 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  /// Signup step: optional self-reported date of birth — collected now so
+  /// the future fintech (KYC / age-gated) features don't need a re-onboarding.
+  Widget _dobStep(bool isDark) {
+    final subColor = isDark
+        ? FinavigColors.textSecondary
+        : FinavigColors.textSecondaryLight;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _QuizQuestion(
+          isDark: isDark,
+          title: 'When were you born?',
+          subtitle:
+              'Optional — we use it to tailor budgets and to meet age rules. '
+              'You can skip this.',
+        ),
+        GestureDetector(
+          onTap: _busy ? null : _pickDateOfBirth,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.white.withOpacity(0.06)
+                  : FinavigColors.cloud,
+              borderRadius: BorderRadius.circular(FinavigRadius.field),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withOpacity(0.10)
+                    : Colors.black.withOpacity(0.05),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.cake_rounded,
+                    size: 20, color: FinavigColors.violet),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    _selectedDob == null
+                        ? 'Select your date of birth'
+                        : '${_selectedDob!.day.toString().padLeft(2, '0')} '
+                            '${_monthName(_selectedDob!.month)} '
+                            '${_selectedDob!.year}',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: _selectedDob == null
+                          ? subColor
+                          : _fieldTextColor(isDark),
+                    ),
+                  ),
+                ),
+                if (_selectedDob != null)
+                  GestureDetector(
+                    onTap: () => setState(() => _selectedDob = null),
+                    child: const Icon(Icons.close_rounded,
+                        size: 18, color: FinavigColors.textSecondary),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Stored privately under our Privacy Policy — never sold or shared.',
+          style: TextStyle(fontSize: 12, color: subColor),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _pickDateOfBirth() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate:
+          _selectedDob ?? DateTime(now.year - 30, now.month, now.day),
+      firstDate: DateTime(1900),
+      lastDate: now,
+      helpText: 'Select your date of birth',
+      cancelText: 'Cancel',
+      confirmText: 'Confirm',
+    );
+    if (picked != null && mounted) {
+      setState(() {
+        _selectedDob = picked;
+        _stepError = null;
+      });
+    }
+  }
+
+  static String _monthName(int month) {
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December',
+    ];
+    return months[month - 1];
+  }
+
   Widget _countryStep(bool isDark) {
     // Two chips per row inside the 24px-padded steps area.
     final chipW =
         ((MediaQuery.of(context).size.width - 48 - 10) / 2)
-            .clamp(140.0, 200.0);
+            .clamp(140.0, 210.0);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -827,7 +958,7 @@ class _LoginScreenState extends State<LoginScreen> {
           isDark: isDark,
           title: 'Where are you based?',
           subtitle:
-              "We'll default your document types — IDs, licences, tenancy — to $_selectedCountry.displayName.",
+              "We'll default your document types — IDs, licences, tenancy — to ${_selectedCountry.displayName}.",
         ),
         Wrap(
           spacing: 10,
@@ -857,13 +988,42 @@ class _LoginScreenState extends State<LoginScreen> {
                     width: selected ? 1.5 : 1,
                   ),
                 ),
+                // ISO-letter badge instead of flag emoji: bundled fonts have
+                // no regional-indicator glyphs, which rendered as "?" tofu
+                // boxes on device. Text badges are deterministic everywhere.
                 child: Row(
                   children: [
-                    Text(c.flag, style: const TextStyle(fontSize: 20)),
-                    const SizedBox(width: 8),
+                    Container(
+                      width: 40,
+                      height: 40,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? FinavigColors.violet
+                            : (isDark
+                                ? Colors.white.withOpacity(0.08)
+                                : Colors.white),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        c.code,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.5,
+                          color: selected
+                              ? Colors.white
+                              : (isDark
+                                  ? FinavigColors.textPrimary
+                                  : FinavigColors.navyPrimary),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
                             c.displayName,
@@ -875,8 +1035,11 @@ class _LoginScreenState extends State<LoginScreen> {
                               color: _fieldTextColor(isDark),
                             ),
                           ),
+                          const SizedBox(height: 2),
                           Text(
                             c.currency,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontSize: 11,
                               color: isDark
@@ -887,12 +1050,19 @@ class _LoginScreenState extends State<LoginScreen> {
                         ],
                       ),
                     ),
-                    if (selected)
-                      const Icon(
-                        Icons.check_circle_rounded,
-                        size: 18,
-                        color: FinavigColors.violet,
-                      ),
+                    // Constant-width trailing slot: the check icon appears
+                    // without re-laying-out the row (was overflowing by
+                    // ~5px the moment selection drew the icon).
+                    SizedBox(
+                      width: 18,
+                      child: selected
+                          ? const Icon(
+                              Icons.check_circle_rounded,
+                              size: 18,
+                              color: FinavigColors.violet,
+                            )
+                          : null,
+                    ),
                   ],
                 ),
               ),

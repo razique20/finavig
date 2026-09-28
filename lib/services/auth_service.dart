@@ -49,13 +49,21 @@ class AuthService {
   /// Create a new account. Email confirmation is controlled by the Supabase
   /// Auth provider settings; if enabled the user must click the link in the
   /// email before signing in (the login screen surfaces that error).
+  ///
+  /// [dateOfBirth] is stored as user metadata (and mirrored into
+  /// user_tiers.date_of_birth by the sync_user_dob trigger — see
+  /// supabase/user_dob_schema.sql) for fintech KYC / age-gate readiness.
   Future<void> signUp({
     required String email,
     required String password,
+    DateTime? dateOfBirth,
   }) async {
     await SupabaseService.client.auth.signUp(
       email: email,
       password: password,
+      data: dateOfBirth != null
+          ? {'date_of_birth': dateOfBirth.toIso8601String().substring(0, 10)}
+          : null,
     );
   }
 
