@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../models/expiry_item.dart';
+import '../../utils/error_messages.dart';
 import '../../models/finance.dart';
 import '../../services/ai_intent_router_service.dart';
 import '../../services/collection_service.dart';
@@ -331,7 +332,10 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
       );
     } catch (e) {
       if (!mounted) return;
-      _showSnack('Could not prepare the record: $e', error: true);
+      _showSnack(
+        friendlyError(e, context: 'Could not prepare the record'),
+        error: true,
+      );
       setState(() => _isSaving = false);
     }
   }
@@ -396,7 +400,10 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
       unawaited(_maybeSuggestCompanions(newItem));
     } catch (e) {
       if (!mounted) return;
-      _showSnack('Failed to save document: $e', error: true);
+      _showSnack(
+        friendlyError(e, context: 'Could not save the document'),
+        error: true,
+      );
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }

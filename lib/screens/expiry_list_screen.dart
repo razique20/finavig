@@ -18,6 +18,7 @@ import '../services/urgency_engine.dart';
 import '../widgets/indicators/empty_state_illustration.dart';
 import '../theme/app_theme.dart';
 import '../widgets/dialogs/renew_document_dialog.dart';
+import '../utils/error_messages.dart';
 import '../widgets/widgets.dart';
 
 class ExpiryListScreen extends StatefulWidget {
@@ -698,7 +699,7 @@ class _ExpiryListScreenState extends State<ExpiryListScreen> {
   void _showError(BuildContext context, Object error) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Action failed: $error'),
+        content: Text(friendlyError(error, context: 'Action failed')),
         backgroundColor: Colors.red,
       ),
     );

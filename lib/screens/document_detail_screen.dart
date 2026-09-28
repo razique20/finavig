@@ -12,6 +12,7 @@ import '../models/expiry_item.dart';
 import '../models/finance.dart';
 import '../models/renewal_record.dart';
 import '../models/subscription_tier.dart';
+import '../utils/error_messages.dart';
 import '../services/finance_service.dart';
 import '../services/document_scanner_service.dart';
 import '../services/collection_service.dart';
@@ -812,7 +813,13 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Error re-uploading file: $e')));
+      ).showSnackBar(
+        SnackBar(
+          content: Text(
+            friendlyError(e, context: 'Could not re-upload the file'),
+          ),
+        ),
+      );
     }
   }
 
@@ -1470,7 +1477,11 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       );
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Could not schedule reminders: $e')),
+        SnackBar(
+          content: Text(
+            friendlyError(e, context: 'Could not schedule reminders'),
+          ),
+        ),
       );
     }
   }
@@ -1554,7 +1565,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Could not update: $e'),
+          content: Text(friendlyError(e, context: 'Could not save the renewal')),
           backgroundColor: Colors.red,
         ),
       );
@@ -1580,7 +1591,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Could not remove: $e'),
+          content: Text(friendlyError(e, context: 'Could not remove')),
           backgroundColor: Colors.red,
         ),
       );
@@ -1670,7 +1681,9 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       }
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Could not share file: $e')),
+        SnackBar(
+          content: Text(friendlyError(e, context: 'Could not share the file')),
+        ),
       );
     }
   }

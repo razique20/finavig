@@ -8,6 +8,7 @@ import '../../services/auth_service.dart';
 import '../../services/gemini_api_service.dart';
 import '../../services/support_service.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/error_messages.dart';
 
 /// Opens the edit-profile bottom sheet (role / phone). Returns the saved
 /// values so the caller can update its state — sheets stay stateless.
@@ -908,17 +909,10 @@ Future<void> showDeleteAccountSheet(BuildContext context) async {
         content: Text('Account deleted. Your data has been removed.'),
       ),
     );
-  } on AuthException catch (e) {
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text('Could not delete account: ${e.message}'),
-        backgroundColor: Colors.red,
-      ),
-    );
   } catch (e) {
     messenger.showSnackBar(
       SnackBar(
-        content: Text('Could not delete account: $e'),
+        content: Text(friendlyError(e, context: 'Could not delete account')),
         backgroundColor: Colors.red,
       ),
     );

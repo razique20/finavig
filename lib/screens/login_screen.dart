@@ -10,6 +10,7 @@ import '../services/custom_document_type_service.dart';
 import '../services/document_scanner_service.dart';
 import '../services/entitlement_service.dart';
 import '../services/finance_service.dart';
+import '../utils/error_messages.dart';
 import '../theme/app_theme.dart';
 import '../widgets/dialogs/legal_info_dialogs.dart';
 
@@ -247,52 +248,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (mounted) context.go('/home');
     } catch (e) {
-      debugPrint('Auth submit failed: $e');
       setState(() {
-        _error = _friendlyError(e.toString());
+        _error = friendlyError(e);
         _busy = false;
       });
     }
-  }
-
-  String _friendlyError(String raw) {
-    final lower = raw.toLowerCase();
-    if (lower.contains('invalid login credentials')) {
-      return 'Wrong email or password.';
-    }
-    if (lower.contains('email not confirmed')) {
-      return 'Please confirm your email first (check your inbox).';
-    }
-    if (lower.contains('already registered')) {
-      return 'An account with this email already exists — sign in instead.';
-    }
-    if (lower.contains('password') && lower.contains('at least')) {
-      return 'Password is too weak — use at least 6 characters.';
-    }
-    if (lower.contains('rate limit')) {
-      return 'Too many attempts — wait a minute and try again.';
-    }
-    if (lower.contains('not configured')) {
-      return 'Supabase is not configured in this build (see lib/config/app_credentials.dart).';
-    }
-    // Supabase's classic message when an auth trigger fails server-side.
-    if (lower.contains('database error saving new user')) {
-      return 'We could not finish creating your account (server issue). '
-          'Please try again in a few minutes or contact support.';
-    }
-    if (lower.contains('signup requires a valid password')) {
-      return 'Please enter a password with at least 6 characters.';
-    }
-    if (lower.contains('unable to validate email') ||
-        lower.contains('invalid email')) {
-      return 'That email address does not look valid.';
-    }
-    if (lower.contains('network') ||
-        lower.contains('socket') ||
-        lower.contains('xmlhttprequest')) {
-      return 'No connection — check your internet and try again.';
-    }
-    return 'Something went wrong. Please try again.';
   }
 
   Future<void> _showForgotPassword() async {
@@ -373,7 +333,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(_friendlyError(e.toString())),
+            content: Text(friendlyError(e)),
             backgroundColor: FinavigColors.danger,
           ),
         );

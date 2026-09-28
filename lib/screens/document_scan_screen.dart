@@ -11,6 +11,7 @@ import '../models/document_collection.dart';
 import '../models/document_type.dart';
 import '../models/expiry_item.dart';
 import '../models/gcc_country.dart';
+import '../utils/error_messages.dart';
 import '../services/collection_service.dart';
 import '../services/custom_document_type_service.dart';
 import '../services/document_scanner_service.dart';
@@ -307,7 +308,11 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
       if (!mounted) return;
       setState(() => _isScanningOcr = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('OCR extraction error: $e')),
+        SnackBar(
+          content: Text(
+            friendlyError(e, context: 'Could not read the document'),
+          ),
+        ),
       );
     }
   }
@@ -348,7 +353,9 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to pick file: $e')),
+        SnackBar(
+          content: Text(friendlyError(e, context: 'Could not pick the file')),
+        ),
       );
     }
   }
@@ -606,7 +613,7 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to save document: $e'),
+          content: Text(friendlyError(e, context: 'Could not save the document')),
           backgroundColor: Colors.red,
         ),
       );

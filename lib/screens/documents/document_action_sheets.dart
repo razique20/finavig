@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../models/expiry_item.dart';
+import '../../utils/error_messages.dart';
 import '../../services/document_scanner_service.dart';
 import '../../widgets/dialogs/renew_document_dialog.dart';
 
@@ -164,7 +165,7 @@ Future<void> _markRenewed(
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Could not renew: $e'),
+        content: Text(friendlyError(e, context: 'Could not renew')),
         backgroundColor: Colors.red,
       ),
     );

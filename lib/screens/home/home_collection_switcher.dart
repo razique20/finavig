@@ -6,6 +6,7 @@ import '../../services/document_scanner_service.dart';
 import '../../services/entitlement_service.dart';
 import '../../services/finance_service.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/error_messages.dart';
 import '../../widgets/widgets.dart';
 
 /// Sentinel returned by the collection-switcher sheet when the user picks
@@ -176,7 +177,9 @@ Future<void> applyHomeCollectionSelection(
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Could not create "${res.name}": $e'),
+            content: Text(
+              friendlyError(e, context: 'Could not create "${res.name}"'),
+            ),
             backgroundColor: Colors.red,
           ),
         );
