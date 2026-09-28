@@ -53,10 +53,14 @@ This document outlines the **next wave** of architectural, visual, and interacti
 
 ---
 
-## 6. Home & Documents Screen Modularization *(pending)*
-* **Is:** `home_screen.dart` (~1,542 lines) and `documents_screen.dart` (~1,615 lines) still carry their full bento layouts, alert ladders, and search/filter logic inline.
-* **Plan:** Follow the Money tab precedent — extract `home/` and `documents/` widget modules with shared section primitives, and move the expiry-alert ladder card into `lib/widgets/cards/` so Expiry List and Home reuse one implementation.
-* **Impact:** Independent rebuilds per card, faster tab switches, one source of truth for the 90·60·30·7-day alert UI.
+## 6. ✅ Home & Documents Screen Modularization *(implemented)*
+* **Was:** `home_screen.dart` (~1,542 lines) and `documents_screen.dart` (~1,615 lines) carried their full bento layouts, alert ladders, and search/filter logic inline — including duplicate hero pill/icon-button widgets between the two screens.
+* **Implemented:** Followed the Money tab precedent —
+  * `lib/screens/home/` — `home_hero_header.dart` (hero + notification bell & alert sheet), `home_collection_switcher.dart` (tier-aware switcher sheet + apply flow), `home_banners.dart` (plan-restriction, attention, expired alerts), `home_categories_grid.dart`, `home_upcoming_section.dart`. Screen file: 1,542 → 259 lines.
+  * `lib/screens/documents/` — `documents_hero_header.dart`, `documents_filters.dart` (search field, status chips, active-filters row, type/sort sheets, `DocFilter`/`DocSort` enums), `documents_insights_section.dart`, `document_card.dart`, `document_action_sheets.dart`. Screen file: 1,615 → 394 lines.
+  * `lib/widgets/hero_widgets.dart` — shared `HeroIconButton` + `HeroActionPill`, now used by Home, Documents, *and* Profile heroes (three copies deleted).
+  * `lib/widgets/cards/urgency_timeline_card.dart` — the shared 90·60·30·7-day alert ladder card; `document_detail_screen.dart` now renders `UrgencyTimelineCard.withIndicator` instead of its private copy (2,139 → 1,879 lines).
+* **Impact:** Independent rebuilds per card, faster tab switches, and one source of truth for the hero chrome and urgency-ladder UI. All 300 tests pass, including the Home/Documents/Profile redesign suites.
 
 ---
 
@@ -85,8 +89,8 @@ Select an optimization to implement:
 3. **Lazy Lists Everywhere** — `ListView.builder` sweep across all tabs.
 4. **Cached Image Pipeline** for document attachments.
 5. **Ask Finavig AI persistent token budget** & cross-session memo.
-6. **Home & Documents Screen Modularization**.
+6. ~~**Home & Documents Screen Modularization**.~~ ✅ Done — see feature #6 above.
 7. **App Guide & FAQ content split**.
 8. **Performance instrumentation & regression guards**.
 
-Recommended order: **~~3~~ → 4 → ~~1~~ → 2 → 6 → 7 → 5 → 8** — user-perceived speed wins first, then structural cleanups, then measurement to lock everything in.
+Recommended order: **~~3~~ → 4 → ~~1~~ → 2 → ~~6~~ → 7 → 5 → 8** — user-perceived speed wins first, then structural cleanups, then measurement to lock everything in.

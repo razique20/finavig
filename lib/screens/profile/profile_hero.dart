@@ -8,6 +8,7 @@ import '../../services/entitlement_service.dart';
 import '../../services/finance_service.dart';
 import '../../services/custom_document_type_service.dart';
 import '../../services/supabase_service.dart';
+import '../../widgets/hero_widgets.dart';
 
 /// Hero header of the Profile (Settings) tab — navy ink backdrop carrying the
 /// user's identity: avatar initials, name, email, plan/sync badges, and the
@@ -55,7 +56,7 @@ class ProfileHeroHeader extends StatelessWidget {
               ),
               const Spacer(),
               if (signedIn)
-                _HeroIconButton(
+                HeroIconButton(
                   icon: Icons.logout_rounded,
                   tooltip: 'Sign out',
                   onTap: () => _signOut(context),
@@ -214,36 +215,3 @@ class _HeroPill extends StatelessWidget {
   }
 }
 
-/// Frosted glass icon button used in the hero header (sign out) — same style
-/// as the dark-mode toggle on Home.
-class _HeroIconButton extends StatelessWidget {
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onTap;
-
-  const _HeroIconButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: Material(
-        color: Colors.white.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(13),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(13),
-          onTap: onTap,
-          child: SizedBox(
-            width: 40,
-            height: 40,
-            child: Icon(icon, color: Colors.white, size: 20),
-          ),
-        ),
-      ),
-    );
-  }
-}

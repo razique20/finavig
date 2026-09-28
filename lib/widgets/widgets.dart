@@ -1,5 +1,7 @@
 export 'cards/document_list_tile.dart';
 export 'cards/expiry_card.dart';
+export 'cards/urgency_timeline_card.dart';
+export 'hero_widgets.dart';
 export 'dialogs/urgency_dialog.dart';
 export 'dialogs/collection_dialogs.dart';
 export 'dialogs/ask_finavig_sheet.dart';
