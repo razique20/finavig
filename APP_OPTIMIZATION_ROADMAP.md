@@ -1,77 +1,84 @@
 # Finavig App — UI/UX & Performance Optimization Roadmap
 
-This document outlines key architectural, visual, and interaction enhancements designed to make **Finavig** feel **frictionless, lightning-fast, and premium** across all devices.
+This document outlines the **next wave** of architectural, visual, and interaction enhancements designed to make **Finavig** feel **frictionless, lightning-fast, and premium** across all devices. The previous wave (shimmer skeletons, quick-action speed dial, pinch-to-zoom viewer, Money tab modularization, unified Ask Finavig AI sheet) is fully shipped.
 
 ---
 
-## 1. ✅ Initial Loading & Shimmer Skeletons (Zero-Lag Experience) *(implemented)*
-* **Was:** When opening the app or navigating to a tab (*Documents* or *Money*) for the first time, data hydrated asynchronously with a blank frame first.
-* **Implemented:** Modern **Shimmer Skeleton Loaders** on `HomeScreen`, `DocumentsScreen`, and `MoneyScreen` (`lib/widgets/shimmer_skeleton.dart`). While data hydrates, users instantly see an elegant pulsating card outline that seamlessly transitions into their real data:
-  * Reusable `ShimmerSkeleton` primitive + ready-made `TileSkeletonLoader`.
-  * Full-page layouts: `HomeSkeletonView`, `DocumentsSkeletonView`, `MoneySkeletonView` — each mirroring the real screen's structure.
-  * Covered by `test/shimmer_skeleton_test.dart`.
-* **Impact:** Eliminates perceived loading delay and ensures continuous visual feedback.
+## 1. Profile Screen Modularization *(pending)*
+* **Is:** `lib/screens/profile_screen.dart` is the largest file in the app (~2,240 lines), mixing account cards, Groq/Gemini key management, app-guide entry points, and settings rows in one widget tree.
+* **Plan:** Split into `lib/screens/profile/` modules — `profile_sections.dart` (shared `SectionHeader`/`TintedCardBox` primitives), `account_cards.dart`, `ai_providers_section.dart` (Groq + Gemini key fields), `settings_rows.dart`, and dedicated form sheets. Make every section widget `const`-constructible so it rebuilds independently.
+* **Impact:** Smaller rebuild scopes, faster Profile tab open, and a file the team can actually navigate.
 
 ---
 
-## 2. ✅ Speed Dial / Universal Quick Action Button *(implemented)*
-* **Was:** To scan a document, log an expense, or create an envelope, users had to navigate to specific tab screens first.
-* **Implemented:** A violet **Universal Action Button (`+`)** sits at the center of the floating nav pill (`_QuickActionButton` in `lib/router.dart`). It opens `showQuickActionSheet` (`lib/widgets/dialogs/quick_action_sheet.dart`), a 1-tap quick menu:
-  * 📄 **Scan / Add Document** — Free-tier quota enforced, then the full-screen scanner.
-  * 💸 **Log Expense or Income** — `TransactionFormSheet` with smart category matching.
-  * 🎙️ **Ask Finavig AI** — one universal voice/text sheet for both flows (`AskFinavigSheet`); money results are persisted by the sheet caller exactly once, documents are saved inside the sheet (quota-gated).
-  * ✉️ **Create Savings Envelope** — Instant target allocation via `EnvelopeFormSheet`.
-* **Impact:** 1-tap access to every core feature from anywhere in the app; entitlement gates stay enforced by reusing the same flows as the tabs.
+## 2. Document Detail Screen Modularization *(pending)*
+* **Is:** `lib/screens/document_detail_screen.dart` (~2,139 lines) contains the detail layout, the full-screen image viewer, the non-image info sheet, share/export logic, and attachment tiles in one file.
+* **Plan:** Extract `_FullScreenImageViewer` into `lib/widgets/viewers/full_screen_image_viewer.dart`, attachment card + share actions into `lib/widgets/documents/attachment_card.dart`, and the info sheet into `lib/screens/documents/detail_info_sheet.dart`.
+* **Impact:** Reusable viewer for future screens (expiry list previews, records), and faster compile/iterate cycles on the most feature-dense screen.
 
 ---
 
-## 3. ✅ Document Details: Full-Screen Pinch-to-Zoom & Quick Share *(implemented)*
-* **Was:** Uploaded document scans and PDF receipts rendered inside a fixed rectangular preview box in `DocumentDetailScreen`.
-* **Implemented:**
-  * **Interactive Full-Screen Viewer:** Tapping *View* (or *Details*) opens `_FullScreenImageViewer` (`lib/screens/document_detail_screen.dart`) — a black-out full-screen modal with pinch-to-zoom (1×–5×), double-tap-to-zoom at the tapped point, and smooth fade-in.
-  * **One-Tap Export & Share:** A *Share* action on the attachment card, the viewer's app bar, and the non-image info sheet calls `SharePlus.instance.share` (`share_plus`) so users can instantly send their scanned Emirates ID / Ejari / Mulkiya via WhatsApp or Mail. Cloud (URL) attachments share the link; missing local files show a helpful "re-upload on this device" sheet.
-* **Impact:** Turns Finavig into a true professional document scanner & manager.
+## 3. Lazy Lists Everywhere (`ListView.builder` Sweep) *(pending)*
+* **Is:** Several screens still build the whole child tree eagerly via `ListView(` — `documents_screen.dart`, `budgets_screen.dart`, `envelopes_screen.dart`, `records_screen.dart`, `alerts_reminders_screen.dart`, `cash_flow_forecast_screen.dart`, and the quick-action companion sheet.
+* **Plan:** Convert to `ListView.builder` / `SliverList` with `itemBuilder`, and `addAutomaticKeepAlives: false` + `addRepaintBoundaries: true` where children are stateless. Long lists (documents, records) should also be sharded with `PagedListView`-style chunks if item counts grow.
+* **Impact:** Constant-memory scrolling and 60–120 FPS on the tabs users hit dozens of times a day.
 
 ---
 
-## 4. ✅ Money Tab Modularization & Smooth Frame-Rates *(implemented)*
-* **Was:** `money_screen.dart` was a heavy file (117 KB) rendering charts, envelope cards, recurring payment ladders, and transaction lists in a single widget tree.
-* **Implemented:** Refactored into modular, `const`-constructible component cards under `lib/screens/money/`:
-  * `money_sections.dart` — shared `SectionHeader`, `HintCard`, `TintedCardBox`, `InsetDivider`.
-  * `money_summary_cards.dart` — analytics cards (bill-spike alerts, renewal outlook, cash-flow teaser, spending pace, weekly-spend chart, category breakdown, top expenses, renewal breakdown).
-  * `money_planning_cards.dart` — `BudgetsSection`, `RecurringSection`, `EnvelopesSection`, `TransactionsSection`.
-  * `money_rows.dart` — `BudgetRow`, `EnvelopeCard`, `TransactionTile`, `RecurringCard`.
-  * `money/forms/` — `TransactionFormSheet`, `RecurringFormSheet`, `EnvelopeFormSheet`, budget form sheets.
-  * The screen file itself is down from 117 KB to ~32 KB (860 lines), and each section widget rebuilds independently.
-* **Impact:** Ultra-smooth 60–120 FPS scrolling and instant tab switching.
+## 4. Cached Image Pipeline for Document Attachments *(pending)*
+* **Is:** `document_detail_screen.dart` renders attachments with raw `Image.file` / `Image.network` — no downsampled decode, no disk cache for cloud URLs.
+* **Plan:**
+  * Pass `cacheWidth`/`cacheHeight` sized to the viewport so a 12 MP scan never decodes at full resolution in the list view.
+  * Adopt `cached_network_image` (with blur-hash placeholder matching the shimmer aesthetic) for Cloud/URL attachments.
+  * Pre-warm thumbnails when a document row becomes visible.
+* **Impact:** Instant attachment previews, dramatically lower memory on the Documents tab, fewer jank frames when scrolling between scans.
 
 ---
 
-## 5. ✅ Unified "Ask Finavig AI" Universal Voice Assistant *(implemented)*
-* **Was:** Separate dialogs existed for Document Natural Language add (`NaturalLanguageAddDialog`) and Money Natural Language add (`NaturalLanguageMoneyAddDialog`) — two sheets, two parsers, duplicated save logic, and a double-add bug on money records.
-* **Implemented:** Merged into one **Universal AI Voice Sheet** (`lib/widgets/dialogs/ask_finavig_sheet.dart`). Users speak or type naturally:
-  * *"Log DEWA bill of 450 AED"* $\rightarrow$ auto-categorized into Utilities.
-  * *"Add Emirates ID expiring 14 Oct 2027"* $\rightarrow$ auto-fills document fields with the 90·60·30·7-day expiry alert ladder.
-* **Token-consumption optimization (Groq cost controls):**
-  * **Local-first routing** (`lib/services/ai_intent_router_service.dart`): a deterministic keyword lexicon resolves the overwhelming majority of utterances offline — $0 tokens. Groq is escalated **only** for the ambiguous remainder.
-  * **Cheapest escalation model:** classification runs on `openai/gpt-oss-20b` (~8× cheaper per token than the 120B workhorse used for prose features); the router needs a 3-way label pick, not reasoning.
-  * **Compact prompt:** ~90-token system prompt (down from ~330) requesting one small JSON object.
-  * **Tight completion cap:** `max_tokens: 60` — the reply is one JSON object, so runaway reasoning is cut off.
-  * **Exact-input memo:** re-analyzing the same utterance (debounce re-fire, sheet re-open, chip re-tap) replays the previous verdict instead of paying for a second identical request. Transport failures are *not* memoized, so a transient network drop never pins a dead verdict.
-  * **Per-session escalation budget:** max 4 Groq escalations per sheet session; past the budget the router degrades gracefully to the manual flow-choice card ("AI assist paused for this session").
-  * **Trimmed payload:** user input is capped at the first 160 characters before it is sent — intent signals (keywords, amount, date) live up front.
-  * **Hermetic test seam:** `escalationOverride` lets the test suite exercise the full escalation path (memo, budget, JSON parsing) with zero network and zero token spend.
-* **Impact:** Hands-free management powered by Groq AI with near-zero token usage: the common case is free, the ambiguous case is cheap, and bursts are capped.
+## 5. Ask Finavig AI — Persistent Token Budget & Cross-Session Memo *(pending)*
+* **Is:** `ai_intent_router_service.dart` already enforces a per-session escalation budget (max 4 Groq escalations) and memoizes exact inputs — but the memo and budget die when the sheet closes.
+* **Plan:**
+  * Persist the exact-input memo cache (LRU, ~200 entries) to disk so repeat utterances across sessions stay at $0 tokens.
+  * Upgrade the per-session budget to a rolling daily budget shared by all AI entry points (quick-action sheet, money form, document form).
+  * Surface remaining budget subtly in the sheet ("AI assist: 3/4 today") so power users understand degradation.
+* **Impact:** Near-zero Groq spend becomes durable, not just per-session; graceful degradation stays predictable.
+
+---
+
+## 6. Home & Documents Screen Modularization *(pending)*
+* **Is:** `home_screen.dart` (~1,542 lines) and `documents_screen.dart` (~1,615 lines) still carry their full bento layouts, alert ladders, and search/filter logic inline.
+* **Plan:** Follow the Money tab precedent — extract `home/` and `documents/` widget modules with shared section primitives, and move the expiry-alert ladder card into `lib/widgets/cards/` so Expiry List and Home reuse one implementation.
+* **Impact:** Independent rebuilds per card, faster tab switches, one source of truth for the 90·60·30·7-day alert UI.
+
+---
+
+## 7. App Guide & FAQ Content Split *(pending)*
+* **Is:** `app_guide_dialog.dart` (~952 lines) and `faq_sheet.dart` (~615 lines) inline large amounts of static content, inflating widget files and first-build cost.
+* **Plan:** Move content data to `lib/config/app_guide_content.dart` / `faq_content.dart` (plain Dart constants), and render from a generic paged sheet. Consider lazy-loading the content file on first open.
+* **Impact:** Smaller core bundle, content edits without touching widget code, cheaper cold start.
+
+---
+
+## 8. Performance Instrumentation & Regression Guards *(pending)*
+* **Is:** No ongoing measurement exists to prove the optimizations above stay fast as features land.
+* **Plan:**
+  * Add DevTools timeline tracing checkpoints (frame build/raster times) around critical flows: cold start → Home, tab switch, document open, quick-action sheet open.
+  * Golden tests for the shimmer skeleton views and Money section cards so visual refactors can't silently regress.
+  * A `flutter analyze --no-pub` + `dart format` CI gate with a file-size budget warning (e.g., flag any widget file > 1,000 lines).
+* **Impact:** Optimizations become measurable and permanent instead of one-off wins.
 
 ---
 
 ## Next Action Plan
 
 Select an optimization to implement:
-1. ~~**Shimmer Skeleton Loaders** for Home, Documents, and Money tabs.~~ ✅ Done — see feature #1 above.
-2. ~~**Universal Quick Action Speed Dial (`+`)** button.~~ ✅ Done — see feature #2 above.
-3. ~~**Full-Screen Pinch-to-Zoom Viewer & Quick Share** in Document Details.~~ ✅ Done — see feature #3 above.
-4. ~~**Money Tab Performance Modularization**.~~ ✅ Done — see feature #4 above.
-5. ~~**Unified "Ask Finavig AI" Universal Voice Assistant** (with Groq token-consumption optimization).~~ ✅ Done — see feature #5 above.
+1. **Profile Screen Modularization** — biggest file first.
+2. **Document Detail Screen Modularization** — extract the reusable full-screen viewer.
+3. **Lazy Lists Everywhere** — `ListView.builder` sweep across all tabs.
+4. **Cached Image Pipeline** for document attachments.
+5. **Ask Finavig AI persistent token budget** & cross-session memo.
+6. **Home & Documents Screen Modularization**.
+7. **App Guide & FAQ content split**.
+8. **Performance instrumentation & regression guards**.
 
-**All roadmap optimizations are implemented.** Next: pick a follow-up from `FEATURE_IDEAS.md` or add a new roadmap item.
+Recommended order: **3 → 4 → 1 → 2 → 6 → 7 → 5 → 8** (user-perceived speed wins first, then structural cleanups, then measurement to lock everything in).
