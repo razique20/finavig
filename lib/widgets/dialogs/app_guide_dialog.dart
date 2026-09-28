@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../config/app_guide_content.dart';
 import '../../theme/app_theme.dart';
 
 /// Show the comprehensive Finavig App Guide modal.
@@ -17,12 +18,9 @@ Future<void> showAppGuideDialog(
   );
 }
 
-/// The comprehensive, interactive user guide introducing everything in Finavig:
-/// 1. Overview & Vision (Financial & Document Command Center)
-/// 2. Document & Expiry Intelligence (OCR, Authority catalogs, 90/60/30/7 reminder ladders)
-/// 3. Money, Budgets & Cash Flow (GCC currencies, categories, 90-day forecast, bill spikes)
-/// 4. Workspaces & Collections (Personal vs Company workspaces, multi-GCC countries)
-/// 5. AI Intelligence & Reports (Groq AI Executive Summaries, AI Budget Planner, PDF/CSV export)
+/// The comprehensive, interactive user guide introducing everything in
+/// Finavig. All copy and chapter structure lives in
+/// `lib/config/app_guide_content.dart` — this file is presentation only.
 class AppGuideDialog extends StatefulWidget {
   final int initialPage;
 
@@ -36,7 +34,8 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
   late final PageController _pageController;
   late int _currentPage;
 
-  static const _totalChapters = 5;
+  static const List<GuideChapter> _chapters = guideChapters;
+  int get _totalChapters => _chapters.length;
 
   @override
   void initState() {
@@ -169,15 +168,14 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
                       scrollDirection: Axis.horizontal,
                       child: Row(
                         children: [
-                          _chapterPill(0, 'Overview', Icons.auto_awesome_rounded),
-                          const SizedBox(width: 6),
-                          _chapterPill(1, 'Documents', Icons.description_rounded),
-                          const SizedBox(width: 6),
-                          _chapterPill(2, 'Money', Icons.account_balance_wallet_rounded),
-                          const SizedBox(width: 6),
-                          _chapterPill(3, 'Workspaces', Icons.business_center_rounded),
-                          const SizedBox(width: 6),
-                          _chapterPill(4, 'AI Power', Icons.psychology_rounded),
+                          for (var i = 0; i < _chapters.length; i++) ...[
+                            if (i > 0) const SizedBox(width: 6),
+                            _chapterPill(
+                              i,
+                              _chapters[i].pillLabel,
+                              _chapters[i].pillIcon,
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -191,11 +189,8 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
                   controller: _pageController,
                   onPageChanged: (index) => setState(() => _currentPage = index),
                   children: [
-                    _buildOverviewSlide(context, isDark, theme),
-                    _buildDocumentsSlide(context, isDark, theme),
-                    _buildMoneySlide(context, isDark, theme),
-                    _buildWorkspacesSlide(context, isDark, theme),
-                    _buildAiSlide(context, isDark, theme),
+                    for (final chapter in _chapters)
+                      _buildChapterSlide(chapter, isDark, theme),
                   ],
                 ),
               ),
@@ -306,7 +301,9 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
               size: 13,
               color: active
                   ? Colors.white
-                  : (isDark ? FinavigColors.textSecondary : FinavigColors.textMuted),
+                  : (isDark
+                      ? FinavigColors.textSecondary
+                      : FinavigColors.textMuted),
             ),
             const SizedBox(width: 5),
             Text(
@@ -328,10 +325,10 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
   }
 
   // ──────────────────────────────────────────────────────────────────────────
-  // 1. Overview Slide
+  // Generic chapter slide — renders the chapter's ordered blocks
   // ──────────────────────────────────────────────────────────────────────────
-  Widget _buildOverviewSlide(
-    BuildContext context,
+  Widget _buildChapterSlide(
+    GuideChapter chapter,
     bool isDark,
     ThemeData theme,
   ) {
@@ -340,477 +337,252 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Banner visual
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [FinavigColors.navyPrimary, FinavigColors.navyPrimaryDark],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(18),
+          if (chapter.title != null) ...[
+            Row(
+              children: [
+                Icon(
+                  chapter.pillIcon,
+                  color: _chapterAccent(chapter),
+                  size: 22,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    chapter.title!,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
             ),
+            const SizedBox(height: 6),
+          ],
+          if (chapter.subtitle != null) ...[
+            Text(
+              chapter.subtitle!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.outline,
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+          for (final block in chapter.blocks) _buildBlock(block, isDark, theme),
+        ],
+      ),
+    );
+  }
+
+  Color _chapterAccent(GuideChapter chapter) {
+    // Match each chapter's accent to its showcase block content.
+    for (final block in chapter.blocks) {
+      if (block is GuideFeatureRowBlock) return block.color;
+      if (block is GuideCtaBlock) return block.color;
+    }
+    return FinavigColors.navyPrimary;
+  }
+
+  Widget _buildBlock(GuideBlock block, bool isDark, ThemeData theme) {
+    switch (block) {
+      case final GuideBannerBlock b:
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 18),
+          child: _banner(b),
+        );
+      case final GuideSectionTitleBlock b:
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Text(
+            b.text,
+            style:
+                theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+          ),
+        );
+      case final GuideDocumentShowcaseBlock b:
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: _documentShowcase(b, isDark, theme),
+        );
+      case final GuideBudgetShowcaseBlock b:
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: _budgetShowcase(b, isDark),
+        );
+      case final GuideWorkspacesShowcaseBlock b:
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: _workspacesShowcase(b, isDark),
+        );
+      case final GuideQuoteShowcaseBlock b:
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: _quoteShowcase(b, isDark),
+        );
+      case final GuideFeatureRowBlock b:
+        return _featureRow(b, isDark);
+      case final GuideBulletBlock b:
+        return _featureBullet(b, isDark);
+      case final GuideCtaBlock b:
+        return Padding(
+          padding: const EdgeInsets.only(top: 14),
+          child: SizedBox(
+            width: double.infinity,
+            child: b.filled
+                ? FilledButton.icon(
+                    onPressed: () => _openRoute(b),
+                    icon: Icon(b.icon, size: 16),
+                    label: Text(b.label),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: FinavigColors.navyPrimary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  )
+                : OutlinedButton.icon(
+                    onPressed: () => _openRoute(b),
+                    icon: Icon(b.icon, size: 16),
+                    label: Text(b.label),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: b.color),
+                      foregroundColor:
+                          isDark ? b.color : _darkenForLightMode(b),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+          ),
+        );
+    }
+  }
+
+  /// CTA text color on light mode for the Money chapter used dark-green.
+  Color _darkenForLightMode(GuideCtaBlock b) {
+    if (b.color == FinavigColors.emerald) return const Color(0xFF065F46);
+    return b.color;
+  }
+
+  void _openRoute(GuideCtaBlock block) {
+    Navigator.pop(context);
+    if (block.usePush) {
+      context.push(block.route);
+    } else {
+      context.go(block.route);
+    }
+  }
+
+  Widget _banner(GuideBannerBlock b) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [FinavigColors.navyPrimary, FinavigColors.navyPrimaryDark],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: FinavigColors.cyanSecondary.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  b.icon,
+                  color: FinavigColors.cyanSecondary,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  b.title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            b.subtitle,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.9),
+              fontSize: 13,
+              height: 1.45,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _documentShowcase(
+    GuideDocumentShowcaseBlock b,
+    bool isDark,
+    ThemeData theme,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDark ? FinavigColors.slate.withOpacity(0.5) : FinavigColors.cloud,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? FinavigColors.slateLight : FinavigColors.mist,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: FinavigColors.navyPrimary.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(b.icon, color: FinavigColors.navyPrimary, size: 20),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: FinavigColors.cyanSecondary.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.rocket_launch_rounded,
-                        color: FinavigColors.cyanSecondary,
-                        size: 22,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    const Expanded(
-                      child: Text(
-                        'Welcome to Finavig',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
                 Text(
-                  'Your unified command center for expiry tracking, financial budgets, multi-company workspaces, and AI intelligence.',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
-                    fontSize: 13,
-                    height: 1.45,
-                  ),
+                  b.title,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 13),
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          Text(
-            'The Four Pillars of Finavig',
-            style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 10),
-          _featureRow(
-            icon: Icons.description_rounded,
-            color: FinavigColors.cyanSecondary,
-            title: '1. Document & Expiry Tracking',
-            desc: 'OCR scan IDs, Passports, Visas, Trade Licenses, Ejari & get 90/60/30/7-day alerts.',
-            isDark: isDark,
-          ),
-          _featureRow(
-            icon: Icons.account_balance_wallet_rounded,
-            color: FinavigColors.emerald,
-            title: '2. Money, Budgets & Cash Flow',
-            desc: 'Track income/expenses in GCC currencies, set category limits & forecast 90-day cash flow.',
-            isDark: isDark,
-          ),
-          _featureRow(
-            icon: Icons.business_center_rounded,
-            color: Colors.purpleAccent,
-            title: '3. Workspaces & Collections',
-            desc: 'Keep personal files completely separate from multiple company or client workspaces.',
-            isDark: isDark,
-          ),
-          _featureRow(
-            icon: Icons.psychology_rounded,
-            color: Colors.amber,
-            title: '4. AI Executive Summaries',
-            desc: 'Groq & Gemini AI analyze your financial health and build realistic savings plans.',
-            isDark: isDark,
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ──────────────────────────────────────────────────────────────────────────
-  // 2. Documents Slide
-  // ──────────────────────────────────────────────────────────────────────────
-  Widget _buildDocumentsSlide(
-    BuildContext context,
-    bool isDark,
-    ThemeData theme,
-  ) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.document_scanner_rounded, color: FinavigColors.navyPrimary, size: 22),
-              const SizedBox(width: 8),
-              Text(
-                'Document & Expiry Intelligence',
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Never get caught by surprise fines or lapsed licenses in the UAE & GCC.',
-            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
-          ),
-          const SizedBox(height: 16),
-          // Interactive Mock Document Card
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: isDark ? FinavigColors.slate.withOpacity(0.5) : FinavigColors.cloud,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isDark ? FinavigColors.slateLight : FinavigColors.mist,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: FinavigColors.navyPrimary.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(Icons.badge_outlined, color: FinavigColors.navyPrimary, size: 20),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Emirates ID — Mohammed R.',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                          ),
-                          Text(
-                            'Authority: ICP UAE • Fee: 370 AED',
-                            style: TextStyle(fontSize: 11, color: theme.colorScheme.outline),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: FinavigColors.warning.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Text(
-                        '18 Days Left',
-                        style: TextStyle(
-                          color: FinavigColors.warning,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 10,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          _featureBullet('Smart OCR Scan', 'Upload images or PDFs — AI extracts expiry date, document number, and issuing authority automatically.'),
-          _featureBullet('GCC Authority Catalog', 'Auto-matches DED, GDRFA, MoHRE, ICP, RTA, DHA, and municipal agencies.'),
-          _featureBullet('Escalation Reminders', 'Automated reminders 90, 60, 30, and 7 days prior to expiry so you renew on time.'),
-          const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () {
-                Navigator.pop(context);
-                context.push('/scan');
-              },
-              icon: const Icon(Icons.add_photo_alternate_rounded, size: 16),
-              label: const Text('Try Adding or Scanning a Document'),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: FinavigColors.navyPrimary),
-                foregroundColor: FinavigColors.navyPrimary,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ──────────────────────────────────────────────────────────────────────────
-  // 3. Money Slide
-  // ──────────────────────────────────────────────────────────────────────────
-  Widget _buildMoneySlide(
-    BuildContext context,
-    bool isDark,
-    ThemeData theme,
-  ) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.account_balance_wallet_rounded, color: FinavigColors.emerald, size: 22),
-              const SizedBox(width: 8),
-              Text(
-                'Money, Budgets & Cash Flow',
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Keep your personal & business cash flow healthy and predictable.',
-            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
-          ),
-          const SizedBox(height: 16),
-          // Mock Budget Gauge
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: isDark ? FinavigColors.slate.withOpacity(0.5) : FinavigColors.cloud,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isDark ? FinavigColors.slateLight : FinavigColors.mist,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Office & Rent Budget', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                    Text('65% used', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: isDark ? FinavigColors.cyanSecondary : FinavigColors.navyPrimary)),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: 0.65,
-                    minHeight: 8,
-                    backgroundColor: isDark ? Colors.black26 : Colors.black12,
-                    valueColor: const AlwaysStoppedAnimation<Color>(FinavigColors.emerald),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                const Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Spent: 6,500 AED', style: TextStyle(fontSize: 11)),
-                    Text('Budget: 10,000 AED', style: TextStyle(fontSize: 11)),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          _featureBullet('GCC Multi-Currency', 'Native support for AED, SAR, KWD, QAR, BHD, and OMR across all reports.'),
-          _featureBullet('90-Day Cash Flow Forecast', 'Combines recurring expenses and document renewal fees to detect financial dips in advance.'),
-          _featureBullet('Smart Bill Spike Alerts', 'Automatically detects anomalous utility or service bills compared to your 3-month history.'),
-          const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () {
-                Navigator.pop(context);
-                context.go('/money');
-              },
-              icon: const Icon(Icons.arrow_outward_rounded, size: 16),
-              label: const Text('Go to Money & Budgets Tab'),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: FinavigColors.emerald),
-                foregroundColor: isDark ? FinavigColors.emerald : const Color(0xFF065F46),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ──────────────────────────────────────────────────────────────────────────
-  // 4. Workspaces & Collections Slide
-  // ──────────────────────────────────────────────────────────────────────────
-  Widget _buildWorkspacesSlide(
-    BuildContext context,
-    bool isDark,
-    ThemeData theme,
-  ) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.business_center_rounded, color: Colors.purpleAccent, size: 22),
-              const SizedBox(width: 8),
-              Text(
-                'Workspaces & Collections',
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Keep personal documents separate from your business or client entities.',
-            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: isDark ? FinavigColors.slate.withOpacity(0.5) : FinavigColors.cloud,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isDark ? FinavigColors.slateLight : FinavigColors.mist,
-              ),
-            ),
-            child: Column(
-              children: [
-                _workspaceItem(
-                  icon: Icons.person_rounded,
-                  title: 'Personal Workspace',
-                  subtitle: 'Your family passports, visas & driving licenses',
-                  country: 'UAE (AED)',
-                  isDark: isDark,
-                ),
-                const Divider(height: 16),
-                _workspaceItem(
-                  icon: Icons.business_rounded,
-                  title: 'Al Mansoori Trading LLC',
-                  subtitle: 'Trade license, Ejari, corporate tax & PRO docs',
-                  country: 'UAE (AED)',
-                  isDark: isDark,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          _featureBullet('One-Tap Switching', 'Switch workspaces from the top-left header anytime to instantly re-scope documents and finances.'),
-          _featureBullet('Plan Tier Mapping', 'Free includes 1 personal collection; Plus unlocks 1 company workspace; Business unlocks unlimited company workspaces.'),
-          _featureBullet('Auto-Protection', 'If a plan expires, your data is never deleted — surplus company workspaces are securely locked until renewed.'),
-          const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () {
-                Navigator.pop(context);
-                context.go('/profile');
-              },
-              icon: const Icon(Icons.folder_shared_rounded, size: 16),
-              label: const Text('Manage Collections in Settings'),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Colors.purpleAccent),
-                foregroundColor: Colors.purpleAccent,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ──────────────────────────────────────────────────────────────────────────
-  // 5. AI Power Slide
-  // ──────────────────────────────────────────────────────────────────────────
-  Widget _buildAiSlide(
-    BuildContext context,
-    bool isDark,
-    ThemeData theme,
-  ) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.psychology_rounded, color: Colors.amber, size: 22),
-              const SizedBox(width: 8),
-              Text(
-                'AI Intelligence & Reports',
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Harness the speed of Groq LLMs and Gemini to understand your finances.',
-            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: isDark
-                    ? [const Color(0xFF2D2305), const Color(0xFF1E1700)]
-                    : [const Color(0xFFFFFBEB), const Color(0xFFFEF3C7)],
-              ),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.amber.withOpacity(0.4)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  children: [
-                    Icon(Icons.bolt_rounded, color: Colors.amber, size: 18),
-                    SizedBox(width: 6),
-                    Text(
-                      'AI Executive Summary & Budget Simulator',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
                 Text(
-                  '“Your cash flow is stable with 12,400 AED net income. 2 renewals totaling 1,850 AED are due in 3 weeks. Recommended: reallocate 400 AED from dining out.”',
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    height: 1.4,
-                    fontStyle: FontStyle.italic,
-                    color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E),
-                  ),
+                  b.subtitle,
+                  style:
+                      TextStyle(fontSize: 11, color: theme.colorScheme.outline),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
-          _featureBullet('Monthly Financial Health Score', 'Calculates an objective 0–100 financial health score based on savings rate, budget discipline, and renewal readiness.'),
-          _featureBullet('Goal-Driven AI Budget Planner', 'State any financial goal (e.g. "Save 15,000 AED for vacation in 6 months") and AI produces tailored category caps.'),
-          _featureBullet('PDF & CSV Export', 'Export official audit lists and finance reports with a single tap for accountants and team records.'),
-          const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: () {
-                Navigator.pop(context);
-                context.push('/ai-summary');
-              },
-              icon: const Icon(Icons.auto_awesome_rounded, size: 16),
-              label: const Text('Try AI Executive Summary'),
-              style: FilledButton.styleFrom(
-                backgroundColor: FinavigColors.navyPrimary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: FinavigColors.warning.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              b.badge,
+              style: const TextStyle(
+                color: FinavigColors.warning,
+                fontWeight: FontWeight.bold,
+                fontSize: 10,
               ),
             ),
           ),
@@ -819,17 +591,125 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
     );
   }
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // Helper Widgets
-  // ──────────────────────────────────────────────────────────────────────────
+  Widget _budgetShowcase(GuideBudgetShowcaseBlock b, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDark ? FinavigColors.slate.withOpacity(0.5) : FinavigColors.cloud,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? FinavigColors.slateLight : FinavigColors.mist,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(b.title,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 13)),
+              Text(
+                b.percentLabel,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  color: isDark
+                      ? FinavigColors.cyanSecondary
+                      : FinavigColors.navyPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: b.fractionUsed,
+              minHeight: 8,
+              backgroundColor: isDark ? Colors.black26 : Colors.black12,
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(FinavigColors.emerald),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(b.spentLabel, style: const TextStyle(fontSize: 11)),
+              Text(b.budgetLabel, style: const TextStyle(fontSize: 11)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
-  Widget _featureRow({
-    required IconData icon,
-    required Color color,
-    required String title,
-    required String desc,
-    required bool isDark,
-  }) {
+  Widget _workspacesShowcase(GuideWorkspacesShowcaseBlock b, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDark ? FinavigColors.slate.withOpacity(0.5) : FinavigColors.cloud,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? FinavigColors.slateLight : FinavigColors.mist,
+        ),
+      ),
+      child: Column(
+        children: [
+          for (var i = 0; i < b.items.length; i++) ...[
+            if (i > 0) const Divider(height: 16),
+            _workspaceItem(b.items[i], isDark),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _quoteShowcase(GuideQuoteShowcaseBlock b, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isDark
+              ? [const Color(0xFF2D2305), const Color(0xFF1E1700)]
+              : [const Color(0xFFFFFBEB), const Color(0xFFFEF3C7)],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.amber.withOpacity(0.4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.bolt_rounded, color: Colors.amber, size: 18),
+              SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'AI Executive Summary & Budget Simulator',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            b.quote,
+            style: TextStyle(
+              fontSize: 11.5,
+              height: 1.4,
+              fontStyle: FontStyle.italic,
+              color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _featureRow(GuideFeatureRowBlock b, bool isDark) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -838,10 +718,10 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
           Container(
             padding: const EdgeInsets.all(7),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.14),
+              color: b.color.withOpacity(0.14),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, color: color, size: 18),
+            child: Icon(b.icon, color: b.color, size: 18),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -849,16 +729,19 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  b.title,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 13),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  desc,
+                  b.description,
                   style: TextStyle(
                     fontSize: 11.5,
                     height: 1.35,
-                    color: isDark ? FinavigColors.textSecondary : FinavigColors.textMutedLight,
+                    color: isDark
+                        ? FinavigColors.textSecondary
+                        : FinavigColors.textMutedLight,
                   ),
                 ),
               ],
@@ -869,9 +752,7 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
     );
   }
 
-  Widget _featureBullet(String title, String desc) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
+  Widget _featureBullet(GuideBulletBlock b, bool isDark) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -889,17 +770,21 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
                 style: TextStyle(
                   fontSize: 12,
                   height: 1.4,
-                  color: isDark ? FinavigColors.textPrimary : FinavigColors.textPrimaryLight,
+                  color: isDark
+                      ? FinavigColors.textPrimary
+                      : FinavigColors.textPrimaryLight,
                 ),
                 children: [
                   TextSpan(
-                    text: '$title: ',
+                    text: '${b.title}: ',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   TextSpan(
-                    text: desc,
+                    text: b.description,
                     style: TextStyle(
-                      color: isDark ? FinavigColors.textSecondary : FinavigColors.textSecondaryLight,
+                      color: isDark
+                          ? FinavigColors.textSecondary
+                          : FinavigColors.textSecondaryLight,
                     ),
                   ),
                 ],
@@ -911,13 +796,7 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
     );
   }
 
-  Widget _workspaceItem({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required String country,
-    required bool isDark,
-  }) {
+  Widget _workspaceItem(GuideWorkspaceItem item, bool isDark) {
     return Row(
       children: [
         Container(
@@ -926,15 +805,18 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
             color: FinavigColors.navyPrimary.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, size: 16, color: FinavigColors.navyPrimary),
+          child: Icon(item.icon, size: 16, color: FinavigColors.navyPrimary),
         ),
         const SizedBox(width: 10),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
-              Text(subtitle, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+              Text(item.title,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 12.5)),
+              Text(item.subtitle,
+                  style: const TextStyle(fontSize: 11, color: Colors.grey)),
             ],
           ),
         ),
@@ -944,7 +826,9 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
             color: isDark ? FinavigColors.slate : FinavigColors.mist,
             borderRadius: BorderRadius.circular(4),
           ),
-          child: Text(country, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
+          child: Text(item.country,
+              style:
+                  const TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
         ),
       ],
     );

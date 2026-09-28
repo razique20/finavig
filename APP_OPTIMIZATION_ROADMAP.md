@@ -69,10 +69,12 @@ This document outlines the **next wave** of architectural, visual, and interacti
 
 ---
 
-## 7. App Guide & FAQ Content Split *(pending)*
-* **Is:** `app_guide_dialog.dart` (~952 lines) and `faq_sheet.dart` (~615 lines) inline large amounts of static content, inflating widget files and first-build cost.
-* **Plan:** Move content data to `lib/config/app_guide_content.dart` / `faq_content.dart` (plain Dart constants), and render from a generic paged sheet. Consider lazy-loading the content file on first open.
-* **Impact:** Smaller core bundle, content edits without touching widget code, cheaper cold start.
+## 7. ✅ App Guide & FAQ Content Split *(implemented)*
+* **Was:** `app_guide_dialog.dart` (~952 lines) and `faq_sheet.dart` (~615 lines) inlined large amounts of static content, inflating widget files and coupling copy edits to widget code.
+* **Implemented:**
+  * `lib/config/faq_content.dart` — `FaqItem` model, `faqCategories` chips, and the full 15-item `faqItems` data set. `faq_sheet.dart` is now presentation-only (486 lines); the support-ticket action callback is wired at render time (static data can't hold a live context).
+  * `lib/config/app_guide_content.dart` — a sealed `GuideBlock` model (banner, section title, document/budget/workspace/quote showcases, feature rows, bullets, CTAs) plus the five `guideChapters`. `app_guide_dialog.dart` renders blocks generically via pattern matching (836 lines, down from 952 despite keeping pixel-identical chrome); chapter pills, headers, and CTAs are all data-driven.
+* **Impact:** Copy and content edits happen in `lib/config/` without touching widget code; the widget files shrink and lose all hardcoded strings. All 300 tests pass, including the FAQ sheet contract test.
 
 ---
 
@@ -95,7 +97,7 @@ Select an optimization to implement:
 4. ~~**Cached Image Pipeline** for document attachments.~~ ✅ Done — see feature #4 above.
 5. **Ask Finavig AI persistent token budget** & cross-session memo.
 6. ~~**Home & Documents Screen Modularization**.~~ ✅ Done — see feature #6 above.
-7. **App Guide & FAQ content split**.
+7. ~~**App Guide & FAQ content split**.~~ ✅ Done — see feature #7 above.
 8. **Performance instrumentation & regression guards**.
 
-Recommended order: **~~3~~ → ~~4~~ → ~~1~~ → 2 → ~~6~~ → 7 → 5 → 8** — user-perceived speed wins first, then structural cleanups, then measurement to lock everything in.
+Recommended order: **~~3~~ → ~~4~~ → ~~1~~ → 2 → ~~6~~ → ~~7~~ → 5 → 8** — user-perceived speed wins first, then structural cleanups, then measurement to lock everything in.

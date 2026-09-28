@@ -1,24 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../config/faq_content.dart';
 import '../../theme/app_theme.dart';
 
-/// Item model for FAQ entry.
-class FaqItem {
-  final String question;
-  final String answer;
-  final String category;
-  final IconData icon;
-  final String? actionLabel;
-  final VoidCallback? onAction;
-
-  const FaqItem({
-    required this.question,
-    required this.answer,
-    required this.category,
-    required this.icon,
-    this.actionLabel,
-    this.onAction,
-  });
-}
+export '../../config/faq_content.dart' show FaqItem, faqCategories, faqItems;
 
 /// Opens an interactive, searchable FAQ bottom sheet with categorized questions,
 /// expandable accordions, and a direct link to submit support requests.
@@ -54,133 +38,8 @@ class _FaqSheetContentState extends State<_FaqSheetContent> {
   String _selectedCategory = 'All';
   String _searchQuery = '';
 
-  final List<String> _categories = [
-    'All',
-    'Documents',
-    'Money',
-    'AI & Voice',
-    'Account & Tiers',
-    'Support',
-  ];
-
-  late final List<FaqItem> _allFaqs;
-
-  @override
-  void initState() {
-    super.initState();
-    _allFaqs = [
-      FaqItem(
-        category: 'Documents',
-        icon: Icons.description_rounded,
-        question: 'How does Finavig track document expiries?',
-        answer:
-            'Finavig monitors all your added documents (Emirates ID, Passports, Visas, Trade Licences, Mulkiya, Insurance) and notifies you at key lead times (90, 60, 30, 14, 7, and 1 day before expiration). You can also customize reminder lead times in Settings.',
-      ),
-      FaqItem(
-        category: 'Documents',
-        icon: Icons.autorenew_rounded,
-        question: 'How do I mark a document as renewed?',
-        answer:
-            'Tap on any document card, then tap "Renew Document". You can set the new expiry date, attach a renewal fee receipt, and optionally auto-log the renewal cost into your Money expense tracker.',
-      ),
-      FaqItem(
-        category: 'Documents',
-        icon: Icons.folder_copy_rounded,
-        question: 'What are Document Collections?',
-        answer:
-            'Collections organize your documents into distinct workspaces (e.g. Personal vs. Company). You can easily switch active collections from the top app header or from Profile settings.',
-      ),
-      FaqItem(
-        category: 'Documents',
-        icon: Icons.sd_storage_rounded,
-        question: 'How are uploaded document files and attachments stored?',
-        answer:
-            'Uploaded document files (photos, scans, PDF receipts) are saved 100% locally on your device in the app\'s secure storage folder (/finavig/documents/). They remain strictly on your phone and are never uploaded to external cloud file servers.',
-      ),
-      FaqItem(
-        category: 'Documents',
-        icon: Icons.security_rounded,
-        question: 'How are document details and metadata stored?',
-        answer:
-            'Document details (title, expiry date, authority, type, fees, and notes) are synchronized to your secure account cloud database (Supabase) for cross-device access, while also cached locally on your device for instant offline access.',
-      ),
-      FaqItem(
-        category: 'Money',
-        icon: Icons.payments_rounded,
-        question: 'How does Smart Category matching work?',
-        answer:
-            'When logging an expense (e.g., "Paid 450 AED for DEWA"), Finavig automatically identifies UAE merchants and categories (like Utilities, Transport, Food, Govt Fees) using fuzzy matching and a UAE keyword dictionary.',
-      ),
-      FaqItem(
-        category: 'Money',
-        icon: Icons.repeat_rounded,
-        question: 'How do Recurring Transactions and Cash Flow work?',
-        answer:
-            'Mark any expense or income as "Repeat Monthly/Yearly". Finavig auto-logs them when due and calculates a 90-Day Cash Flow forecast combining bank balance, upcoming recurring bills, and document renewal fees.',
-      ),
-      FaqItem(
-        category: 'Money',
-        icon: Icons.show_chart_rounded,
-        question: 'What is a Bill Spike anomaly alert?',
-        answer:
-            'Finavig automatically detects sudden price increases in recurring expenses (e.g., a utility bill jumping 35%+ higher than your average) and alerts you so you can review potential overcharges.',
-      ),
-      FaqItem(
-        category: 'AI & Voice',
-        icon: Icons.graphic_eq_rounded,
-        question: 'How do I log records using Voice or Text?',
-        answer:
-            'Tap the Voice / Sparkle button on the Home or Money screen and speak or type naturally (e.g., "Spent 85 AED on Uber today"). Finavig extracts the amount, vendor, category, and date automatically.',
-      ),
-      FaqItem(
-        category: 'AI & Voice',
-        icon: Icons.auto_awesome_rounded,
-        question: 'Do I need a Gemini API key for AI features?',
-        answer:
-            'No! Finavig includes built-in smart templates out of the box. Adding your free Gemini API key in Settings is optional and enables deeper executive summaries generated by Google Gemini.',
-      ),
-      FaqItem(
-        category: 'Account & Tiers',
-        icon: Icons.wifi_off_rounded,
-        question: 'Does Finavig work offline without internet?',
-        answer:
-            'Yes! Finavig uses local-first caching. All your data is saved locally on your device for fast offline access and automatically syncs with cloud database when reconnected.',
-      ),
-      FaqItem(
-        category: 'Account & Tiers',
-        icon: Icons.workspace_premium_rounded,
-        question: 'What are the differences between Free, Plus, and Business tiers?',
-        answer:
-            '• Free: 1 Personal collection & up to 10 active documents.\n• Plus: 1 Company collection & up to 100 documents.\n• Business: Unlimited Company collections, team features & unlimited AI summaries.',
-      ),
-      FaqItem(
-        category: 'Account & Tiers',
-        icon: Icons.lock_outline_rounded,
-        question: 'What happens to my data if my plan changes?',
-        answer:
-            'Your data is completely safe and is never deleted. If your plan downgrades, surplus company collections are safely locked in read-only mode until you upgrade your plan.',
-      ),
-      FaqItem(
-        category: 'Support',
-        icon: Icons.support_agent_rounded,
-        question: 'How can I submit a support request or report a bug?',
-        answer:
-            'Tap "Submit a Request" in Profile → Help & Support, or tap the button below to send a message to our support team. You can track all your submissions in "My Requests".',
-        actionLabel: 'Submit Support Ticket',
-        onAction: () {
-          Navigator.pop(context);
-          widget.onOpenSupportTicket?.call();
-        },
-      ),
-      FaqItem(
-        category: 'Support',
-        icon: Icons.contact_support_rounded,
-        question: 'Where can I track the status of my support ticket?',
-        answer:
-            'Go to Profile → Help & Support → "My Requests". There you will see all your active and resolved tickets along with admin status updates.',
-      ),
-    ];
-  }
+  static const List<String> _categories = faqCategories;
+  static const List<FaqItem> _allFaqs = faqItems;
 
   @override
   void dispose() {
@@ -398,9 +257,18 @@ class _FaqSheetContentState extends State<_FaqSheetContent> {
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                       itemCount: filtered.length,
                       itemBuilder: (ctx, idx) {
+                        final item = filtered[idx];
                         return _FaqAccordionCard(
-                          item: filtered[idx],
+                          item: item,
                           isDark: isDark,
+                          // Action callbacks need a live context, so they
+                          // are wired here rather than in the static data.
+                          onAction: item.actionLabel == null
+                              ? null
+                              : () {
+                                  Navigator.pop(context);
+                                  widget.onOpenSupportTicket?.call();
+                                },
                         );
                       },
                     ),
@@ -475,10 +343,12 @@ class _FaqSheetContentState extends State<_FaqSheetContent> {
 class _FaqAccordionCard extends StatefulWidget {
   final FaqItem item;
   final bool isDark;
+  final VoidCallback? onAction;
 
   const _FaqAccordionCard({
     required this.item,
     required this.isDark,
+    this.onAction,
   });
 
   @override
@@ -578,10 +448,11 @@ class _FaqAccordionCardState extends State<_FaqAccordionCard> {
                           fontSize: 13.5,
                         ),
                       ),
-                      if (item.actionLabel != null && item.onAction != null) ...[
+                      if (item.actionLabel != null &&
+                          widget.onAction != null) ...[
                         const SizedBox(height: 14),
                         OutlinedButton.icon(
-                          onPressed: item.onAction,
+                          onPressed: widget.onAction,
                           icon: const Icon(
                             Icons.arrow_forward_rounded,
                             size: 16,
