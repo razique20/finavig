@@ -39,6 +39,33 @@ $$;
 
 -- The on_auth_user_created trigger already exists (handle_new_user).
 -- Add a second trigger on the same event for the DOB sync.
+--
+-- IMPORTANT: the DOB mirror is best-effort. Any error here would abort the
+-- auth.users insert itself (Supabase surfaces that to the app as
+-- "Database error saving new user" and signup fails), so the function
+-- swallows exceptions and logs a warning instead.
+create or replace function public.sync_user_dob()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  begin
+    insert into public.user_tiers (user_id, date_of_birth)
+    values (new.id, nullif(new.raw_user_meta_data->>'date_of_birth', '')::date)
+    on conflict (user_id) do update
+      set date_of_birth = coalesce(
+        nullif(new.raw_user_meta_data->>'date_of_birth', '')::date,
+        public.user_tiers.date_of_birth
+      );
+  exception when others then
+    -- Never block signup because of the DOB mirror.
+    raise warning 'sync_user_dob failed for %: %', new.id, sqlerrm;
+  end;
+  return new;
+end;
+$$;
+
 drop trigger if exists on_auth_user_created_dob on auth.users;
 create trigger on_auth_user_created_dob
   after insert on auth.users

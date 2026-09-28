@@ -223,21 +223,31 @@ class _LoginScreenState extends State<LoginScreen> {
       // collections first (DocumentScannerService maps legacy collection
       // ids against this list), then custom doc types (rows decode into
       // ExpiryItems via the registry), then documents and finance.
-      await DocumentCollectionService.instance.reset();
-      // On signup the DB trigger creates the personal collection with default
-      // country 'AE'. Patch it to the country the user actually selected.
-      if (_isSignUp) {
-        await DocumentCollectionService.instance
-            .updatePersonalCountry(_selectedCountry.code);
+      //
+      // Auth has already succeeded at this point — a failure here must
+      // NEVER send the user back to "try again" (the account exists, so a
+      // retry would report "already registered"). Log it and enter the app;
+      // services re-sync on next launch.
+      try {
+        await DocumentCollectionService.instance.reset();
+        // On signup the DB trigger creates the personal collection with
+        // default country 'AE'. Patch it to the selected country.
+        if (_isSignUp) {
+          await DocumentCollectionService.instance
+              .updatePersonalCountry(_selectedCountry.code);
+        }
+        await CustomDocumentTypeService.instance.reset();
+        await DocumentScannerService.instance.refresh();
+        await FinanceService.instance.refresh();
+        // Load the tier granted to this user (Track 1 entitlements).
+        await EntitlementService.instance.refresh();
+      } catch (e) {
+        debugPrint('Post-auth refresh failed (entering app anyway): $e');
       }
-      await CustomDocumentTypeService.instance.reset();
-      await DocumentScannerService.instance.refresh();
-      await FinanceService.instance.refresh();
-      // Load the tier granted to this user (Track 1 entitlements).
-      await EntitlementService.instance.refresh();
 
       if (mounted) context.go('/home');
     } catch (e) {
+      debugPrint('Auth submit failed: $e');
       setState(() {
         _error = _friendlyError(e.toString());
         _busy = false;
@@ -264,6 +274,23 @@ class _LoginScreenState extends State<LoginScreen> {
     }
     if (lower.contains('not configured')) {
       return 'Supabase is not configured in this build (see lib/config/app_credentials.dart).';
+    }
+    // Supabase's classic message when an auth trigger fails server-side.
+    if (lower.contains('database error saving new user')) {
+      return 'We could not finish creating your account (server issue). '
+          'Please try again in a few minutes or contact support.';
+    }
+    if (lower.contains('signup requires a valid password')) {
+      return 'Please enter a password with at least 6 characters.';
+    }
+    if (lower.contains('unable to validate email') ||
+        lower.contains('invalid email')) {
+      return 'That email address does not look valid.';
+    }
+    if (lower.contains('network') ||
+        lower.contains('socket') ||
+        lower.contains('xmlhttprequest')) {
+      return 'No connection — check your internet and try again.';
     }
     return 'Something went wrong. Please try again.';
   }
@@ -1096,7 +1123,7 @@ class _LoginScreenState extends State<LoginScreen> {
             style: TextStyle(color: _fieldTextColor(isDark), fontSize: 15),
             decoration: _fieldDecoration(
               isDark,
-              label: 'Phone — $_selectedCountry.phoneCode (Optional)',
+              label: 'Phone — ${_selectedCountry.phoneCode} (Optional)',
               icon: Icons.phone_iphone_rounded,
             ),
           ),
