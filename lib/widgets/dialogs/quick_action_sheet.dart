@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../models/finance.dart';
 import '../../services/finance_service.dart';
+import '../../services/perf_tracing_service.dart';
 import '../../screens/money_screen.dart';
 import '../../theme/app_theme.dart';
 import 'ask_finavig_sheet.dart';
@@ -32,12 +33,15 @@ Future<void> showAskFinavigFlow(BuildContext context) async {
 /// entitlement gates (document limit, plan restrictions) stay enforced in
 /// one place.
 Future<void> showQuickActionSheet(BuildContext context) {
-  return showModalBottomSheet<void>(
-    context: context,
-    useRootNavigator: true,
-    backgroundColor: Colors.transparent,
-    isScrollControlled: true,
-    builder: (sheetContext) => const _QuickActionSheet(),
+  return PerfTracingService.traceAsync(
+    PerfTracingService.flowQuickActionSheet,
+    () => showModalBottomSheet<void>(
+      context: context,
+      useRootNavigator: true,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (sheetContext) => const _QuickActionSheet(),
+    ),
   );
 }
 

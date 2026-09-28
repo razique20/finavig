@@ -60,9 +60,11 @@ The defensible wedge is the **document↔finance join**: renewal fees feed a cas
 ## 4. Product–market signals (from the build so far)
 
 - The app's category model mirrors how users actually think: 15 built-in UAE document types, each with its typical renewal authority and cycle, plus custom types — established from the domain, not invented.
-- The urgency ladder (90/60/30/7 → WhatsApp escalation) matches how PRO agents actually escalate; the detail screen renders it natively.
+- The urgency ladder (90/60/30/7 → escalation) matches how PRO agents actually escalate; one shared implementation renders it identically on the detail screen and beyond.
+- **Zero-friction capture shipped:** the unified Ask Finavig AI sheet turns capture into one spoken/typed sentence — the biggest adoption lever for a utility whose value only appears once documents are actually in it. Local-first routing keeps the marginal cost of a voice add near zero, so there is no economic reason to throttle usage.
 - Bill-spike detection and budget alerts were built for the second-order pain: renewal *and* running costs landing in the same month.
 - Custom reminder offsets and the 90-day cash-flow forecast came from the same insight: people need to *plan around* renewal dates, not just be reminded of them.
+- **Multi-collection matches real structures:** Personal vs company workspaces with tiered limits mirror how solo founders actually separate life and business — and create the natural Plus/Business upsell path (see §6).
 
 ## 5. Demand estimate (order-of-magnitude)
 
@@ -74,9 +76,9 @@ The defensible wedge is the **document↔finance join**: renewal fees feed a cas
 
 | Tier | Contents | Shape |
 |---|---|---|
-| Free | 1 collection, up to ~10 documents, local reminders | Volume + habit formation |
-| Plus (~AED 5–10 / month or ~AED 50/yr) | Unlimited docs, company collections, cash-flow forecast, PDF/CSV exports, custom alert days | Individual power users |
-| Business (~AED 25–50 / month) | Multiple company workspaces, assignment, renewal audit history, exports | PROs & small SMEs — highest ARPUs |
+| Free | 1 personal collection, up to ~10 documents, local reminders, unlimited AI quick-adds | Volume + habit formation |
+| Plus (~AED 5–10 / month or ~AED 50/yr) | Unlimited docs, 1 company collection, cash-flow forecast, PDF/CSV exports, custom alert days | Individual power users |
+| Business (~AED 25–50 / month) | Unlimited company workspaces, assignment, renewal audit history, exports | PROs & small SMEs — highest ARPUs |
 
 Adjacent revenue once trust exists: **renewal concierge** (partnered PRO filing for a fee per renewal) — this is where the market's real money is, but it is a services business and deliberately out of scope pre-PMF (see feasibility study §5).
 
@@ -91,4 +93,4 @@ Adjacent revenue once trust exists: **renewal concierge** (partnered PRO filing 
 
 ## 8. Conclusion
 
-The UAE market has a dense, recurring, fine-backed set of expiry obligations and no incumbent that unifies them with the money to renew them. The pain is severe for solo founders and SMEs, chronic for expatriate households, and the current solutions (government silos, calendars, PRO agents) are all partial. Finavig's document+finance join is a credible wedge into a freemium utility with a clear expansion path into PRO/SME team workflows. The immediate next step is the validation loop described in the feasibility study (§6): a real-device pilot with 20–50 solo founders, measuring 30-day retention and the alert-to-renewal conversion rate.
+The UAE market has a dense, recurring, fine-backed set of expiry obligations and no incumbent that unifies them with the money to renew them. The pain is severe for solo founders and SMEs, chronic for expatriate households, and the current solutions (government silos, calendars, PRO agents) are all partial. Finavig's document+finance join — now with one-sentence AI capture on top — is a credible wedge into a freemium utility with a clear expansion path into PRO/SME team workflows. The build is feature-complete and CI-guarded; the immediate next step is the validation loop described in the feasibility study (§6): a real-device pilot with 20–50 solo founders, measuring 30-day retention and the alert-to-renewal conversion rate.

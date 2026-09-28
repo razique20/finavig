@@ -17,10 +17,16 @@ import 'services/supabase_service.dart';
 import 'services/theme_service.dart';
 import 'services/urgency_engine.dart';
 import 'services/notification_service.dart';
+import 'services/perf_tracing_service.dart';
 import 'services/storage_migration_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Frame-time monitor: debug/profile only, zero cost in release. Wires
+  // DevTools timeline sections too (trace/traceAsync call sites).
+  PerfTracingService.instance.startFrameMonitor();
+  PerfTracingService.markFlow(PerfTracingService.flowColdStartToHome);
 
   // Set preferred orientations
   SystemChrome.setPreferredOrientations([

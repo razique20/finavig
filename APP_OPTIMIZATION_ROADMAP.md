@@ -81,13 +81,14 @@ This document outlines the **next wave** of architectural, visual, and interacti
 
 ---
 
-## 8. Performance Instrumentation & Regression Guards *(pending)*
-* **Is:** No ongoing measurement exists to prove the optimizations above stay fast as features land.
-* **Plan:**
-  * Add DevTools timeline tracing checkpoints (frame build/raster times) around critical flows: cold start → Home, tab switch, document open, quick-action sheet open.
-  * Golden tests for the shimmer skeleton views and Money section cards so visual refactors can't silently regress.
-  * A `flutter analyze --no-pub` + `dart format` CI gate with a file-size budget warning (e.g., flag any widget file > 1,000 lines).
-* **Impact:** Optimizations become measurable and permanent instead of one-off wins.
+## 8. ✅ Performance Instrumentation & Regression Guards *(implemented)*
+* **Is:** No ongoing measurement existed to prove the optimizations above stay fast as features land.
+* **Implemented:**
+  * **Frame-timing tracing** — `lib/services/perf_tracing_service.dart`: named DevTools `Timeline` sections (`trace`/`traceAsync`, compiled away in release) for the critical flows — cold start → Home, tab switch (in `_goBranch`), document open (route builder), quick-action sheet open — plus an opt-in frame monitor (debug/profile only) that samples build+raster durations into a bounded ring buffer, exposes `jankRatio()`, and reports >16.7ms jank / >33ms severe frames via `onSlowFrame` for device-lab harnesses.
+  * **Golden tests** — `test/golden_test.dart` + committed `test/goldens/` for the Home/Documents/Money shimmer skeleton views (the loading state on every tab's cold open), rendered on a plain hermetic theme (no google_fonts runtime fetch — CI-safe) at a pinned viewport with one settled animation tick. Visual regressions now fail CI; regenerate via `flutter test --update-goldens test/golden_test.dart`.
+  * **File-size ratchet** — `tool/perf_budget_check.dart`: fails on any screens/widgets file > 1,200 lines (config > 800), with per-file grandfathering (detail screen, AI planner, login) so existing monoliths get 10%-style headroom instead of an instant red build — they must be split before further major growth.
+  * **CI workflow** — `.github/workflows/ci.yml`: `flutter analyze --no-pub` (errors fatal, documented pre-existing warning/info baseline stays non-fatal until a cleanup pass), the file-size budget gate, and the full test suite including goldens, on every push to `main` and every PR.
+* **Impact:** Optimizations become measurable and permanent instead of one-off wins: jank shows up in the timeline and the monitor, visual refactors fail goldens, and monoliths can't silently return.
 
 ---
 
@@ -101,6 +102,6 @@ Select an optimization to implement:
 5. ~~**Ask Finavig AI persistent token budget** & cross-session memo.~~ ✅ Done — see feature #5 above.
 6. ~~**Home & Documents Screen Modularization**.~~ ✅ Done — see feature #6 above.
 7. ~~**App Guide & FAQ content split**.~~ ✅ Done — see feature #7 above.
-8. **Performance instrumentation & regression guards**.
+8. ~~**Performance instrumentation & regression guards**.~~ ✅ Done — see feature #8 above.
 
-Recommended order: **~~3~~ → ~~4~~ → ~~1~~ → ~~2~~ → ~~6~~ → ~~7~~ → ~~5~~ → 8** — user-perceived speed wins first, then structural cleanups, then measurement to lock everything in.
+Recommended order: **~~3~~ → ~~4~~ → ~~1~~ → ~~2~~ → ~~6~~ → ~~7~~ → ~~5~~ → ~~8~~** — all roadmap items implemented; next wave starts from `FEATURE_IDEAS.md`.

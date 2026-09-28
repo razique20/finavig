@@ -8,6 +8,7 @@ import 'services/alert_preferences_service.dart';
 import 'services/budget_alert_service.dart';
 import 'services/document_scanner_service.dart';
 import 'services/finance_service.dart';
+import 'services/perf_tracing_service.dart';
 import 'screens/login_screen.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/splash_screen.dart';
@@ -89,6 +90,7 @@ final router = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) {
         final id = state.pathParameters['id']!;
+        PerfTracingService.markFlow(PerfTracingService.flowDocumentOpen);
         return DocumentDetailScreen(documentId: id);
       },
     ),
@@ -362,10 +364,12 @@ class _AppShellState extends State<_AppShell> {
     // Every tab tap lands at the top of that tab's screen. Tapping the
     // already-active tab also resets its scroll (standard mobile pattern).
     TabScrollRegistry.scrollToTop(index);
-    widget.navigationShell.goBranch(
-      index,
-      initialLocation: index == widget.navigationShell.currentIndex,
-    );
+    PerfTracingService.trace(PerfTracingService.flowTabSwitch, () {
+      widget.navigationShell.goBranch(
+        index,
+        initialLocation: index == widget.navigationShell.currentIndex,
+      );
+    });
   }
 }
 

@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  analyze-test-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Doctor (informational)
+        run: flutter --version
+
+      # Static analysis: errors fail CI; the codebase carries a documented
+      # pre-existing warning/info baseline (see TEST_REPORT.md,
+      # PRODUCTION_READINESS.md) that stays non-fatal until cleaned up.
+      # A one-time `dart format lib/ test/` commit can then add a strict
+      # `--set-exit-if-changed` style gate.
+      - name: flutter analyze
+        run: flutter analyze --no-pub
+
+      # File-size ratchet: no widget/screen file may exceed its budget
+      # (see tool/perf_budget_check.dart for budgets + grandfathering).
+      - name: perf file-size budget
+        run: dart run tool/perf_budget_check.dart
+
+      # Full test suite, including golden guards (hermetic: no network).
+      - name: flutter test
+        run: flutter test --no-pub --report expanded
