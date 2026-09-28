@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/gcc_country.dart';
 import '../services/auth_service.dart';
@@ -403,12 +404,12 @@ class _LoginScreenState extends State<LoginScreen> {
         children: [
           Row(
             children: [
-              const Text(
+              Text(
                 'Finavig',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.6,
+                style: GoogleFonts.playfairDisplay(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.2,
                   color: Colors.white,
                 ),
               ),
