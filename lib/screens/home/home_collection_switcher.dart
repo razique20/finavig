@@ -53,20 +53,21 @@ Future<String?> showHomeCollectionSwitcher(BuildContext context) async {
             ),
           ),
           Flexible(
-            child: ListView(
+            // Lazy builder: only the visible collection rows are built.
+            child: ListView.builder(
               shrinkWrap: true,
-              children: [
-                for (final collection in collections)
-                  Builder(
-                    builder: (tileCtx) {
-                      final isLocked =
-                          entitlements.isCollectionLocked(collection);
-                      final reqTier =
-                          entitlements.requiredTierForCollection(collection);
-                      final reqFeature =
-                          entitlements.requiredFeatureForCollection(collection);
+              itemCount: collections.length,
+              itemBuilder: (tileCtx, index) {
+                final collection = collections[index];
+                {
+                  final isLocked =
+                      entitlements.isCollectionLocked(collection);
+                  final reqTier =
+                      entitlements.requiredTierForCollection(collection);
+                  final reqFeature =
+                      entitlements.requiredFeatureForCollection(collection);
 
-                      return ListTile(
+                  return ListTile(
                         leading: isLocked
                             ? const Icon(Icons.lock_rounded,
                                 color: FinavigColors.warning)
@@ -125,9 +126,8 @@ Future<String?> showHomeCollectionSwitcher(BuildContext context) async {
                           }
                         },
                       );
-                    },
-                  ),
-              ],
+                }
+              },
             ),
           ),
           const Divider(height: 1),

@@ -129,7 +129,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
                           scene: EmptyStateScene.wallet,
                         ),
                       ],
-                    )
+                    )  // static two-child list: nothing to lazify
                   : ListView.builder(
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 180),

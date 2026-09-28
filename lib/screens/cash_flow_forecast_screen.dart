@@ -73,9 +73,14 @@ class _CashFlowForecastScreenState extends State<CashFlowForecastScreen> {
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
+          : CustomScrollView(
+              slivers: [
+                SliverPadding(
+                  padding: const EdgeInsets.all(16),
+                  sliver: SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                 // Chart Card
                 CashFlowForecastCard(forecast: forecast),
                 const SizedBox(height: 24),
@@ -126,30 +131,46 @@ class _CashFlowForecastScreenState extends State<CashFlowForecastScreen> {
                     });
                   },
                 ),
-                const SizedBox(height: 16),
-
+                      ],
+                    ),
+                  ),
+                ),
                 // Event Days List
                 if (pointsWithEvents.isEmpty)
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E2430) : Colors.grey.shade50,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      'No scheduled recurring payments or document renewals in the next 90 days.',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.outline,
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Container(
+                        padding: const EdgeInsets.all(24),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF1E2430) : Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          'No scheduled recurring payments or document renewals in the next 90 days.',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.outline,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
                       ),
-                      textAlign: TextAlign.center,
                     ),
                   )
                 else
-                  for (final point in pointsWithEvents) ...[
-                    _buildDayEventCard(theme, point, isDark),
-                    const SizedBox(height: 12),
-                  ],
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    sliver: SliverList.builder(
+                      itemCount: pointsWithEvents.length,
+                      itemBuilder: (context, index) {
+                        final point = pointsWithEvents[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _buildDayEventCard(theme, point, isDark),
+                        );
+                      },
+                    ),
+                  ),
               ],
             ),
     );

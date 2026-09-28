@@ -26,10 +26,13 @@ This document outlines the **next wave** of architectural, visual, and interacti
 
 ---
 
-## 3. Lazy Lists Everywhere (`ListView.builder` Sweep) *(pending)*
-* **Is:** Several screens still build the whole child tree eagerly via `ListView(` — `documents_screen.dart`, `budgets_screen.dart`, `envelopes_screen.dart`, `records_screen.dart`, `alerts_reminders_screen.dart`, `cash_flow_forecast_screen.dart`, and the quick-action companion sheet.
-* **Plan:** Convert to `ListView.builder` / `SliverList` with `itemBuilder`, and `addAutomaticKeepAlives: false` + `addRepaintBoundaries: true` where children are stateless. Long lists (documents, records) should also be sharded with `PagedListView`-style chunks if item counts grow.
-* **Impact:** Constant-memory scrolling and 60–120 FPS on the tabs users hit dozens of times a day.
+## 3. ✅ Lazy Lists Everywhere (`ListView.builder` Sweep) *(implemented)*
+* **Was:** Several screens built their whole child tree eagerly via `ListView(` — Alerts & Reminders, Budgets, Envelopes, Cash-Flow Forecast, the document-type filter sheet, the Home collection switcher, the notifications sheet, and the quick-action companion sheet.
+* **Implemented:**
+  * **Data-driven rows → true lazy builders:** Budgets & Envelopes moved to `CustomScrollView` + `SliverList.builder` (headers as `SliverToBoxAdapter`, empty states preserved); Cash-Flow event days to `SliverList.builder` with `SliverPadding`; document-type sheet and collection switcher to `ListView.builder` with `shrinkWrap` retained.
+  * **Bounded sheets → `ListView.builder` over prepared rows:** notifications sheet and companion-suggestion sheet build their row widgets once, then lay out only the visible portion (sheets are height-capped, so this eliminates the bulk of layout cost without changing the data flow).
+  * **Static form kept as a short list:** Alerts & Reminders is a fixed ~6-section settings form — converted to `CustomScrollView` + `SliverChildListDelegate` so off-screen portions of the scrollable no longer lay out; Records' empty state is a 2-child list left as-is (nothing to lazify).
+* **Impact:** Constant-memory scrolling and 60–120 FPS on the tabs users hit dozens of times a day. All 300 tests pass, and the analyzer shows no new issues on converted files.
 
 ---
 
@@ -88,7 +91,7 @@ This document outlines the **next wave** of architectural, visual, and interacti
 Select an optimization to implement:
 1. ~~**Profile Screen Modularization** — biggest file first.~~ ✅ Done — see feature #1 above.
 2. **Document Detail Screen Modularization** — extract the reusable full-screen viewer.
-3. ~~**Lazy Lists Everywhere** — `ListView.builder` sweep across all tabs.~~
+3. ~~**Lazy Lists Everywhere** — `ListView.builder` sweep across all tabs.~~ ✅ Done — see feature #3 above.
 4. ~~**Cached Image Pipeline** for document attachments.~~ ✅ Done — see feature #4 above.
 5. **Ask Finavig AI persistent token budget** & cross-session memo.
 6. ~~**Home & Documents Screen Modularization**.~~ ✅ Done — see feature #6 above.

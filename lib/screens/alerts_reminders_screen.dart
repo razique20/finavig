@@ -87,9 +87,12 @@ class _AlertsRemindersScreenState extends State<AlertsRemindersScreen> {
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
+          : CustomScrollView(
+              slivers: [
+                SliverPadding(
+                  padding: const EdgeInsets.all(16),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
                 // Informational banner
                 Container(
                   padding: const EdgeInsets.all(14),
@@ -237,6 +240,9 @@ class _AlertsRemindersScreenState extends State<AlertsRemindersScreen> {
                   ],
                 ),
                 const SizedBox(height: 32),
+                    ]),
+                  ),
+                ),
               ],
             ),
     );

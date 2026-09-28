@@ -92,31 +92,37 @@ class _EnvelopesScreenState extends State<EnvelopesScreen> {
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _reload,
-              child: ListView(
+              child: CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
-                children: [
-                  if (_envelopes.isEmpty)
-                    _hintCard(
-                      theme,
-                      'Set aside money for big renewals — tracked only, no real money moves. Tap "New envelope" to start one.',
-                      scene: EmptyStateScene.wallet,
-                    )
-                  else
-                    ..._envelopes.map(
-                      (envelope) => Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: EnvelopeCard(
-                          envelope: envelope,
-                          onAdd: () => _adjustEnvelope(envelope, 100),
-                          onWithdraw: () => _adjustEnvelope(envelope, -100),
-                          onDelete: () =>
-                              FinanceService.instance.deleteEnvelope(
-                            envelope.id,
+                slivers: [
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
+                    sliver: _envelopes.isEmpty
+                        ? SliverToBoxAdapter(
+                            child: _hintCard(
+                              theme,
+                              'Set aside money for big renewals — tracked only, no real money moves. Tap "New envelope" to start one.',
+                              scene: EmptyStateScene.wallet,
+                            ),
+                          )
+                        : SliverList.builder(
+                            itemCount: _envelopes.length,
+                            itemBuilder: (context, index) {
+                              final envelope = _envelopes[index];
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: EnvelopeCard(
+                                  envelope: envelope,
+                                  onAdd: () => _adjustEnvelope(envelope, 100),
+                                  onWithdraw: () =>
+                                      _adjustEnvelope(envelope, -100),
+                                  onDelete: () => FinanceService.instance
+                                      .deleteEnvelope(envelope.id),
+                                ),
+                              );
+                            },
                           ),
-                        ),
-                      ),
-                    ),
+                  ),
                 ],
               ),
             ),

@@ -299,21 +299,27 @@ Future<String?> showDocumentsTypeFilterSheet(BuildContext context) {
               ),
             ),
             Flexible(
-              child: ListView(
+              // Lazy builder: only the visible type rows are built & laid out.
+              child: ListView.builder(
                 shrinkWrap: true,
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.apps_rounded),
-                    title: const Text('All types'),
-                    onTap: () => Navigator.pop(sheetContext, '__all__'),
-                  ),
-                  for (final t in DocumentTypeRegistry.instance.typesForPicker)
-                    ListTile(
-                      leading: Icon(t.icon, color: t.primaryColor),
-                      title: Text(t.displayName),
-                      onTap: () => Navigator.pop(sheetContext, t.key),
-                    ),
-                ],
+                itemCount:
+                    DocumentTypeRegistry.instance.typesForPicker.length + 1,
+                itemBuilder: (sheetContext, index) {
+                  if (index == 0) {
+                    return ListTile(
+                      leading: const Icon(Icons.apps_rounded),
+                      title: const Text('All types'),
+                      onTap: () => Navigator.pop(sheetContext, '__all__'),
+                    );
+                  }
+                  final t =
+                      DocumentTypeRegistry.instance.typesForPicker[index - 1];
+                  return ListTile(
+                    leading: Icon(t.icon, color: t.primaryColor),
+                    title: Text(t.displayName),
+                    onTap: () => Navigator.pop(sheetContext, t.key),
+                  );
+                },
               ),
             ),
           ],

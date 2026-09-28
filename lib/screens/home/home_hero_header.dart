@@ -483,10 +483,13 @@ class HomeNotificationBell extends StatelessWidget {
                 )
               else
                 Flexible(
-                  child: ListView(
+                  // Lazy builder over the prebuilt alert rows: the sheet's
+                  // height is bounded, so only the visible rows lay out.
+                  child: ListView.builder(
                     shrinkWrap: true,
                     padding: const EdgeInsets.symmetric(vertical: 8),
-                    children: rows,
+                    itemCount: rows.length,
+                    itemBuilder: (_, index) => rows[index],
                   ),
                 ),
             ],

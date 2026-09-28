@@ -183,34 +183,48 @@ class _CompanionSuggestionSheetState extends State<CompanionSuggestionSheet> {
             const SizedBox(height: 12),
 
             Flexible(
-              child: ListView(
-                shrinkWrap: true,
-                padding: EdgeInsets.zero,
-                children: [
-                  for (final poolName in pools) ...[
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4, bottom: 6),
-                      child: Text(
-                        poolName.toUpperCase(),
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.8,
+              // Lazy builder over a flattened pool-header/item index: only
+              // the visible portion of the suggestion list is built.
+              child: Builder(
+                builder: (_) {
+                  final flat = <Widget>[];
+                  for (final poolName in pools) {
+                    flat.add(
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4, bottom: 6),
+                        child: Text(
+                          poolName.toUpperCase(),
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.8,
+                          ),
                         ),
                       ),
-                    ),
+                    );
                     for (final s in suggestions.where(
                       (s) => s.poolName == poolName,
-                    ))
-                      _SuggestionTile(
-                        suggestion: s,
-                        selected: _selected.contains(s.type),
-                        onToggle: () => setState(() {
-                          if (!_selected.remove(s.type)) _selected.add(s.type);
-                        }),
-                      ),
-                  ],
-                ],
+                    )) {
+                      flat.add(
+                        _SuggestionTile(
+                          suggestion: s,
+                          selected: _selected.contains(s.type),
+                          onToggle: () => setState(() {
+                            if (!_selected.remove(s.type)) {
+                              _selected.add(s.type);
+                            }
+                          }),
+                        ),
+                      );
+                    }
+                  }
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    padding: EdgeInsets.zero,
+                    itemCount: flat.length,
+                    itemBuilder: (_, index) => flat[index],
+                  );
+                },
               ),
             ),
             const SizedBox(height: 8),

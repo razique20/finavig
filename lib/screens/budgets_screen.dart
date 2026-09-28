@@ -116,10 +116,12 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _reload,
-              child: ListView(
+              child: CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
-                children: [
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Column(
+                      children: [
                   // Overall cap card.
                   Card(
                     elevation: 0,
@@ -252,28 +254,37 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
                   if (_budgets.isEmpty)
-                    _hintCard(
-                      theme,
-                      _overallBudget != null
-                          ? 'No category budgets added yet. Tap "Add category" to allocate your monthly budget.'
-                          : 'Set a monthly limit for any category to see progress here.',
-                      scene: EmptyStateScene.growth,
+                    SliverToBoxAdapter(
+                      child: _hintCard(
+                        theme,
+                        _overallBudget != null
+                            ? 'No category budgets added yet. Tap "Add category" to allocate your monthly budget.'
+                            : 'Set a monthly limit for any category to see progress here.',
+                        scene: EmptyStateScene.growth,
+                      ),
                     )
                   else
-                    ..._budgets.map((budget) {
-                      final spent = spendByCategory[budget.category] ?? 0;
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: BudgetRow(
-                          budget: budget,
-                          spent: spent,
-                          onEdit: () => _showBudgetSheet(existing: budget),
-                          onDelete: () =>
-                              FinanceService.instance.deleteBudget(budget.id),
-                        ),
-                      );
-                    }),
+                    SliverList.builder(
+                      itemCount: _budgets.length,
+                      itemBuilder: (context, index) {
+                        final budget = _budgets[index];
+                        final spent = spendByCategory[budget.category] ?? 0;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: BudgetRow(
+                            budget: budget,
+                            spent: spent,
+                            onEdit: () => _showBudgetSheet(existing: budget),
+                            onDelete: () => FinanceService.instance
+                                .deleteBudget(budget.id),
+                          ),
+                        );
+                      },
+                    ),
                 ],
               ),
             ),
