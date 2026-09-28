@@ -50,6 +50,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _userName = 'Unknown User';
   String _userRole = 'Document Admin';
   String _userPhone = '';
+  int? _userAge;
   String _geminiKey = '';
 
   @override
@@ -117,8 +118,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _userName = derivedName;
       _userRole = prefs.getString('userRole') ?? 'Document Admin';
       _userPhone = prefs.getString('userPhone') ?? '';
+      _userAge = _ageFromDob(prefs.getString('userDateOfBirth'));
       _geminiKey = prefs.getString('gemini.apiKey.v1') ?? '';
     });
+  }
+
+  /// Exact age in years from the ISO DOB captured at signup (null when the
+  /// account predates DOB capture or the stored value is unusable).
+  static int? _ageFromDob(String? isoDob) {
+    final dob = DateTime.tryParse(isoDob ?? '');
+    if (dob == null) return null;
+    final now = DateTime.now();
+    var age = now.year - dob.year;
+    if (now.month < dob.month ||
+        (now.month == dob.month && now.day < dob.day)) {
+      age--;
+    }
+    return age >= 0 && age < 150 ? age : null;
   }
 
   /// Persists the profile details edited in the bottom sheet.
@@ -280,7 +296,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               SliverToBoxAdapter(
-                child: ProfileHeroHeader(userName: _userName),
+                child: ProfileHeroHeader(
+                  userName: _userName,
+                  userAge: _userAge,
+                ),
               ),
               SliverToBoxAdapter(
                 child: Container(

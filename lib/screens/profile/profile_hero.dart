@@ -17,7 +17,15 @@ import '../../widgets/hero_widgets.dart';
 class ProfileHeroHeader extends StatelessWidget {
   final String userName;
 
-  const ProfileHeroHeader({super.key, required this.userName});
+  /// Exact age derived from the DOB captured at signup; null hides the line
+  /// (accounts created before DOB capture).
+  final int? userAge;
+
+  const ProfileHeroHeader({
+    super.key,
+    required this.userName,
+    this.userAge,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -113,6 +121,16 @@ class ProfileHeroHeader extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    if (userAge != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        'Age $userAge',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.white.withOpacity(0.55),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
