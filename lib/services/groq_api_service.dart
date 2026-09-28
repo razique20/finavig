@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../config/app_credentials.dart';
+
 /// Groq API client for ultra-fast AI Executive Summaries.
 ///
 /// Communicates with Groq's OpenAI-compatible endpoint
@@ -20,11 +22,9 @@ class GroqApiService {
   static const String _endpoint =
       'https://api.groq.com/openai/v1/chat/completions';
 
-  static const String _k1 = 'WB4EyWLI6Ni2arLa3jgs';
-  static const String _k2 = 'WGdyb3FYsHnxdVvmiVvLeDqLIT4GKrni';
-
-  /// In-app default Groq key.
-  static String get _defaultApiKey => 'gsk_$_k1$_k2';
+  /// In-app default Groq key — lives with every other credential in
+  /// lib/config/app_credentials.dart (single source of truth).
+  static String get _defaultApiKey => AppCredentials.groqApiKey;
 
   /// Primary fast Groq model.
   ///
