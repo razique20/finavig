@@ -12,12 +12,10 @@ class AppLinks {
   static const String privacy = 'https://wazy-admin-sgjt.vercel.app/privacy';
 
   // ── Direct contact ───────────────────────────────────────────────────────
-  static const String supportEmail = 'support@finavig.app';
-  static const String salesEmail = 'hello@finavig.app';
-  static const String whatsappNumber = '971547400553';
+  static const String supportEmail = 'aethylglobal@gmail.com';
+  static const String salesEmail = 'wazyappuae@gmail.com';
 
   // ── Composed URLs ────────────────────────────────────────────────────────
   static String get mailtoSupport => 'mailto:$supportEmail';
   static String get mailtoSales => 'mailto:$salesEmail';
-  static String get whatsappUrl => 'https://wa.me/$whatsappNumber';
 }

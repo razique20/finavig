@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../config/app_links.dart';
+import '../../screens/profile/profile_sheets.dart';
 import '../indicators/finavig_logo.dart';
 
 /// In-app Terms & Conditions, Privacy Policy, About, and Support sheets.
@@ -377,7 +378,11 @@ void showAboutSheet(BuildContext context) {
   );
 }
 
-/// Support / Contact — email, WhatsApp, website.
+/// Support / Contact — in-app request form plus direct email and website.
+///
+/// Support runs through the in-app request system (SupportService →
+/// `support_requests` table) so tickets land in one trackable queue; the
+/// direct emails stay available as fallbacks for billing and partnerships.
 void showSupportSheet(BuildContext context) {
   final theme = Theme.of(context);
   showModalBottomSheet<void>(
@@ -398,15 +403,25 @@ void showSupportSheet(BuildContext context) {
             ),
             const SizedBox(height: 6),
             Text(
-              'Questions about your account, documents, or renewals — we '
-              'usually reply within a day.',
+              'Submit a request and we reply to your account email — usually '
+              'within a day. Prefer email? Reach us directly below.',
               style: theme.textTheme.bodyMedium,
             ),
             const SizedBox(height: 20),
             _AboutLink(
+              icon: Icons.add_comment_rounded,
+              label: 'Submit an in-app request',
+              sub: 'Trackable ticket — replies to your email',
+              highlighted: true,
+              onTap: () async {
+                Navigator.pop(sheetCtx);
+                await showProfileSupportSheet(context);
+              },
+            ),
+            _AboutLink(
               icon: Icons.mail_outline_rounded,
               label: AppLinks.supportEmail,
-              sub: 'Support & account help',
+              sub: 'Direct support email',
               onTap: () => _openLink(AppLinks.mailtoSupport),
             ),
             _AboutLink(
@@ -416,14 +431,8 @@ void showSupportSheet(BuildContext context) {
               onTap: () => _openLink(AppLinks.mailtoSales),
             ),
             _AboutLink(
-              icon: Icons.chat_bubble_outline_rounded,
-              label: 'WhatsApp ${AppLinks.whatsappNumber}',
-              sub: 'Fastest response',
-              onTap: () => _openLink(AppLinks.whatsappUrl),
-            ),
-            _AboutLink(
               icon: Icons.language_rounded,
-              label: 'finavig.app',
+              label: 'wazy-admin-sgjt.vercel.app',
               sub: 'Guides & FAQ',
               onTap: () => _openLink(AppLinks.website),
             ),
@@ -448,8 +457,13 @@ class _AboutLink extends StatelessWidget {
     required this.icon,
     required this.label,
     this.sub,
+    this.highlighted = false,
     required this.onTap,
   });
+
+  /// True for the primary action (in-app request form) — tinted background
+  /// and a chevron instead of the external-link icon.
+  final bool highlighted;
 
   @override
   Widget build(BuildContext context) {
@@ -457,7 +471,9 @@ class _AboutLink extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Material(
-        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.4),
+        color: highlighted
+            ? theme.colorScheme.primary.withOpacity(0.08)
+            : theme.colorScheme.surfaceContainerHighest.withOpacity(0.4),
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
@@ -489,7 +505,9 @@ class _AboutLink extends StatelessWidget {
                   ),
                 ),
                 Icon(
-                  Icons.open_in_new_rounded,
+                  highlighted
+                      ? Icons.chevron_right_rounded
+                      : Icons.open_in_new_rounded,
                   size: 16,
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
