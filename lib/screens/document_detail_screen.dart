@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -16,6 +17,7 @@ import '../services/document_scanner_service.dart';
 import '../services/collection_service.dart';
 import '../services/entitlement_service.dart';
 import '../services/notification_service.dart';
+import '../widgets/attachment_thumbnail.dart';
 import '../widgets/dialogs/renew_document_dialog.dart';
 import '../widgets/widgets.dart';
 
@@ -431,6 +433,17 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       );
     }
 
+    // Whether this attachment is a displayable image (drives the thumbnail
+    // preview vs the generic file icon).
+    final lowerPath = (path ?? '').toLowerCase();
+    final isImage =
+        lowerPath.contains('.png') ||
+        lowerPath.contains('.jpg') ||
+        lowerPath.contains('.jpeg') ||
+        lowerPath.contains('.webp') ||
+        lowerPath.contains('.gif') ||
+        lowerPath.contains('.heic');
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -441,6 +454,8 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       ),
       child: Row(
         children: [
+          // Downsampled, cached thumbnail preview (or generic icon for
+          // non-image files) — a 12 MP scan decodes at ~96 logical px here.
           Container(
             width: 44,
             height: 44,
@@ -448,11 +463,20 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
               color: theme.colorScheme.primaryContainer,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(
-              Icons.attach_file_rounded,
-              color: theme.colorScheme.onPrimaryContainer,
-              size: 24,
-            ),
+            clipBehavior: Clip.antiAlias,
+            child: isImage
+                ? AttachmentImage(
+                    path: path!,
+                    isNetwork: isNetwork,
+                    localFile: file,
+                    targetWidth: 44,
+                    fit: BoxFit.cover,
+                  )
+                : Icon(
+                    Icons.attach_file_rounded,
+                    color: theme.colorScheme.onPrimaryContainer,
+                    size: 24,
+                  ),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -556,6 +580,15 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         lowerPath.contains('.heic');
 
     if (isImage) {
+      // Pre-warm before the fade-in opens so the first frame is instant.
+      unawaited(
+        prewarmAttachmentImage(
+          context,
+          path!,
+          isNetwork: isNetwork,
+          localFile: file,
+        ),
+      );
       Navigator.of(context, rootNavigator: true).push(
         PageRouteBuilder<void>(
           opaque: false,
@@ -563,7 +596,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
           transitionDuration: const Duration(milliseconds: 220),
           pageBuilder: (_, __, ___) => _FullScreenImageViewer(
             name: name,
-            path: path!,
+            path: path,
             isNetwork: isNetwork,
             localFile: file,
             onShare: () => _shareDocumentFile(context, item),
@@ -1838,38 +1871,13 @@ class _FullScreenImageViewerState extends State<_FullScreenImageViewer> {
                 _handleDoubleTap(_doubleTapDetails!);
               }
             },
-            child: widget.isNetwork
-                ? Image.network(
-                    widget.path,
-                    fit: BoxFit.contain,
-                    loadingBuilder: (_, child, progress) {
-                      if (progress == null) return child;
-                      return Center(
-                        child: CircularProgressIndicator(
-                          value: progress.expectedTotalBytes != null
-                              ? progress.cumulativeBytesLoaded /
-                                  progress.expectedTotalBytes!
-                              : null,
-                        ),
-                      );
-                    },
-                    errorBuilder: (_, __, ___) => const Center(
-                      child: Text(
-                        'Error loading cloud image.',
-                        style: TextStyle(color: Colors.white70),
-                      ),
-                    ),
-                  )
-                : Image.file(
-                    widget.localFile!,
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const Center(
-                      child: Text(
-                        'Error loading local image file.',
-                        style: TextStyle(color: Colors.white70),
-                      ),
-                    ),
-                  ),
+            child: AttachmentImage(
+              path: widget.path,
+              isNetwork: widget.isNetwork,
+              localFile: widget.localFile,
+              // No targetWidth: full-resolution decode for crisp zoom.
+              fit: BoxFit.contain,
+            ),
           ),
         ),
       ),

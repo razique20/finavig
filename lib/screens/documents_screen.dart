@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -9,6 +11,7 @@ import '../services/urgency_engine.dart';
 import '../theme/app_theme.dart';
 import '../widgets/dialogs/upgrade_dialog.dart';
 import '../widgets/indicators/empty_state_illustration.dart';
+import '../widgets/attachment_thumbnail.dart';
 import '../widgets/shimmer_skeleton.dart';
 import 'documents/document_action_sheets.dart';
 import 'documents/document_card.dart';
@@ -78,6 +81,40 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         _items = items;
         _loading = false;
       });
+      _prewarmThumbnails();
+    }
+  }
+
+  /// Pre-warms downsampled thumbnails for the first image attachments so
+  /// scrolling between scans never stalls on the first decode. Bounded to
+  /// keep IO and memory predictable; further rows warm on detail open.
+  void _prewarmThumbnails() {
+    const maxPrewarms = 24;
+    var warmed = 0;
+    for (final item in _items) {
+      if (warmed >= maxPrewarms) break;
+      final path = item.filePath;
+      if (path == null || path.isEmpty) continue;
+      final isNetwork =
+          path.startsWith('http://') || path.startsWith('https://');
+      final lower = path.toLowerCase();
+      final isImage =
+          lower.contains('.png') ||
+          lower.contains('.jpg') ||
+          lower.contains('.jpeg') ||
+          lower.contains('.webp') ||
+          lower.contains('.gif') ||
+          lower.contains('.heic');
+      if (!isImage) continue;
+      unawaited(
+        prewarmAttachmentImage(
+          context,
+          path,
+          isNetwork: isNetwork,
+          targetWidth: 96,
+        ),
+      );
+      warmed++;
     }
   }
 

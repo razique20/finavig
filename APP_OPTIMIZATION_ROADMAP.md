@@ -33,12 +33,14 @@ This document outlines the **next wave** of architectural, visual, and interacti
 
 ---
 
-## 4. Cached Image Pipeline for Document Attachments *(pending)*
-* **Is:** `document_detail_screen.dart` renders attachments with raw `Image.file` / `Image.network` — no downsampled decode, no disk cache for cloud URLs.
-* **Plan:**
-  * Pass `cacheWidth`/`cacheHeight` sized to the viewport so a 12 MP scan never decodes at full resolution in the list view.
-  * Adopt `cached_network_image` (with blur-hash placeholder matching the shimmer aesthetic) for Cloud/URL attachments.
-  * Pre-warm thumbnails when a document row becomes visible.
+## 4. ✅ Cached Image Pipeline for Document Attachments *(implemented)*
+* **Was:** `document_detail_screen.dart` rendered attachments with raw `Image.file` / `Image.network` — no downsampled decode (a 12 MP scan decoded at full resolution inside a 44 px card) and no disk cache for cloud URLs (every open re-downloaded).
+* **Implemented:** New shared pipeline in `lib/widgets/attachment_thumbnail.dart`:
+  * `AttachmentImage` — **local files decode downsampled** (`cacheWidth` = layout width × device pixel ratio); **cloud URLs** go through `cached_network_image` with a persistent disk cache and a pulsating placeholder matching the shimmer aesthetic; smooth fade-in frame builder; styled error states.
+  * **Attachment card previews:** the detail screen's 44 px file tile now shows a real downsampled thumbnail instead of a generic paperclip icon.
+  * **Full-screen viewer:** switched to `AttachmentImage` with no cache bounds (native resolution, crisp zoom) and a progress-free cached load.
+  * **Pre-warm helper:** `prewarmAttachmentImage` decodes local images into the shared image cache via `precacheImage` (exact-provider match, incl. `ResizeImage` width) and disk-caches cloud files via `flutter_cache_manager`; `DocumentsScreen._prewarmThumbnails()` warms the first 24 image attachments after each list load.
+  * Added `cached_network_image` + explicit `flutter_cache_manager` dependencies.
 * **Impact:** Instant attachment previews, dramatically lower memory on the Documents tab, fewer jank frames when scrolling between scans.
 
 ---
@@ -86,11 +88,11 @@ This document outlines the **next wave** of architectural, visual, and interacti
 Select an optimization to implement:
 1. ~~**Profile Screen Modularization** — biggest file first.~~ ✅ Done — see feature #1 above.
 2. **Document Detail Screen Modularization** — extract the reusable full-screen viewer.
-3. **Lazy Lists Everywhere** — `ListView.builder` sweep across all tabs.
-4. **Cached Image Pipeline** for document attachments.
+3. ~~**Lazy Lists Everywhere** — `ListView.builder` sweep across all tabs.~~
+4. ~~**Cached Image Pipeline** for document attachments.~~ ✅ Done — see feature #4 above.
 5. **Ask Finavig AI persistent token budget** & cross-session memo.
 6. ~~**Home & Documents Screen Modularization**.~~ ✅ Done — see feature #6 above.
 7. **App Guide & FAQ content split**.
 8. **Performance instrumentation & regression guards**.
 
-Recommended order: **~~3~~ → 4 → ~~1~~ → 2 → ~~6~~ → 7 → 5 → 8** — user-perceived speed wins first, then structural cleanups, then measurement to lock everything in.
+Recommended order: **~~3~~ → ~~4~~ → ~~1~~ → 2 → ~~6~~ → 7 → 5 → 8** — user-perceived speed wins first, then structural cleanups, then measurement to lock everything in.
