@@ -4,10 +4,18 @@ This document outlines the **next wave** of architectural, visual, and interacti
 
 ---
 
-## 1. Profile Screen Modularization *(pending)*
-* **Is:** `lib/screens/profile_screen.dart` is the largest file in the app (~2,240 lines), mixing account cards, Groq/Gemini key management, app-guide entry points, and settings rows in one widget tree.
-* **Plan:** Split into `lib/screens/profile/` modules — `profile_sections.dart` (shared `SectionHeader`/`TintedCardBox` primitives), `account_cards.dart`, `ai_providers_section.dart` (Groq + Gemini key fields), `settings_rows.dart`, and dedicated form sheets. Make every section widget `const`-constructible so it rebuilds independently.
-* **Impact:** Smaller rebuild scopes, faster Profile tab open, and a file the team can actually navigate.
+## 1. ✅ Profile Screen Modularization *(implemented)*
+* **Was:** `lib/screens/profile_screen.dart` was the largest file in the app (~2,240 lines), mixing account cards, Gemini key management, app-guide entry points, and settings rows in one widget tree.
+* **Implemented:** Split into `lib/screens/profile/` modules, mirroring the Money tab precedent:
+  * `profile_sections.dart` — shared primitives: `ProfileSectionGroup`, `ProfileSettingsTile`, `ProfileUsageMeter`, `ProfilePlanNotice`, `profileTileBg`.
+  * `profile_hero.dart` — `ProfileHeroHeader` (identity, plan/sync badges, sign out).
+  * `profile_account_section.dart` — `ProfileAccountCard` + `ProfileAiSection` (Gemini key).
+  * `profile_subscription_section.dart` — `ProfileSubscriptionSection` with self-contained document-count future.
+  * `profile_collections_section.dart` — `ProfileCollectionsSection` (switch/rename/delete/lock).
+  * `profile_appearance_section.dart` — `ProfileAppearanceSection` + `ProfilePreferencesSection`.
+  * `profile_sheets.dart` — stateless bottom sheets: edit-profile, Gemini key, submit-request, request history, `ProfileSupportRequestCard`.
+  * The screen file is down from ~2,240 to ~423 lines; dead alert-toggle state left over from the standalone Alerts & Reminders screen was removed.
+* **Impact:** Smaller rebuild scopes, faster Profile tab open, and a settings screen the team can actually navigate. Covered by `settings_redesign_test.dart` + `plan_restriction_and_collection_locking_test.dart`.
 
 ---
 
@@ -72,7 +80,7 @@ This document outlines the **next wave** of architectural, visual, and interacti
 ## Next Action Plan
 
 Select an optimization to implement:
-1. **Profile Screen Modularization** — biggest file first.
+1. ~~**Profile Screen Modularization** — biggest file first.~~ ✅ Done — see feature #1 above.
 2. **Document Detail Screen Modularization** — extract the reusable full-screen viewer.
 3. **Lazy Lists Everywhere** — `ListView.builder` sweep across all tabs.
 4. **Cached Image Pipeline** for document attachments.
@@ -81,4 +89,4 @@ Select an optimization to implement:
 7. **App Guide & FAQ content split**.
 8. **Performance instrumentation & regression guards**.
 
-Recommended order: **3 → 4 → 1 → 2 → 6 → 7 → 5 → 8** (user-perceived speed wins first, then structural cleanups, then measurement to lock everything in).
+Recommended order: **~~3~~ → 4 → ~~1~~ → 2 → 6 → 7 → 5 → 8** — user-perceived speed wins first, then structural cleanups, then measurement to lock everything in.

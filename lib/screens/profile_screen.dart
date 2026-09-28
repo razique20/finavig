@@ -1,41 +1,37 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/document_collection.dart';
-import '../models/subscription_tier.dart';
-import '../services/alert_preferences_service.dart';
 import '../services/auth_service.dart';
 import '../services/collection_service.dart';
 import '../services/document_scanner_service.dart';
-import '../services/finance_service.dart';
-import '../services/custom_document_type_service.dart';
-import '../services/gemini_api_service.dart';
-import '../services/notification_service.dart';
 import '../services/entitlement_service.dart';
-import '../services/supabase_service.dart';
-import '../services/support_service.dart';
+import '../services/finance_service.dart';
 import '../services/tab_scroll_registry.dart';
-import '../services/theme_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/widgets.dart';
+import 'profile/profile_account_section.dart';
+import 'profile/profile_appearance_section.dart';
+import 'profile/profile_collections_section.dart';
+import 'profile/profile_hero.dart';
+import 'profile/profile_sheets.dart';
+import 'profile/profile_sections.dart';
+import 'profile/profile_subscription_section.dart';
 
 /// Profile tab — Settings, redesigned to the visual language of the Home and
 /// Documents tabs: a navy hero header over a rounded content sheet.
 ///
-/// It keeps the same anatomy family but a settings-specific identity — the
-/// hero carries the user's identity (avatar, name, plan and sync badges)
-/// instead of live dashboards, and the sheet holds grouped preference cards
-/// rather than grids or document lists:
-/// 1. Subscription card (plan, usage meters, upgrade/renew)
-/// 2. Collections (document workspaces)
-/// 3. Appearance (theme)
-/// 4. Alerts & reminders (alert switches + reminder ladder)
-/// 5. AI summary key
+/// The heavy lifting lives in `lib/screens/profile/` modules so each section
+/// rebuilds independently:
+/// 1. Hero (identity, badges, sign out) — `profile_hero.dart`
+/// 2. Account card (role, phone, active collection) — `profile_account_section.dart`
+/// 3. Subscription (plan, meters, upgrade) — `profile_subscription_section.dart`
+/// 4. Collections — `profile_collections_section.dart`
+/// 5. Appearance (theme) + Preferences (alerts link) — `profile_appearance_section.dart`
+/// 6. AI summary key — `profile_account_section.dart`
+/// 7. Help & support — `profile_sheets.dart`
 ///
-/// Sign out lives in the hero — the floating bottom nav pill covers the end
-/// of the scroll content, so it can't live there. Every control saves
-/// immediately — there is no Save button.
+/// Every control saves immediately — there is no Save button.
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -54,12 +50,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _userName = 'Unknown User';
   String _userRole = 'Document Admin';
   String _userPhone = '';
-  bool _notificationsEnabled = true;
-  bool _billSpikesEnabled = true;
-  bool _budgetAlertsEnabled = true;
-  int _reminderCadence = 90;
-  int _taskCadence = 60;
-  int _escalationCadence = 30;
   String _geminiKey = '';
 
   @override
@@ -122,71 +112,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               .toUpperCase()
         : 'Unknown User';
 
+    if (!mounted) return;
     setState(() {
       _userName = derivedName;
       _userRole = prefs.getString('userRole') ?? 'Document Admin';
       _userPhone = prefs.getString('userPhone') ?? '';
-      _notificationsEnabled = prefs.getBool('notificationsEnabled') ?? true;
-      _billSpikesEnabled = AlertPreferencesService.instance.billSpikesEnabled;
-      _budgetAlertsEnabled =
-          AlertPreferencesService.instance.budgetAlertsEnabled;
-      _reminderCadence = prefs.getInt('reminderCadence') ?? 90;
-      _taskCadence = prefs.getInt('taskCadence') ?? 60;
-      _escalationCadence = prefs.getInt('escalationCadence') ?? 30;
       _geminiKey = prefs.getString('gemini.apiKey.v1') ?? '';
     });
-  }
-
-  /// Prompt for / clear the Gemini API key used by the AI executive summary.
-  Future<void> _editGeminiKey() async {
-    final controller = TextEditingController(text: _geminiKey);
-    final result = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Gemini API key'),
-        content: TextField(
-          controller: controller,
-          obscureText: true,
-          decoration: const InputDecoration(
-            hintText: 'AIza…',
-            helperText:
-                'Stored only on this device. Get a free key at aistudio.google.com',
-          ),
-        ),
-        actions: [
-          if (_geminiKey.isNotEmpty)
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, ''),
-              child: const Text('Remove'),
-            ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-    if (result == null || !mounted) return;
-    setState(() => _geminiKey = result);
-    if (result.isEmpty) {
-      await GeminiApiService.instance.clearApiKey();
-    } else {
-      await GeminiApiService.instance.setApiKey(result);
-    }
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          result.isEmpty
-              ? 'Gemini key removed — summaries use built-in templates'
-              : 'Gemini key saved — summaries will be AI-polished',
-        ),
-      ),
-    );
   }
 
   /// Persists the profile details edited in the bottom sheet.
@@ -197,150 +129,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await prefs.setString('userPhone', _userPhone);
   }
 
-  /// Persists reminder prefs and re-applies the OS reminder schedule so
-  /// changes take effect immediately — there is no Save button on this page.
-  Future<void> _applyReminderSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('notificationsEnabled', _notificationsEnabled);
-    await prefs.setInt('reminderCadence', _reminderCadence);
-    await prefs.setInt('taskCadence', _taskCadence);
-    await prefs.setInt('escalationCadence', _escalationCadence);
-    try {
-      final items = await DocumentScannerService.instance.getAllItems();
-      for (final item in items) {
-        if (_notificationsEnabled) {
-          await NotificationService.instance.scheduleEscalationLadder(
-            item.id,
-            item.expiresAt,
-            title: item.displayName,
-          );
-        } else {
-          await NotificationService.instance.cancelReminders(item.id);
-        }
-      }
-    } catch (_) {
-      // Non-fatal: scheduling may be unavailable (e.g. plugin not ready).
-    }
-  }
-
-  Future<void> _editProfile(BuildContext context) async {
-    final roleCtrl = TextEditingController(text: _userRole);
-    final phoneCtrl = TextEditingController(text: _userPhone);
-
-    await showModalBottomSheet(
-      context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.edit_note_rounded, size: 24),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Edit Profile',
-                      style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(ctx),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: roleCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Role / Designation',
-                    prefixIcon: Icon(Icons.badge_outlined),
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: phoneCtrl,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    labelText: 'Phone Number (Optional)',
-                    hintText: '+971 50 000 0000',
-                    prefixIcon: Icon(Icons.phone_iphone_rounded),
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed: () {
-                      setState(() {
-                        _userRole = roleCtrl.text.trim().isEmpty
-                            ? _userRole
-                            : roleCtrl.text.trim();
-                        _userPhone = phoneCtrl.text.trim();
-                      });
-                      Navigator.pop(ctx);
-                      _saveProfileDetails();
-                    },
-                    icon: const Icon(Icons.check_circle_outline),
-                    label: const Text('Save'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+  Future<void> _editProfile() async {
+    await showProfileEditSheet(
+      context,
+      initialRole: _userRole,
+      initialPhone: _userPhone,
+      onSaved: (role, phone) {
+        if (!mounted) return;
+        setState(() {
+          _userRole = role;
+          _userPhone = phone;
+        });
+        _saveProfileDetails();
+      },
     );
   }
 
-  Future<void> _signOut() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Sign out?'),
-        content: const Text(
-          'You will need to sign in again to see your documents.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sign out'),
-          ),
-        ],
-      ),
+  /// Prompt for / clear the Gemini API key used by the AI executive summary.
+  Future<void> _editGeminiKey() async {
+    await showGeminiKeySheet(
+      context,
+      currentKey: _geminiKey,
+      onSaved: (key) {
+        if (!mounted) return;
+        setState(() => _geminiKey = key);
+      },
     );
-
-    if (confirmed != true) return;
-
-    await AuthService.instance.signOut();
-    DocumentScannerService.instance.clearCache();
-    FinanceService.instance.clearCache();
-    CustomDocumentTypeService.instance.reset();
-    EntitlementService.instance.reset();
-
-    if (mounted) context.go('/login');
   }
 
   // ------------------------------------------------------------------
@@ -351,21 +165,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
     // Track 1 gate: company workspaces are tiered — Free has none, Plus one,
     // Business unlimited.
     if (!await enforceCompanyCollectionLimit(context)) return;
+    if (!mounted) return;
 
     final res = await showCreateCollectionDialog(context);
     if (res == null || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
 
     try {
-      final created = await DocumentCollectionService.instance.createCollection(
+      final created =
+          await DocumentCollectionService.instance.createCollection(
         res.name,
         countryCode: res.countryCode,
       );
       await DocumentCollectionService.instance.setActive(created.id);
       await _loadCollections();
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Collection "${res.name}" created')));
+        messenger.showSnackBar(
+          SnackBar(content: Text('Collection "${res.name}" created')),
+        );
       }
     } catch (e) {
       if (mounted) _showError('Could not create collection: $e');
@@ -391,9 +208,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
       await _loadCollections();
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Renamed to "$name"')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Renamed to "$name"')));
       }
     } catch (e) {
       if (mounted) _showError('Could not rename collection: $e');
@@ -408,9 +224,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await DocumentCollectionService.instance.deleteCollection(collection.id);
       await _loadCollections();
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('"${collection.name}" deleted')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('"${collection.name}" deleted')),
+        );
       }
     } catch (e) {
       if (mounted) _showError('Could not delete collection: $e');
@@ -453,1788 +269,156 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       // Ink backdrop behind the hero; the content sheet covers the rest.
       // Same backdrop as Home/Documents.
-      backgroundColor:
-          isDark ? FinavigColors.obsidian : FinavigColors.ink,
+      backgroundColor: isDark ? FinavigColors.obsidian : FinavigColors.ink,
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(
-                color: theme.colorScheme.secondary,
-                onRefresh: _loadSettings,
-                child: CustomScrollView(
-                  controller: _scrollController,
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  slivers: [
-                    SliverToBoxAdapter(child: _buildHeroHeader(theme)),
-                    SliverToBoxAdapter(
-                      child: Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surface,
-                          borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(28),
+          color: theme.colorScheme.secondary,
+          onRefresh: _loadSettings,
+          child: CustomScrollView(
+            controller: _scrollController,
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(
+                child: ProfileHeroHeader(userName: _userName),
+              ),
+              SliverToBoxAdapter(
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(28),
+                    ),
+                  ),
+                  child: _loading
+                      ? SizedBox(
+                          height: 320,
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: theme.colorScheme.secondary,
+                            ),
                           ),
-                        ),
-                        child: _loading
-                            ? SizedBox(
-                                height: 320,
-                                child: Center(
-                                  child: CircularProgressIndicator(
-                                    color: theme.colorScheme.secondary,
+                        )
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 20),
+                            ProfileAccountCard(
+                              userRole: _userRole,
+                              userPhone: _userPhone,
+                              collections: _collections,
+                              activeId: _activeId,
+                              onEditProfile: _editProfile,
+                            ),
+                            const SizedBox(height: 16),
+                            ProfileSubscriptionSection(
+                              collections: _collections,
+                            ),
+                            const SizedBox(height: 16),
+                            ProfileCollectionsSection(
+                              collections: _collections,
+                              activeId: _activeId,
+                              onCreate: _createCollection,
+                              onRename: _renameCollection,
+                              onDelete: _deleteCollection,
+                              onSwitch: _switchTo,
+                            ),
+                            const SizedBox(height: 16),
+                            const ProfileAppearanceSection(),
+                            const SizedBox(height: 16),
+                            const ProfilePreferencesSection(),
+                            const SizedBox(height: 16),
+                            ProfileAiSection(
+                              geminiKey: _geminiKey,
+                              onEditGeminiKey: _editGeminiKey,
+                            ),
+                            const SizedBox(height: 16),
+                            ProfileSectionGroup(
+                              title: 'Help & Support',
+                              children: [
+                                ProfileSettingsTile(
+                                  icon: Icons.quiz_rounded,
+                                  iconColor: const Color(0xFFD97706),
+                                  title: 'Frequently Asked Questions (FAQ)',
+                                  subtitle:
+                                      'Instant answers for documents, money, AI & account',
+                                  trailing: const Icon(
+                                    Icons.chevron_right_rounded,
+                                    size: 20,
+                                    color: Colors.grey,
+                                  ),
+                                  onTap: () => showFaqSheet(
+                                    context,
+                                    onOpenSupportTicket: () =>
+                                        showProfileSupportSheet(context),
                                   ),
                                 ),
-                              )
-                            : Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const SizedBox(height: 20),
-                                  _buildAccountCard(theme),
-                            const SizedBox(height: 16),
-                            _buildSubscriptionSection(context, theme),
-                            const SizedBox(height: 16),
-                            _buildCollectionsSection(context, theme),
-                            const SizedBox(height: 16),
-                            _buildAppearanceSection(context, theme),
-                            const SizedBox(height: 16),
-                            _buildAlertsSection(context, theme),
-                            const SizedBox(height: 16),
-                            _buildAiSection(context, theme),
-                            const SizedBox(height: 16),
-                            _buildSupportSection(context, theme),
+                                ProfileSettingsTile(
+                                  icon: Icons.auto_stories_rounded,
+                                  iconColor: Colors.teal,
+                                  title: 'App Guide',
+                                  subtitle:
+                                      'Interactive walkthrough of all Finavig features',
+                                  trailing: const Icon(
+                                    Icons.chevron_right_rounded,
+                                    size: 20,
+                                    color: Colors.grey,
+                                  ),
+                                  onTap: () => showAppGuideDialog(context),
+                                ),
+                                ProfileSettingsTile(
+                                  icon: Icons.add_comment_rounded,
+                                  iconColor: Colors.teal,
+                                  title: 'Submit a Request',
+                                  subtitle:
+                                      'Request a tracking option, report a bug, or get help',
+                                  trailing: const Icon(
+                                    Icons.chevron_right_rounded,
+                                    size: 20,
+                                    color: Colors.grey,
+                                  ),
+                                  onTap: () => showProfileSupportSheet(context),
+                                ),
+                                ProfileSettingsTile(
+                                  icon: Icons.history_rounded,
+                                  iconColor: Colors.blueGrey,
+                                  title: 'My Requests',
+                                  subtitle:
+                                      'View status of your previous submissions',
+                                  trailing: const Icon(
+                                    Icons.chevron_right_rounded,
+                                    size: 20,
+                                    color: Colors.grey,
+                                  ),
+                                  onTap: () =>
+                                      showProfileRequestHistorySheet(context),
+                                ),
+                              ],
+                            ),
                             // Keep the last card scrollable clear of the
                             // floating nav pill (height + margins ≈ 80).
                             SizedBox(
                               height:
-                                  8 +
-                                  MediaQuery.of(context).padding.bottom +
-                                  80,
+                                  8 + MediaQuery.of(context).padding.bottom + 80,
                             ),
                           ],
                         ),
-                      ),
-                    ),
-                    // White filler: extends the sheet across the rest of the
-                    // viewport when content is short, and into overscroll —
-                    // the navy backdrop never peeks out below the content,
-                    // behind the floating nav pill.
-                    SliverFillRemaining(
-                      hasScrollBody: false,
-                      fillOverscroll: true,
-                      child: ColoredBox(color: theme.colorScheme.surface),
-                    ),
-                  ],
                 ),
               ),
-      ),
-    );
-  }
-
-  // ------------------------------------------------------------------
-  // Hero header — identity (avatar, name, badges, email)
-  // ------------------------------------------------------------------
-
-  Widget _buildHeroHeader(ThemeData theme) {
-    final email = AuthService.instance.userEmail;
-    final isCloudSynced =
-        SupabaseService.hasCredentials && AuthService.instance.isSignedIn;
-    final signedIn = AuthService.instance.isSignedIn;
-    final entitlements = EntitlementService.instance;
-    final tier = entitlements.tier;
-    final tierInfo = TierInfo.all[tier]!;
-    final daysLeft = entitlements.daysUntilPlanExpiry();
-
-    final initials = _userName
-        .trim()
-        .split(' ')
-        .where((e) => e.isNotEmpty)
-        .map((e) => e[0])
-        .take(2)
-        .join('')
-        .toUpperCase();
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                'Settings',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const Spacer(),
-              if (signedIn)
-                _HeroIconButton(
-                  icon: Icons.logout_rounded,
-                  tooltip: 'Sign out',
-                  onTap: _signOut,
-                ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              // Avatar: white on the ink hero — quiet, premium, no glare.
-              Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.14),
-                  borderRadius: BorderRadius.circular(17),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.18),
-                    width: 1,
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    initials.isEmpty ? 'U' : initials,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _userName,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      email ?? 'local@finavig.app',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.white.withOpacity(0.65),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
+              // Sheet filler: extends the sheet across the rest of the
+              // viewport when content is short, and into overscroll —
+              // the navy backdrop never peeks out below the content,
+              // behind the floating nav pill.
+              SliverFillRemaining(
+                hasScrollBody: false,
+                fillOverscroll: true,
+                child: ColoredBox(color: theme.colorScheme.surface),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          // Plan + sync status badges.
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _HeroPill(
-                icon: Icons.workspace_premium_rounded,
-                label: tierInfo.name,
-              ),
-              _HeroPill(
-                icon: isCloudSynced
-                    ? Icons.cloud_done_rounded
-                    : Icons.storage_rounded,
-                label: isCloudSynced ? 'Cloud synced' : 'Local only',
-              ),
-              if (daysLeft != null && !entitlements.isPlanExpired)
-                _HeroPill(
-                  icon: Icons.hourglass_top_rounded,
-                  label: '$daysLeft day${daysLeft == 1 ? '' : 's'} left',
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ------------------------------------------------------------------
-  // 1. Account card — role/phone summary + edit (identity lives in the
-  //    hero; the card carries the editable details).
-  // ------------------------------------------------------------------
-
-  Widget _buildAccountCard(ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-        decoration: BoxDecoration(
-          color: _tileBg(theme),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          children: [
-            _SettingsTile(
-              icon: Icons.badge_outlined,
-              title: _userRole,
-              subtitle: 'Role / designation',
-              trailing: const Icon(
-                Icons.chevron_right_rounded,
-                size: 20,
-                color: Colors.grey,
-              ),
-              onTap: () => _editProfile(context),
-            ),
-            if (_userPhone.trim().isNotEmpty)
-              _SettingsTile(
-                icon: Icons.phone_iphone_rounded,
-                title: _userPhone,
-                subtitle: 'Phone number',
-                trailing: const Icon(
-                  Icons.chevron_right_rounded,
-                  size: 20,
-                  color: Colors.grey,
-                ),
-                onTap: () => _editProfile(context),
-              ),
-            _SettingsTile(
-              icon: Icons.folder_special_rounded,
-              title: '$_activeCollectionName is active',
-              subtitle: 'Current collection',
-              trailing: const Icon(
-                Icons.chevron_right_rounded,
-                size: 20,
-                color: Colors.grey,
-              ),
-              onTap: () => context.go('/documents'),
-            ),
-          ],
         ),
       ),
     );
-  }
-
-  String get _activeCollectionName {
-    for (final c in _collections) {
-      if (c.id == _activeId) return c.name;
-    }
-    return 'Personal';
-  }
-
-  // ------------------------------------------------------------------
-  // 2. Subscription — plan badge, expiry, usage meters, upgrade/renew.
-  // ------------------------------------------------------------------
-
-  Widget _buildSubscriptionSection(BuildContext context, ThemeData theme) {
-    final entitlements = EntitlementService.instance;
-    final tier = entitlements.tier;
-    final info = TierInfo.all[tier]!;
-    final limits = entitlements.limits;
-    final isTopTier = TierInfo.nextTierUp(tier) == null;
-    final planEndsAt = entitlements.planEndsAt;
-    final daysLeft = entitlements.daysUntilPlanExpiry();
-    final isExpired = entitlements.isPlanExpired;
-    final isPaid = tier != SubscriptionTier.free && planEndsAt != null;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Subscription',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: _tileBg(theme),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-            Row(
-              children: [
-                TierBadge(tier: tier),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    info.tagline,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.outline,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-            // Plan expiry countdown (fetched from user_tiers.plan_ends_at).
-            if (isPaid && !isExpired && daysLeft != null) ...[
-              const SizedBox(height: 10),
-              _planNotice(
-                theme,
-                icon: daysLeft <= 7
-                    ? Icons.notification_important_rounded
-                    : Icons.event_available_rounded,
-                color: daysLeft <= 7 ? FinavigColors.warning : FinavigColors.safe,
-                text: daysLeft == 0
-                    ? 'Your ${info.name} plan expires today'
-                    : 'Your ${info.name} plan expires in $daysLeft '
-                          'day${daysLeft == 1 ? '' : 's'} — '
-                          '${_formatDate(planEndsAt)}',
-              ),
-            ],
-            // Expired plan: warn + nudge to renew.
-            if (isExpired) ...[
-              const SizedBox(height: 10),
-              _planNotice(
-                theme,
-                icon: Icons.error_outline_rounded,
-                color: FinavigColors.danger,
-                text: 'Your ${info.name} plan expired on '
-                    '${_formatDate(planEndsAt!)} — features are locked '
-                    'again. Tap Renew Plan to resubscribe.',
-              ),
-            ],
-            const SizedBox(height: 12),
-            // Usage meters: documents + company workspaces, mirrored from
-            // the free-tier limits.
-            FutureBuilder<int>(
-              future: _documentCount ??= _countDocuments(),
-              builder: (context, snap) {
-                final used = snap.data ?? 0;
-                final max = limits.maxDocuments;
-                final companyUsed = _collections
-                    .where((c) => !c.isPersonal)
-                    .length;
-                final maxCompany = limits.maxCompanyCollections;
-                // Hide the workspaces meter on Free (cap 0, none in use) —
-                // a permanent empty bar is noise, not information.
-                final showCompanyMeter =
-                    companyUsed > 0 || (maxCompany != null && maxCompany > 0);
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _UsageMeter(
-                      label: 'Documents',
-                      used: used,
-                      max: max,
-                    ),
-                    if (showCompanyMeter) ...[
-                      const SizedBox(height: 8),
-                      _UsageMeter(
-                        label: 'Company workspaces',
-                        used: companyUsed,
-                        max: maxCompany,
-                      ),
-                    ],
-                  ],
-                );
-              },
-            ),
-            const SizedBox(height: 12),
-            if (!isTopTier)
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: () => showTierRequestSheet(context),
-                  icon: const Icon(Icons.upgrade_rounded, size: 18),
-                  label: Text(isExpired
-                      ? 'Renew Plan'
-                      : isPaid
-                          ? 'Extend Plan'
-                          : 'Upgrade Plan'),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: FinavigColors.navyPrimary,
-                    foregroundColor: Colors.white,
-                  ),
-                ),
-              )
-            else
-              Text(
-                'You are on the highest plan — thanks for supporting Finavig!',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: FinavigColors.safe,
-                ),
-              ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// One-tick-later guard so the FutureBuilder doesn't re-fire the count on
-  /// every rebuild (usage only changes when documents change).
-  Future<int>? _documentCount;
-
-  Future<int> _countDocuments() =>
-      EntitlementService.instance.documentsInUse();
-
-  Widget _planNotice(
-    ThemeData theme, {
-    required IconData icon,
-    required Color color,
-    required String text,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withAlpha(20),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withAlpha(70)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: color),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  static String _formatDate(DateTime date) {
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
-    final local = date.toLocal();
-    return '${local.day} ${months[local.month - 1]} ${local.year}';
-  }
-
-  // ------------------------------------------------------------------
-  // 3. Collections — group documents per company.
-  // ------------------------------------------------------------------
-
-  Widget _buildCollectionsSection(BuildContext context, ThemeData theme) {
-    final entitlements = EntitlementService.instance;
-    return _SettingsGroup(
-      title: 'My Collections',
-      action: IconButton(
-        onPressed: _createCollection,
-        icon: const Icon(Icons.add_circle_outline),
-        tooltip: 'New collection',
-        visualDensity: VisualDensity.compact,
-      ),
-      children: [
-        for (final collection in _collections)
-          Builder(
-            builder: (ctx) {
-              final isLocked = entitlements.isCollectionLocked(collection);
-              final reqTier = entitlements.requiredTierForCollection(collection);
-              final reqFeature = entitlements.requiredFeatureForCollection(collection);
-
-              return _SettingsTile(
-                icon: isLocked ? Icons.lock_rounded : collection.icon,
-                iconColor: isLocked ? FinavigColors.warning : null,
-                title: collection.name,
-                subtitle: isLocked
-                    ? 'Locked • Requires ${TierInfo.all[reqTier]!.name} Plan'
-                    : (collection.isPersonal
-                        ? 'Your own documents — always here'
-                        : 'Company collection'),
-                highlighted: _activeId == collection.id && !isLocked,
-                trailing: isLocked
-                    ? Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: FinavigColors.warning.withAlpha(35),
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(
-                                color: FinavigColors.warning.withAlpha(120),
-                                width: 0.8,
-                              ),
-                            ),
-                            child: const Text(
-                              'LOCKED',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: FinavigColors.warning,
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.delete_outline,
-                              size: 18,
-                              color: Colors.red,
-                            ),
-                            tooltip: 'Delete',
-                            visualDensity: VisualDensity.compact,
-                            onPressed: () => _deleteCollection(collection),
-                          ),
-                          const Icon(
-                            Icons.chevron_right_rounded,
-                            size: 20,
-                            color: Colors.grey,
-                          ),
-                        ],
-                      )
-                    : (_activeId == collection.id
-                        ? const Tooltip(
-                            message: 'Active collection',
-                            child: Icon(
-                              Icons.check_circle,
-                              color: Colors.green,
-                              size: 20,
-                            ),
-                          )
-                        : Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Personal collection cannot be renamed/deleted.
-                              if (!collection.isPersonal) ...[
-                                IconButton(
-                                  icon: const Icon(Icons.edit_outlined, size: 18),
-                                  tooltip: 'Rename',
-                                  visualDensity: VisualDensity.compact,
-                                  onPressed: () => _renameCollection(collection),
-                                ),
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.delete_outline,
-                                    size: 18,
-                                    color: Colors.red,
-                                  ),
-                                  tooltip: 'Delete',
-                                  visualDensity: VisualDensity.compact,
-                                  onPressed: () => _deleteCollection(collection),
-                                ),
-                              ],
-                              const Icon(
-                                Icons.chevron_right_rounded,
-                                size: 20,
-                                color: Colors.grey,
-                              ),
-                            ],
-                          )),
-                onTap: isLocked
-                    ? () => showUpgradeDialog(context, reqFeature)
-                    : (_activeId == collection.id
-                        ? null
-                        : () => _switchTo(collection)),
-              );
-            },
-          ),
-      ],
-    );
-  }
-
-  // ------------------------------------------------------------------
-  // 4. Appearance — theme (segmented control).
-  // ------------------------------------------------------------------
-
-  Widget _buildAppearanceSection(BuildContext context, ThemeData theme) {
-    return _SettingsGroup(
-      title: 'Appearance',
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
-          child: SizedBox(
-            width: double.infinity,
-            child: SegmentedButton<ThemeMode>(
-              segments: const [
-                ButtonSegment(
-                  value: ThemeMode.system,
-                  icon: Icon(Icons.brightness_auto, size: 18),
-                  label: Text('System'),
-                ),
-                ButtonSegment(
-                  value: ThemeMode.light,
-                  icon: Icon(Icons.light_mode, size: 18),
-                  label: Text('Light'),
-                ),
-                ButtonSegment(
-                  value: ThemeMode.dark,
-                  icon: Icon(Icons.dark_mode, size: 18),
-                  label: Text('Dark'),
-                ),
-              ],
-              selected: {ThemeService.instance.mode},
-              onSelectionChanged: (selected) {
-                ThemeService.instance.setMode(selected.first);
-                setState(() {}); // update selected highlight
-              },
-              showSelectedIcon: false,
-              style: ButtonStyle(
-                visualDensity: VisualDensity.compact,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ------------------------------------------------------------------
-  // 5. Alerts & reminders — switches + the reminder ladder.
-  //    Every change is saved and re-applied immediately.
-  // ------------------------------------------------------------------
-
-  Widget _buildAlertsSection(BuildContext context, ThemeData theme) {
-    return _SettingsGroup(
-      title: 'Preferences',
-      children: [
-        _SettingsTile(
-          icon: Icons.notifications_active_rounded,
-          iconColor: FinavigColors.indigo,
-          title: 'Alerts & Reminders',
-          subtitle: 'Notifications, bill spikes, budget alerts & lead times',
-          trailing: const Icon(Icons.chevron_right_rounded, size: 20),
-          onTap: () => context.push('/alerts-reminders'),
-        ),
-      ],
-    );
-  }
-
-  // ------------------------------------------------------------------
-  // 6. AI summary — Gemini key configuration. Key stays on-device and only
-  //    gates the LLM polish pass; the summary works without it.
-  // ------------------------------------------------------------------
-
-  Widget _buildAiSection(BuildContext context, ThemeData theme) {
-    return _SettingsGroup(
-      title: 'AI Summary',
-      children: [
-        _SettingsTile(
-          icon: Icons.auto_awesome_rounded,
-          iconColor: Colors.deepPurple,
-          title: 'AI Executive Summary',
-          subtitle: _geminiKey.isEmpty
-              ? 'Uses built-in templates — add a Gemini key for AI polish'
-              : 'Gemini key configured — summaries are AI-polished',
-          trailing: const Icon(
-            Icons.edit_rounded,
-            size: 20,
-            color: Colors.grey,
-          ),
-          onTap: _editGeminiKey,
-        ),
-      ],
-    );
-  }
-
-  // ------------------------------------------------------------------
-  // 7. Help & Support — submit requests, track status.
-  // ------------------------------------------------------------------
-
-  Widget _buildSupportSection(BuildContext context, ThemeData theme) {
-    return _SettingsGroup(
-      title: 'Help & Support',
-      children: [
-        _SettingsTile(
-          icon: Icons.quiz_rounded,
-          iconColor: const Color(0xFFD97706),
-          title: 'Frequently Asked Questions (FAQ)',
-          subtitle: 'Instant answers for documents, money, AI & account',
-          trailing: const Icon(
-            Icons.chevron_right_rounded,
-            size: 20,
-            color: Colors.grey,
-          ),
-          onTap: () => showFaqSheet(
-            context,
-            onOpenSupportTicket: () => _showSubmitSupportSheet(context),
-          ),
-        ),
-        _SettingsTile(
-          icon: Icons.auto_stories_rounded,
-          iconColor: Colors.teal,
-          title: 'App Guide',
-          subtitle: 'Interactive walkthrough of all Finavig features',
-          trailing: const Icon(
-            Icons.chevron_right_rounded,
-            size: 20,
-            color: Colors.grey,
-          ),
-          onTap: () => showAppGuideDialog(context),
-        ),
-        _SettingsTile(
-          icon: Icons.add_comment_rounded,
-          iconColor: Colors.teal,
-          title: 'Submit a Request',
-          subtitle: 'Request a tracking option, report a bug, or get help',
-          trailing: const Icon(
-            Icons.chevron_right_rounded,
-            size: 20,
-            color: Colors.grey,
-          ),
-          onTap: () => _showSubmitSupportSheet(context),
-        ),
-        _SettingsTile(
-          icon: Icons.history_rounded,
-          iconColor: Colors.blueGrey,
-          title: 'My Requests',
-          subtitle: 'View status of your previous submissions',
-          trailing: const Icon(
-            Icons.chevron_right_rounded,
-            size: 20,
-            color: Colors.grey,
-          ),
-          onTap: () => _showRequestHistorySheet(context),
-        ),
-      ],
-    );
-  }
-
-  /// Opens a bottom sheet for submitting a new support / tracking request.
-  Future<void> _showSubmitSupportSheet(BuildContext context) async {
-    final theme = Theme.of(context);
-    final titleCtrl = TextEditingController();
-    final descCtrl = TextEditingController();
-    String selectedType = 'tracking_option_request';
-
-    final submitted = await showModalBottomSheet<bool>(
-      context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      backgroundColor: theme.colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheetState) {
-          return SafeArea(
-            child: Padding(
-              padding: EdgeInsets.only(
-                left: 20,
-                right: 20,
-                top: 20,
-                bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Drag handle
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.outline.withOpacity(0.3),
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.teal.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.support_agent_rounded,
-                            color: Colors.teal,
-                            size: 22,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'Submit a Request',
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed: () => Navigator.pop(ctx, false),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Request type
-                    Text(
-                      'Request Type',
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: theme.colorScheme.outline.withOpacity(0.3),
-                        ),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: selectedType,
-                          isExpanded: true,
-                          borderRadius: BorderRadius.circular(12),
-                          items: const [
-                            DropdownMenuItem(
-                              value: 'tracking_option_request',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.track_changes_rounded, size: 18, color: Colors.teal),
-                                  SizedBox(width: 10),
-                                  Text('Tracking Option Request'),
-                                ],
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 'feature_request',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.lightbulb_outline_rounded, size: 18, color: Colors.amber),
-                                  SizedBox(width: 10),
-                                  Text('Feature Request'),
-                                ],
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 'bug_report',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.bug_report_outlined, size: 18, color: Colors.redAccent),
-                                  SizedBox(width: 10),
-                                  Text('Bug Report'),
-                                ],
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 'support_request',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.help_outline_rounded, size: 18, color: Colors.blue),
-                                  SizedBox(width: 10),
-                                  Text('General Support'),
-                                ],
-                              ),
-                            ),
-                          ],
-                          onChanged: (v) {
-                            if (v != null) setSheetState(() => selectedType = v);
-                          },
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Title
-                    Text(
-                      'Title',
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: titleCtrl,
-                      textCapitalization: TextCapitalization.sentences,
-                      decoration: InputDecoration(
-                        hintText: 'e.g. Add vehicle registration tracking',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        prefixIcon: const Icon(Icons.title_rounded),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Description
-                    Text(
-                      'Description',
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: descCtrl,
-                      maxLines: 4,
-                      textCapitalization: TextCapitalization.sentences,
-                      decoration: InputDecoration(
-                        hintText:
-                            'Describe what you need in detail…',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        alignLabelWithHint: true,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Submit
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: FilledButton.icon(
-                        onPressed: () async {
-                          final title = titleCtrl.text.trim();
-                          final desc = descCtrl.text.trim();
-                          if (title.isEmpty) {
-                            ScaffoldMessenger.of(ctx).showSnackBar(
-                              const SnackBar(
-                                content: Text('Please enter a title'),
-                              ),
-                            );
-                            return;
-                          }
-                          if (desc.isEmpty) {
-                            ScaffoldMessenger.of(ctx).showSnackBar(
-                              const SnackBar(
-                                content: Text('Please add a description'),
-                              ),
-                            );
-                            return;
-                          }
-
-                          final result =
-                              await SupportService.instance.submitRequest(
-                            title: title,
-                            description: desc,
-                            requestType: selectedType,
-                          );
-
-                          if (ctx.mounted) {
-                            ScaffoldMessenger.of(ctx).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  result.message ?? 'Request submitted',
-                                ),
-                              ),
-                            );
-                            Navigator.pop(ctx, result.success);
-                          }
-                        },
-                        icon: const Icon(Icons.send_rounded),
-                        label: const Text('Submit Request'),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: FinavigColors.navyPrimary,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-
-    // Refresh is not needed because support requests are independent of
-    // the profile state, but good UX if user checks My Requests next.
-    if (submitted == true && mounted) {
-      setState(() {});
-    }
-  }
-
-  /// Opens a bottom sheet listing all the user's past support requests
-  /// with their current status.
-  Future<void> _showRequestHistorySheet(BuildContext context) async {
-    final theme = Theme.of(context);
-
-    showModalBottomSheet(
-      context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      backgroundColor: theme.colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) {
-        return SafeArea(
-          child: SizedBox(
-            height: MediaQuery.of(ctx).size.height * 0.65,
-            child: Column(
-              children: [
-                // Drag handle
-                const SizedBox(height: 8),
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.outline.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.blueGrey.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.history_rounded,
-                          color: Colors.blueGrey,
-                          size: 22,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'My Requests',
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.pop(ctx),
-                      ),
-                    ],
-                  ),
-                ),
-                const Divider(height: 1),
-                Expanded(
-                  child: FutureBuilder<List<SupportRequestItem>>(
-                    future: SupportService.instance.fetchUserRequests(),
-                    builder: (ctx, snap) {
-                      if (snap.connectionState == ConnectionState.waiting) {
-                        return const Center(
-                          child: CircularProgressIndicator(),
-                        );
-                      }
-                      final items = snap.data ?? [];
-                      if (items.isEmpty) {
-                        return Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(32),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.inbox_rounded,
-                                  size: 56,
-                                  color: theme.colorScheme.outline
-                                      .withOpacity(0.4),
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  'No requests yet',
-                                  style:
-                                      theme.textTheme.titleMedium?.copyWith(
-                                    color: theme.colorScheme.outline,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Submit a request and it will appear here',
-                                  style:
-                                      theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.outline,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }
-                      return ListView.separated(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        itemCount: items.length,
-                        separatorBuilder: (_, __) =>
-                            const SizedBox(height: 10),
-                        itemBuilder: (ctx, i) {
-                          final item = items[i];
-                          return _SupportRequestCard(
-                            item: item,
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  // ------------------------------------------------------------------
-  // Shared building blocks
-  // ------------------------------------------------------------------
-
-  Color _tileBg(ThemeData theme) {
-    final isDark = theme.brightness == Brightness.dark;
-    return isDark
-        ? FinavigColors.slate.withOpacity(0.5)
-        : Colors.white;
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Settings building blocks
-// ─────────────────────────────────────────────────────────────────────────────
-
-/// A grouped settings card: title row (like "Next renewals · N") over a
-/// rounded tile-background column of rows, matching the sheet's tile style.
-class _SettingsGroup extends StatelessWidget {
-  final String title;
-  final Widget? action;
-  final List<Widget> children;
-
-  const _SettingsGroup({
-    required this.title,
-    required this.children,
-    this.action,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final tileBg = isDark
-        ? FinavigColors.slate.withOpacity(0.5)
-        : Colors.white;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              if (action != null) action!,
-            ],
-          ),
-          const SizedBox(height: 10),
-          Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: tileBg,
-              borderRadius: BorderRadius.circular(FinavigRadius.card),
-            ),
-            child: Column(
-              children: [
-                for (var i = 0; i < children.length; i++) ...[
-                  children[i],
-                  if (i < children.length - 1)
-                    Divider(
-                      height: 1,
-                      indent: 50,
-                      endIndent: 16,
-                      color: isDark
-                          ? Colors.white.withOpacity(0.06)
-                          : Colors.black.withOpacity(0.05),
-                    ),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// One tappable settings row: tinted circular icon, title, optional subtitle,
-/// and a trailing widget — the same row anatomy as the notification rows.
-class _SettingsTile extends StatelessWidget {
-  final IconData icon;
-  final Color? iconColor;
-  final String title;
-  final String? subtitle;
-  final Widget? trailing;
-  final VoidCallback? onTap;
-  final bool highlighted;
-
-  const _SettingsTile({
-    required this.icon,
-    required this.title,
-    this.iconColor,
-    this.subtitle,
-    this.trailing,
-    this.onTap,
-    this.highlighted = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final accent = iconColor ?? FinavigColors.indigo;
-
-    return Material(
-      color: highlighted
-          ? theme.colorScheme.primary.withOpacity(isDark ? 0.14 : 0.05)
-          : Colors.transparent,
-      borderRadius: BorderRadius.circular(FinavigRadius.tile),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(FinavigRadius.tile),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Row(
-            children: [
-              BentoIconTile(
-                icon: icon,
-                color: accent,
-                size: 38,
-                iconSize: 18,
-                radius: 12,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (subtitle != null) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle!,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.outline,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              if (trailing != null) ...[
-                const SizedBox(width: 8),
-                trailing!,
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Switch row inside a [_SettingsGroup].
-class _SettingsSwitchTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  const _SettingsSwitchTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.value,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return _SettingsTile(
-      icon: icon,
-      title: title,
-      subtitle: subtitle,
-      onTap: () => onChanged(!value),
-      trailing: Switch(
-        value: value,
-        onChanged: onChanged,
-      ),
-    );
-  }
-}
-
-/// Dropdown row inside a [_SettingsGroup].
-class _SettingsDropdownTile<T> extends StatelessWidget {
-  final IconData icon;
-  final Color? iconColor;
-  final String title;
-  final String subtitle;
-  final T value;
-  final List<T> items;
-  final ValueChanged<T?> onChanged;
-
-  const _SettingsDropdownTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.value,
-    required this.items,
-    required this.onChanged,
-    this.iconColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return _SettingsTile(
-      icon: icon,
-      iconColor: iconColor,
-      title: title,
-      subtitle: subtitle,
-      onTap: () {
-        // Hand-rolled menu: ListTile options in a bottom sheet, matching
-        // the collection switcher on Home.
-        showModalBottomSheet<T>(
-          context: context,
-          backgroundColor: theme.colorScheme.surface,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          builder: (sheetContext) => SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 8),
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.outline.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
-                    title,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                const Divider(height: 1),
-                for (final item in items)
-                  ListTile(
-                    leading: Text(
-                      _labelFor(item),
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    trailing: value == item
-                        ? Icon(
-                            Icons.check_rounded,
-                            color: theme.colorScheme.primary,
-                          )
-                        : null,
-                    onTap: () => Navigator.pop(sheetContext, item),
-                  ),
-              ],
-            ),
-          ),
-        ).then((selection) {
-          if (selection != null) onChanged(selection);
-        });
-      },
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            _labelFor(value),
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.primary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const Icon(Icons.expand_more_rounded, size: 18),
-        ],
-      ),
-    );
-  }
-
-  String _labelFor(T value) {
-    // Day counts render as "N days"; other types as raw strings.
-    if (value is int) return '$value days';
-    return '$value';
-  }
-}
-
-/// Plan usage meter: label + "used / max" (or "used · unlimited"), with a
-/// thin progress bar — documents/workspaces at a glance, like the money
-/// breakdown under the Home hero.
-class _UsageMeter extends StatelessWidget {
-  final String label;
-  final int used;
-  final int? max;
-
-  const _UsageMeter({
-    required this.label,
-    required this.used,
-    required this.max,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final ratio = max == null || max == 0 ? 0.0 : (used / max!).clamp(0.0, 1.0);
-    final barColor = max == null
-        ? FinavigColors.safe
-        : ratio >= 1.0
-            ? FinavigColors.danger
-            : ratio >= 0.8
-                ? FinavigColors.warning
-                : theme.colorScheme.primary;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                label,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.outline,
-                ),
-              ),
-            ),
-            Text(
-              max == null
-                  ? '$used · unlimited'
-                  : '$used / $max',
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: barColor,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(3),
-          child: LinearProgressIndicator(
-            value: max == null ? 1.0 : ratio,
-            minHeight: 5,
-            backgroundColor: isDark
-                ? Colors.white.withOpacity(0.08)
-                : Colors.black.withOpacity(0.06),
-            valueColor: AlwaysStoppedAnimation<Color>(barColor),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Frosted pill in the hero (plan / sync status) — a quieter variant of the
-/// hero action pills on Home.
-class _HeroPill extends StatelessWidget {
-  final IconData icon;
-  final String label;
-
-  const _HeroPill({required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.10),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.18)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: Colors.white),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Frosted glass icon button used in the hero header (sign out) — same style
-/// as the dark-mode toggle on Home.
-class _HeroIconButton extends StatelessWidget {
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onTap;
-
-  const _HeroIconButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: Material(
-        color: Colors.white.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(13),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(13),
-          onTap: onTap,
-          child: SizedBox(
-            width: 40,
-            height: 40,
-            child: Icon(icon, color: Colors.white, size: 20),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// A card that shows one support request — type, title, description snippet,
-/// submitted date, and a colour-coded status badge.
-class _SupportRequestCard extends StatelessWidget {
-  final SupportRequestItem item;
-
-  const _SupportRequestCard({required this.item});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    final (Color statusColor, IconData statusIcon) = switch (item.status) {
-      'in_progress' => (Colors.orange, Icons.autorenew_rounded),
-      'resolved' => (FinavigColors.safe, Icons.check_circle_outline_rounded),
-      _ => (Colors.blueGrey, Icons.schedule_rounded), // 'open'
-    };
-
-    final statusLabel = switch (item.status) {
-      'in_progress' => 'In Progress',
-      'resolved' => 'Resolved',
-      _ => 'Open',
-    };
-
-    final typeIcon = switch (item.requestType) {
-      'tracking_option_request' => Icons.track_changes_rounded,
-      'feature_request' => Icons.lightbulb_outline_rounded,
-      'bug_report' => Icons.bug_report_outlined,
-      _ => Icons.help_outline_rounded,
-    };
-
-    final typeColor = switch (item.requestType) {
-      'tracking_option_request' => Colors.teal,
-      'feature_request' => Colors.amber.shade700,
-      'bug_report' => Colors.redAccent,
-      _ => Colors.blue,
-    };
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isDark
-            ? FinavigColors.slate.withOpacity(0.55)
-            : FinavigColors.cloud,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withOpacity(0.06)
-              : Colors.black.withOpacity(0.05),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Top row: type pill + status badge
-          Row(
-            children: [
-              // Type pill
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: typeColor.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(typeIcon, size: 14, color: typeColor),
-                    const SizedBox(width: 4),
-                    Text(
-                      item.typeLabel,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: typeColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Spacer(),
-              // Status badge
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(statusIcon, size: 14, color: statusColor),
-                    const SizedBox(width: 4),
-                    Text(
-                      statusLabel,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: statusColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-
-          // Title
-          Text(
-            item.title,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-
-          if (item.description.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              item.description,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.outline,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-
-          // Admin notes (if any)
-          if (item.adminNotes != null &&
-              item.adminNotes!.trim().isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: FinavigColors.cyanSecondary.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: FinavigColors.cyanSecondary.withOpacity(0.2),
-                ),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(
-                    Icons.admin_panel_settings_rounded,
-                    size: 16,
-                    color: FinavigColors.cyanSecondary,
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      item.adminNotes!,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: FinavigColors.cyanSecondary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-
-          const SizedBox(height: 8),
-          // Date
-          Text(
-            _formatRequestDate(item.createdAt),
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.outline.withOpacity(0.6),
-              fontSize: 11,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  static String _formatRequestDate(DateTime date) {
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
-    final local = date.toLocal();
-    final hour = local.hour % 12 == 0 ? 12 : local.hour % 12;
-    final amPm = local.hour >= 12 ? 'PM' : 'AM';
-    final min = local.minute.toString().padLeft(2, '0');
-    return '${local.day} ${months[local.month - 1]} ${local.year} · $hour:$min $amPm';
   }
 }
