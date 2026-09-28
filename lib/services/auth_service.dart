@@ -1,4 +1,11 @@
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'collection_service.dart';
+import 'custom_document_type_service.dart';
+import 'document_scanner_service.dart';
+import 'entitlement_service.dart';
+import 'finance_service.dart';
 
 import 'supabase_service.dart';
 
@@ -60,6 +67,64 @@ class AuthService {
   Future<void> signOut() async {
     if (!isAvailable) return;
     await SupabaseService.client.auth.signOut();
+  }
+
+  /// Permanently delete the signed-in user's account and all their data.
+  ///
+  /// Calls the `delete_own_account` security-definer Postgres function (see
+  /// supabase/delete_account_function.sql): the auth.users row is removed and
+  /// every business table cascades via owner_id ON DELETE CASCADE. Then the
+  /// session is signed out and local caches/preferences are cleared so no
+  /// trace of the account remains on this device.
+  ///
+  /// Throws [AuthException] when Supabase is unreachable or the RPC fails.
+  /// No-op in local-only mode (no Supabase configured).
+  Future<void> deleteAccount() async {
+    final client = SupabaseService.clientOrNull;
+    if (client == null) return; // local-only mode: nothing to delete server-side
+
+    // 1. Server-side deletion (auth user + all cascaded rows).
+    await client.rpc('delete_own_account');
+
+    // 2. Sign out. The auth row is already gone, so server-side token
+    //    revocation inside signOut may fail with AuthException — ignore it;
+    //    local session cleanup is what matters now.
+    try {
+      await SupabaseService.client.auth.signOut();
+    } catch (_) {
+      // Best-effort — local session is cleared by supabase_flutter regardless.
+    }
+
+    // 3. Clear every local cache/pref that could hold account remnants.
+    await _clearLocalAccountData();
+  }
+
+  /// Removes all device-local data tied to the (now-deleted) account:
+  /// document/finance caches, quota counters, AI keys, profile fields and
+  /// the local-mode stores. Best-effort per key — deletion must succeed
+  /// even if one pref read fails.
+  Future<void> _clearLocalAccountData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final keys = prefs.getKeys().toList();
+      for (final key in keys) {
+        try {
+          await prefs.remove(key);
+        } catch (_) {}
+      }
+    } catch (_) {
+      // SharedPreferences unavailable — proceed with sign-out anyway.
+    }
+
+    // Reset in-memory service caches (same set as sign-out plus the
+    // collection scope) so a new sign-up starts from a clean slate.
+    // Server-side rows are already gone via CASCADE and prefs are wiped,
+    // so the per-feature quota clearers are not needed here.
+    DocumentScannerService.instance.clearCache();
+    FinanceService.instance.clearCache();
+    EntitlementService.instance.reset();
+    await CustomDocumentTypeService.instance.reset();
+    await DocumentCollectionService.instance.reset();
   }
 
   /// Listen to auth changes (sign-in, sign-out, token refresh). Used by the

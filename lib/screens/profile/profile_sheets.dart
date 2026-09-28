@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../config/app_links.dart';
+import '../../services/auth_service.dart';
 import '../../services/gemini_api_service.dart';
 import '../../services/support_service.dart';
 import '../../theme/app_theme.dart';
@@ -740,5 +745,182 @@ class ProfileSupportRequestCard extends StatelessWidget {
     final amPm = local.hour >= 12 ? 'PM' : 'AM';
     final min = local.minute.toString().padLeft(2, '0');
     return '${local.day} ${months[local.month - 1]} ${local.year} · $hour:$min $amPm';
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Account deletion (Play Store data-safety compliance)
+// ────────────────────────────────────────────────────────────────────────────
+
+/// Two-step account deletion: a warning sheet, then a typed-confirmation
+/// dialog. On confirm the Supabase auth user is deleted via the
+/// `delete_own_account` RPC (see supabase/delete_account_function.sql) and
+/// all cascaded server rows plus local caches are wiped by
+/// [AuthService.deleteAccount].
+Future<void> showDeleteAccountSheet(BuildContext context) async {
+  // Step 1 — warning with a data-clearance summary.
+  final wantsDelete = await showModalBottomSheet<bool>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    useRootNavigator: true,
+    builder: (sheetCtx) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.delete_forever_rounded,
+                    color: Colors.red,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Delete account?',
+                    style: Theme.of(sheetCtx).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Text(
+              'This permanently removes:\n'
+              '\u2022 Your account and sign-in ability\n'
+              '\u2022 All documents, scans and financial records\n'
+              '\u2022 Budgets, envelopes and AI quota history\n\n'
+              'This cannot be undone once confirmed.',
+              style: Theme.of(sheetCtx).textTheme.bodyMedium?.copyWith(
+                    height: 1.5,
+                    color: Theme.of(sheetCtx)
+                        .colorScheme
+                        .onSurface
+                        .withOpacity(0.8),
+                  ),
+            ),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(sheetCtx, false),
+                    child: const Text('Keep my account'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.red,
+                    ),
+                    onPressed: () => Navigator.pop(sheetCtx, true),
+                    child: const Text('Continue'),
+                    ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Center(
+              child: TextButton(
+                onPressed: () => launchUrl(
+                  Uri.parse(AppLinks.privacy),
+                  mode: LaunchMode.externalApplication,
+                ),
+                child: const Text('Read the Privacy Policy'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+
+  if (wantsDelete != true || !context.mounted) return;
+
+  // Step 2 — typed confirmation.
+  final email = AuthService.instance.userEmail ?? '';
+  final typed = await showDialog<String>(
+    context: context,
+    useRootNavigator: true,
+    builder: (dlgCtx) {
+      final controller = TextEditingController();
+      return AlertDialog(
+        title: const Text('Confirm deletion'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Type your email to confirm:'),
+            const SizedBox(height: 10),
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.emailAddress,
+              autocorrect: false,
+              enableSuggestions: false,
+              decoration: InputDecoration(hintText: email),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dlgCtx),
+            child: const Text('Cancel'),
+          ),
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: controller,
+            builder: (ctx, value, _) => FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: value.text.trim().toLowerCase() ==
+                      email.trim().toLowerCase() &&
+                  email.isNotEmpty
+                  ? () => Navigator.pop(dlgCtx, value.text.trim())
+                  : null,
+              child: const Text('Delete forever'),
+            ),
+          ),
+        ],
+      );
+    },
+  );
+
+  if (typed == null || !context.mounted) return;
+
+  // Step 3 — delete.
+  final messenger = ScaffoldMessenger.of(context);
+  try {
+    await AuthService.instance.deleteAccount();
+    if (context.mounted) context.go('/login');
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Text('Account deleted. Your data has been removed.'),
+      ),
+    );
+  } on AuthException catch (e) {
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text('Could not delete account: ${e.message}'),
+        backgroundColor: Colors.red,
+      ),
+    );
+  } catch (e) {
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text('Could not delete account: $e'),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 }

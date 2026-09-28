@@ -214,4 +214,3 @@ class _HeroPill extends StatelessWidget {
     );
   }
 }
-

@@ -394,6 +394,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   onTap: () =>
                                       showProfileRequestHistorySheet(context),
                                 ),
+                                ProfileSettingsTile(
+                                  icon: Icons.delete_forever_rounded,
+                                  iconColor: Colors.red,
+                                  title: 'Delete Account',
+                                  subtitle:
+                                      'Permanently erase your account and all data',
+                                  trailing: const Icon(
+                                    Icons.chevron_right_rounded,
+                                    size: 20,
+                                    color: Colors.grey,
+                                  ),
+                                  onTap: () async {
+                                    final signedIn =
+                                        AuthService.instance.isSignedIn;
+                                    if (!signedIn) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                              'Sign in to delete your account.'),
+                                        ),
+                                      );
+                                      return;
+                                    }
+                                    await showDeleteAccountSheet(context);
+                                  },
+                                ),
                               ],
                             ),
                             // Keep the last card scrollable clear of the
