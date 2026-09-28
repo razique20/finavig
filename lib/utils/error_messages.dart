@@ -53,7 +53,6 @@ String friendlyError(Object error, {String? context}) {
       raw.contains('xmlhttprequest error') ||
       raw.contains('network is unreachable') ||
       raw.contains('connection refused') ||
-      raw.contains('connection timed out') ||
       raw.contains('clientexception')) {
     reason = 'no connection — check your internet and try again';
   } else if (raw.contains('timeout') || raw.contains('timed out')) {
