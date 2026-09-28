@@ -19,10 +19,12 @@ This document outlines the **next wave** of architectural, visual, and interacti
 
 ---
 
-## 2. Document Detail Screen Modularization *(pending)*
-* **Is:** `lib/screens/document_detail_screen.dart` (~2,139 lines) contains the detail layout, the full-screen image viewer, the non-image info sheet, share/export logic, and attachment tiles in one file.
-* **Plan:** Extract `_FullScreenImageViewer` into `lib/widgets/viewers/full_screen_image_viewer.dart`, attachment card + share actions into `lib/widgets/documents/attachment_card.dart`, and the info sheet into `lib/screens/documents/detail_info_sheet.dart`.
-* **Impact:** Reusable viewer for future screens (expiry list previews, records), and faster compile/iterate cycles on the most feature-dense screen.
+## 2. ✅ Document Detail Screen Modularization *(viewer extracted)*
+* **Is:** `lib/screens/document_detail_screen.dart` contained the detail layout, the full-screen image viewer, the non-image info sheet, share/export logic, and attachment tiles in one file.
+* **Implemented:** The viewer is now a reusable shared widget —
+  * `lib/widgets/viewers/full_screen_image_viewer.dart` — public `FullScreenImageViewer` (pinch-to-zoom 1×–5×, double-tap zoom at tapped point, optional share action now hidden when no callback is provided) plus a `showFullScreenImageViewer` helper that owns the root-navigator fade transition.
+  * The screen's private `_FullScreenImageViewer` copy was deleted (2,139 → 1,772 lines); it already renders on the shared `AttachmentImage` pipeline from roadmap item #4, so any future call site (expiry list previews, records) gets cached, pre-warmed images for free.
+* **Impact:** Reusable viewer for future screens (expiry list previews, records), and faster compile/iterate cycles on the most feature-dense screen. Remaining detail-screen extraction (attachment card, info sheets) stays open for when those surfaces gain a second consumer.
 
 ---
 
@@ -92,7 +94,7 @@ This document outlines the **next wave** of architectural, visual, and interacti
 
 Select an optimization to implement:
 1. ~~**Profile Screen Modularization** — biggest file first.~~ ✅ Done — see feature #1 above.
-2. **Document Detail Screen Modularization** — extract the reusable full-screen viewer.
+2. ~~**Document Detail Screen Modularization** — extract the reusable full-screen viewer.~~ ✅ Done — see feature #2 above.
 3. ~~**Lazy Lists Everywhere** — `ListView.builder` sweep across all tabs.~~ ✅ Done — see feature #3 above.
 4. ~~**Cached Image Pipeline** for document attachments.~~ ✅ Done — see feature #4 above.
 5. **Ask Finavig AI persistent token budget** & cross-session memo.
@@ -100,4 +102,4 @@ Select an optimization to implement:
 7. ~~**App Guide & FAQ content split**.~~ ✅ Done — see feature #7 above.
 8. **Performance instrumentation & regression guards**.
 
-Recommended order: **~~3~~ → ~~4~~ → ~~1~~ → 2 → ~~6~~ → ~~7~~ → 5 → 8** — user-perceived speed wins first, then structural cleanups, then measurement to lock everything in.
+Recommended order: **~~3~~ → ~~4~~ → ~~1~~ → ~~2~~ → ~~6~~ → ~~7~~ → 5 → 8** — user-perceived speed wins first, then structural cleanups, then measurement to lock everything in.

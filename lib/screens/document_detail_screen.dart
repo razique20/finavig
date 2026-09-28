@@ -19,6 +19,7 @@ import '../services/entitlement_service.dart';
 import '../services/notification_service.dart';
 import '../widgets/attachment_thumbnail.dart';
 import '../widgets/dialogs/renew_document_dialog.dart';
+import '../widgets/viewers/full_screen_image_viewer.dart';
 import '../widgets/widgets.dart';
 
 class DocumentDetailScreen extends StatefulWidget {
@@ -589,21 +590,13 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
           localFile: file,
         ),
       );
-      Navigator.of(context, rootNavigator: true).push(
-        PageRouteBuilder<void>(
-          opaque: false,
-          barrierColor: Colors.black,
-          transitionDuration: const Duration(milliseconds: 220),
-          pageBuilder: (_, __, ___) => _FullScreenImageViewer(
-            name: name,
-            path: path,
-            isNetwork: isNetwork,
-            localFile: file,
-            onShare: () => _shareDocumentFile(context, item),
-          ),
-          transitionsBuilder: (_, animation, __, child) =>
-              FadeTransition(opacity: animation, child: child),
-        ),
+      showFullScreenImageViewer(
+        context,
+        name: name,
+        path: path,
+        isNetwork: isNetwork,
+        localFile: file,
+        onShare: () => _shareDocumentFile(context, item),
       );
     } else {
       _showFileInfoSheet(context, item, path, name, exists);
@@ -1777,111 +1770,3 @@ class _InfoTile extends StatelessWidget {
     );
   }
 }
-
-/// Full-screen black-out image viewer with pinch-to-zoom, double-tap zoom,
-/// and a one-tap Share action. Opened from the document attachment card.
-class _FullScreenImageViewer extends StatefulWidget {
-  final String name;
-  final String path;
-  final bool isNetwork;
-  final File? localFile;
-  final VoidCallback onShare;
-
-  const _FullScreenImageViewer({
-    required this.name,
-    required this.path,
-    required this.isNetwork,
-    required this.onShare,
-    this.localFile,
-  });
-
-  @override
-  State<_FullScreenImageViewer> createState() =>
-      _FullScreenImageViewerState();
-}
-
-class _FullScreenImageViewerState extends State<_FullScreenImageViewer> {
-  final TransformationController _transform =
-      TransformationController(Matrix4.identity());
-  TapDownDetails? _doubleTapDetails;
-
-  @override
-  void dispose() {
-    _transform.dispose();
-    super.dispose();
-  }
-
-  /// Zoom into the double-tapped point (or back out if already zoomed).
-  void _handleDoubleTap(TapDownDetails details) {
-    const double tapScale = 2.5;
-    final position = details.localPosition;
-
-    if (_transform.value.getMaxScaleOnAxis() > 1.0) {
-      _transform.value = Matrix4.identity();
-    } else {
-      _transform.value = Matrix4(
-        tapScale, 0, 0, 0,
-        0, tapScale, 0, 0,
-        0, 0, 1, 0,
-        tapScale - tapScale * position.dx,
-        tapScale - tapScale * position.dy,
-        0, 1,
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-        title: Text(
-          widget.name,
-          style: const TextStyle(color: Colors.white),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        actions: [
-          IconButton(
-            tooltip: 'Share document file',
-            icon: const Icon(Icons.ios_share_rounded),
-            onPressed: () {
-              Navigator.of(context).pop();
-              widget.onShare();
-            },
-          ),
-        ],
-      ),
-      body: InteractiveViewer(
-        clipBehavior: Clip.none,
-        transformationController: _transform,
-        minScale: 1.0,
-        maxScale: 5.0,
-        panEnabled: true,
-        onInteractionStart: (_) => _doubleTapDetails = null,
-        child: Center(
-          child: GestureDetector(
-            onDoubleTapDown: (details) => _doubleTapDetails = details,
-            onDoubleTap: () {
-              if (_doubleTapDetails != null) {
-                _handleDoubleTap(_doubleTapDetails!);
-              }
-            },
-            child: AttachmentImage(
-              path: widget.path,
-              isNetwork: widget.isNetwork,
-              localFile: widget.localFile,
-              // No targetWidth: full-resolution decode for crisp zoom.
-              fit: BoxFit.contain,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
