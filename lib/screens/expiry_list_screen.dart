@@ -1071,7 +1071,7 @@ const Map<int, String> _urgencyStatusChips = {
   1: 'Reminder sent (90 days)',
   2: 'Task assigned (60 days)',
   3: 'Escalation triggered (30 days)',
-  4: 'WhatsApp sent (7 days)',
+  4: 'Urgent reminder sent (7 days)',
 };
 
 class _DaysRangePreset {

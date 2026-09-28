@@ -967,7 +967,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       case 3:
         return '30-day escalation active';
       case 4:
-        return '7-day WhatsApp sent';
+        return '7-day urgent reminder sent';
       default:
         return 'Unknown';
     }
@@ -1425,20 +1425,6 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
               backgroundColor: Colors.green,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
-            ),
-          ),
-        ),
-        const SizedBox(height: 10),
-        // WhatsApp alerts are not active yet (need a server-side provider).
-        // The button is shown disabled so users see it's coming.
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: null,
-            icon: const Icon(Icons.chat_rounded),
-            label: const Text('WhatsApp reminder — coming soon'),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 12),
             ),
           ),
         ),

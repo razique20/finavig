@@ -33,7 +33,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           icon: Icons.notifications_active_rounded,
           title: 'We remind you before it\'s too late',
           body:
-              '90 days out → reminder. 60 days → task assigned. 30 days → escalation. 7 days → WhatsApp alert. You set the cadence; we enforce it.',
+              '90 days out → reminder. 60 days → task assigned. 30 days → escalation. 7 days → urgent alert. You set the cadence; we enforce it.',
           color: FinavigColors.warning,
         ),
         _OnboardingPage(

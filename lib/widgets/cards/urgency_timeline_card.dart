@@ -178,8 +178,8 @@ class UrgencyTimelineCard extends StatelessWidget {
             Expanded(
               child: UrgencyTimelineStep(
                 days: 7,
-                label: 'WhatsApp',
-                description: 'Urgent WhatsApp alert',
+                label: 'Final week',
+                description: 'Urgent final reminder',
                 isActive: days <= 7,
                 isCompleted: false,
                 color: Colors.red,
@@ -231,10 +231,10 @@ class UrgencyTimelineCard extends StatelessWidget {
       );
     } else {
       return UrgencyCurrentStep(
-        label: '7-day WhatsApp alert',
+        label: '7-day final reminder',
         color: Colors.red,
         icon: Icons.whatshot_rounded,
-        description: 'Send urgent WhatsApp notification',
+        description: 'Final week before expiry — act now',
         daysLeft: days,
       );
     }

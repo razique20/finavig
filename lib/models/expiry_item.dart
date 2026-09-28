@@ -78,7 +78,7 @@ class UrgencyLevel {
         );
       case 4:
         return UrgencyLevel(
-          title: 'WhatsApp sent',
+          title: 'Urgent reminder sent',
           icon: Icons.whatshot_rounded,
           color: FinavigColors.danger,
           priority: 3,
