@@ -20,6 +20,11 @@ jobs:
       - name: Doctor (informational)
         run: flutter --version
 
+      # Fresh checkouts have no package_config — pub get must run before
+      # any --no-pub step (analyze/test) or every package import fails.
+      - name: flutter pub get
+        run: flutter pub get
+
       # Static analysis: errors fail CI; the codebase carries a documented
       # pre-existing warning/info baseline (see TEST_REPORT.md,
       # PRODUCTION_READINESS.md) that stays non-fatal until cleaned up.
