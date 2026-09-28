@@ -50,13 +50,14 @@ This document outlines the **next wave** of architectural, visual, and interacti
 
 ---
 
-## 5. Ask Finavig AI — Persistent Token Budget & Cross-Session Memo *(pending)*
-* **Is:** `ai_intent_router_service.dart` already enforces a per-session escalation budget (max 4 Groq escalations) and memoizes exact inputs — but the memo and budget die when the sheet closes.
-* **Plan:**
-  * Persist the exact-input memo cache (LRU, ~200 entries) to disk so repeat utterances across sessions stay at $0 tokens.
-  * Upgrade the per-session budget to a rolling daily budget shared by all AI entry points (quick-action sheet, money form, document form).
-  * Surface remaining budget subtly in the sheet ("AI assist: 3/4 today") so power users understand degradation.
-* **Impact:** Near-zero Groq spend becomes durable, not just per-session; graceful degradation stays predictable.
+## 5. ✅ Ask Finavig AI — Persistent Token Budget & Cross-Session Memo *(implemented)*
+* **Was:** `ai_intent_router_service.dart` enforced a per-session escalation budget (max 4 Groq escalations) and memoized exact inputs — but both died when the sheet closed, so every app restart started from a fresh budget and cold memo.
+* **Implemented:**
+  * **Disk-persisted memo:** exact-input verdicts (LRU-capped at 200, oldest evicted first) serialize to `SharedPreferences` (`ai.router.memo.v1`) on every write and reload on first use — repeat utterances stay at $0 tokens across app restarts. Routing verdicts, source, confidence, note, and the missing-date flag all round-trip; corrupt state degrades to empty, never crashes.
+  * **Rolling daily budget:** the 4-escalation session cap became a 12-escalation rolling-day counter (`ai.router.budget.v1`), shared by every AI entry point and persisted per escalation so a restart resumes mid-budget. Local midnight resets it automatically (a stale stored day just reads as zero).
+  * **Budget surfaced in the sheet:** a subtle "AI assist: N of 12 today" chip appears beside the input only once escalations have actually been spent today — quiet while fully within budget, amber at ≤1 remaining, so the "Daily AI assist limit reached" fallback never feels arbitrary.
+  * **Transport failures still never memoize**, so a transient network drop can't pin a dead verdict across sessions either.
+* **Impact:** Near-zero Groq spend becomes durable, not just per-session; graceful degradation stays predictable and explainable. Covered by new restart/memo-replay tests (302 total pass).
 
 ---
 
@@ -97,9 +98,9 @@ Select an optimization to implement:
 2. ~~**Document Detail Screen Modularization** — extract the reusable full-screen viewer.~~ ✅ Done — see feature #2 above.
 3. ~~**Lazy Lists Everywhere** — `ListView.builder` sweep across all tabs.~~ ✅ Done — see feature #3 above.
 4. ~~**Cached Image Pipeline** for document attachments.~~ ✅ Done — see feature #4 above.
-5. **Ask Finavig AI persistent token budget** & cross-session memo.
+5. ~~**Ask Finavig AI persistent token budget** & cross-session memo.~~ ✅ Done — see feature #5 above.
 6. ~~**Home & Documents Screen Modularization**.~~ ✅ Done — see feature #6 above.
 7. ~~**App Guide & FAQ content split**.~~ ✅ Done — see feature #7 above.
 8. **Performance instrumentation & regression guards**.
 
-Recommended order: **~~3~~ → ~~4~~ → ~~1~~ → ~~2~~ → ~~6~~ → ~~7~~ → 5 → 8** — user-perceived speed wins first, then structural cleanups, then measurement to lock everything in.
+Recommended order: **~~3~~ → ~~4~~ → ~~1~~ → ~~2~~ → ~~6~~ → ~~7~~ → ~~5~~ → 8** — user-perceived speed wins first, then structural cleanups, then measurement to lock everything in.

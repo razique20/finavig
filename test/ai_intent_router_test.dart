@@ -1,5 +1,18 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:finavig/services/ai_intent_router_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+/// Grabs the current mock SharedPreferences store so a test can simulate an
+/// app restart while keeping the same persisted values.
+Future<Map<String, Object>> _currentMockStore() async {
+  final prefs = await SharedPreferences.getInstance();
+  final store = <String, Object>{};
+  for (final key in prefs.getKeys()) {
+    final value = prefs.get(key);
+    if (value != null) store[key] = value;
+  }
+  return store;
+}
 
 void main() {
   // Keep the suite hermetic — no network, ever.
@@ -145,6 +158,8 @@ void main() {
 
   group('token-consumption guards (offline, no network)', () {
     setUp(() {
+      SharedPreferences.setMockInitialValues({});
+      TestWidgetsFlutterBinding.ensureInitialized();
       AiIntentRouterService.instance.resetSession();
     });
 
@@ -181,19 +196,19 @@ void main() {
         return '{"intent":"UNCLEAR","confidence":0.4}';
       };
 
-      for (var i = 0; i < AiIntentRouterService.maxEscalationsPerSession; i++) {
+      for (var i = 0; i < AiIntentRouterService.maxEscalationsPerDay; i++) {
         final r = await AiIntentRouterService.instance.route('unclear $i');
         expect(r.source, AskRoutingSource.groq);
       }
-      expect(calls, AiIntentRouterService.maxEscalationsPerSession);
+      expect(calls, AiIntentRouterService.maxEscalationsPerDay);
 
       // Budget spent — the next ambiguous input must NOT escalate. It
-      // resolves instantly with the pause note instead.
+      // resolves instantly with the daily-limit note instead.
       final capped = await AiIntentRouterService.instance.route('unclear after cap');
-      expect(calls, AiIntentRouterService.maxEscalationsPerSession,
+      expect(calls, AiIntentRouterService.maxEscalationsPerDay,
           reason: 'no escalation past the budget');
       expect(capped.source, AskRoutingSource.fallback);
-      expect(capped.note, contains('paused'));
+      expect(capped.note, contains('limit reached'));
     });
 
     test('known flows never count against the budget', () async {
@@ -225,6 +240,61 @@ void main() {
       // _maxUserInputChars: routing only needs intent signals, so the payload
       // is capped at 160 characters regardless of input length.
       expect(received!.length, 160);
+    });
+
+    test('daily budget persists across a simulated app restart', () async {
+      AiIntentRouterService.groqEnabled = true;
+      AiIntentRouterService.escalationOverride = (_) async =>
+          '{"intent":"UNCLEAR","confidence":0.4}';
+
+      // Spend 2 of the daily escalations.
+      await AiIntentRouterService.instance.route('unclear one');
+      await AiIntentRouterService.instance.route('unclear two');
+      expect(await AiIntentRouterService.instance.escalationsUsedToday(), 2);
+
+      // Simulate a restart: same mock prefs store, fresh in-memory state.
+      AiIntentRouterService.instance.resetSession();
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('ai.router.budget.v1'), isNotNull);
+
+      // The same utterance replays the memoized verdict (no new escalation,
+      // original source preserved) instead of paying for a second request.
+      final replayed = await AiIntentRouterService.instance.route('unclear one');
+      expect(replayed.source, AskRoutingSource.groq,
+          reason: 'memoized verdict replays after restart without escalating');
+      expect(await AiIntentRouterService.instance.escalationsUsedToday(), 2,
+          reason: 'budget resumed from prefs, not reset to zero');
+
+      // A genuinely new ambiguous input still escalates — the restored
+      // budget has room left.
+      var escalated = false;
+      AiIntentRouterService.escalationOverride = (_) async {
+        escalated = true;
+        return '{"intent":"UNCLEAR","confidence":0.4}';
+      };
+      await AiIntentRouterService.instance.route('unclear three');
+      expect(escalated, isTrue);
+      expect(await AiIntentRouterService.instance.escalationsUsedToday(), 3);
+    });
+
+    test('memoized verdict replays without escalating after reload', () async {
+      AiIntentRouterService.groqEnabled = true;
+      var calls = 0;
+      AiIntentRouterService.escalationOverride = (_) async {
+        calls++;
+        return '{"intent":"LOG_MONEY","confidence":0.8}';
+      };
+
+      const input = 'xyzzy ambiguous input';
+      await AiIntentRouterService.instance.route(input);
+      expect(calls, 1);
+
+      // Fresh process: mock prefs still hold the memo entry.
+      SharedPreferences.setMockInitialValues(await _currentMockStore());
+      final routing = await AiIntentRouterService.instance.route(input);
+      expect(calls, 1, reason: 'memo hit from disk — no second request');
+      expect(routing.intent, AskIntent.logMoney);
+      expect(routing.source, AskRoutingSource.groq);
     });
   });
 

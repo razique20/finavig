@@ -81,6 +81,10 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
   bool _isSaving = false;
   Timer? _debounce;
 
+  /// Remaining daily AI escalations shared across all entry points —
+  /// refreshed after every routing so power users understand degradation.
+  int? _aiBudgetRemaining;
+
   // Voice input state (shared VoiceInputService).
   bool _isListening = false;
   String _voicePartial = '';
@@ -105,6 +109,13 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
         VoiceInputService.instance.statusStream.listen(_onVoiceStatus);
     _voiceTranscriptSub =
         VoiceInputService.instance.transcriptStream.listen(_onVoiceUpdate);
+    _refreshAiBudget();
+  }
+
+  Future<void> _refreshAiBudget() async {
+    final remaining =
+        await AiIntentRouterService.instance.escalationsRemainingToday();
+    if (mounted) setState(() => _aiBudgetRemaining = remaining);
   }
 
   @override
@@ -193,6 +204,10 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
 
     // Input changed (or cleared) while routing — drop the stale result.
     if (!mounted || _inputController.text.trim() != text) return;
+
+    // Keep the budget chip in sync after each routing (escalations may
+    // have been spent — or reset at local midnight).
+    _refreshAiBudget();
 
     switch (routing.intent) {
       case AskIntent.logMoney:
@@ -467,6 +482,7 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
                   const SizedBox(height: 12),
                 ],
                 _buildInputField(theme),
+                if (_buildBudgetChip(theme) != null) _buildBudgetChip(theme)!,
                 if (_isListening) ...[
                   const SizedBox(height: 10),
                   _buildListeningBanner(theme),
@@ -615,6 +631,40 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
                 ),
                 onPressed: _toggleVoice,
               ),
+      ),
+    );
+  }
+
+  /// Subtle daily-budget chip shown beside the input once AI escalations
+  /// have actually been used today. Stays quiet while the user is fully
+  /// within budget (nothing to manage), and turns amber as it depletes so
+  /// the eventual "limit reached" fallback never feels arbitrary.
+  Widget? _buildBudgetChip(ThemeData theme) {
+    final remaining = _aiBudgetRemaining;
+    if (remaining == null) return null; // not loaded yet
+    if (remaining >= AiIntentRouterService.maxEscalationsPerDay) {
+      return null; // fully within budget — no noise
+    }
+    final isDark = theme.brightness == Brightness.dark;
+    final low = remaining <= 1;
+    final color = low ? FinavigColors.warning : FinavigColors.accent;
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Icon(Icons.bolt_rounded, size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(
+            'AI assist: $remaining of '
+                '${AiIntentRouterService.maxEscalationsPerDay} today',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: isDark ? color : color,
+              fontWeight: FontWeight.w600,
+              fontSize: 11,
+            ),
+          ),
+        ],
       ),
     );
   }

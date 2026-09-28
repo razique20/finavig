@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'groq_api_service.dart';
 
@@ -92,18 +93,37 @@ class AiIntentRouterService {
   // Token-consumption guards
   // --------------------------------------------------------------------------
 
-  /// How many Groq escalations a single sheet session may spend before the
-  /// router stops asking the network and resolves locally. The lexicon
-  /// already resolves the overwhelming majority of inputs, so this only
-  /// caps a pathological burst (rapid-fire gibberish) — and one utterance
-  /// never costs more than one request thanks to [_routeMemo].
-  static const int maxEscalationsPerSession = 4;
+  /// How many Groq escalations a rolling day may spend before the router
+  /// stops asking the network and resolves locally — shared across every
+  /// AI entry point (Ask Finavig sheet, money form, document form), not
+  /// just one sheet session. The lexicon already resolves the overwhelming
+  /// majority of inputs, so this only caps a pathological burst, and one
+  /// utterance never costs more than one request thanks to the memo.
+  static const int maxEscalationsPerDay = 12;
 
-  int _escalationsThisSession = 0;
+  /// Kept as an alias for older call sites/tests.
+  @Deprecated('Renamed to maxEscalationsPerDay — the budget is now daily')
+  static const int maxEscalationsPerSession = maxEscalationsPerDay;
 
-  /// Exact-input memo. Re-analyzing the same utterance (debounce re-fire,
-  /// returning to the sheet, chip re-tap) replays the previous verdict
-  /// instead of paying for a second identical request.
+  static const String _budgetPrefsKey = 'ai.router.budget.v1';
+  static const String _memoPrefsKey = 'ai.router.memo.v1';
+
+  /// In-memory mirrored escalation count for today. Loaded from prefs on
+  /// first use; persisted on every increment so app restarts keep the
+  /// budget honest.
+  int _escalationsToday = 0;
+
+  /// Local midnight of the day the current [_escalationsToday] count belongs
+  /// to. A different day resets the counter to zero.
+  DateTime? _budgetDay;
+
+  bool _prefsLoaded = false;
+
+  /// Exact-input memo — [maxMemoEntries] LRU entries mirrored to disk.
+  /// Re-analyzing the same utterance (debounce re-fire, sheet re-open,
+  /// app restart, chip re-tap) replays the previous verdict instead of
+  /// paying for a second identical request.
+  static const int maxMemoEntries = 200;
   final Map<String, AskRouting> _routeMemo = {};
 
   /// Per-user input cap on what we send to the model. Routing only needs
@@ -111,11 +131,153 @@ class AiIntentRouterService {
   /// carry them all.
   static const int _maxUserInputChars = 160;
 
-  /// Test hook: reset the session budget and memo between tests.
+  /// Test hook: reset the in-memory budget and memo between tests. Disk
+  /// state is untouched — tests simulate persistence by re-seeding
+  /// `SharedPreferences.setMockInitialValues` and calling this to force a
+  /// reload, mirroring an app restart.
   @visibleForTesting
   void resetSession() {
-    _escalationsThisSession = 0;
+    _escalationsToday = 0;
+    _budgetDay = null;
     _routeMemo.clear();
+    _prefsLoaded = false;
+  }
+
+  DateTime _todayMidnight() {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day);
+  }
+
+  /// Loads persisted memo + budget once per process. After a restart the
+  /// memo replays previous verdicts for free and the daily budget resumes
+  /// where the user left off (a new calendar day resets it).
+  Future<void> _ensurePrefsLoaded() async {
+    if (_prefsLoaded) return;
+    _prefsLoaded = true;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // --- Memo ---
+      final rawMemo = prefs.getString(_memoPrefsKey);
+      if (rawMemo != null && rawMemo.isNotEmpty) {
+        final decoded = jsonDecode(rawMemo);
+        if (decoded is List) {
+          // Stored oldest-first; replay in order so the most recent entries
+          // are most-recently-used in the LRU map.
+          for (final entry in decoded) {
+            if (entry is! Map<String, dynamic>) continue;
+            final input = entry['i'] as String?;
+            final routing = _decodeRouting(entry['r']);
+            if (input != null && routing != null) {
+              _routeMemo[input] = routing;
+            }
+          }
+        }
+      }
+
+      // --- Daily budget ---
+      final rawBudget = prefs.getString(_budgetPrefsKey);
+      if (rawBudget != null) {
+        final decoded = jsonDecode(rawBudget);
+        if (decoded is Map<String, dynamic>) {
+          final day = DateTime.tryParse(decoded['day'] as String? ?? '');
+          final count = decoded['count'] as int? ?? 0;
+          if (day != null && count >= 0) {
+            if (day == _todayMidnight()) {
+              _budgetDay = day;
+              _escalationsToday = count;
+            }
+            // A stale day simply stays at zero — no reset write needed.
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('AiIntentRouterService: failed to load persisted state ($e)');
+      // Corrupt state = default to empty; guards still work in-memory.
+    }
+  }
+
+  /// Persists the memo (LRU-capped, oldest evicted first) and the daily
+  /// counter. Best-effort — a failed write only costs cache warmth.
+  Future<void> _persistAll() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // Keep only the newest [maxMemoEntries], serialized oldest-first.
+      final entries = _routeMemo.entries.toList();
+      final kept = entries.length > maxMemoEntries
+          ? entries.sublist(entries.length - maxMemoEntries)
+          : entries;
+      final encoded = jsonEncode(
+        kept
+            .map((e) => {
+                  'i': e.key,
+                  'r': _encodeRouting(e.value),
+                })
+            .toList(),
+      );
+      await prefs.setString(_memoPrefsKey, encoded);
+      await prefs.setString(
+        _budgetPrefsKey,
+        jsonEncode({
+          'day': (_budgetDay ?? _todayMidnight()).toIso8601String(),
+          'count': _escalationsToday,
+        }),
+      );
+    } catch (e) {
+      debugPrint('AiIntentRouterService: failed to persist state ($e)');
+    }
+  }
+
+  Map<String, dynamic> _encodeRouting(AskRouting r) => {
+        if (r.intent == AskIntent.logMoney)
+          'i': 'LOG_MONEY'
+        else if (r.intent == AskIntent.addDocument)
+          'i': 'ADD_DOCUMENT'
+        else
+          'i': 'UNCLEAR',
+        'c': r.confidence,
+        's': r.source.name,
+        if (r.note != null) 'n': r.note,
+        if (r.missingDate) 'd': true,
+      };
+
+  AskRouting? _decodeRouting(dynamic raw) {
+    if (raw is! Map<String, dynamic>) return null;
+    final intentRaw = (raw['i'] ?? '').toString().trim().toUpperCase();
+    final intent = switch (intentRaw) {
+      'LOG_MONEY' => AskIntent.logMoney,
+      'ADD_DOCUMENT' => AskIntent.addDocument,
+      'UNCLEAR' => AskIntent.unclear,
+      _ => null,
+    };
+    if (intent == null) return null;
+    final sourceRaw = (raw['s'] ?? '').toString();
+    final source = AskRoutingSource.values
+        .where((s) => s.name == sourceRaw)
+        .firstOrNull;
+    return AskRouting(
+      intent: intent,
+      confidence: (raw['c'] as num? ?? 0.0).clamp(0.0, 1.0).toDouble(),
+      source: source ?? AskRoutingSource.fallback,
+      note: raw['n'] as String?,
+      missingDate: raw['d'] as bool? ?? false,
+    );
+  }
+
+  /// Escalations already spent today, across all entry points and app
+  /// restarts. Exposed so the UI can show remaining budget.
+  Future<int> escalationsUsedToday() async {
+    await _ensurePrefsLoaded();
+    if (_budgetDay != _todayMidnight()) return 0;
+    return _escalationsToday;
+  }
+
+  /// Remaining escalations for today across all AI entry points.
+  Future<int> escalationsRemainingToday() async {
+    await _ensurePrefsLoaded();
+    if (_budgetDay != _todayMidnight()) return maxEscalationsPerDay;
+    return (maxEscalationsPerDay - _escalationsToday).clamp(0, maxEscalationsPerDay);
   }
 
   // --------------------------------------------------------------------------
@@ -306,22 +468,30 @@ class AiIntentRouterService {
     // 2. Escalate only the ambiguous remainder to Groq.
     if (!groqEnabled) return local;
 
-    // 3. Token guards — in order: never pay twice for the same utterance,
-    //    then never spend past the per-session budget. Both fall back to the
+    // 3. Token guards — in order: never pay twice for the same utterance
+    //    (memo survives app restarts), then never spend past the rolling
+    //    daily budget shared by every AI entry point. Both fall back to the
     //    local verdict (unclear → the sheet asks the user), so behavior is
     //    always defined and costs stay bounded.
+    await _ensurePrefsLoaded();
     final memoHit = _routeMemo[text];
     if (memoHit != null) return memoHit;
-    if (_escalationsThisSession >= maxEscalationsPerSession) {
+    if (_budgetDay != _todayMidnight()) {
+      // New calendar day — the rolling budget resets.
+      _budgetDay = _todayMidnight();
+      _escalationsToday = 0;
+    }
+    if (_escalationsToday >= maxEscalationsPerDay) {
       return AskRouting(
         intent: AskIntent.unclear,
         confidence: 0,
         source: AskRoutingSource.fallback,
-        note: 'AI assist paused for this session — pick a flow below.',
+        note: 'Daily AI assist limit reached — pick a flow below.',
       );
     }
 
-    _escalationsThisSession++;
+    _escalationsToday++;
+    await _persistAll();
     try {
       final raw = escalationOverride != null
           ? await escalationOverride!(
@@ -342,17 +512,22 @@ class AiIntentRouterService {
       final routing = _parseGroqRouting(raw, userInput: text);
       if (routing != null) {
         // Persist the verdict so a re-analysis of the same utterance never
-        // pays for a second identical request.
-        return _routeMemo[text] = routing;
+        // pays for a second identical request — even after an app restart.
+        _routeMemo[text] = routing;
+        await _persistAll();
+        return routing;
       }
       // Model reachable but unparseable — we only got here because the local
       // lexicon was unclear, so ask the user rather than guess.
-      return _routeMemo[text] = AskRouting(
+      final unclear = AskRouting(
         intent: AskIntent.unclear,
         confidence: 0,
         source: AskRoutingSource.fallback,
         note: 'Could not understand that request.',
       );
+      _routeMemo[text] = unclear;
+      await _persistAll();
+      return unclear;
     } catch (e) {
       debugPrint('AiIntentRouterService: Groq escalation failed ($e)');
       // Don't memoize transport failures: a transient network drop shouldn't
