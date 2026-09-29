@@ -163,11 +163,11 @@ const List<GuideChapter> guideChapters = [
     blocks: [
       GuideBannerBlock(
         icon: Icons.rocket_launch_rounded,
-        title: 'Welcome to FV',
+        title: 'Welcome to Finavig',
         subtitle:
             'Your unified command center for expiry tracking, financial budgets, multi-company workspaces, and AI intelligence.',
       ),
-      GuideSectionTitleBlock('The Four Pillars of FV'),
+      GuideSectionTitleBlock('The Four Pillars of Finavig'),
       GuideFeatureRowBlock(
         icon: Icons.description_rounded,
         color: FinavigColors.cyanSecondary,

@@ -34,7 +34,7 @@ class DemoDocumentService {
       expiresAt: expiry,
       renewalFee: 2500,
       description:
-          'Sample document to explore FV — tap "Remove document" '
+          'Sample document to explore Finavig — tap "Remove document" '
           'in its detail screen to delete it.',
     );
 

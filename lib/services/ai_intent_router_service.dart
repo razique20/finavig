@@ -442,7 +442,7 @@ class AiIntentRouterService {
   /// Compact system prompt (~90 tokens vs ~330 for the previous draft).
   /// Same contract: one JSON object, three labels, no prose.
   static const String _groqSystemPrompt =
-      'Classify the user request for FV, a GCC finance + document-expiry '
+      'Classify the user request for Finavig, a GCC finance + document-expiry '
       'app. Reply ONLY with JSON: '
       '{"intent":"LOG_MONEY|ADD_DOCUMENT|UNCLEAR","confidence":0.0-1.0}. '
       'LOG_MONEY = expense, income, bill, salary, any money moved. '

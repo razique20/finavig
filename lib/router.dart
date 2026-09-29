@@ -400,7 +400,7 @@ class _QuickActionButton extends StatelessWidget {
     return Expanded(
       child: Center(
         child: Tooltip(
-          message: 'Quick actions\nHold for Ask FV AI',
+          message: 'Quick actions\nHold for Ask Finavig AI',
           waitDuration: const Duration(milliseconds: 600),
           child: Material(
             color: Colors.transparent,

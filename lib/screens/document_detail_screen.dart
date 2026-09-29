@@ -1679,7 +1679,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       final result = await SharePlus.instance.share(
         ShareParams(
           title: item.fileName ?? item.displayName,
-          subject: '${item.displayName} — shared from FV',
+          subject: '${item.displayName} — shared from Finavig',
           files: isNetwork ? null : [XFile(path)],
           text: isNetwork ? path : null,
         ),

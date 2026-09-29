@@ -29,7 +29,7 @@ class _FinavigAppState extends State<FinavigApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'FV',
+      title: 'Finavig',
       debugShowCheckedModeBanner: false,
       theme: FinavigTheme.light(),
       darkTheme: FinavigTheme.dark(),

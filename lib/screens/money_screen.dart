@@ -342,7 +342,7 @@ class _MoneyScreenState extends State<MoneyScreen> {
               const SizedBox(width: 8),
               _MoneyHeroIconButton(
                 icon: Icons.auto_awesome_rounded,
-                tooltip: 'Ask FV AI',
+                tooltip: 'Ask Finavig AI',
                 onTap: () async {
                   final result = await AskFinavigSheet.show(context);
                   if (result is AskMoneyResult) {

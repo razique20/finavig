@@ -383,7 +383,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   iconColor: Colors.teal,
                                   title: 'App Guide',
                                   subtitle:
-                                      'Interactive walkthrough of all FV features',
+                                      'Interactive walkthrough of all Finavig features',
                                   trailing: const Icon(
                                     Icons.chevron_right_rounded,
                                     size: 20,

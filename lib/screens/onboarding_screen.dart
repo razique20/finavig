@@ -50,7 +50,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           icon: Icons.notifications_active_rounded,
           title: 'Allow notifications — please',
           body:
-              'FV alerts you 90, 60, 30 and 7 days before any document '
+              'Finavig alerts you 90, 60, 30 and 7 days before any document '
               'expires. Allow notifications on the next screen, or the '
               'reminders that save you the fines can\'t reach you.',
           color: FinavigColors.cyanAccent,
@@ -59,7 +59,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           icon: Icons.check_circle_rounded,
           title: 'You\'re ready',
           body:
-              'Nothing to install. Nothing to sync. Just upload and we\'ll take it from there. Welcome to FV.',
+              'Nothing to install. Nothing to sync. Just upload and we\'ll take it from there. Welcome to Finavig.',
           color: FinavigColors.safe,
           actionLabel: 'Get started',
           action: () {

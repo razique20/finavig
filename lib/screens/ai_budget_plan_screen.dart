@@ -280,7 +280,7 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
         title: Text('Set ${category.displayName} budget'),
         content: Text(
           'Cap ${category.displayName} at $_cur ${limit.toStringAsFixed(0)} '
-          'per month? FV will track it in the Budgets tab and warn you '
+          'per month? Finavig will track it in the Budgets tab and warn you '
           'when you get close.',
         ),
         actions: [
@@ -1409,7 +1409,7 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'FV includes an in-app Groq API key by default. You can optional enter a custom key below.',
+              'Finavig includes an in-app Groq API key by default. You can optional enter a custom key below.',
               style: TextStyle(fontSize: 13, height: 1.4),
             ),
             const SizedBox(height: 14),

@@ -161,7 +161,7 @@ class _ProfileSubscriptionSectionState
                   )
                 else
                   Text(
-                    'You are on the highest plan — thanks for supporting FV!',
+                    'You are on the highest plan — thanks for supporting Finavig!',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: FinavigColors.safe,
                     ),

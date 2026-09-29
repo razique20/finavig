@@ -165,7 +165,7 @@ class _GettingStartedChecklistCardState
                             Text(
                               allDone
                                   ? 'All initial steps completed — you are ready to roll!'
-                                  : 'Follow these 4 steps to set up your FV cockpit',
+                                  : 'Follow these 4 steps to set up your Finavig cockpit',
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.colorScheme.outline,
                                 fontSize: 11,

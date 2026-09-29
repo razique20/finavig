@@ -189,7 +189,7 @@ extension _QuickActionX on _QuickAction {
       case _QuickAction.logMoney:
         return 'Log Expense or Income';
       case _QuickAction.voiceAiLog:
-        return 'Ask FV AI';
+        return 'Ask Finavig AI';
     }
   }
 

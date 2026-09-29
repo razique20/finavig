@@ -275,7 +275,7 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
         amount: item.amount,
         currency: item.currency,
         occurredAt: item.occurredAt,
-        note: 'Added via Ask FV AI: "${item.rawInput}"',
+        note: 'Added via Ask Finavig AI: "${item.rawInput}"',
       );
 
       RecurringTransaction? recurringTemplate;
@@ -364,7 +364,7 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
         isExpired: daysOffset < 0,
         isNotified: false,
         notifiedDays: null,
-        description: 'Added via Ask FV AI: "${item.rawInput}"',
+        description: 'Added via Ask Finavig AI: "${item.rawInput}"',
         location: item.authority,
         reminderStatus: _reminderStatus(daysOffset),
         urgency: _urgency(daysOffset),
@@ -528,7 +528,7 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Ask FV AI',
+                'Ask Finavig AI',
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w800,
                 ),
@@ -773,7 +773,7 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'One sentence is enough — FV fills in the category, '
+              'One sentence is enough — Finavig fills in the category, '
               'amount, date, or expiry automatically.',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurface,

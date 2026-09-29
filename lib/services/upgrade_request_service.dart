@@ -76,12 +76,12 @@ class UpgradeRequestService {
     final now = DateTime.now().toUtc();
 
     final subject =
-        'FV upgrade request — ${target.name} (${duration.id}) — user $userId';
+        'Finavig upgrade request — ${target.name} (${duration.id}) — user $userId';
 
     final body = StringBuffer()
-      ..writeln('Hello FV team,')
+      ..writeln('Hello Finavig team,')
       ..writeln()
-      ..writeln('I would like to upgrade my FV subscription.')
+      ..writeln('I would like to upgrade my Finavig subscription.')
       ..writeln()
       ..writeln('— Request —')
       ..writeln('Requested tier: ${target.name}')
@@ -100,7 +100,7 @@ class UpgradeRequestService {
       ..writeln('Platform: $platform')
       ..writeln('Requested at: ${now.toIso8601String()}')
       ..writeln()
-      ..writeln('(Sent from the FV app upgrade dialog.)');
+      ..writeln('(Sent from the Finavig app upgrade dialog.)');
 
     final uri = Uri(
       scheme: 'mailto',

@@ -33,7 +33,7 @@ void main() {
         docType: meta,
         expiresAt: expiry,
         renewalFee: 2500,
-        description: 'Sample document to explore FV',
+        description: 'Sample document to explore Finavig',
       );
 
       expect(item.displayName, startsWith('Demo: '));
