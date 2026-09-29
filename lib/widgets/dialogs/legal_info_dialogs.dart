@@ -3,7 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../config/app_links.dart';
 import '../../screens/profile/profile_sheets.dart';
-import '../indicators/finavig_logo.dart';
+import '../../theme/app_theme.dart';
 
 /// In-app Terms & Conditions, Privacy Policy, About, and Support sheets.
 ///
@@ -292,7 +292,7 @@ void showAboutSheet(BuildContext context) {
           children: [
             Row(
               children: [
-                const FinavigLogo(size: 56, showShadow: false),
+                const _FvBadge(),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
@@ -514,6 +514,46 @@ class _AboutLink extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Rounded gradient badge with the FV monogram, used in the About header.
+class _FvBadge extends StatelessWidget {
+  const _FvBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    const radius = BorderRadius.all(Radius.circular(14));
+
+    return Container(
+      width: 56,
+      height: 56,
+      decoration: BoxDecoration(
+        borderRadius: radius,
+        gradient: const LinearGradient(
+          colors: [FinavigColors.cyanAccent, FinavigColors.violet],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: FinavigColors.violet.withOpacity(0.35),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      alignment: Alignment.center,
+      child: const Text(
+        'FV',
+        style: TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 1.5,
+          color: Colors.white,
         ),
       ),
     );

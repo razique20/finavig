@@ -17,6 +17,11 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
+  late final Animation<double> _markScale;
+  late final Animation<double> _markFade;
+  late final Animation<double> _glowPulse;
+  late final Animation<double> _taglineFade;
+
   bool _hasOnboarded = false;
 
   @override
@@ -25,6 +30,26 @@ class _SplashScreenState extends State<SplashScreen>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1800),
+    );
+
+    // Monogram: quick pop-in over the first 40% of the timeline.
+    _markScale = CurvedAnimation(
+      parent: _controller,
+      curve: const Interval(0.0, 0.4, curve: Curves.easeOutBack),
+    );
+    _markFade = CurvedAnimation(
+      parent: _controller,
+      curve: const Interval(0.0, 0.3, curve: Curves.easeOut),
+    );
+    // Glow keeps breathing after the pop settles.
+    _glowPulse = CurvedAnimation(
+      parent: _controller,
+      curve: const Interval(0.35, 1.0, curve: Curves.easeInOut),
+    );
+    // Tagline follows the mark.
+    _taglineFade = CurvedAnimation(
+      parent: _controller,
+      curve: const Interval(0.45, 0.8, curve: _TaglineEaseCurve()),
     );
     _checkOnboarding();
   }
@@ -38,7 +63,7 @@ class _SplashScreenState extends State<SplashScreen>
       _controller.forward();
     }
 
-    // Always check for app updates when opening the app
+    // Always check for app updates when opening the screen
     final versionResult = await AppVersionService.instance.checkAppVersion(
       platform: AppVersionService.osPlatformKey,
     );
@@ -76,32 +101,76 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: FinavigColors.navyPrimary,
       body: Stack(
+        fit: StackFit.expand,
         children: [
+          // Backdrop: deep navy → indigo wash instead of the flat navy.
+          const DecoratedBox(
+            decoration: BoxDecoration(gradient: FinavigGradients.splash),
+          ),
+          // Ambient glow behind the wordmark.
+          Positioned.fill(
+            child: IgnorePointer(
+              child: AnimatedBuilder(
+                animation: _controller,
+                builder: (context, child) => Container(
+                  alignment: Alignment.center,
+                  child: Transform.scale(
+                    scale: 1 + _glowPulse.value * 0.15,
+                    child: child,
+                  ),
+                ),
+                child: Container(
+                  width: 420,
+                  height: 420,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        FinavigColors.cyanAccent.withOpacity(0.18),
+                        FinavigColors.violet.withOpacity(0.10),
+                        Colors.transparent,
+                      ],
+                      stops: const [0.0, 0.55, 1.0],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
           Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'FV',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 44,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 3.0,
-                    color: Colors.white,
-                  ),
+                // Gradient FV monogram with a soft neon halo.
+                AnimatedBuilder(
+                  animation: _controller,
+                  builder: (context, child) {
+                    final pop = _markScale.value;
+                    return Opacity(
+                      opacity: _markFade.value.clamp(0.0, 1.0),
+                      child: Transform.scale(scale: pop, child: child),
+                    );
+                  },
+                  child: const _FvMonogram(),
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  'FINANCIAL & DOCUMENT INTELLIGENCE',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 2.5,
-                    color: FinavigColors.cyanAccent.withOpacity(0.9),
+                const SizedBox(height: 18),
+                // Tagline fades in after the mark lands.
+                AnimatedBuilder(
+                  animation: _controller,
+                  builder: (context, child) => Opacity(
+                    opacity: _taglineFade.value.clamp(0.0, 1.0),
+                    child: child,
+                  ),
+                  child: Text(
+                    'FINANCIAL & DOCUMENT INTELLIGENCE',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 2.5,
+                      color: FinavigColors.cyanAccent.withOpacity(0.9),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 48),
@@ -139,3 +208,39 @@ class _SplashScreenState extends State<SplashScreen>
   }
 }
 
+/// Ease-out for the tagline: fast reveal, gentle settle.
+class _TaglineEaseCurve extends Curve {
+  const _TaglineEaseCurve();
+
+  @override
+  double transformInternal(double t) => 1 - (1 - t) * (1 - t);
+}
+
+/// Gradient "FV" glyphs with a soft neon halo, sized to dominate the splash.
+class _FvMonogram extends StatelessWidget {
+  const _FvMonogram();
+
+  @override
+  Widget build(BuildContext context) {
+    const gradient = LinearGradient(
+      colors: [Colors.white, FinavigColors.cyanAccent, FinavigColors.violet],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      stops: [0.0, 0.55, 1.0],
+    );    return ShaderMask(
+      shaderCallback: (bounds) => gradient.createShader(bounds),
+      blendMode: BlendMode.srcIn,
+      child: const Text(
+        'FV',
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 96,
+          height: 1.0,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 4.0,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
+}

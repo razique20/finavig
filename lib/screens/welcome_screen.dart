@@ -377,15 +377,34 @@ class _BlobWithRings extends StatelessWidget {
             decoration: BoxDecoration(
               color: FinavigColors.navyPrimary,
               borderRadius: BorderRadius.circular(60),
+              border: Border.all(
+                color: FinavigColors.cyanAccent.withOpacity(0.35),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: FinavigColors.cyanAccent.withOpacity(0.20),
+                  blurRadius: 34,
+                  spreadRadius: 6,
+                ),
+              ],
             ),
             alignment: Alignment.center,
-            child: const Text(
-              'FV',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 2.5,
-                color: Colors.white,
+            child: ShaderMask(
+              shaderCallback: (bounds) => const LinearGradient(
+                colors: [Colors.white, FinavigColors.cyanAccent],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ).createShader(bounds),
+              blendMode: BlendMode.srcIn,
+              child: const Text(
+                'FV',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 3.0,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),

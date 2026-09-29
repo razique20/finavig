@@ -391,13 +391,21 @@ class _LoginScreenState extends State<LoginScreen> {
         children: [
           Row(
             children: [
-              Text(
-                'FV',
-                style: GoogleFonts.playfairDisplay(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.2,
-                  color: Colors.white,
+              ShaderMask(
+                shaderCallback: (bounds) => const LinearGradient(
+                  colors: [Colors.white, FinavigColors.cyanAccent],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ).createShader(bounds),
+                blendMode: BlendMode.srcIn,
+                child: Text(
+                  'FV',
+                  style: GoogleFonts.playfairDisplay(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 2,
+                    color: Colors.white,
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
