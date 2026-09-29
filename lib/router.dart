@@ -31,6 +31,7 @@ import 'screens/alerts_reminders_screen.dart';
 import 'services/auth_service.dart';
 import 'services/tab_scroll_registry.dart';
 import 'widgets/dialogs/quick_action_sheet.dart';
+import 'widgets/indicators/offline_banner.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _homeShellKey = GlobalKey<NavigatorState>();
@@ -277,7 +278,15 @@ class _AppShellState extends State<_AppShell> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      body: widget.navigationShell,
+      // Slim offline notice above everything — explains queued sync instead
+      // of letting silence read as "broken".
+      backgroundColor: isDark ? FinavigColors.obsidian : FinavigColors.ink,
+      body: Column(
+        children: [
+          const OfflineBanner(),
+          Expanded(child: widget.navigationShell),
+        ],
+      ),
       extendBody: true,
       bottomNavigationBar: SafeArea(
         top: false,

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../models/document_type.dart';
 import '../models/expiry_item.dart';
+import '../services/demo_document_service.dart';
 import '../services/document_scanner_service.dart';
 import '../services/tab_scroll_registry.dart';
 import '../services/urgency_engine.dart';
@@ -386,13 +387,19 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
-          if (!_hasActiveFilters)
+          if (!_hasActiveFilters) ...[
             FilledButton.icon(
               onPressed: _openScanner,
               icon: const Icon(Icons.add_rounded, size: 18),
               label: const Text('Add first document'),
-            )
-          else
+            ),
+            const SizedBox(height: 8),
+            TextButton.icon(
+              onPressed: _addDemoDocument,
+              icon: const Icon(Icons.auto_awesome_rounded, size: 16),
+              label: const Text('Try a demo document'),
+            ),
+          ] else
             TextButton(
               onPressed: _clearFilters,
               child: const Text('Clear filters'),
@@ -410,6 +417,21 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   Future<void> _openScanner() async {
     if (!await enforceDocumentLimit(context)) return;
     if (mounted) await context.push('/scan');
+  }
+
+  /// First-run helper: insert one labelled demo document so the user can
+  /// explore alerts and the urgency ladder without scanning anything.
+  Future<void> _addDemoDocument() async {
+    if (!await enforceDocumentLimit(context)) return;
+    await DemoDocumentService.instance.addDemoDocument();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Demo document added — explore alerts & reminders, remove it anytime.',
+        ),
+      ),
+    );
   }
 
   Future<void> _showTypeFilterSheet() async {

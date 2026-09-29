@@ -18,6 +18,7 @@ import '../services/document_scanner_service.dart';
 import '../services/collection_service.dart';
 import '../services/entitlement_service.dart';
 import '../services/notification_service.dart';
+import '../services/rating_prompt_service.dart';
 import '../widgets/attachment_thumbnail.dart';
 import '../widgets/dialogs/renew_document_dialog.dart';
 import '../widgets/viewers/full_screen_image_viewer.dart';
@@ -1561,6 +1562,10 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
           backgroundColor: Colors.green,
         ),
       );
+
+      // Renewal = success moment. Record it; the soft rate prompt decides
+      // for itself whether now is an appropriate time to ask (never nags).
+      unawaited(_maybeAskForRating());
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1570,6 +1575,14 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         ),
       );
     }
+  }
+
+  /// Fire-and-forget rating ask: counts the renewal, then shows the native
+  /// in-app review sheet only when the policy allows (2+ renewals, 90-day
+  /// cooldown, max 3 per install).
+  Future<void> _maybeAskForRating() async {
+    await RatingPromptService.instance.recordRenewal();
+    await RatingPromptService.instance.maybeAsk();
   }
 
   Future<void> _removeDocument(BuildContext context, ExpiryItem item) async {

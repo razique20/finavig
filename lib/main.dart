@@ -12,16 +12,25 @@ import 'services/collection_service.dart';
 import 'services/custom_document_type_service.dart';
 import 'services/document_scanner_service.dart';
 import 'services/entitlement_service.dart';
+import 'services/error_capture_service.dart';
+import 'services/notification_tap_service.dart';
 import 'services/finance_service.dart';
 import 'services/supabase_service.dart';
 import 'services/theme_service.dart';
 import 'services/urgency_engine.dart';
 import 'services/notification_service.dart';
 import 'services/perf_tracing_service.dart';
+import 'services/rating_prompt_ui.dart';
 import 'services/storage_migration_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Global error hooks first, so even startup crashes are captured.
+  ErrorCaptureService.instance.install();
+
+  // Wire the native in-app review sheet into the soft rating prompt.
+  RatingPromptUi.register();
 
   // Frame-time monitor: debug/profile only, zero cost in release. Wires
   // DevTools timeline sections too (trace/traceAsync call sites).
@@ -59,6 +68,11 @@ void main() async {
   // supabase_flutter during Supabase.initialize, so by this point
   // AuthService.isSignedIn is already correct on cold start.
   await _prewarmServices();
+
+  // Route notification taps to the tapped document (cold start included).
+  // After prewarm so the router mounts with services loaded; a very early
+  // tap is stashed as pendingDocumentId and consumed by the app shell.
+  unawaited(NotificationTapService.instance.init());
 
   runApp(const FinavigApp());
 }

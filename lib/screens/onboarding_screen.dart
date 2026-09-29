@@ -43,6 +43,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               'Trade licence, ejari, visas, Emirates IDs, labour documents, insurance, vehicles, contracts, domains, subscriptions, supplier agreements — in one place.',
           color: FinavigColors.emeraldAccent,
         ),
+        // Pre-permission explainer: iOS/Android fire the OS notification
+        // prompt on first NotificationService.init() — this page makes the
+        // ask make sense before that happens, lifting grant rates.
+        _OnboardingPage(
+          icon: Icons.notifications_active_rounded,
+          title: 'Allow notifications — please',
+          body:
+              'Finavig alerts you 90, 60, 30 and 7 days before any document '
+              'expires. Allow notifications on the next screen, or the '
+              'reminders that save you the fines can\'t reach you.',
+          color: FinavigColors.cyanAccent,
+        ),
         _OnboardingPage(
           icon: Icons.check_circle_rounded,
           title: 'You\'re ready',
@@ -181,7 +193,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           foregroundColor: FinavigColors.cyanAccent,
                         ),
                         child: Text(
-                          _page == pages.length - 2 ? 'Next' : 'Skip',
+                          _page == pages.length - 2
+                              ? 'Got it'
+                              : 'Skip',
                           style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,

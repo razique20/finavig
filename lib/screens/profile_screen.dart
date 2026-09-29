@@ -12,6 +12,7 @@ import '../theme/app_theme.dart';
 import '../widgets/widgets.dart';
 import 'profile/profile_account_section.dart';
 import 'profile/profile_appearance_section.dart';
+import 'profile/profile_backup_nudge.dart';
 import 'profile/profile_collections_section.dart';
 import 'profile/profile_hero.dart';
 import 'profile/profile_sheets.dart';
@@ -330,6 +331,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               activeId: _activeId,
                               onEditProfile: _editProfile,
                             ),
+                            const SizedBox(height: 16),
+                            // Data-safety nudge: scans are device-local
+                            // until Storage sync ships — point at exports.
+                            const ProfileBackupNudge(),
                             const SizedBox(height: 16),
                             ProfileSubscriptionSection(
                               collections: _collections,

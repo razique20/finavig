@@ -2,6 +2,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
+import 'notification_tap_service.dart' show NotificationServiceTapHook;
+
 /// Local reminder engine for Finavig.
 ///
 /// Backed by [flutter_local_notifications] + `timezone`: reminders are
@@ -56,7 +58,14 @@ class NotificationService {
     );
 
     try {
-      await _plugin.initialize(settings);
+      // Forward notification taps (payload = document id) to the deep-link
+      // service, which routes to the document detail screen.
+      await _plugin.initialize(
+        settings,
+        onDidReceiveNotificationResponse: (response) {
+          NotificationServiceTapHook.onTap?.call(response.payload);
+        },
+      );
       // Android 13+ requires a runtime permission prompt; iOS already prompts
       // via DarwinInitializationSettings above.
       await _plugin

@@ -14,6 +14,7 @@ import '../services/collection_service.dart';
 import '../services/document_scanner_service.dart';
 import '../services/entitlement_service.dart';
 import '../services/expiry_report.dart';
+import '../services/rating_prompt_service.dart';
 import '../services/urgency_engine.dart';
 import '../widgets/indicators/empty_state_illustration.dart';
 import '../theme/app_theme.dart';
@@ -691,6 +692,11 @@ class _ExpiryListScreenState extends State<ExpiryListScreen> {
           ),
         );
       }
+
+      // Renewal = success moment. Record it; the soft rate prompt decides
+      // for itself whether now is an appropriate time to ask (never nags).
+      await RatingPromptService.instance.recordRenewal();
+      await RatingPromptService.instance.maybeAsk();
     } catch (e) {
       _showError(context, e);
     }

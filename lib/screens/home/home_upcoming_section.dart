@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../services/demo_document_service.dart';
+
 import '../../models/expiry_item.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/indicators/empty_state_illustration.dart';
@@ -88,6 +90,14 @@ class HomeEmptyState extends StatelessWidget {
               color: theme.colorScheme.outline.withOpacity(0.7),
             ),
             textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          TextButton.icon(
+            onPressed: () async {
+              await DemoDocumentService.instance.addDemoDocument();
+            },
+            icon: const Icon(Icons.auto_awesome_rounded, size: 16),
+            label: const Text('Try a demo document'),
           ),
         ],
       ),
