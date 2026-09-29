@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/document_collection.dart';
 import '../models/expiry_item.dart';
@@ -58,21 +57,9 @@ class _HomeScreenState extends State<HomeScreen> {
       _loading = false;
     }
     _loadData();
-    _checkFirstTimeGuide();
     TabScrollRegistry.register(0, _scrollController);
     FinanceService.instance.addListener(_reloadMoney);
     DocumentScannerService.instance.addListener(_onServiceChanged);
-  }
-
-  /// Auto-show the interactive app guide on first ever launch.
-  Future<void> _checkFirstTimeGuide() async {
-    final prefs = await SharedPreferences.getInstance();
-    final hasSeen = prefs.getBool('hasSeenAppGuide') ?? false;
-    if (!hasSeen && mounted) {
-      // Small delay so the home screen renders first before overlaying the guide.
-      await Future.delayed(const Duration(milliseconds: 600));
-      if (mounted) showAppGuideDialog(context);
-    }
   }
 
   @override
@@ -162,6 +149,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               pendingActionsCount: urgency.pendingActions.length,
                               onScanTap: _openScanner,
                             ),
+                            const FirstRunGuideBanner(),
                             HomePlanRestrictionBanner(),
                             // Both banners own their top margin internally and
                             // collapse to zero height when not applicable, so

@@ -23,6 +23,8 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('hasOnboarded', true);
     await prefs.setBool('hasSeenWelcome', true);
+    // Keep the pitch screenshots free of the first-run guide banner.
+    await prefs.setBool('hasSeenAppGuide', true);
 
     // One demo trade licence expiring in 21 days (inside the urgency band).
     await DemoDocumentService.instance.addDemoDocument();
