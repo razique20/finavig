@@ -1,6 +1,6 @@
 // ignore_for_file: avoid_print
-/// Builds the Finavig product pitch PDF from live app screenshots captured
-/// by tool/capture_pitch_shots.sh (integration_test/app_pitch_screenshots_test.dart).
+/// Builds the Finavig user pitch PDF from live app screenshots captured by
+/// tool/capture_pitch_shots.sh (integration_test/app_pitch_screenshots_test.dart).
 ///
 /// Usage: dart run tool/build_pitch_pdf.dart [output.pdf]
 /// Output defaults to docs/finavig-product-pitch.pdf.
@@ -12,130 +12,242 @@ import 'package:pdf/widgets.dart' as pw;
 const _indigo = PdfColor.fromInt(0xFF4F46E5);
 const _indigoDeep = PdfColor.fromInt(0xFF312E81);
 const _indigoBright = PdfColor.fromInt(0xFF818CF8);
-const _emerald = PdfColor.fromInt(0xFF10B981);
 const _indigoBright50 = PdfColor.fromInt(0x80818CF8); // 50% alpha
+const _emerald = PdfColor.fromInt(0xFF10B981);
 const _ink = PdfColor.fromInt(0xFF0C0E14);
 const _white = PdfColors.white;
 
 const _shotsDir = 'build/pitch/shots';
 
 Future<void> main(List<String> args) async {
-  final outPath = args.isNotEmpty
-      ? args.first
-      : 'docs/finavig-product-pitch.pdf';
+  final outPath =
+      args.isNotEmpty ? args.first : 'docs/finavig-product-pitch.pdf';
 
   final doc = pw.Document();
+  pw.MemoryImage? shot(String name) => _loadShot(name);
 
-  final shots = <String, pw.MemoryImage?>{
-    '01_home': _loadShot('01_home'),
-    '02_documents': _loadShot('02_documents'),
-    '03_money': _loadShot('03_money'),
-    '04_expiry_list': _loadShot('04_expiry_list'),
-    '05_budgets': _loadShot('05_budgets'),
-    '06_ai_summary': _loadShot('06_ai_summary'),
-  };
-
-  final home = shots['01_home'];
-  if (home != null) {
-    doc.addPage(_cover(home));
-  } else {
-    doc.addPage(_cover(null));
-  }
+  // ── Opening ────────────────────────────────────────────────────────────
+  doc.addPage(_cover(shot('01_home')));
   doc.addPage(_problem());
   doc.addPage(_solution());
 
-  doc.addPage(_shotPage(
-    kicker: 'LIVE SCREEN - HOME',
-    title: 'Your whole business day, on one screen',
+  // ── Part 1: Documents ─────────────────────────────────────────────────
+  doc.addPage(_chapter('PART 1', 'Your documents, under control',
+      'Every licence, ID and deadline in one vault - scanned, understood, '
+      'and never missed again.'));
+  doc.addPage(_screen(
+    kicker: 'SCREEN - HOME',
+    title: 'Home base: your day at a glance',
     intro:
-        'Open FV and see everything that needs attention today: documents '
-        'approaching their deadline, cash position, and quick actions. No '
-        'digging through folders.',
+        'The moment you open FV you see what needs attention: documents '
+        'nearing deadline, plan status, and one-tap actions. Everything '
+        'important is one tap deep, never more.',
     bullets: [
-      'Urgency rings surface documents by deadline, not alphabet.',
-      'Quick actions: scan a document or log money in two taps.',
-      'Hold the sparkle button to talk - Ask FV AI does the typing.',
+      'Urgency-sorted feed: what expires soonest floats to the top.',
+      'Scan or log money in two taps from the quick-action grid.',
+      'Works offline - your data lives on the device first.',
     ],
-    shot: shots['01_home'],
+    shot: shot('01_home'),
   ));
-
-  doc.addPage(_shotPage(
-    kicker: 'LIVE SCREEN - DOCUMENTS',
-    title: 'Every licence, ID and visa in one vault',
+  doc.addPage(_screen(
+    kicker: 'SCREEN - DOCUMENTS',
+    title: 'The company document vault',
     intro:
         'Trade licences, Emirates IDs, passports, visas, Mulkiya, insurance, '
-        'contracts. Scan with the camera and the AI extracts the dates, '
-        'amounts and vendors for you.',
+        'contracts, subscriptions - all in one searchable place, organized '
+        'per company or client.',
     bullets: [
-      'OCR scan: point the camera, get structured data back.',
-      'Multi-company workspaces keep client entities separate.',
-      'Files stay on your phone; nothing is sold or shared.',
+      'Scan with the camera; AI extracts dates, fees and vendors.',
+      'Separate workspaces keep every entity and client tidy.',
+      'Attach files, notes and renewal steps to each document.',
     ],
-    shot: shots['02_documents'],
+    shot: shot('02_documents'),
   ));
-
-  doc.addPage(_shotPage(
-    kicker: 'LIVE SCREEN - DEADLINES',
-    title: 'Renewal alerts before the fines do',
+  doc.addPage(_screen(
+    kicker: 'SCREEN - DOCUMENT DETAIL',
+    title: 'Every detail, ready when you need it',
     intro:
-        'FV watches every expiry and warns you at 90, 60, 30, 14, 7 and 1 '
-        'day. Lead times are customizable, and each document tracks its '
-        'renewal fee so you can plan the cash.',
+        'Open any document to see its expiry countdown, renewal fee, stored '
+        'files and history. Renew it, log the payment, share it with your '
+        'PRO - all from one screen.',
     bullets: [
-      'A single ranked list of what expires next across all entities.',
-      'Renewal fees feed straight into your cash-flow forecast.',
+      'Live countdown with urgency color so nothing sneaks up.',
       'Log the renewal payment against the document in one tap.',
+      'Share the file or export the details instantly.',
     ],
-    shot: shots['04_expiry_list'],
+    shot: shot('04_document_detail'),
+  ));
+  doc.addPage(_screen(
+    kicker: 'SCREEN - DEADLINES',
+    title: 'Renewals ranked by urgency',
+    intro:
+        'One ranked list of everything expiring across all your companies. '
+        'FV alerts you at 90, 60, 30, 14, 7 and 1 day - lead times are '
+        'customizable per document.',
+    bullets: [
+      'Never pay an avoidable late-renewal fine again.',
+      'Filter by company, type or urgency band.',
+      'Export the whole list as CSV or PDF for your accountant.',
+    ],
+    shot: shot('05_expiry_list'),
     accent: _emerald,
   ));
-
-  doc.addPage(_shotPage(
-    kicker: 'LIVE SCREEN - MONEY',
-    title: 'Money in and money out, finally organized',
+  doc.addPage(_screen(
+    kicker: 'SCREEN - SEARCH',
+    title: 'Find any document in seconds',
     intro:
-        'Expenses and income in GCC currencies, auto-categorized against a '
-        'UAE merchant dictionary. Recurring bills log themselves, and '
-        'sudden price jumps raise a flag.',
+        'Search across every document by name, number or notes. Perfect for '
+        'the "send me the licence now" moments.',
     bullets: [
-      'Say it once: "Spent 85 AED on Uber" - category and date handled.',
+      'Instant results across all workspaces.',
+      'Search by plate number, licence ID or your own notes.',
+      'Open, share or renew straight from the result.',
+    ],
+    shot: shot('06_global_search'),
+  ));
+
+  // ── Part 2: Money ─────────────────────────────────────────────────────
+  doc.addPage(_chapter('PART 2', 'Your money, finally clear',
+      'GCC-currency bookkeeping that logs itself, warns you early, and '
+      'answers "can we afford it?" before you commit.'));
+  doc.addPage(_screen(
+    kicker: 'SCREEN - MONEY',
+    title: 'Income and expenses, auto-organized',
+    intro:
+        'Log money by typing or speaking one sentence - "Spent 85 AED on '
+        'Uber". FV picks the category, date and currency automatically '
+        'against a UAE merchant dictionary.',
+    bullets: [
       'Recurring rent, salaries and subscriptions auto-log when due.',
-      'Anomaly detection alerts on 35%+ jumps in recurring costs.',
+      'Anomaly alerts on 35%+ jumps in recurring costs.',
+      'Everything categorized for clean month-end reviews.',
     ],
-    shot: shots['03_money'],
+    shot: shot('03_money'),
   ));
-
-  doc.addPage(_shotPage(
-    kicker: 'LIVE SCREEN - BUDGETS',
-    title: 'Budgets that warn you before you overspend',
+  doc.addPage(_screen(
+    kicker: 'SCREEN - BUDGETS',
+    title: 'Budgets that warn you, not scold you',
     intro:
-        'Set a monthly limit per category and FV tracks the burn, warns you '
-        'as you approach it, and folds everything into a 90-day cash-flow '
-        'forecast.',
+        'Set a monthly limit per category. FV tracks the burn and warns you '
+        'as you approach it - before the money is gone, not after.',
     bullets: [
-      'Category envelopes with proactive overspend warnings.',
-      '90-day cash forecast: balance, bills, renewals combined.',
-      'Budget alerts delivered as notifications, not nag screens.',
+      'Category budgets with proactive overspend warnings.',
+      'Renewal fees fold into the plan automatically.',
+      'Budget alerts arrive as notifications you can act on.',
     ],
-    shot: shots['05_budgets'],
+    shot: shot('07_budgets'),
+    accent: _emerald,
+  ));
+  doc.addPage(_screen(
+    kicker: 'SCREEN - ENVELOPES',
+    title: 'Envelope saving for big goals',
+    intro:
+        'Set money aside for the things you know are coming: renewal season, '
+        'Eid stock-ups, the new chiller. Fill envelopes gradually and spend '
+        'without stress.',
+    bullets: [
+      'One envelope per goal with progress at a glance.',
+      'Move money between envelopes when priorities shift.',
+      'Pairs with budgets for complete control.',
+    ],
+    shot: shot('08_envelopes'),
+  ));
+  doc.addPage(_screen(
+    kicker: 'SCREEN - RECORDS',
+    title: 'A clean ledger of everything',
+    intro:
+        'Every transaction, searchable and filterable. Your accountant will '
+        'thank you - and so will future-you during VAT season.',
+    bullets: [
+      'Filter by category, kind, date range or collection.',
+      'Edit or duplicate entries in two taps.',
+      'Export for bookkeeping whenever you need it.',
+    ],
+    shot: shot('09_records'),
+  ));
+  doc.addPage(_screen(
+    kicker: 'SCREEN - CASH FLOW',
+    title: '90-day cash forecast',
+    intro:
+        'Bank balance, upcoming recurring bills and document renewal fees '
+        'combined into one forecast - so you see the tight weeks coming '
+        'while there is still time to act.',
+    bullets: [
+      'Sees renewal fees coming before they hit.',
+      'Visual chart of the next 90 days.',
+      'Plan hiring, stock and expansion on facts.',
+    ],
+    shot: shot('10_cash_flow'),
     accent: _emerald,
   ));
 
-  doc.addPage(_shotPage(
-    kicker: 'LIVE SCREEN - AI',
-    title: 'An executive summary, generated for you',
+  // ── Part 3: AI ────────────────────────────────────────────────────────
+  doc.addPage(_chapter('PART 3', 'Your AI copilot',
+      'Not a gimmick: AI that does the boring parts of running a company - '
+      'typing, categorizing, summarizing and planning.'));
+  doc.addPage(_screen(
+    kicker: 'SCREEN - AI SUMMARY',
+    title: 'Your executive brief, generated',
     intro:
         'FV reads your month - spending, budgets, upcoming renewals - and '
-        'writes the executive brief: what changed, what is coming, what to '
-        'decide.',
+        'writes the summary a good CFO would: what changed, what is coming, '
+        'what needs a decision.',
     bullets: [
-      'AI budget planner turns "I want to buy X" into a savings plan.',
-      'Smart templates work out of the box; bring your own key for more.',
-      'One-tap expense and income logging from natural language.',
+      'Works out of the box with a built-in key; bring your own for more.',
+      'Executive tone, GCC context, zero setup.',
+      'Regenerate anytime as new data lands.',
     ],
-    shot: shots['06_ai_summary'],
+    shot: shot('11_ai_summary'),
+  ));
+  doc.addPage(_screen(
+    kicker: 'SCREEN - AI PLANNER',
+    title: 'Say the goal, get the plan',
+    intro:
+        '"I want to buy a delivery van by March." The AI budget planner '
+        'turns that into a monthly savings plan and tracks it in your '
+        'budgets automatically.',
+    bullets: [
+      'Natural-language goals become concrete monthly plans.',
+      'Plans live in the Budgets tab and warn you when you drift.',
+      'Great for Hajj trips, equipment, expansions, stock-ups.',
+    ],
+    shot: shot('12_ai_budget_plan'),
   ));
 
+  // ── Part 4: Account ───────────────────────────────────────────────────
+  doc.addPage(_chapter('PART 4', 'Yours, and private by design',
+      'Local-first storage, your data exportable anytime, and reminders '
+      'that actually reach you.'));
+  doc.addPage(_screen(
+    kicker: 'SCREEN - PROFILE',
+    title: 'Your account and controls',
+    intro:
+        'Manage workspaces, plan, backup and preferences from one hub. '
+        'Download your entire dataset as JSON whenever you want - no '
+        'lock-in, ever.',
+    bullets: [
+      'One-tap data export: it is your data, take it anywhere.',
+      'Reminder health check so alerts always reach you.',
+      'Upgrade to Plus or Business when you outgrow Free.',
+    ],
+    shot: shot('13_profile'),
+  ));
+  doc.addPage(_screen(
+    kicker: 'SCREEN - ALERTS',
+    title: 'Reminders that actually fire',
+    intro:
+        'A dedicated center for every alert FV sends: renewals, budget '
+        'warnings, anomalies. Tune lead times and channels to match how '
+        'you work.',
+    bullets: [
+      '90/60/30/14/7/1-day escalation ladder for renewals.',
+      'Notification deep links open the exact document.',
+      'Set-up helper for notification permissions.',
+    ],
+    shot: shot('14_alerts'),
+  ));
+
+  // ── Closing ───────────────────────────────────────────────────────────
   doc.addPage(_closing());
 
   final file = File(outPath)
@@ -153,9 +265,7 @@ pw.MemoryImage? _loadShot(String name) {
   return pw.MemoryImage(f.readAsBytesSync());
 }
 
-pw.Page _darkScaffold({
-  required pw.Widget child,
-}) {
+pw.Page _darkScaffold({required pw.Widget child}) {
   return pw.Page(
     pageFormat: PdfPageFormat.a4.landscape,
     margin: pw.EdgeInsets.zero,
@@ -245,9 +355,9 @@ pw.Page _cover(pw.MemoryImage? home) {
               ),
               pw.SizedBox(height: 10),
               pw.Text(
-                'Document deadlines, company money and AI insights in one '
-                'local-first app.\nBuilt in the UAE, for the way business '
-                'actually runs here.',
+                'Every screen in this deck is the live app running with demo '
+                'data.\nDocument deadlines, company money and AI insights - '
+                'one local-first app.',
                 style: pw.TextStyle(
                   color: PdfColors.white,
                   fontSize: 13,
@@ -263,7 +373,7 @@ pw.Page _cover(pw.MemoryImage? home) {
                   border: pw.Border.all(color: _indigoBright, width: 1),
                 ),
                 child: pw.Text(
-                  'PRODUCT PITCH  -  FIRST LOOK',
+                  'USER PITCH  -  ALL SCREENS & USES',
                   style: pw.TextStyle(
                     color: _indigoBright,
                     fontSize: 9,
@@ -422,7 +532,7 @@ pw.Page _solution() {
         _kicker('THE SOLUTION'),
         pw.SizedBox(height: 12),
         pw.Text(
-          'One app. Four pillars.',
+          'One app. Four pillars. Fourteen screens.',
           style: pw.TextStyle(
             color: _white,
             fontSize: 30,
@@ -431,8 +541,9 @@ pw.Page _solution() {
         ),
         pw.SizedBox(height: 10),
         pw.Text(
-          'Finavig (FV) unifies what GCC businesses juggle today across '
-          'four or more disconnected tools.',
+          'Finavig (FV) replaces the four or more disconnected tools GCC '
+          'businesses juggle today. The next pages walk every screen and '
+          'what it does for you.',
           style: pw.TextStyle(color: PdfColors.white, fontSize: 13),
         ),
         pw.SizedBox(height: 26),
@@ -491,6 +602,39 @@ pw.Page _solution() {
   );
 }
 
+pw.Page _chapter(String part, String title, String intro) {
+  return _darkScaffold(
+    child: pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      mainAxisAlignment: pw.MainAxisAlignment.center,
+      children: [
+        _kicker(part),
+        pw.SizedBox(height: 14),
+        pw.Text(
+          title,
+          style: pw.TextStyle(
+            color: _white,
+            fontSize: 36,
+            fontWeight: pw.FontWeight.bold,
+          ),
+        ),
+        pw.SizedBox(height: 14),
+        pw.SizedBox(
+          width: 320,
+          child: pw.Text(
+            intro,
+            style: pw.TextStyle(
+              color: PdfColors.white,
+              fontSize: 14,
+              lineSpacing: 5,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 pw.Widget _phoneFrame(pw.MemoryImage image, {double width = 216}) {
   final height = width * 2622 / 1206;
   return pw.Container(
@@ -510,7 +654,7 @@ pw.Widget _phoneFrame(pw.MemoryImage image, {double width = 216}) {
   );
 }
 
-pw.Page _shotPage({
+pw.Page _screen({
   required String kicker,
   required String title,
   required String intro,
@@ -657,8 +801,7 @@ pw.Page _closing() {
         ),
         pw.SizedBox(height: 8),
         pw.Text(
-          'Every screen in this deck is the live app running with demo data - '
-          'not mockups. Here is how it ships:',
+          'You have now seen every screen. Here is how it ships:',
           style: pw.TextStyle(color: PdfColors.white, fontSize: 12.5),
         ),
         pw.SizedBox(height: 20),

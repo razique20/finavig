@@ -18,7 +18,7 @@ flutter test integration_test/app_pitch_screenshots_test.dart \
 TEST_PID=$!
 trap 'kill $TEST_PID 2>/dev/null' EXIT
 
-ORDER=(01_home 02_documents 03_money 04_expiry_list 05_budgets 06_ai_summary)
+ORDER=(01_home 02_documents 03_money 04_document_detail 05_expiry_list 06_global_search 07_budgets 08_envelopes 09_records 10_cash_flow 11_ai_summary 12_ai_budget_plan 13_profile 14_alerts)
 SEEN=0
 for i in $(seq 1 240); do
   sleep 1
