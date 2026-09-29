@@ -101,7 +101,7 @@ class RecurringFormSheetState extends State<RecurringFormSheet> {
               ),
               const SizedBox(height: 4),
               Text(
-                'Finavig auto-logs this amount on the chosen day — rent, salaries, subscriptions.',
+                'FV auto-logs this amount on the chosen day — rent, salaries, subscriptions.',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),

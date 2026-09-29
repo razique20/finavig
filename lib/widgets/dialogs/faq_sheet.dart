@@ -121,7 +121,7 @@ class _FaqSheetContentState extends State<_FaqSheetContent> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Everything you need to know about Finavig',
+                          'Everything you need to know about FV',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.outline,
                           ),

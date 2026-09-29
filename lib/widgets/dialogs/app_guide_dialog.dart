@@ -138,7 +138,7 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Finavig App Guide',
+                                'FV App Guide',
                                 style: theme.textTheme.titleSmall?.copyWith(
                                   fontWeight: FontWeight.w800,
                                   letterSpacing: -0.2,

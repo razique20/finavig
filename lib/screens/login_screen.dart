@@ -140,7 +140,7 @@ class _LoginScreenState extends State<LoginScreen> {
           age--;
         }
         if (age < 16) {
-          return _failStep('You must be at least 16 to use Finavig');
+          return _failStep('You must be at least 16 to use FV');
         }
       }
     }
@@ -392,7 +392,7 @@ class _LoginScreenState extends State<LoginScreen> {
           Row(
             children: [
               Text(
-                'Finavig',
+                'FV',
                 style: GoogleFonts.playfairDisplay(
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
@@ -741,7 +741,7 @@ class _LoginScreenState extends State<LoginScreen> {
             title:
                 isSignUp ? "First — what's your email?" : "What's your email?",
             subtitle: isSignUp
-                ? "We'll create your Finavig account with it."
+                ? "We'll create your FV account with it."
                 : "Welcome back! Let's get you signed in.",
           ),
           TextFormField(

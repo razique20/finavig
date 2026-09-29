@@ -313,7 +313,7 @@ class ExpiryReport {
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
             pw.Text(
-              'Finavig - Expiry report',
+              'FV - Expiry report',
               style: pw.TextStyle(fontSize: 18, font: bold),
             ),
             pw.Text(

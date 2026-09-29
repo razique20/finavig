@@ -138,13 +138,13 @@ void _showTermsSheet(BuildContext context) {
     context,
     title: 'Terms & Conditions',
     body: const _LegalBody(
-      intro: 'These terms govern your use of Finavig — the financial and '
+      intro: 'These terms govern your use of FV — the financial and '
           'document intelligence platform for GCC businesses. By creating an '
           'account you agree to them.',
       sections: [
         _LegalSection(
           '1. The service',
-          'Finavig lets you upload company documents (trade licences, visas, '
+          'FV lets you upload company documents (trade licences, visas, '
           'invoices, receipts, tenancy agreements and more), automatically '
           'extracts dates, amounts and vendors with AI, tracks spending, '
           'budgets and cash-flow forecasts, and sends renewal reminders.',
@@ -169,7 +169,7 @@ void _showTermsSheet(BuildContext context) {
         ),
         _LegalSection(
           '5. Insights are assistance, not professional advice',
-          'Finavig highlights upcoming deadlines, spending patterns and cash '
+          'FV highlights upcoming deadlines, spending patterns and cash '
           'projections, but it does not replace professional legal, PRO, '
           'accounting, tax or compliance advice. Always confirm deadlines '
           'with the issuing authority and figures with your accountant.',
@@ -200,7 +200,7 @@ void _showPrivacySheet(BuildContext context) {
     title: 'Privacy Policy',
     body: _LegalBody(
       intro: 'Your documents and financial data are sensitive. This policy '
-          'explains, in plain language, what Finavig collects, why, and how it '
+          'explains, in plain language, what FV collects, why, and how it '
           'stays protected.',
       action: SizedBox(
         width: double.infinity,
@@ -259,7 +259,7 @@ void _showPrivacySheet(BuildContext context) {
         ),
         _LegalSection(
           '7. Children',
-          'Finavig is a business tool and is not directed at children under 16.',
+          'FV is a business tool and is not directed at children under 16.',
         ),
       ],
     ),
@@ -276,7 +276,7 @@ void showTermsDialog(BuildContext context) => _showTermsSheet(context);
 /// Privacy Policy sheet.
 void showPrivacyDialog(BuildContext context) => _showPrivacySheet(context);
 
-/// About Finavig — what the app does, version, and links to everything else.
+/// About FV — what the app does, version, and links to everything else.
 void showAboutSheet(BuildContext context) {
   final theme = Theme.of(context);
   showModalBottomSheet<void>(
@@ -299,7 +299,7 @@ void showAboutSheet(BuildContext context) {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Finavig',
+                        'FV',
                         style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w800,
                         ),
@@ -326,7 +326,7 @@ void showAboutSheet(BuildContext context) {
             ),
             const SizedBox(height: 8),
             Text(
-              'Finavig turns your paperwork into clarity. Upload documents and '
+              'FV turns your paperwork into clarity. Upload documents and '
               'receipts — AI extracts the dates, amounts and vendors. Track '
               'spending, budgets and 90-day cash forecasts in one place, and '
               'get renewal alerts before deadlines hit.',
@@ -365,7 +365,7 @@ void showAboutSheet(BuildContext context) {
             const SizedBox(height: 8),
             Center(
               child: Text(
-                'Made for the GCC · © 2026 Finavig',
+                'Made for the GCC · © 2026 FV',
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),

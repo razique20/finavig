@@ -66,7 +66,7 @@ class DocumentsHeroHeader extends StatelessWidget {
               // Ask Finavig AI: universal voice/text add (money or docs).
               HeroIconButton(
                 icon: Icons.auto_awesome_rounded,
-                tooltip: 'Ask Finavig AI',
+                tooltip: 'Ask FV AI',
                 onTap: () => AskFinavigSheet.show(context),
               ),
               const SizedBox(width: 8),

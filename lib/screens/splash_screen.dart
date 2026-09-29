@@ -84,7 +84,7 @@ class _SplashScreenState extends State<SplashScreen>
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
-                  'FINAVIG',
+                  'FV',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 44,

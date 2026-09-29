@@ -380,7 +380,7 @@ class _BlobWithRings extends StatelessWidget {
             ),
             alignment: Alignment.center,
             child: const Text(
-              'FINAVIG',
+              'FV',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w800,

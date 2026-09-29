@@ -45,7 +45,7 @@ Future<void> showAiBudgetPlanSheet(BuildContext context) {
             ),
             const SizedBox(height: 10),
             Text(
-              'Tell Finavig what you want to buy or save for and Groq AI builds a '
+              'Tell FV what you want to buy or save for and Groq AI builds a '
               'month-by-month plan from your real budgets, envelopes and '
               'spending history.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(

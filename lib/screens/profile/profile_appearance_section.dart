@@ -104,7 +104,7 @@ class ProfilePreferencesSection extends StatelessWidget {
       // saveFile cancelled or unsupported — fall back to the share sheet.
       await SharePlus.instance.share(
         ShareParams(
-          title: 'Finavig data export',
+          title: 'FV data export',
           text: json,
         ),
       );

@@ -33,7 +33,7 @@ void main() {
 
     expect(find.text('Modern Fintech for\nPersonal Finance'), findsOneWidget);
     expect(find.text('Easy ways to manage your finances'), findsOneWidget);
-    expect(find.text('FINAVIG'), findsOneWidget);
+    expect(find.text('FV'), findsOneWidget);
     // Main CTA (the in-phone pill reads "Get Started  →").
     expect(find.widgetWithText(ElevatedButton, 'Get Started'), findsOneWidget);
   });
