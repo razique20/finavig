@@ -86,6 +86,7 @@ class UpgradeRequestService {
       ..writeln('— Request —')
       ..writeln('Requested tier: ${target.name}')
       ..writeln('Requested plan duration: ${duration.label}')
+      ..writeln('Price for this period: ${TierInfo.priceFor(target, duration)}')
       ..writeln('Feature I need: $featureLabel')
       ..writeln('Current tier: ${currentTier.name}')
       ..writeln(

@@ -5,6 +5,8 @@
 /// reads it and resolves feature entitlements from [limits].
 library;
 
+import '../services/upgrade_request_service.dart';
+
 /// The three commercial tiers. Ordered by ascending capability.
 enum SubscriptionTier {
   free,
@@ -205,6 +207,76 @@ class TierInfo {
       ],
     ),
   };
+
+  /// AED price for one billing period of [tier], keyed by plan length.
+  /// Monthly = the anchor prices (Plus 25, Business 99). Longer periods get
+  /// a real discount vs paying month-to-month:
+  ///  - Plus 3 months: 69 (vs 75) — ~8% off; 1 year: 240 (vs 300) — 20% off.
+  ///  - Business 3 months: 269 (vs 297) — ~9% off; 1 year: 899 (vs 1188) —
+  ///    ~24% off.
+  static const Map<SubscriptionTier, Map<PlanDuration, double>> priceAed = {
+    SubscriptionTier.plus: {
+      PlanDuration.oneMonth: 25,
+      PlanDuration.threeMonths: 69,
+      PlanDuration.oneYear: 240,
+    },
+    SubscriptionTier.business: {
+      PlanDuration.oneMonth: 99,
+      PlanDuration.threeMonths: 269,
+      PlanDuration.oneYear: 899,
+    },
+  };
+
+  /// Approximate USD for the same period (1 AED = 0.2723 USD, rounded to
+  /// x.99 psychology pricing).
+  static const Map<SubscriptionTier, Map<PlanDuration, String>> priceUsdHint = {
+    SubscriptionTier.plus: {
+      PlanDuration.oneMonth: '~\$6.99',
+      PlanDuration.threeMonths: '~\$18.99',
+      PlanDuration.oneYear: '~\$64.99',
+    },
+    SubscriptionTier.business: {
+      PlanDuration.oneMonth: '~\$26.99',
+      PlanDuration.threeMonths: '~\$72.99',
+      PlanDuration.oneYear: '~\$244.99',
+    },
+  };
+
+  /// Formatted price for [tier] billed at [duration], e.g.
+  /// "AED 25 / month  (~\$6.99)" or "AED 240 / year  (~\$64.99)".
+  static String priceFor(SubscriptionTier tier, PlanDuration duration) {
+    final aed = priceAed[tier]?[duration];
+    if (aed == null) return all[tier]?.priceLabel ?? '';
+    final usd = priceUsdHint[tier]?[duration] ?? '';
+    final aedText = aed == aed.roundToDouble()
+        ? aed.round().toString()
+        : aed.toStringAsFixed(2);
+    final period = switch (duration) {
+      PlanDuration.oneMonth => '/ month',
+      PlanDuration.threeMonths => '/ 3 months',
+      PlanDuration.oneYear => '/ year',
+    };
+    final savings = switch (duration) {
+      PlanDuration.oneMonth => '',
+      PlanDuration.threeMonths => _savingSuffix(tier, duration, aed),
+      PlanDuration.oneYear => _savingSuffix(tier, duration, aed),
+    };
+    return 'AED $aedText $period${usd.isEmpty ? '' : '  ($usd)'}$savings';
+  }
+
+  /// " — save 20%" suffix when the bundle is cheaper than paying monthly.
+  static String _savingSuffix(
+    SubscriptionTier tier,
+    PlanDuration duration,
+    double bundlePrice,
+  ) {
+    final monthly = priceAed[tier]?[PlanDuration.oneMonth];
+    if (monthly == null) return '';
+    final monthlyTotal = monthly * duration.months;
+    if (monthlyTotal <= bundlePrice) return '';
+    final pct = ((1 - bundlePrice / monthlyTotal) * 100).round();
+    return pct > 0 ? ' — save $pct%' : '';
+  }
 
   /// The tier one step above, or null when already at the top tier.
   static SubscriptionTier? nextTierUp(SubscriptionTier tier) => switch (tier) {

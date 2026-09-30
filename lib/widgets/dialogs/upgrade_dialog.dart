@@ -194,6 +194,7 @@ class _TierRequestSheetState extends State<_TierRequestSheet> {
                 _TierOptionCard(
                   info: TierInfo.all[target]!,
                   duration: _duration,
+                  priceLabel: TierInfo.priceFor(target, _duration),
                   onTap: () => _request(context, target),
                 ),
                 const SizedBox(height: 10),
@@ -219,6 +220,7 @@ class _TierOptionCard extends StatelessWidget {
     required this.info,
     required this.onTap,
     this.duration,
+    this.priceLabel,
   });
 
   final TierInfo info;
@@ -226,6 +228,18 @@ class _TierOptionCard extends StatelessWidget {
 
   /// When set, the card shows the price estimate for this billing period.
   final PlanDuration? duration;
+
+  /// Price text for the selected billing period, e.g.
+  /// "AED 240 / year (~\$64.99) — save 20%". Shown in the title row
+  /// (falling back to [TierInfo.priceLabel] when null).
+  final String? priceLabel;
+
+  /// "3 months" / "1 year" — used by the per-card billing hint.
+  static String _periodLabel(PlanDuration duration) => switch (duration) {
+        PlanDuration.oneMonth => '1 month',
+        PlanDuration.threeMonths => '3 months',
+        PlanDuration.oneYear => '1 year',
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -263,12 +277,21 @@ class _TierOptionCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${info.name} — ${info.priceLabel}',
+                    '${info.name} — ${priceLabel ?? info.priceLabel}',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                     ),
                   ),
+                  if (duration != null && duration != PlanDuration.oneMonth) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      'Billed every ${_periodLabel(duration!)}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 2),
                   Text(
                     info.benefits.take(3).join(' • '),
