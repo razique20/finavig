@@ -235,13 +235,6 @@ class _TierOptionCard extends StatelessWidget {
   /// (falling back to [TierInfo.priceLabel] when null).
   final String? priceLabel;
 
-  /// "3 months" / "1 year" — used by the per-card billing hint.
-  static String _periodLabel(PlanDuration duration) => switch (duration) {
-        PlanDuration.oneMonth => '1 month',
-        PlanDuration.threeMonths => '3 months',
-        PlanDuration.oneYear => '1 year',
-      };
-
   @override
   Widget build(BuildContext context) {
     return InkWell(
@@ -299,24 +292,37 @@ class _TierOptionCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 10),
-            // Price row: always fully visible, never truncated.
-            Text(
-              priceLabel ?? info.priceLabel,
-              style: const TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 16,
-                color: FinavigColors.navyPrimary,
-              ),
-            ),
-            if (duration != null && duration != PlanDuration.oneMonth) ...[
-              const SizedBox(height: 2),
-              Text(
-                'Billed every ${_periodLabel(duration!)}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
+            // Price row: bold main price + small USD/saving hint, all on
+            // ONE line so both cards keep the same height.
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  duration == null
+                      ? (priceLabel ?? info.priceLabel)
+                      : TierInfo.priceMain(info.tier, duration!),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                    color: FinavigColors.navyPrimary,
+                  ),
                 ),
-              ),
-            ],
+                if (duration != null) ...[
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      TierInfo.priceSub(info.tier, duration!),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
             const SizedBox(height: 10),
             // Every feature listed, one per line — nothing hidden.
             ...info.benefits.map(

@@ -261,21 +261,45 @@ class TierInfo {
       PlanDuration.threeMonths => _savingSuffix(tier, duration, aed),
       PlanDuration.oneYear => _savingSuffix(tier, duration, aed),
     };
-    return 'AED $aedText $period${usd.isEmpty ? '' : '  ($usd)'}$savings';
+    return 'AED $aedText $period${usd.isEmpty ? '' : '  ($usd)'}${savings.isEmpty ? '' : ' — $savings'}';
   }
 
-  /// " — save 20%" suffix when the bundle is cheaper than paying monthly.
+  /// Main price text, e.g. "AED 240 / year" — the bold part of the row.
+  static String priceMain(SubscriptionTier tier, PlanDuration duration) {
+    final aed = priceAed[tier]?[duration];
+    if (aed == null) return all[tier]?.priceLabel ?? '';
+    final aedText = aed == aed.roundToDouble()
+        ? aed.round().toString()
+        : aed.toStringAsFixed(2);
+    final period = switch (duration) {
+      PlanDuration.oneMonth => '/ month',
+      PlanDuration.threeMonths => '/ 3 months',
+      PlanDuration.oneYear => '/ year',
+    };
+    return 'AED $aedText $period';
+  }
+
+  /// Small trailing hint, e.g. "~\$64.99 · save 20%" — empty for monthly.
+  static String priceSub(SubscriptionTier tier, PlanDuration duration) {
+    final usd = priceUsdHint[tier]?[duration] ?? '';
+    final saving = _savingSuffix(tier, duration, priceAed[tier]?[duration]);
+    if (usd.isEmpty && saving.isEmpty) return '';
+    return [usd, saving].where((s) => s.isNotEmpty).join(' · ');
+  }
+
+  /// " — save 20%" text when the bundle is cheaper than paying monthly.
   static String _savingSuffix(
     SubscriptionTier tier,
     PlanDuration duration,
-    double bundlePrice,
+    double? bundlePrice,
   ) {
+    if (bundlePrice == null || duration == PlanDuration.oneMonth) return '';
     final monthly = priceAed[tier]?[PlanDuration.oneMonth];
     if (monthly == null) return '';
     final monthlyTotal = monthly * duration.months;
     if (monthlyTotal <= bundlePrice) return '';
     final pct = ((1 - bundlePrice / monthlyTotal) * 100).round();
-    return pct > 0 ? ' — save $pct%' : '';
+    return pct > 0 ? 'save $pct%' : '';
   }
 
   /// The tier one step above, or null when already at the top tier.
