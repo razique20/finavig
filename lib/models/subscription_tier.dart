@@ -212,8 +212,8 @@ class TierInfo {
   /// Monthly = the anchor prices (Plus 25, Business 99). Longer periods get
   /// a real discount vs paying month-to-month:
   ///  - Plus 3 months: 69 (vs 75) — ~8% off; 1 year: 240 (vs 300) — 20% off.
-  ///  - Business 3 months: 269 (vs 297) — ~9% off; 1 year: 899 (vs 1188) —
-  ///    ~24% off.
+  ///  - Business 3 months: 269 (vs 297) — ~9% off; 1 year: 999 (vs 1188) —
+  ///    ~16% off.
   static const Map<SubscriptionTier, Map<PlanDuration, double>> priceAed = {
     SubscriptionTier.plus: {
       PlanDuration.oneMonth: 25,
@@ -223,7 +223,7 @@ class TierInfo {
     SubscriptionTier.business: {
       PlanDuration.oneMonth: 99,
       PlanDuration.threeMonths: 269,
-      PlanDuration.oneYear: 899,
+      PlanDuration.oneYear: 999,
     },
   };
 
@@ -238,7 +238,7 @@ class TierInfo {
     SubscriptionTier.business: {
       PlanDuration.oneMonth: '~\$26.99',
       PlanDuration.threeMonths: '~\$72.99',
-      PlanDuration.oneYear: '~\$244.99',
+      PlanDuration.oneYear: '~\$271.99',
     },
   };
 

@@ -131,75 +131,76 @@ class _TierRequestSheetState extends State<_TierRequestSheet> {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Choose your plan',
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'You are on ${TierInfo.all[currentTier]!.name}'
-              '${planEndsAt != null && currentTier != SubscriptionTier.free ? ' — ends ${_formatDate(planEndsAt)}' : ''}. '
-              'Pick a billing period, tap a plan, and send the drafted email to '
-              '${UpgradeRequestService.supportEmail} — we reply with a payment '
-              'link and activate your plan after payment.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.outline,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Choose your plan',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
-            ),
-            const SizedBox(height: 14),
-            Text(
-              'Billing period',
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: Theme.of(context).colorScheme.outline,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: [
-                for (final d in PlanDuration.values)
-                  ChoiceChip(
-                    label: Text(d.label),
-                    selected: _duration == d,
-                    onSelected: (_) => setState(() => _duration = d),
-                    selectedColor: FinavigColors.navyPrimary.withAlpha(46),
-                    labelStyle: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: _duration == d
-                          ? FinavigColors.navyPrimary
-                          : Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                    side: BorderSide(
-                      color: _duration == d
-                          ? FinavigColors.navyPrimary
-                          : Theme.of(context).colorScheme.outlineVariant,
-                    ),
-                    showCheckmark: false,
-                  ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            for (final target in [
-              SubscriptionTier.plus,
-              SubscriptionTier.business,
-            ])
-              if (target > currentTier) ...[
-                _TierOptionCard(
-                  info: TierInfo.all[target]!,
-                  duration: _duration,
-                  priceLabel: TierInfo.priceFor(target, _duration),
-                  onTap: () => _request(context, target),
+              const SizedBox(height: 4),
+              Text(
+                'You are on ${TierInfo.all[currentTier]!.name}'
+                '${planEndsAt != null && currentTier != SubscriptionTier.free ? ' — ends ${_formatDate(planEndsAt)}' : ''}. '
+                'Pick a billing period, then tap a plan — we reply with a '
+                'payment link and activate after payment.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.outline,
                 ),
-                const SizedBox(height: 10),
-              ],
-          ],
+              ),
+              const SizedBox(height: 14),
+              Text(
+                'Billing period',
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.outline,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: [
+                  for (final d in PlanDuration.values)
+                    ChoiceChip(
+                      label: Text(d.label),
+                      selected: _duration == d,
+                      onSelected: (_) => setState(() => _duration = d),
+                      selectedColor: FinavigColors.navyPrimary.withAlpha(46),
+                      labelStyle: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: _duration == d
+                            ? FinavigColors.navyPrimary
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      side: BorderSide(
+                        color: _duration == d
+                            ? FinavigColors.navyPrimary
+                            : Theme.of(context).colorScheme.outlineVariant,
+                      ),
+                      showCheckmark: false,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              for (final target in [
+                SubscriptionTier.plus,
+                SubscriptionTier.business,
+              ])
+                if (target > currentTier) ...[
+                  _TierOptionCard(
+                    info: TierInfo.all[target]!,
+                    duration: _duration,
+                    priceLabel: TierInfo.priceFor(target, _duration),
+                    onTap: () => _request(context, target),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+            ],
+          ),
         ),
       ),
     );
@@ -255,56 +256,94 @@ class _TierOptionCard extends StatelessWidget {
             color: Theme.of(context).colorScheme.outlineVariant,
           ),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: FinavigColors.navyPrimary.withAlpha(25),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                info.tier == SubscriptionTier.business
-                    ? Icons.business_center_rounded
-                    : Icons.workspace_premium_rounded,
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: FinavigColors.navyPrimary.withAlpha(25),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    info.tier == SubscriptionTier.business
+                        ? Icons.business_center_rounded
+                        : Icons.workspace_premium_rounded,
+                    color: FinavigColors.navyPrimary,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        info.name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                      Text(
+                        info.tagline,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            // Price row: always fully visible, never truncated.
+            Text(
+              priceLabel ?? info.priceLabel,
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 16,
                 color: FinavigColors.navyPrimary,
-                size: 20,
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${info.name} — ${priceLabel ?? info.priceLabel}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
+            if (duration != null && duration != PlanDuration.oneMonth) ...[
+              const SizedBox(height: 2),
+              Text(
+                'Billed every ${_periodLabel(duration!)}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.outline,
+                ),
+              ),
+            ],
+            const SizedBox(height: 10),
+            // Every feature listed, one per line — nothing hidden.
+            ...info.benefits.map(
+              (b) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.check_circle_rounded,
+                      color: FinavigColors.navyPrimary,
+                      size: 15,
                     ),
-                  ),
-                  if (duration != null && duration != PlanDuration.oneMonth) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      'Billed every ${_periodLabel(duration!)}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.outline,
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        b,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface
+                              .withAlpha(200),
+                        ),
                       ),
                     ),
                   ],
-                  const SizedBox(height: 2),
-                  Text(
-                    info.benefits.take(3).join(' • '),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.outline,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+                ),
               ),
             ),
-            const Icon(Icons.chevron_right_rounded),
           ],
         ),
       ),
@@ -410,25 +449,35 @@ class UpgradeDialog extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: FinavigColors.cyanSecondary.withAlpha(46),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          info.priceLabel,
-                          style: const TextStyle(
-                            color: FinavigColors.cyanSecondary,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
+                      Flexible(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: FinavigColors.cyanSecondary.withAlpha(46),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            info.priceLabel,
+                            style: const TextStyle(
+                              color: FinavigColors.cyanSecondary,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    info.tagline,
+                    style: TextStyle(
+                      color: Colors.white.withAlpha(200),
+                      fontSize: 12,
+                    ),
                   ),
                   const SizedBox(height: 10),
                   ...info.benefits.map(

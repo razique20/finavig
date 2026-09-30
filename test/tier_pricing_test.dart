@@ -34,11 +34,11 @@ void main() {
       );
       expect(
         TierInfo.priceFor(SubscriptionTier.business, PlanDuration.oneYear),
-        contains('AED 899 / year'),
+        contains('AED 999 / year'),
       );
       expect(
         TierInfo.priceFor(SubscriptionTier.business, PlanDuration.oneYear),
-        contains('save 24%'),
+        contains('save 16%'),
       );
     });
 
