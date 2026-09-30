@@ -47,10 +47,14 @@ class NotificationService {
     }
 
     const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+    // Do NOT request permission here: init() runs during main() prewarm,
+    // so the OS prompt would appear over the blank launch screen before
+    // the splash renders. Permission is requested explicitly from the
+    // onboarding pre-permission page (see requestPermission()).
     const iosInit = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
     );
     const settings = InitializationSettings(
       android: androidInit,
@@ -66,15 +70,37 @@ class NotificationService {
           NotificationServiceTapHook.onTap?.call(response.payload);
         },
       );
-      // Android 13+ requires a runtime permission prompt; iOS already prompts
-      // via DarwinInitializationSettings above.
+      // Android 13+ runtime permission is requested from onboarding via
+      // requestPermission(), not during startup init.
+      // ignore: avoid_catches_without_on_var_annotations
+    } catch (_) {
+      // Plugin unavailable (e.g. tests) — service degrades to no-ops.
+    }
+  }
+
+  /// Ask the user for notification permission. Called from the onboarding
+  /// pre-permission page so the OS prompt appears after it has been
+  /// explained, never over the cold-start launch screen.
+  Future<void> requestPermission() async {
+    await init();
+    try {
       await _plugin
           .resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>()
           ?.requestNotificationsPermission();
+      // iOS: requesting again is a no-op if already decided; on first run
+      // this surfaces the system prompt at the right moment.
+      await _plugin
+          .resolvePlatformSpecificImplementation<
+              IOSFlutterLocalNotificationsPlugin>()
+          ?.requestPermissions(
+            alert: true,
+            badge: true,
+            sound: true,
+          );
       // ignore: avoid_catches_without_on_var_annotations
     } catch (_) {
-      // Plugin unavailable (e.g. tests) — service degrades to no-ops.
+      // Plugin unavailable — nothing to request.
     }
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../services/notification_service.dart';
 import '../theme/app_theme.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -43,9 +44,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               'Trade licence, ejari, visas, Emirates IDs, labour documents, insurance, vehicles, contracts, domains, subscriptions, supplier agreements — in one place.',
           color: FinavigColors.emeraldAccent,
         ),
-        // Pre-permission explainer: iOS/Android fire the OS notification
-        // prompt on first NotificationService.init() — this page makes the
-        // ask make sense before that happens, lifting grant rates.
+        // Pre-permission explainer: the OS notification prompt fires from
+        // this page's action (via NotificationService.requestPermission),
+        // so the ask is explained before it appears — never over the cold-
+        // start launch screen.
         _OnboardingPage(
           icon: Icons.notifications_active_rounded,
           title: 'Allow notifications — please',
@@ -54,6 +56,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               'expires. Allow notifications on the next screen, or the '
               'reminders that save you the fines can\'t reach you.',
           color: FinavigColors.cyanAccent,
+          action: () {
+            // Fire the OS prompt at the moment it has been explained.
+            NotificationService.instance.requestPermission();
+            setState(() => _page++);
+          },
         ),
         _OnboardingPage(
           icon: Icons.check_circle_rounded,
