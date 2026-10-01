@@ -60,24 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
   int get _totalSteps => _isSignUp ? 5 : 2;
 
   @override
-  void initState() {
-    super.initState();
-    // Rebuild when any field gains/loses focus — the glass fields draw a
-    // soft accent glow while focused (Glass & Glow).
-    for (final node in [_emailFocus, _passwordFocus, _phoneFocus]) {
-      node.addListener(_onFocusChanged);
-    }
-  }
-
-  void _onFocusChanged() {
-    if (mounted) setState(() {});
-  }
-
-  @override
   void dispose() {
-    for (final node in [_emailFocus, _passwordFocus, _phoneFocus]) {
-      node.removeListener(_onFocusChanged);
-    }
     _emailController.dispose();
     _passwordController.dispose();
     _phoneController.dispose();
@@ -823,23 +806,19 @@ class _LoginScreenState extends State<LoginScreen> {
                 ? "We'll create your Finavig account with it."
                 : "Welcome back! Let's get you signed in.",
           ),
-          _glowWrap(
-            isDark,
-            _emailFocus,
-            TextFormField(
-              controller: _emailController,
-              focusNode: _emailFocus,
-              keyboardType: TextInputType.emailAddress,
-              autofillHints: const [AutofillHints.email],
-              textInputAction: TextInputAction.next,
-              onFieldSubmitted: (_) => _continue(),
-              style: TextStyle(color: _fieldTextColor(isDark), fontSize: 15),
-              decoration: _fieldDecoration(
-                isDark,
-                label: 'Email Address',
-                icon: Icons.alternate_email_rounded,
-                errorText: _stepError,
-              ),
+          TextFormField(
+            controller: _emailController,
+            focusNode: _emailFocus,
+            keyboardType: TextInputType.emailAddress,
+            autofillHints: const [AutofillHints.email],
+            textInputAction: TextInputAction.next,
+            onFieldSubmitted: (_) => _continue(),
+            style: TextStyle(color: _fieldTextColor(isDark), fontSize: 15),
+            decoration: _fieldDecoration(
+              isDark,
+              label: 'Email Address',
+              icon: Icons.alternate_email_rounded,
+              errorText: _stepError,
             ),
           ),
         ],
@@ -860,39 +839,35 @@ class _LoginScreenState extends State<LoginScreen> {
                 ? 'At least 6 characters. You can change it later.'
                 : null,
           ),
-          _glowWrap(
-            isDark,
-            _passwordFocus,
-            TextFormField(
-              controller: _passwordController,
-              focusNode: _passwordFocus,
-              obscureText: _obscurePassword,
-              autofillHints: const [AutofillHints.password],
-              textInputAction:
-                  isSignUp ? TextInputAction.next : TextInputAction.done,
-              onFieldSubmitted: (_) => _continue(),
-              style: TextStyle(color: _fieldTextColor(isDark), fontSize: 15),
-              decoration: _fieldDecoration(
-                isDark,
-                label: 'Password',
-                icon: Icons.lock_outline_rounded,
-                errorText: _stepError,
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscurePassword
-                        ? Icons.visibility_off_rounded
-                        : Icons.visibility_rounded,
-                    size: 20,
-                    color: isDark
-                        ? FinavigColors.textSecondary
-                        : FinavigColors.textSecondaryLight,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _obscurePassword = !_obscurePassword;
-                    });
-                  },
+          TextFormField(
+            controller: _passwordController,
+            focusNode: _passwordFocus,
+            obscureText: _obscurePassword,
+            autofillHints: const [AutofillHints.password],
+            textInputAction:
+                isSignUp ? TextInputAction.next : TextInputAction.done,
+            onFieldSubmitted: (_) => _continue(),
+            style: TextStyle(color: _fieldTextColor(isDark), fontSize: 15),
+            decoration: _fieldDecoration(
+              isDark,
+              label: 'Password',
+              icon: Icons.lock_outline_rounded,
+              errorText: _stepError,
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscurePassword
+                      ? Icons.visibility_off_rounded
+                      : Icons.visibility_rounded,
+                  size: 20,
+                  color: isDark
+                      ? FinavigColors.textSecondary
+                      : FinavigColors.textSecondaryLight,
                 ),
+                onPressed: () {
+                  setState(() {
+                    _obscurePassword = !_obscurePassword;
+                  });
+                },
               ),
             ),
           ),
@@ -1288,46 +1263,22 @@ class _LoginScreenState extends State<LoginScreen> {
             subtitle:
                 'Optional — used for renewal reminders and cash-flow alerts. You can skip this.',
           ),
-          _glowWrap(
-            isDark,
-            _phoneFocus,
-            TextFormField(
-              controller: _phoneController,
-              focusNode: _phoneFocus,
-              keyboardType: TextInputType.phone,
-              autofillHints: const [AutofillHints.telephoneNumber],
-              textInputAction: TextInputAction.done,
-              onFieldSubmitted: (_) => _continue(),
-              style: TextStyle(color: _fieldTextColor(isDark), fontSize: 15),
-              decoration: _fieldDecoration(
-                isDark,
-                label: 'Phone — ${_selectedCountry.phoneCode} (Optional)',
-                icon: Icons.phone_iphone_rounded,
-              ),
+          TextFormField(
+            controller: _phoneController,
+            focusNode: _phoneFocus,
+            keyboardType: TextInputType.phone,
+            autofillHints: const [AutofillHints.telephoneNumber],
+            textInputAction: TextInputAction.done,
+            onFieldSubmitted: (_) => _continue(),
+            style: TextStyle(color: _fieldTextColor(isDark), fontSize: 15),
+            decoration: _fieldDecoration(
+              isDark,
+              label: 'Phone — ${_selectedCountry.phoneCode} (Optional)',
+              icon: Icons.phone_iphone_rounded,
             ),
           ),
         ],
       ),
-    );
-  }
-
-  /// Glass field wrapper: soft accent glow while focused (Glass & Glow).
-  Widget _glowWrap(bool isDark, FocusNode node, Widget child) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: node.hasFocus
-            ? [
-                BoxShadow(
-                  color: FinavigColors.accentBright.withOpacity(0.35),
-                  blurRadius: 18,
-                  offset: const Offset(0, 4),
-                ),
-              ]
-            : const [],
-      ),
-      child: child,
     );
   }
 
