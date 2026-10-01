@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -352,85 +351,45 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       // Same backdrop recipe as Home: ink in light mode, obsidian in dark.
+      // Flat solid backdrop — no glows or gradients.
       backgroundColor: isDark ? FinavigColors.obsidian : FinavigColors.ink,
-      body: Stack(
-        children: [
-          // Glass & Glow: ambient accent glows behind the frosted sheet —
-          // visible in light mode too (violet on ink, not just dark).
-          Positioned(
-            top: -120,
-            left: -80,
-            child: _ambientGlow(320, FinavigColors.violet.withOpacity(0.40)),
-          ),
-          Positioned(
-            bottom: -60,
-            right: -100,
-            child:
-                _ambientGlow(300, FinavigColors.accentBright.withOpacity(0.25)),
-          ),
-          SafeArea(
-            bottom: false,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _hero(theme, isDark),
-                Expanded(child: _glassSheet(theme, isDark)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Soft radial accent blob used behind the frosted sheet.
-  Widget _ambientGlow(double size, Color color) {
-    return IgnorePointer(
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: [color, color.withOpacity(0)],
-          ),
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _hero(theme, isDark),
+            Expanded(child: _glassSheet(theme, isDark)),
+          ],
         ),
       ),
     );
   }
 
-  /// The frosted sheet holding toggle / progress / steps / footer.
-  ///
-  /// Glass & Glow: a real BackdropFilter blurs the ambient glows behind it,
-  /// so the sheet reads as translucent glass in both themes (light mode is
-  /// the reference look — white glass on ink; dark uses white-at-7%).
+  /// The sheet holding toggle / progress / steps / footer. Slightly
+  /// translucent so the ink backdrop reads as one continuous surface.
   Widget _glassSheet(ThemeData theme, bool isDark) {
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
-        child: Container(
-          decoration: BoxDecoration(
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withOpacity(0.07)
+            : Colors.white.withOpacity(0.90),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        border: Border(
+          top: BorderSide(
             color: isDark
-                ? Colors.white.withOpacity(0.07)
+                ? Colors.white.withOpacity(0.16)
                 : Colors.white.withOpacity(0.90),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-            border: Border(
-              top: BorderSide(
-                color: isDark
-                    ? Colors.white.withOpacity(0.16)
-                    : Colors.white.withOpacity(0.90),
-              ),
-            ),
-          ),
-          child: Column(
-            children: [
-              _chrome(theme, isDark),
-              Expanded(child: _stepsArea(theme, isDark)),
-              _footer(theme, isDark),
-            ],
           ),
         ),
+      ),
+      child: Column(
+        children: [
+          _chrome(theme, isDark),
+          Expanded(child: _stepsArea(theme, isDark)),
+          _footer(theme, isDark),
+        ],
       ),
     );
   }
