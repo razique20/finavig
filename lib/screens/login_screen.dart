@@ -1588,19 +1588,11 @@ class _ModeToggle extends StatelessWidget {
             height: 44,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: selected
-                  ? (isDark
-                      ? Colors.white.withOpacity(0.16)
-                      : Colors.white)
-                  : Colors.transparent,
+              // Solid white pill in both themes with ink (button-color)
+              // text — matches the flat dark CTA.
+              color: selected ? Colors.white : Colors.transparent,
               borderRadius: BorderRadius.circular(16),
-              border: selected
-                  ? Border.all(
-                      color: (isDark ? Colors.white : FinavigColors.violet)
-                          .withOpacity(0.35),
-                    )
-                  : null,
-              boxShadow: selected && !isDark ? FinavigShadows.soft : null,
+              boxShadow: selected ? FinavigShadows.soft : null,
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -1608,9 +1600,7 @@ class _ModeToggle extends StatelessWidget {
                 Icon(
                   icon,
                   size: 16,
-                  color: selected
-                      ? (isDark ? Colors.white : FinavigColors.violet)
-                      : inactiveColor,
+                  color: selected ? FinavigColors.ink : inactiveColor,
                 ),
                 const SizedBox(width: 6),
                 Text(
@@ -1618,9 +1608,7 @@ class _ModeToggle extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                    color: selected
-                        ? (isDark ? Colors.white : FinavigColors.violet)
-                        : inactiveColor,
+                    color: selected ? FinavigColors.ink : inactiveColor,
                   ),
                 ),
               ],
