@@ -113,9 +113,12 @@ class _EnvelopesScreenState extends State<EnvelopesScreen> {
                                 padding: const EdgeInsets.only(bottom: 10),
                                 child: EnvelopeCard(
                                   envelope: envelope,
-                                  onAdd: () => _adjustEnvelope(envelope, 100),
-                                  onWithdraw: () =>
-                                      _adjustEnvelope(envelope, -100),
+                                  // Step follows the envelope's plan
+                                  // (monthly contribution, or AED 50).
+                                  onAdd: () => _adjustEnvelope(
+                                      envelope, envelope.adjustStep),
+                                  onWithdraw: () => _adjustEnvelope(
+                                      envelope, -envelope.adjustStep),
                                   onDelete: () => FinanceService.instance
                                       .deleteEnvelope(envelope.id),
                                 ),

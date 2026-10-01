@@ -259,6 +259,7 @@ class EnvelopesSection extends StatelessWidget {
   final List<SavingsEnvelope> envelopes;
   final VoidCallback onAdd;
   final void Function(SavingsEnvelope) onAdjust;
+  final void Function(SavingsEnvelope) onWithdraw;
   final void Function(SavingsEnvelope) onDelete;
 
   const EnvelopesSection({
@@ -266,6 +267,7 @@ class EnvelopesSection extends StatelessWidget {
     required this.envelopes,
     required this.onAdd,
     required this.onAdjust,
+    required this.onWithdraw,
     required this.onDelete,
   });
 
@@ -292,8 +294,10 @@ class EnvelopesSection extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 10),
               child: EnvelopeCard(
                 envelope: envelope,
+                // + adds and − withdraws: two distinct callbacks so the
+                // card's two buttons can never collapse to one action.
                 onAdd: () => onAdjust(envelope),
-                onWithdraw: () => onAdjust(envelope),
+                onWithdraw: () => onWithdraw(envelope),
                 onDelete: () => onDelete(envelope),
               ),
             ),

@@ -270,7 +270,12 @@ class _MoneyScreenState extends State<MoneyScreen> {
                               EnvelopesSection(
                                 envelopes: _envelopes,
                                 onAdd: _showEnvelopeSheet,
-                                onAdjust: (e) => _adjustEnvelope(e, 100),
+                                // + adds and − withdraws the envelope's
+                                // step (plan amount, or AED 50). Both signs
+                                // are decided here, per envelope.
+                                onAdjust: (e) => _adjustEnvelope(e, e.adjustStep),
+                                onWithdraw: (e) =>
+                                    _adjustEnvelope(e, -e.adjustStep),
                                 onDelete: (e) =>
                                     FinanceService.instance.deleteEnvelope(e.id),
                               ),

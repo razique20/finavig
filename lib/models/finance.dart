@@ -549,6 +549,11 @@ class SavingsEnvelope {
   double get remaining =>
       (targetAmount - savedAmount).clamp(0.0, double.infinity);
 
+  /// Step used by the envelope card's +/− buttons: the planned monthly
+  /// contribution when set, otherwise AED 50 (small enough to be useful on
+  /// small envelopes, large enough not to need twenty taps).
+  double get adjustStep => monthlyContribution > 0 ? monthlyContribution : 50;
+
   bool get isComplete => targetAmount > 0 && savedAmount >= targetAmount;
 
   SavingsEnvelope copyWith({
