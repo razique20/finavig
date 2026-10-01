@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -58,7 +60,24 @@ class _LoginScreenState extends State<LoginScreen> {
   int get _totalSteps => _isSignUp ? 5 : 2;
 
   @override
+  void initState() {
+    super.initState();
+    // Rebuild when any field gains/loses focus — the glass fields draw a
+    // soft accent glow while focused (Glass & Glow).
+    for (final node in [_emailFocus, _passwordFocus, _phoneFocus]) {
+      node.addListener(_onFocusChanged);
+    }
+  }
+
+  void _onFocusChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
   void dispose() {
+    for (final node in [_emailFocus, _passwordFocus, _phoneFocus]) {
+      node.removeListener(_onFocusChanged);
+    }
     _emailController.dispose();
     _passwordController.dispose();
     _phoneController.dispose();
@@ -351,31 +370,83 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       // Same backdrop recipe as Home: ink in light mode, obsidian in dark.
       backgroundColor: isDark ? FinavigColors.obsidian : FinavigColors.ink,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _hero(theme, isDark),
-            Expanded(
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(28),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    _chrome(theme, isDark),
-                    Expanded(child: _stepsArea(theme, isDark)),
-                    _footer(theme, isDark),
-                  ],
-                ),
+      body: Stack(
+        children: [
+          // Glass & Glow: ambient accent glows behind the frosted sheet —
+          // visible in light mode too (violet on ink, not just dark).
+          Positioned(
+            top: -120,
+            left: -80,
+            child: _ambientGlow(320, FinavigColors.violet.withOpacity(0.40)),
+          ),
+          Positioned(
+            bottom: -60,
+            right: -100,
+            child:
+                _ambientGlow(300, FinavigColors.accentBright.withOpacity(0.25)),
+          ),
+          SafeArea(
+            bottom: false,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _hero(theme, isDark),
+                Expanded(child: _glassSheet(theme, isDark)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Soft radial accent blob used behind the frosted sheet.
+  Widget _ambientGlow(double size, Color color) {
+    return IgnorePointer(
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(
+            colors: [color, color.withOpacity(0)],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// The frosted sheet holding toggle / progress / steps / footer.
+  ///
+  /// Glass & Glow: a real BackdropFilter blurs the ambient glows behind it,
+  /// so the sheet reads as translucent glass in both themes (light mode is
+  /// the reference look — white glass on ink; dark uses white-at-7%).
+  Widget _glassSheet(ThemeData theme, bool isDark) {
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+        child: Container(
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.white.withOpacity(0.07)
+                : Colors.white.withOpacity(0.90),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+            border: Border(
+              top: BorderSide(
+                color: isDark
+                    ? Colors.white.withOpacity(0.16)
+                    : Colors.white.withOpacity(0.90),
               ),
             ),
-          ],
+          ),
+          child: Column(
+            children: [
+              _chrome(theme, isDark),
+              Expanded(child: _stepsArea(theme, isDark)),
+              _footer(theme, isDark),
+            ],
+          ),
         ),
       ),
     );
@@ -752,19 +823,23 @@ class _LoginScreenState extends State<LoginScreen> {
                 ? "We'll create your Finavig account with it."
                 : "Welcome back! Let's get you signed in.",
           ),
-          TextFormField(
-            controller: _emailController,
-            focusNode: _emailFocus,
-            keyboardType: TextInputType.emailAddress,
-            autofillHints: const [AutofillHints.email],
-            textInputAction: TextInputAction.next,
-            onFieldSubmitted: (_) => _continue(),
-            style: TextStyle(color: _fieldTextColor(isDark), fontSize: 15),
-            decoration: _fieldDecoration(
-              isDark,
-              label: 'Email Address',
-              icon: Icons.alternate_email_rounded,
-              errorText: _stepError,
+          _glowWrap(
+            isDark,
+            _emailFocus,
+            TextFormField(
+              controller: _emailController,
+              focusNode: _emailFocus,
+              keyboardType: TextInputType.emailAddress,
+              autofillHints: const [AutofillHints.email],
+              textInputAction: TextInputAction.next,
+              onFieldSubmitted: (_) => _continue(),
+              style: TextStyle(color: _fieldTextColor(isDark), fontSize: 15),
+              decoration: _fieldDecoration(
+                isDark,
+                label: 'Email Address',
+                icon: Icons.alternate_email_rounded,
+                errorText: _stepError,
+              ),
             ),
           ),
         ],
@@ -785,35 +860,39 @@ class _LoginScreenState extends State<LoginScreen> {
                 ? 'At least 6 characters. You can change it later.'
                 : null,
           ),
-          TextFormField(
-            controller: _passwordController,
-            focusNode: _passwordFocus,
-            obscureText: _obscurePassword,
-            autofillHints: const [AutofillHints.password],
-            textInputAction:
-                isSignUp ? TextInputAction.next : TextInputAction.done,
-            onFieldSubmitted: (_) => _continue(),
-            style: TextStyle(color: _fieldTextColor(isDark), fontSize: 15),
-            decoration: _fieldDecoration(
-              isDark,
-              label: 'Password',
-              icon: Icons.lock_outline_rounded,
-              errorText: _stepError,
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _obscurePassword
-                      ? Icons.visibility_off_rounded
-                      : Icons.visibility_rounded,
-                  size: 20,
-                  color: isDark
-                      ? FinavigColors.textSecondary
-                      : FinavigColors.textSecondaryLight,
+          _glowWrap(
+            isDark,
+            _passwordFocus,
+            TextFormField(
+              controller: _passwordController,
+              focusNode: _passwordFocus,
+              obscureText: _obscurePassword,
+              autofillHints: const [AutofillHints.password],
+              textInputAction:
+                  isSignUp ? TextInputAction.next : TextInputAction.done,
+              onFieldSubmitted: (_) => _continue(),
+              style: TextStyle(color: _fieldTextColor(isDark), fontSize: 15),
+              decoration: _fieldDecoration(
+                isDark,
+                label: 'Password',
+                icon: Icons.lock_outline_rounded,
+                errorText: _stepError,
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscurePassword
+                        ? Icons.visibility_off_rounded
+                        : Icons.visibility_rounded,
+                    size: 20,
+                    color: isDark
+                        ? FinavigColors.textSecondary
+                        : FinavigColors.textSecondaryLight,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _obscurePassword = !_obscurePassword;
+                    });
+                  },
                 ),
-                onPressed: () {
-                  setState(() {
-                    _obscurePassword = !_obscurePassword;
-                  });
-                },
               ),
             ),
           ),
@@ -866,12 +945,11 @@ class _LoginScreenState extends State<LoginScreen> {
             decoration: BoxDecoration(
               color: isDark
                   ? Colors.white.withOpacity(0.06)
-                  : FinavigColors.cloud,
-              borderRadius: BorderRadius.circular(FinavigRadius.field),
+                  : Colors.black.withOpacity(0.03),
+              borderRadius: BorderRadius.circular(22),
               border: Border.all(
-                color: isDark
-                    ? Colors.white.withOpacity(0.10)
-                    : Colors.black.withOpacity(0.05),
+                color:
+                    (isDark ? Colors.white : Colors.black).withOpacity(0.14),
               ),
             ),
             child: Row(
@@ -961,13 +1039,12 @@ class _LoginScreenState extends State<LoginScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
               color: isDark
-                  ? FinavigColors.slate.withOpacity(0.55)
-                  : FinavigColors.cloud,
-              borderRadius: BorderRadius.circular(FinavigRadius.field),
+                  ? Colors.white.withOpacity(0.06)
+                  : Colors.black.withOpacity(0.03),
+              borderRadius: BorderRadius.circular(22),
               border: Border.all(
-                color: isDark
-                    ? Colors.white.withOpacity(0.10)
-                    : Colors.black.withOpacity(0.05),
+                color:
+                    (isDark ? Colors.white : Colors.black).withOpacity(0.14),
               ),
             ),
             child: Row(
@@ -1211,22 +1288,46 @@ class _LoginScreenState extends State<LoginScreen> {
             subtitle:
                 'Optional — used for renewal reminders and cash-flow alerts. You can skip this.',
           ),
-          TextFormField(
-            controller: _phoneController,
-            focusNode: _phoneFocus,
-            keyboardType: TextInputType.phone,
-            autofillHints: const [AutofillHints.telephoneNumber],
-            textInputAction: TextInputAction.done,
-            onFieldSubmitted: (_) => _continue(),
-            style: TextStyle(color: _fieldTextColor(isDark), fontSize: 15),
-            decoration: _fieldDecoration(
-              isDark,
-              label: 'Phone — ${_selectedCountry.phoneCode} (Optional)',
-              icon: Icons.phone_iphone_rounded,
+          _glowWrap(
+            isDark,
+            _phoneFocus,
+            TextFormField(
+              controller: _phoneController,
+              focusNode: _phoneFocus,
+              keyboardType: TextInputType.phone,
+              autofillHints: const [AutofillHints.telephoneNumber],
+              textInputAction: TextInputAction.done,
+              onFieldSubmitted: (_) => _continue(),
+              style: TextStyle(color: _fieldTextColor(isDark), fontSize: 15),
+              decoration: _fieldDecoration(
+                isDark,
+                label: 'Phone — ${_selectedCountry.phoneCode} (Optional)',
+                icon: Icons.phone_iphone_rounded,
+              ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  /// Glass field wrapper: soft accent glow while focused (Glass & Glow).
+  Widget _glowWrap(bool isDark, FocusNode node, Widget child) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: node.hasFocus
+            ? [
+                BoxShadow(
+                  color: FinavigColors.accentBright.withOpacity(0.35),
+                  blurRadius: 18,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : const [],
+      ),
+      child: child,
     );
   }
 
@@ -1242,6 +1343,9 @@ class _LoginScreenState extends State<LoginScreen> {
     String? errorText,
     Widget? suffixIcon,
   }) {
+    // Glass & Glow fields: quiet translucent pill, hairline border, accent
+    // focus ring (the outer glow is drawn by [_glowWrap]).
+    final radius = BorderRadius.circular(22);
     return InputDecoration(
       labelText: label,
       labelStyle: TextStyle(
@@ -1251,36 +1355,42 @@ class _LoginScreenState extends State<LoginScreen> {
         fontSize: 13,
       ),
       errorText: errorText,
-      prefixIcon: Icon(icon, size: 20, color: FinavigColors.violet),
+      prefixIcon: Icon(icon, size: 20, color: FinavigColors.accentBright),
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: isDark
-          ? FinavigColors.slate.withOpacity(0.55)
-          : FinavigColors.cloud,
+          ? Colors.white.withOpacity(0.06)
+          : Colors.black.withOpacity(0.03),
       contentPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(FinavigRadius.field),
-        borderSide: BorderSide.none,
+        borderRadius: radius,
+        borderSide: BorderSide(
+          color: (isDark ? Colors.white : Colors.black).withOpacity(0.14),
+        ),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(FinavigRadius.field),
-        borderSide: BorderSide.none,
+        borderRadius: radius,
+        borderSide: BorderSide(
+          color: (isDark ? Colors.white : Colors.black).withOpacity(0.14),
+        ),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(FinavigRadius.field),
-        borderSide:
-            const BorderSide(color: FinavigColors.violet, width: 1.5),
+        borderRadius: radius,
+        borderSide: const BorderSide(
+          color: FinavigColors.accentBright,
+          width: 1.6,
+        ),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(FinavigRadius.field),
+        borderRadius: radius,
         borderSide:
             const BorderSide(color: FinavigColors.danger, width: 1.2),
       ),
       focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(FinavigRadius.field),
+        borderRadius: radius,
         borderSide:
-            const BorderSide(color: FinavigColors.danger, width: 1.5),
+            const BorderSide(color: FinavigColors.danger, width: 1.6),
       ),
     );
   }
@@ -1407,22 +1517,33 @@ class _PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Glass & Glow CTA: violet→lilac gradient pill with a soft halo.
     return SizedBox(
-      height: 52,
+      height: 56,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(FinavigRadius.button),
-          boxShadow: FinavigShadows.adaptive(isDark),
+          borderRadius: BorderRadius.circular(28),
+          gradient: const LinearGradient(
+            colors: [FinavigColors.accent, FinavigColors.lilac],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: FinavigColors.violet.withOpacity(0.45),
+              blurRadius: 26,
+              offset: const Offset(0, 10),
+            ),
+          ],
         ),
         child: FilledButton(
           onPressed: busy ? null : onPressed,
           style: FilledButton.styleFrom(
-            backgroundColor: FinavigColors.violet,
+            backgroundColor: Colors.transparent,
             foregroundColor: Colors.white,
             elevation: 0,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(FinavigRadius.button),
+              borderRadius: BorderRadius.circular(28),
             ),
           ),
           child: busy
@@ -1470,7 +1591,7 @@ class _BackButton extends StatelessWidget {
                 : Colors.black.withOpacity(0.10),
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(FinavigRadius.button),
+            borderRadius: BorderRadius.circular(26),
           ),
         ),
         child: Icon(
@@ -1504,8 +1625,8 @@ class _ModeToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final trackColor =
-        isDark ? Colors.white.withOpacity(0.06) : FinavigColors.cloud;
+    // Glass & Glow: quiet glass track; the selected segment is a raised
+    // glass pill (white with violet text in light, white-at-16% in dark).
     final inactiveColor =
         isDark ? FinavigColors.textSecondary : FinavigColors.textSecondaryLight;
 
@@ -1521,9 +1642,19 @@ class _ModeToggle extends StatelessWidget {
             height: 44,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: selected ? FinavigColors.violet : Colors.transparent,
-              borderRadius: BorderRadius.circular(FinavigRadius.tile),
-              boxShadow: selected ? FinavigShadows.soft : null,
+              color: selected
+                  ? (isDark
+                      ? Colors.white.withOpacity(0.16)
+                      : Colors.white)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(16),
+              border: selected
+                  ? Border.all(
+                      color: (isDark ? Colors.white : FinavigColors.violet)
+                          .withOpacity(0.35),
+                    )
+                  : null,
+              boxShadow: selected && !isDark ? FinavigShadows.soft : null,
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -1531,15 +1662,19 @@ class _ModeToggle extends StatelessWidget {
                 Icon(
                   icon,
                   size: 16,
-                  color: selected ? Colors.white : inactiveColor,
+                  color: selected
+                      ? (isDark ? Colors.white : FinavigColors.violet)
+                      : inactiveColor,
                 ),
                 const SizedBox(width: 6),
                 Text(
                   label,
                   style: TextStyle(
                     fontSize: 14,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
-                    color: selected ? Colors.white : inactiveColor,
+                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                    color: selected
+                        ? (isDark ? Colors.white : FinavigColors.violet)
+                        : inactiveColor,
                   ),
                 ),
               ],
@@ -1550,15 +1685,21 @@ class _ModeToggle extends StatelessWidget {
     }
 
     return Container(
-      height: 52,
-      padding: const EdgeInsets.all(4),
+      height: 54,
+      padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
-        color: trackColor,
-        borderRadius: BorderRadius.circular(FinavigRadius.tile + 2),
+        color: isDark
+            ? Colors.white.withOpacity(0.06)
+            : Colors.black.withOpacity(0.04),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: (isDark ? Colors.white : Colors.black).withOpacity(0.10),
+        ),
       ),
       child: Row(
         children: [
           segment('Sign in', false, Icons.login_rounded),
+          const SizedBox(width: 4),
           segment('Sign up', true, Icons.person_add_alt_rounded),
         ],
       ),
