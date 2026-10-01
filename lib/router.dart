@@ -382,8 +382,8 @@ class _AppShellState extends State<_AppShell> {
   }
 }
 
-/// Center "universal quick action" (+) button inside the nav pill: a solid
-/// ink orb that opens the quick action menu from any tab.
+/// Center "universal quick action" (+) button inside the nav pill: a raised
+/// violet orb that opens the quick action menu from any tab.
 class _QuickActionButton extends StatelessWidget {
   final bool isDark;
   final VoidCallback onTap;
@@ -413,14 +413,18 @@ class _QuickActionButton extends StatelessWidget {
                 height: 38,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  // Solid ink — the same dark as the login/home hero —
-                  // with a hairline border for visibility on dark mode.
-                  color: FinavigColors.ink,
-                  border: Border.all(
-                    color: isDark
-                        ? Colors.white.withOpacity(0.16)
-                        : Colors.transparent,
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [FinavigColors.violet, FinavigColors.violetDark],
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: FinavigColors.violet.withOpacity(0.45),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: const Icon(
                   Icons.add_rounded,

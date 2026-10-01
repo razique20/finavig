@@ -154,7 +154,9 @@ class _ProfileSubscriptionSectionState
                               ? 'Extend Plan'
                               : 'Upgrade Plan'),
                       style: FilledButton.styleFrom(
-                        backgroundColor: FinavigColors.navyPrimary,
+                        // Flat hero dark — matches the ink CTA on login and
+                        // the app's flat button language.
+                        backgroundColor: FinavigColors.ink,
                         foregroundColor: Colors.white,
                       ),
                     ),
