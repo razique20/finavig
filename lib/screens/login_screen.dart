@@ -916,7 +916,7 @@ class _LoginScreenState extends State<LoginScreen> {
         GestureDetector(
           onTap: _busy ? null : _pickDateOfBirth,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
             decoration: BoxDecoration(
               color: isDark
                   ? Colors.white.withOpacity(0.06)
@@ -930,7 +930,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Row(
               children: [
                 const Icon(Icons.cake_rounded,
-                    size: 20, color: FinavigColors.violet),
+                    size: 19, color: FinavigColors.violet),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -1011,7 +1011,7 @@ class _LoginScreenState extends State<LoginScreen> {
         GestureDetector(
           onTap: _busy ? null : _pickCountry,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               color: isDark
                   ? Colors.white.withOpacity(0.06)
@@ -1029,7 +1029,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 // like AE visible on light backgrounds.
                 Container(
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(6),
                     border: Border.all(
                       color: isDark
                           ? Colors.white.withOpacity(0.20)
@@ -1037,11 +1037,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(7),
+                    borderRadius: BorderRadius.circular(5),
                     child: Image.asset(
                       c.flagAsset,
-                      width: 40,
-                      height: 28,
+                      width: 32,
+                      height: 22,
                       fit: BoxFit.cover,
                       gaplessPlayback: true,
                     ),
@@ -1294,9 +1294,12 @@ class _LoginScreenState extends State<LoginScreen> {
     String? errorText,
     Widget? suffixIcon,
   }) {
-    // Sharp-edged fields: quiet fill, hairline border, NO accent highlight
-    // when focused — focus is communicated by the caret and keyboard only.
+    // Sharp-edged, compact fields: quiet fill, hairline border, NO accent
+    // highlight when focused — focus is communicated by the caret and
+    // keyboard only. Tight icon constraints + slim padding keep the boxes
+    // ~44px tall instead of the Material default ~56px.
     const radius = BorderRadius.all(Radius.circular(6));
+    const iconSlot = BoxConstraints(minWidth: 40, minHeight: 36);
     final hairline = (isDark ? Colors.white : Colors.black).withOpacity(0.14);
     return InputDecoration(
       labelText: label,
@@ -1307,14 +1310,16 @@ class _LoginScreenState extends State<LoginScreen> {
         fontSize: 13,
       ),
       errorText: errorText,
-      prefixIcon: Icon(icon, size: 20, color: FinavigColors.accentBright),
+      prefixIcon: Icon(icon, size: 19, color: FinavigColors.accentBright),
+      prefixIconConstraints: iconSlot,
+      suffixIconConstraints: iconSlot,
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: isDark
           ? Colors.white.withOpacity(0.06)
           : Colors.black.withOpacity(0.03),
       contentPadding:
-          const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+          const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       border: OutlineInputBorder(
         borderRadius: radius,
         borderSide: BorderSide(color: hairline),
@@ -1464,33 +1469,27 @@ class _PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Glass & Glow CTA: violet→lilac gradient pill with a soft halo.
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Flat single-dark-color CTA: solid ink in both themes (hairline border
+    // keeps it visible on the dark glass sheet). No gradient, no halo.
     return SizedBox(
-      height: 56,
+      height: 52,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(28),
-          gradient: const LinearGradient(
-            colors: [FinavigColors.accent, FinavigColors.lilac],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: FinavigColors.violet.withOpacity(0.45),
-              blurRadius: 26,
-              offset: const Offset(0, 10),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(FinavigRadius.button),
+          border: isDark
+              ? Border.all(color: Colors.white.withOpacity(0.14))
+              : null,
         ),
         child: FilledButton(
           onPressed: busy ? null : onPressed,
           style: FilledButton.styleFrom(
-            backgroundColor: Colors.transparent,
+            backgroundColor: FinavigColors.ink,
             foregroundColor: Colors.white,
+            disabledBackgroundColor: FinavigColors.ink.withOpacity(0.55),
             elevation: 0,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(28),
+              borderRadius: BorderRadius.circular(FinavigRadius.button),
             ),
           ),
           child: busy
