@@ -109,7 +109,7 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
           'Add category',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: FinavigColors.violetAccent,
+        backgroundColor: FinavigColors.ink,
         foregroundColor: Colors.white,
       ),
       body: _loading

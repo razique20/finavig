@@ -98,7 +98,7 @@ class DocumentsSearchField extends StatelessWidget {
               : FinavigColors.cloud,
           contentPadding: EdgeInsets.zero,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(FinavigRadius.field),
+            borderRadius: BorderRadius.circular(6),
             borderSide: BorderSide.none,
           ),
         ),

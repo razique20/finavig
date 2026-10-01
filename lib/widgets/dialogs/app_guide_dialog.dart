@@ -241,7 +241,7 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
                     ],
                     FilledButton(
                       style: FilledButton.styleFrom(
-                        backgroundColor: FinavigColors.navyPrimary,
+                        backgroundColor: FinavigColors.ink,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 18,
@@ -433,7 +433,7 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
                     icon: Icon(b.icon, size: 16),
                     label: Text(b.label),
                     style: FilledButton.styleFrom(
-                      backgroundColor: FinavigColors.navyPrimary,
+                      backgroundColor: FinavigColors.ink,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),

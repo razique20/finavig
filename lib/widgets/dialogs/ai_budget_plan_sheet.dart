@@ -63,7 +63,7 @@ Future<void> showAiBudgetPlanSheet(BuildContext context) {
                 icon: const Icon(Icons.arrow_forward_rounded, size: 18),
                 label: const Text('Open AI Budget Planner'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: FinavigColors.navyPrimary,
+                  backgroundColor: FinavigColors.ink,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(

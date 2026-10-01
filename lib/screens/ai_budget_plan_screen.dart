@@ -197,7 +197,7 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
             icon: const Icon(Icons.bolt_rounded, size: 16),
             label: const Text('Confirm & Use 1 Credit'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: FinavigColors.navyPrimary,
+              backgroundColor: FinavigColors.ink,
               foregroundColor: Colors.white,
             ),
           ),
@@ -234,7 +234,7 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: FinavigColors.navyPrimary,
+              backgroundColor: FinavigColors.ink,
               foregroundColor: Colors.white,
             ),
             child: const Text('Create'),
@@ -291,7 +291,7 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: FinavigColors.navyPrimary,
+              backgroundColor: FinavigColors.ink,
               foregroundColor: Colors.white,
             ),
             child: const Text('Set budget'),
@@ -737,7 +737,7 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
                       : 'Generate AI Budget Plan (Uses 1 Credit)',
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: FinavigColors.navyPrimary,
+                  backgroundColor: FinavigColors.ink,
                   foregroundColor: Colors.white,
                   disabledBackgroundColor:
                       theme.colorScheme.outlineVariant.withOpacity(0.4),
@@ -1237,7 +1237,7 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
                         : 'Apply ${changed.length} budget${changed.length == 1 ? '' : 's'}',
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: FinavigColors.navyPrimary,
+                backgroundColor: FinavigColors.ink,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
@@ -1337,7 +1337,7 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: FinavigColors.navyPrimary,
+              backgroundColor: FinavigColors.ink,
               foregroundColor: Colors.white,
             ),
             child: const Text('Apply'),
@@ -1443,7 +1443,7 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
               if (ctx.mounted) Navigator.pop(ctx);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: FinavigColors.navyPrimary,
+              backgroundColor: FinavigColors.ink,
               foregroundColor: Colors.white,
             ),
             child: const Text('Save Key'),

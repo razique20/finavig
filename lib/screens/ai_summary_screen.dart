@@ -136,7 +136,7 @@ class _AiSummaryScreenState extends State<AiSummaryScreen> {
             icon: const Icon(Icons.bolt_rounded, size: 16),
             label: const Text('Confirm & Use 1 Credit'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: FinavigColors.navyPrimary,
+              backgroundColor: FinavigColors.ink,
               foregroundColor: Colors.white,
             ),
           ),
@@ -202,7 +202,7 @@ class _AiSummaryScreenState extends State<AiSummaryScreen> {
               _loadSummary(forceRegenerate: true);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: FinavigColors.navyPrimary,
+              backgroundColor: FinavigColors.ink,
               foregroundColor: Colors.white,
             ),
             child: const Text('Save Key'),
@@ -470,7 +470,7 @@ class _AiSummaryScreenState extends State<AiSummaryScreen> {
                       : const Icon(Icons.bolt_rounded, size: 18),
                   label: const Text('Generate AI Executive Summary (1 Credit)'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: FinavigColors.navyPrimary,
+                    backgroundColor: FinavigColors.ink,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(

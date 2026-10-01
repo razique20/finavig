@@ -104,39 +104,9 @@ class _SplashScreenState extends State<SplashScreen>
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Backdrop: deep navy → indigo wash instead of the flat navy.
+          // Backdrop: flat ink — one dark, no gradient wash or glow.
           const DecoratedBox(
-            decoration: BoxDecoration(gradient: FinavigGradients.splash),
-          ),
-          // Ambient glow behind the wordmark.
-          Positioned.fill(
-            child: IgnorePointer(
-              child: AnimatedBuilder(
-                animation: _controller,
-                builder: (context, child) => Container(
-                  alignment: Alignment.center,
-                  child: Transform.scale(
-                    scale: 1 + _glowPulse.value * 0.15,
-                    child: child,
-                  ),
-                ),
-                child: Container(
-                  width: 420,
-                  height: 420,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        FinavigColors.cyanAccent.withOpacity(0.18),
-                        FinavigColors.violet.withOpacity(0.10),
-                        Colors.transparent,
-                      ],
-                      stops: const [0.0, 0.55, 1.0],
-                    ),
-                  ),
-                ),
-              ),
-            ),
+            decoration: BoxDecoration(color: FinavigColors.ink),
           ),
           Center(
             child: Column(
@@ -216,17 +186,17 @@ class _TaglineEaseCurve extends Curve {
   double transformInternal(double t) => 1 - (1 - t) * (1 - t);
 }
 
-/// Gradient "FV" glyphs with a soft neon halo, sized to dominate the splash.
+/// Solid white "FV" glyphs, sized to dominate the splash.
 class _FvMonogram extends StatelessWidget {
   const _FvMonogram();
 
   @override
   Widget build(BuildContext context) {
     const gradient = LinearGradient(
-      colors: [Colors.white, FinavigColors.cyanAccent, FinavigColors.violet],
+      colors: [Colors.white, Colors.white],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
-      stops: [0.0, 0.55, 1.0],
+      stops: [0.0, 1.0],
     );    return ShaderMask(
       shaderCallback: (bounds) => gradient.createShader(bounds),
       blendMode: BlendMode.srcIn,

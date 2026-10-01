@@ -319,7 +319,7 @@ class _FaqSheetContentState extends State<_FaqSheetContent> {
                     icon: const Icon(Icons.support_agent_rounded, size: 18),
                     label: const Text('Contact Support'),
                     style: FilledButton.styleFrom(
-                      backgroundColor: FinavigColors.navyPrimary,
+                      backgroundColor: FinavigColors.ink,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,

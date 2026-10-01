@@ -402,7 +402,7 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
                       icon: const Icon(Icons.send_rounded),
                       label: const Text('Submit Request'),
                       style: FilledButton.styleFrom(
-                        backgroundColor: FinavigColors.navyPrimary,
+                        backgroundColor: FinavigColors.ink,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),

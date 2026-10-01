@@ -121,7 +121,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                             child: ElevatedButton(
                               onPressed: _getStarted,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: FinavigColors.navyPrimary,
+                                backgroundColor: FinavigColors.ink,
                                 foregroundColor: Colors.white,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(

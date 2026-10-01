@@ -538,7 +538,7 @@ class UpgradeDialog extends StatelessWidget {
           icon: const Icon(Icons.upgrade_rounded, size: 18),
           label: const Text('Request Upgrade'),
           style: FilledButton.styleFrom(
-            backgroundColor: FinavigColors.navyPrimary,
+            backgroundColor: FinavigColors.ink,
             foregroundColor: Colors.white,
           ),
         ),
