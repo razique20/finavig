@@ -469,31 +469,38 @@ class FinavigTheme {
         filled: true,
         fillColor: FinavigColors.slate.withOpacity(0.55),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(FinavigRadius.field),
-          borderSide: BorderSide.none,
+          borderRadius: BorderRadius.circular(22),
+          borderSide: BorderSide(
+            color: Colors.white.withOpacity(0.14),
+          ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(FinavigRadius.field),
-          borderSide: BorderSide.none,
+          borderRadius: BorderRadius.circular(22),
+          borderSide: BorderSide(
+            color: Colors.white.withOpacity(0.14),
+          ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(FinavigRadius.field),
-          borderSide: const BorderSide(color: FinavigColors.accentBright, width: 1.5),
+          borderRadius: BorderRadius.circular(22),
+          borderSide: const BorderSide(
+            color: FinavigColors.accentBright,
+            width: 1.6,
+          ),
         ),
         labelStyle: const TextStyle(color: FinavigColors.textSecondary, fontSize: 13),
         hintStyle: const TextStyle(color: FinavigColors.textMuted, fontSize: 13),
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: scheme.primary,
           foregroundColor: scheme.onPrimary,
-          minimumSize: const Size(0, 48),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          minimumSize: const Size(0, 50),
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 13),
           elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(FinavigRadius.button),
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(25)),
           ),
           textStyle: _withEmojiFallback(GoogleFonts.inter(
             fontWeight: FontWeight.w700,
@@ -505,11 +512,11 @@ class FinavigTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: FinavigColors.accent,
           foregroundColor: Colors.white,
-          minimumSize: const Size(0, 48),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          minimumSize: const Size(0, 50),
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 13),
           elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(FinavigRadius.button),
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(25)),
           ),
           textStyle: _withEmojiFallback(GoogleFonts.inter(
             fontWeight: FontWeight.w700,
@@ -582,7 +589,7 @@ class FinavigTheme {
         secondaryLabelStyle: _withEmojiFallback(GoogleFonts.inter(
             fontSize: 12, color: scheme.secondary, fontWeight: FontWeight.w600)),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
         ),
         side: BorderSide(color: Colors.white.withOpacity(0.06)),
       ),
@@ -698,31 +705,35 @@ class FinavigTheme {
         filled: true,
         fillColor: FinavigColors.cloud,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(FinavigRadius.field),
-          borderSide: BorderSide.none,
+          borderRadius: BorderRadius.circular(22),
+          borderSide: BorderSide(
+            color: Colors.black.withOpacity(0.08),
+          ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(FinavigRadius.field),
-          borderSide: BorderSide.none,
+          borderRadius: BorderRadius.circular(22),
+          borderSide: BorderSide(
+            color: Colors.black.withOpacity(0.08),
+          ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(FinavigRadius.field),
-          borderSide: BorderSide(color: scheme.primary, width: 1.5),
+          borderRadius: BorderRadius.circular(22),
+          borderSide: BorderSide(color: scheme.primary, width: 1.6),
         ),
         labelStyle: const TextStyle(color: FinavigColors.textSecondaryLight, fontSize: 13),
         hintStyle: const TextStyle(color: FinavigColors.textMutedLight, fontSize: 13),
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: scheme.primary,
           foregroundColor: Colors.white,
-          minimumSize: const Size(0, 48),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          minimumSize: const Size(0, 50),
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 13),
           elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(FinavigRadius.button),
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(25)),
           ),
           textStyle: _withEmojiFallback(GoogleFonts.inter(
             fontWeight: FontWeight.w700,
@@ -734,11 +745,11 @@ class FinavigTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: FinavigColors.ink,
           foregroundColor: Colors.white,
-          minimumSize: const Size(0, 48),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          minimumSize: const Size(0, 50),
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 13),
           elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(FinavigRadius.button),
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(25)),
           ),
           textStyle: _withEmojiFallback(GoogleFonts.inter(
             fontWeight: FontWeight.w700,
@@ -811,7 +822,7 @@ class FinavigTheme {
         secondaryLabelStyle: _withEmojiFallback(GoogleFonts.inter(
             fontSize: 12, color: scheme.primary, fontWeight: FontWeight.w600)),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
         ),
         side: const BorderSide(color: Color(0xFFEAECF2)),
       ),
