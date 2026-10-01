@@ -102,18 +102,24 @@ class _CreateCollectionDialogState extends State<_CreateCollectionDialog> {
                     value: country,
                     child: Row(
                       children: [
+                        // Bundled flag image — deterministic on every
+                        // platform (emoji flags render as tofu with the
+                        // app's bundled fonts).
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.primaryContainer,
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: BorderRadius.circular(5),
+                            border: Border.all(
+                              color: theme.colorScheme.outline.withOpacity(0.4),
+                            ),
                           ),
-                          child: Text(
-                            country.code,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              color: theme.colorScheme.onPrimaryContainer,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: Image.asset(
+                              country.flagAsset,
+                              width: 26,
+                              height: 18,
+                              fit: BoxFit.cover,
+                              gaplessPlayback: true,
                             ),
                           ),
                         ),

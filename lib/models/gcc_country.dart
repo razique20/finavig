@@ -26,6 +26,10 @@ enum GccCountry {
   /// Flag emoji for display.
   String get flag => flagEmoji;
 
+  /// Bundled flag image asset (small PNG, deterministic on every platform —
+  /// unlike flag emoji, which bundled fonts render as tofu boxes).
+  String get flagAsset => 'assets/images/flags/${code.toLowerCase()}.png';
+
   /// Resolve country from standard ISO 2-letter country code (case-insensitive).
   /// Defaults to UAE for unknown or missing codes.
   static GccCountry fromCode(String? code) {

@@ -943,10 +943,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _countryStep(bool isDark) {
-    // Two chips per row inside the 24px-padded steps area.
-    final chipW =
-        ((MediaQuery.of(context).size.width - 48 - 10) / 2)
-            .clamp(140.0, 210.0);
+    final c = _selectedCountry;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -954,119 +951,252 @@ class _LoginScreenState extends State<LoginScreen> {
           isDark: isDark,
           title: 'Where are you based?',
           subtitle:
-              "We'll default your document types — IDs, licences, tenancy — to ${_selectedCountry.displayName}.",
+              "We'll default your document types — IDs, licences, tenancy — to ${c.displayName}.",
         ),
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: GccCountry.values.map((c) {
-            final selected = c == _selectedCountry;
-            return GestureDetector(
-              onTap: _busy ? null : () => setState(() => _selectedCountry = c),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                width: chipW,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                decoration: BoxDecoration(
-                  color: selected
-                      ? FinavigColors.violet.withOpacity(0.10)
-                      : (isDark
-                          ? Colors.white.withOpacity(0.06)
-                          : FinavigColors.cloud),
-                  borderRadius: BorderRadius.circular(FinavigRadius.field),
-                  border: Border.all(
-                    color: selected
-                        ? FinavigColors.violet
-                        : (isDark
-                            ? Colors.white.withOpacity(0.10)
-                            : Colors.black.withOpacity(0.05)),
-                    width: selected ? 1.5 : 1,
+        // Dropdown-style picker: tappable field opening a bottom sheet with
+        // all 6 GCC countries (same pattern as the app's other pickers).
+        GestureDetector(
+          onTap: _busy ? null : _pickCountry,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? FinavigColors.slate.withOpacity(0.55)
+                  : FinavigColors.cloud,
+              borderRadius: BorderRadius.circular(FinavigRadius.field),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withOpacity(0.10)
+                    : Colors.black.withOpacity(0.05),
+              ),
+            ),
+            child: Row(
+              children: [
+                // Bundled flag image (emoji flags render as tofu with the
+                // bundled fonts); hairline border keeps white-edged flags
+                // like AE visible on light backgrounds.
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: isDark
+                          ? Colors.white.withOpacity(0.20)
+                          : Colors.black.withOpacity(0.10),
+                    ),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(7),
+                    child: Image.asset(
+                      c.flagAsset,
+                      width: 40,
+                      height: 28,
+                      fit: BoxFit.cover,
+                      gaplessPlayback: true,
+                    ),
                   ),
                 ),
-                // ISO-letter badge instead of flag emoji: bundled fonts have
-                // no regional-indicator glyphs, which rendered as "?" tofu
-                // boxes on device. Text badges are deterministic everywhere.
-                child: Row(
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: selected
-                            ? FinavigColors.violet
-                            : (isDark
-                                ? Colors.white.withOpacity(0.08)
-                                : Colors.white),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        c.code,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        c.displayName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.5,
-                          color: selected
-                              ? Colors.white
-                              : (isDark
-                                  ? FinavigColors.textPrimary
-                                  : FinavigColors.navyPrimary),
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: _fieldTextColor(isDark),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            c.displayName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w700,
-                              color: _fieldTextColor(isDark),
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            c.currency,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: isDark
-                                  ? FinavigColors.textSecondary
-                                  : FinavigColors.textSecondaryLight,
-                            ),
-                          ),
-                        ],
+                      const SizedBox(height: 2),
+                      Text(
+                        '${c.currency} · ${c.phoneCode}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: isDark
+                              ? FinavigColors.textSecondary
+                              : FinavigColors.textSecondaryLight,
+                        ),
                       ),
-                    ),
-                    // Constant-width trailing slot: the check icon appears
-                    // without re-laying-out the row (was overflowing by
-                    // ~5px the moment selection drew the icon).
-                    SizedBox(
-                      width: 18,
-                      child: selected
-                          ? const Icon(
-                              Icons.check_circle_rounded,
-                              size: 18,
-                              color: FinavigColors.violet,
-                            )
-                          : null,
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            );
-          }).toList(),
+                Icon(
+                  Icons.expand_more_rounded,
+                  size: 22,
+                  color: isDark
+                      ? FinavigColors.textSecondary
+                      : FinavigColors.textSecondaryLight,
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     );
+  }
+
+  /// Opens the country picker bottom sheet and updates the selection.
+  Future<void> _pickCountry() async {
+    FocusScope.of(context).unfocus();
+    final picked = await showModalBottomSheet<GccCountry>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        final sheetDark = theme.brightness == Brightness.dark;
+        return SafeArea(
+          top: false,
+          child: Container(
+            margin: const EdgeInsets.all(12),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 14),
+                    decoration: BoxDecoration(
+                      color: sheetDark
+                          ? Colors.white.withOpacity(0.15)
+                          : Colors.black.withOpacity(0.10),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                Text(
+                  'Select your country',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: sheetDark
+                        ? FinavigColors.textPrimary
+                        : FinavigColors.textPrimaryLight,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ...GccCountry.values.map((option) {
+                  final selected = option == _selectedCountry;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: GestureDetector(
+                      onTap: () => Navigator.pop(ctx, option),
+                      behavior: HitTestBehavior.opaque,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? FinavigColors.violet.withOpacity(0.10)
+                              : (sheetDark
+                                  ? Colors.white.withOpacity(0.05)
+                                  : FinavigColors.cloud),
+                          borderRadius:
+                              BorderRadius.circular(FinavigRadius.tile),
+                          border: Border.all(
+                            color: selected
+                                ? FinavigColors.violet
+                                : (sheetDark
+                                    ? Colors.white.withOpacity(0.08)
+                                    : Colors.black.withOpacity(0.05)),
+                            width: selected ? 1.5 : 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: sheetDark
+                                      ? Colors.white.withOpacity(0.20)
+                                      : Colors.black.withOpacity(0.10),
+                                ),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(7),
+                                child: Image.asset(
+                                  option.flagAsset,
+                                  width: 38,
+                                  height: 28,
+                                  fit: BoxFit.cover,
+                                  gaplessPlayback: true,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    option.displayName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: sheetDark
+                                          ? FinavigColors.textPrimary
+                                          : FinavigColors.textPrimaryLight,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '${option.currency} · ${option.phoneCode}',
+                                    style: TextStyle(
+                                      fontSize: 11.5,
+                                      color: sheetDark
+                                          ? FinavigColors.textSecondary
+                                          : FinavigColors.textSecondaryLight,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(
+                              width: 22,
+                              child: selected
+                                  ? const Icon(
+                                      Icons.check_circle_rounded,
+                                      size: 20,
+                                      color: FinavigColors.violet,
+                                    )
+                                  : null,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    if (picked != null && mounted) {
+      setState(() {
+        _selectedCountry = picked;
+        _stepError = null;
+      });
+    }
   }
 
   Widget _phoneStep(bool isDark) {
