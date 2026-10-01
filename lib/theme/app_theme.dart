@@ -469,28 +469,27 @@ class FinavigTheme {
         filled: true,
         fillColor: FinavigColors.slate.withOpacity(0.55),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(6),
           borderSide: BorderSide(
             color: Colors.white.withOpacity(0.14),
           ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(6),
           borderSide: BorderSide(
             color: Colors.white.withOpacity(0.14),
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(22),
-          borderSide: const BorderSide(
-            color: FinavigColors.accentBright,
-            width: 1.6,
+          borderRadius: BorderRadius.circular(6),
+          borderSide: BorderSide(
+            color: Colors.white.withOpacity(0.22),
           ),
         ),
         labelStyle: const TextStyle(color: FinavigColors.textSecondary, fontSize: 13),
         hintStyle: const TextStyle(color: FinavigColors.textMuted, fontSize: 13),
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
@@ -705,25 +704,27 @@ class FinavigTheme {
         filled: true,
         fillColor: FinavigColors.cloud,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(6),
           borderSide: BorderSide(
             color: Colors.black.withOpacity(0.08),
           ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(6),
           borderSide: BorderSide(
             color: Colors.black.withOpacity(0.08),
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(22),
-          borderSide: BorderSide(color: scheme.primary, width: 1.6),
+          borderRadius: BorderRadius.circular(6),
+          borderSide: BorderSide(
+            color: Colors.black.withOpacity(0.16),
+          ),
         ),
         labelStyle: const TextStyle(color: FinavigColors.textSecondaryLight, fontSize: 13),
         hintStyle: const TextStyle(color: FinavigColors.textMutedLight, fontSize: 13),
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(

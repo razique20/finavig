@@ -921,7 +921,7 @@ class _LoginScreenState extends State<LoginScreen> {
               color: isDark
                   ? Colors.white.withOpacity(0.06)
                   : Colors.black.withOpacity(0.03),
-              borderRadius: BorderRadius.circular(22),
+              borderRadius: BorderRadius.circular(6),
               border: Border.all(
                 color:
                     (isDark ? Colors.white : Colors.black).withOpacity(0.14),
@@ -1016,7 +1016,7 @@ class _LoginScreenState extends State<LoginScreen> {
               color: isDark
                   ? Colors.white.withOpacity(0.06)
                   : Colors.black.withOpacity(0.03),
-              borderRadius: BorderRadius.circular(22),
+              borderRadius: BorderRadius.circular(6),
               border: Border.all(
                 color:
                     (isDark ? Colors.white : Colors.black).withOpacity(0.14),
@@ -1294,9 +1294,10 @@ class _LoginScreenState extends State<LoginScreen> {
     String? errorText,
     Widget? suffixIcon,
   }) {
-    // Glass & Glow fields: quiet translucent pill, hairline border, accent
-    // focus ring (the outer glow is drawn by [_glowWrap]).
-    final radius = BorderRadius.circular(22);
+    // Sharp-edged fields: quiet fill, hairline border, NO accent highlight
+    // when focused — focus is communicated by the caret and keyboard only.
+    const radius = BorderRadius.all(Radius.circular(6));
+    final hairline = (isDark ? Colors.white : Colors.black).withOpacity(0.14);
     return InputDecoration(
       labelText: label,
       labelStyle: TextStyle(
@@ -1313,24 +1314,19 @@ class _LoginScreenState extends State<LoginScreen> {
           ? Colors.white.withOpacity(0.06)
           : Colors.black.withOpacity(0.03),
       contentPadding:
-          const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+          const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: radius,
-        borderSide: BorderSide(
-          color: (isDark ? Colors.white : Colors.black).withOpacity(0.14),
-        ),
+        borderSide: BorderSide(color: hairline),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: radius,
-        borderSide: BorderSide(
-          color: (isDark ? Colors.white : Colors.black).withOpacity(0.14),
-        ),
+        borderSide: BorderSide(color: hairline),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: radius,
-        borderSide: const BorderSide(
-          color: FinavigColors.accentBright,
-          width: 1.6,
+        borderSide: BorderSide(
+          color: (isDark ? Colors.white : Colors.black).withOpacity(0.22),
         ),
       ),
       errorBorder: OutlineInputBorder(
@@ -1341,7 +1337,7 @@ class _LoginScreenState extends State<LoginScreen> {
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: radius,
         borderSide:
-            const BorderSide(color: FinavigColors.danger, width: 1.6),
+            const BorderSide(color: FinavigColors.danger, width: 1.2),
       ),
     );
   }
