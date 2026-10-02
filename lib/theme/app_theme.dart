@@ -17,9 +17,9 @@ class FinavigColors {
   FinavigColors._();
 
   // ── Brand accents ───────────────────────────────────────────────────────
-  static const Color accent = Color(0xFF4F46E5); // indigo-600
-  static const Color accentDeep = Color(0xFF4338CA); // indigo-700
-  static const Color accentBright = Color(0xFF818CF8); // indigo-400
+  static const Color accent = Color(0xFF4338CA); // indigo-700 — darker violet for icons/links
+  static const Color accentDeep = Color(0xFF3730A3); // indigo-800
+  static const Color accentBright = Color(0xFF6366F1); // indigo-500
   static const Color accentSoft = Color(0xFFEEF2FF); // indigo-50
 
   // Legacy aliases — map old names onto the new accent so the whole app
@@ -54,7 +54,7 @@ class FinavigColors {
   static const Color fog = Color(0xFFDFE3EC); // hairlines
 
   // ── Bento tile tints (accent + matching pastel container) ───────────────
-  static const Color indigo = Color(0xFF4F46E5);
+  static const Color indigo = Color(0xFF4338CA);
   static const Color indigoTint = Color(0xFFEEF2FF);
   static const Color blue = Color(0xFF3B82F6);
   static const Color blueTint = Color(0xFFDBEAFE);
@@ -72,7 +72,7 @@ class FinavigColors {
   static const Color redTint = Color(0xFFFEE2E2);
   static const Color pink = Color(0xFFEC4899);
   static const Color pinkTint = Color(0xFFFCE7F3);
-  static const Color lilac = Color(0xFF8B5CF6);
+  static const Color lilac = Color(0xFF7C3AED);
   static const Color lilacTint = Color(0xFFEDE9FE);
 
   // ── Semantic: urgency ───────────────────────────────────────────────────
@@ -185,7 +185,7 @@ class FinavigGradients {
   FinavigGradients._();
 
   static const LinearGradient primary = LinearGradient(
-    colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+    colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
@@ -379,7 +379,7 @@ class FinavigTheme {
       onPrimary: Color(0xFF101223),
       primaryContainer: Color(0xFF312E81),
       onPrimaryContainer: Color(0xFFE0E7FF),
-      secondary: Color(0xFFA5B4FC),
+      secondary: Color(0xFF818CF8),
       onSecondary: Color(0xFF101223),
       secondaryContainer: Color(0xFF2E2A5C),
       onSecondaryContainer: Color(0xFFC7D2FE),
@@ -613,7 +613,7 @@ class FinavigTheme {
       onPrimary: Colors.white,
       primaryContainer: FinavigColors.accentSoft,
       onPrimaryContainer: Color(0xFF312E81),
-      secondary: Color(0xFF6366F1),
+      secondary: Color(0xFF4F46E5),
       onSecondary: Colors.white,
       secondaryContainer: FinavigColors.accentSoft,
       onSecondaryContainer: Color(0xFF3730A3),
