@@ -99,8 +99,31 @@ class _TierRequestSheet extends StatefulWidget {
 
 class _TierRequestSheetState extends State<_TierRequestSheet> {
   PlanDuration _duration = PlanDuration.oneMonth;
+  SubscriptionTier? _selected;
 
-  Future<void> _request(BuildContext context, SubscriptionTier tier) async {
+  /// Tiers above the current one — dynamic, so a Free user sees both Plus
+  /// and Business while a Plus user only sees Business.
+  List<SubscriptionTier> get _eligibleTiers {
+    final current = EntitlementService.instance.tier;
+    return [
+      SubscriptionTier.plus,
+      SubscriptionTier.business,
+    ].where((t) => t > current).toList();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    final tiers = _eligibleTiers;
+    _selected = tiers.isEmpty ? null : tiers.first;
+  }
+
+  /// Single request action for whichever plan + billing period the user
+  /// selected above.
+  Future<void> _request(BuildContext context) async {
+    final tier = _selected;
+    if (tier == null) return;
+    final info = TierInfo.all[tier]!;
     UpgradeRequestService.instance.logAttempt(null, tier);
     final launched = await UpgradeRequestService.instance.send(
       feature: null,
@@ -113,8 +136,9 @@ class _TierRequestSheetState extends State<_TierRequestSheet> {
         backgroundColor: launched ? Colors.green : FinavigColors.navyPrimary,
         content: Text(
           launched
-              ? 'Upgrade request opened in your mail app — just press send. '
-                    'You will receive a payment link for the ${_duration.label} plan.'
+              ? 'Request for ${info.name} (${_duration.label}) opened in '
+                    'your mail app — just press send. You will receive a '
+                    'payment link and the plan activates after payment.'
               : 'No mail app found — request copied to clipboard, paste it '
                     'into an email to ${UpgradeRequestService.supportEmail}',
         ),
@@ -123,10 +147,26 @@ class _TierRequestSheetState extends State<_TierRequestSheet> {
     if (launched && context.mounted) Navigator.of(context).pop();
   }
 
+  /// "save X%" chip hint when the bundle beats paying monthly.
+  String? _savingHint(SubscriptionTier tier, PlanDuration duration) {
+    if (duration == PlanDuration.oneMonth) return null;
+    final bundle = TierInfo.priceAed[tier]?[duration];
+    final monthly = TierInfo.priceAed[tier]?[PlanDuration.oneMonth];
+    if (bundle == null || monthly == null) return null;
+    final total = monthly * duration.months;
+    if (total <= bundle) return null;
+    final pct = ((1 - bundle / total) * 100).round();
+    return pct > 0 ? 'save $pct%' : null;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final currentTier = EntitlementService.instance.tier;
     final planEndsAt = EntitlementService.instance.planEndsAt;
+    final tiers = _eligibleTiers;
+    final selectedInfo = _selected == null ? null : TierInfo.all[_selected]!;
 
     return SafeArea(
       child: Padding(
@@ -138,67 +178,103 @@ class _TierRequestSheetState extends State<_TierRequestSheet> {
             children: [
               Text(
                 'Choose your plan',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
                 'You are on ${TierInfo.all[currentTier]!.name}'
                 '${planEndsAt != null && currentTier != SubscriptionTier.free ? ' — ends ${_formatDate(planEndsAt)}' : ''}. '
-                'Pick a billing period, then tap a plan — we reply with a '
-                'payment link and activate after payment.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
+                'Pick a plan and billing period, then send one request.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.outline,
                 ),
               ),
               const SizedBox(height: 14),
-              Text(
-                'Billing period',
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.outline,
+              // Plan tiles — one compact row each, tap to select.
+              for (final tier in tiers) ...[
+                _PlanTile(
+                  info: TierInfo.all[tier]!,
+                  selected: _selected == tier,
+                  onTap: () => setState(() => _selected = tier),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children: [
-                  for (final d in PlanDuration.values)
-                    ChoiceChip(
-                      label: Text(d.label),
-                      selected: _duration == d,
-                      onSelected: (_) => setState(() => _duration = d),
-                      selectedColor: FinavigColors.navyPrimary.withAlpha(46),
-                      labelStyle: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: _duration == d
-                            ? FinavigColors.navyPrimary
-                            : Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                      side: BorderSide(
-                        color: _duration == d
-                            ? FinavigColors.navyPrimary
-                            : Theme.of(context).colorScheme.outlineVariant,
-                      ),
-                      showCheckmark: false,
-                    ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              for (final target in [
-                SubscriptionTier.plus,
-                SubscriptionTier.business,
-              ])
-                if (target > currentTier) ...[
-                  _TierOptionCard(
-                    info: TierInfo.all[target]!,
-                    duration: _duration,
-                    priceLabel: TierInfo.priceFor(target, _duration),
-                    onTap: () => _request(context, target),
+                const SizedBox(height: 8),
+              ],
+              if (selectedInfo != null) ...[
+                const SizedBox(height: 6),
+                Text(
+                  'Billing period',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.outline,
                   ),
-                  const SizedBox(height: 10),
-                ],
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final d in PlanDuration.values)
+                      ChoiceChip(
+                        label: Text(
+                          _savingHint(selectedInfo.tier, d) == null
+                              ? d.label
+                              : '${d.label} · ${_savingHint(selectedInfo.tier, d)}',
+                        ),
+                        selected: _duration == d,
+                        onSelected: (_) => setState(() => _duration = d),
+                        selectedColor:
+                            FinavigColors.navyPrimary.withAlpha(46),
+                        labelStyle: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                          color: _duration == d
+                              ? FinavigColors.navyPrimary
+                              : theme.colorScheme.onSurfaceVariant,
+                        ),
+                        side: BorderSide(
+                          color: _duration == d
+                              ? FinavigColors.navyPrimary
+                              : theme.colorScheme.outlineVariant,
+                        ),
+                        showCheckmark: false,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                // Live price summary for the current selection.
+                _PriceSummaryCard(info: selectedInfo, duration: _duration),
+                const SizedBox(height: 14),
+                // One request action — reflects plan + duration above.
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: () => _request(context),
+                    icon: const Icon(Icons.send_rounded, size: 18),
+                    label: Text(
+                      'Request ${selectedInfo.name} · ${_duration.label}',
+                    ),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: FinavigColors.ink,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'We reply with a payment link and activate the plan after '
+                  'payment.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.outline,
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -216,142 +292,179 @@ class _TierRequestSheetState extends State<_TierRequestSheet> {
   }
 }
 
-class _TierOptionCard extends StatelessWidget {
-  const _TierOptionCard({
+/// One selectable plan row: gold icon chip, name, tagline, check indicator.
+/// Selection is shown with an accent border; the live price and top
+/// benefits live in the summary card below so the sheet stays short.
+class _PlanTile extends StatelessWidget {
+  const _PlanTile({
     required this.info,
+    required this.selected,
     required this.onTap,
-    this.duration,
-    this.priceLabel,
   });
 
   final TierInfo info;
+  final bool selected;
   final VoidCallback onTap;
-
-  /// When set, the card shows the price estimate for this billing period.
-  final PlanDuration? duration;
-
-  /// Price text for the selected billing period, e.g.
-  /// "AED 240 / year (~\$64.99) — save 20%". Shown in the title row
-  /// (falling back to [TierInfo.priceLabel] when null).
-  final String? priceLabel;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final gold = isDark ? FinavigColors.tierGold : FinavigColors.tierGoldDark;
+    final isBusiness = info.tier == SubscriptionTier.business;
+
+    // Gold icon chips echo the tier-badge language: outlined gold for Plus,
+    // solid gold for Business.
+    final iconChip = Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: isBusiness ? gold : gold.withAlpha(30),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Icon(
+        isBusiness
+            ? Icons.business_center_rounded
+            : Icons.workspace_premium_rounded,
+        color: isBusiness
+            ? (isDark ? FinavigColors.ink : Colors.white)
+            : gold,
+        size: 20,
+      ),
+    );
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
       child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
+          color: selected
+              ? FinavigColors.accent.withAlpha(isDark ? 40 : 18)
+              : null,
           border: Border.all(
-            color: Theme.of(context).colorScheme.outlineVariant,
+            color: selected
+                ? FinavigColors.accent
+                : theme.colorScheme.outlineVariant,
+            width: selected ? 1.6 : 1,
           ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: FinavigColors.navyPrimary.withAlpha(25),
-                    borderRadius: BorderRadius.circular(10),
+            iconChip,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    info.name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
                   ),
-                  child: Icon(
-                    info.tier == SubscriptionTier.business
-                        ? Icons.business_center_rounded
-                        : Icons.workspace_premium_rounded,
-                    color: FinavigColors.navyPrimary,
-                    size: 20,
+                  Text(
+                    info.tagline,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.outline,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(
+              selected
+                  ? Icons.check_circle_rounded
+                  : Icons.radio_button_unchecked_rounded,
+              color: selected
+                  ? FinavigColors.accent
+                  : theme.colorScheme.outlineVariant,
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Price + top benefits for the currently selected plan & billing period.
+class _PriceSummaryCard extends StatelessWidget {
+  const _PriceSummaryCard({required this.info, required this.duration});
+
+  final TierInfo info;
+  final PlanDuration duration;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final accent = isDark ? FinavigColors.accentBright : FinavigColors.accent;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        color: FinavigColors.accent.withAlpha(isDark ? 40 : 18),
+        border: Border.all(
+          color: FinavigColors.accent.withAlpha(isDark ? 110 : 70),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                TierInfo.priceMain(info.tier, duration),
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 18,
+                  color: accent,
+                ),
+              ),
+              const Spacer(),
+              Flexible(
+                child: Text(
+                  TierInfo.priceSub(info.tier, duration),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.outline,
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Top benefits only — the full list stays on the paywall dialog.
+          ...info.benefits.take(3).map(
+                (b) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        info.name,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
-                      ),
-                      Text(
-                        info.tagline,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.outline,
+                      Icon(Icons.check_circle_rounded, color: accent, size: 15),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          b,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurface.withAlpha(200),
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            // Price row: bold main price + small USD/saving hint, all on
-            // ONE line so both cards keep the same height.
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                Text(
-                  duration == null
-                      ? (priceLabel ?? info.priceLabel)
-                      : TierInfo.priceMain(info.tier, duration!),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 15,
-                    color: FinavigColors.navyPrimary,
-                  ),
-                ),
-                if (duration != null) ...[
-                  const SizedBox(width: 6),
-                  Flexible(
-                    child: Text(
-                      TierInfo.priceSub(info.tier, duration!),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-            const SizedBox(height: 10),
-            // Every feature listed, one per line — nothing hidden.
-            ...info.benefits.map(
-              (b) => Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(
-                      Icons.check_circle_rounded,
-                      color: FinavigColors.navyPrimary,
-                      size: 15,
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        b,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface
-                              .withAlpha(200),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
               ),
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }
