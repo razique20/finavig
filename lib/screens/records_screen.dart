@@ -100,19 +100,16 @@ class _RecordsScreenState extends State<RecordsScreen> {
           ),
         ],
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 115),
-        child: FloatingActionButton.extended(
-          heroTag: 'records_add',
-          onPressed: _showAddTransactionSheet,
-          icon: const Icon(Icons.add_rounded),
-          label: const Text(
-            'Add Record',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          backgroundColor: FinavigColors.ink,
-          foregroundColor: Colors.white,
+      floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'records_add',
+        onPressed: _showAddTransactionSheet,
+        icon: const Icon(Icons.add_rounded),
+        label: const Text(
+          'Add Record',
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
+        backgroundColor: FinavigColors.ink,
+        foregroundColor: Colors.white,
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
