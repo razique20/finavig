@@ -6,7 +6,8 @@ import '../../theme/app_theme.dart';
 import '../../widgets/indicators/department_logo.dart';
 
 /// Detailed document card — compact, urgency-tinted left accent, time
-/// progress bar, detail wrap, and an inline Actions button. Extracted from
+/// progress bar, and detail rows. Actions open via long-press or the small
+/// ⋯ button in the header. Extracted from
 /// `documents_screen.dart` so the list rebuilds per card.
 class DocumentCard extends StatelessWidget {
   final ExpiryItem item;
@@ -89,6 +90,7 @@ class DocumentCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onTap,
+        onLongPress: onAction,
         borderRadius: BorderRadius.circular(14),
         child: Container(
           decoration: BoxDecoration(
@@ -148,37 +150,60 @@ class DocumentCard extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text(
-                                  item.daysRemaining < 0
-                                      ? '${-item.daysRemaining}d overdue'
-                                      : '${item.daysRemaining}d left',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                    color: accent,
-                                  ),
-                                ),
-                                Container(
-                                  margin: const EdgeInsets.only(top: 2),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: accent.withOpacity(
-                                      isDark ? 0.15 : 0.10,
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      item.daysRemaining < 0
+                                          ? '${-item.daysRemaining}d overdue'
+                                          : '${item.daysRemaining}d left',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 15,
+                                        color: accent,
+                                      ),
                                     ),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    _statusLabel,
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                      color: accent,
+                                    Container(
+                                      margin: const EdgeInsets.only(top: 2),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: accent.withOpacity(
+                                          isDark ? 0.15 : 0.10,
+                                        ),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        _statusLabel,
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w600,
+                                          color: accent,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                // Compact inline actions trigger.
+                                const SizedBox(width: 4),
+                                SizedBox(
+                                  width: 28,
+                                  height: 28,
+                                  child: IconButton(
+                                    onPressed: onAction,
+                                    tooltip: 'Actions',
+                                    padding: EdgeInsets.zero,
+                                    iconSize: 18,
+                                    icon: Icon(
+                                      Icons.more_horiz_rounded,
+                                      color: isDark
+                                          ? FinavigColors.cyanSecondary
+                                          : FinavigColors.navyPrimary,
                                     ),
                                   ),
                                 ),
@@ -274,46 +299,6 @@ class DocumentCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ],
-                        // Inline actions.
-                        const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: onAction,
-                                icon: Icon(
-                                  Icons.more_horiz_rounded,
-                                  size: 16,
-                                  color: isDark
-                                      ? FinavigColors.cyanSecondary
-                                      : FinavigColors.navyPrimary,
-                                ),
-                                label: Text(
-                                  'Actions',
-                                  style: TextStyle(
-                                    color: isDark
-                                        ? FinavigColors.cyanSecondary
-                                        : FinavigColors.navyPrimary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                style: OutlinedButton.styleFrom(
-                                  visualDensity: VisualDensity.compact,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 8,
-                                  ),
-                                  side: BorderSide(
-                                    color: isDark
-                                        ? FinavigColors.cyanSecondary
-                                            .withOpacity(0.4)
-                                        : FinavigColors.navyPrimary
-                                            .withOpacity(0.3),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
                       ],
                     ),
                   ),
