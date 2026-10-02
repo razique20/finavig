@@ -1,5 +1,7 @@
 # Finavig (FV)
 
+**Say it: FIN-a-vig.** Finance + navigate — steering your money and deadlines, not just tracking them.
+
 **Financial & Document Intelligence for GCC businesses**
 
 Document deadlines, company money and AI insights in one local-first app.
