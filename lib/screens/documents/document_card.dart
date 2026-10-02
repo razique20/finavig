@@ -5,10 +5,11 @@ import '../../services/collection_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/indicators/department_logo.dart';
 
-/// Detailed document card — compact, urgency-tinted left accent, time
-/// progress bar, and detail rows. Actions open via long-press or the small
-/// ⋯ button in the header. Extracted from
-/// `documents_screen.dart` so the list rebuilds per card.
+/// Document card — urgency-tinted left edge, then a scannable hierarchy of
+/// the main details: document identity, headline days-remaining with status,
+/// exact expiry date, renewal fee and authority, slim progress bar and an
+/// urgent-only warning. Actions open via long-press or the small ⋯ button.
+/// Extracted from `documents_screen.dart` so the list rebuilds per card.
 class DocumentCard extends StatelessWidget {
   final ExpiryItem item;
   final VoidCallback onTap;
@@ -50,6 +51,11 @@ class DocumentCard extends StatelessWidget {
     return 'On track';
   }
 
+  /// Headline countdown shown large on the card.
+  String get _daysLabel => item.daysRemaining < 0
+      ? '${-item.daysRemaining}d overdue'
+      : '${item.daysRemaining}d left';
+
   /// Fraction of the tracking window already elapsed (0 → just renewed,
   /// 1 → expiring now). Approximates urgency visually.
   double get _timeProgress {
@@ -57,22 +63,6 @@ class DocumentCard extends StatelessWidget {
     final window = item.docType.typicalRenewalDays;
     if (window <= 0) return 0;
     return (1 - item.daysRemaining / window).clamp(0.0, 1.0);
-  }
-
-  /// Human explanation of what the reminder tier means.
-  String get _reminderText {
-    switch (item.reminderStatus) {
-      case 4:
-        return 'Final alert — renew immediately';
-      case 3:
-        return 'Active reminders — renew this month';
-      case 2:
-        return 'Early reminders — plan ahead';
-      case 1:
-        return 'Monitoring — plenty of time left';
-      default:
-        return 'No reminders yet';
-    }
   }
 
   @override
@@ -116,10 +106,10 @@ class DocumentCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Header row.
+                        // Header: identity + menu.
                         Row(
                           children: [
-                            DepartmentLogo(item: item, size: 44),
+                            DepartmentLogo(item: item, size: 40),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
@@ -150,110 +140,107 @@ class DocumentCard extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    Text(
-                                      item.daysRemaining < 0
-                                          ? '${-item.daysRemaining}d overdue'
-                                          : '${item.daysRemaining}d left',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 15,
-                                        color: accent,
-                                      ),
-                                    ),
-                                    Container(
-                                      margin: const EdgeInsets.only(top: 2),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 6,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: accent.withOpacity(
-                                          isDark ? 0.15 : 0.10,
-                                        ),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        _statusLabel,
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w600,
-                                          color: accent,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                            // Compact inline actions trigger.
+                            SizedBox(
+                              width: 28,
+                              height: 28,
+                              child: IconButton(
+                                onPressed: onAction,
+                                tooltip: 'Actions',
+                                padding: EdgeInsets.zero,
+                                iconSize: 18,
+                                icon: Icon(
+                                  Icons.more_horiz_rounded,
+                                  color: isDark
+                                      ? FinavigColors.cyanSecondary
+                                      : FinavigColors.navyPrimary,
                                 ),
-                                // Compact inline actions trigger.
-                                const SizedBox(width: 4),
-                                SizedBox(
-                                  width: 28,
-                                  height: 28,
-                                  child: IconButton(
-                                    onPressed: onAction,
-                                    tooltip: 'Actions',
-                                    padding: EdgeInsets.zero,
-                                    iconSize: 18,
-                                    icon: Icon(
-                                      Icons.more_horiz_rounded,
-                                      color: isDark
-                                          ? FinavigColors.cyanSecondary
-                                          : FinavigColors.navyPrimary,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
                           ],
                         ),
-                        // Time-remaining progress bar.
-                        const SizedBox(height: 12),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: _timeProgress,
-                            minHeight: 5,
-                            backgroundColor: isDark
-                                ? theme.colorScheme.surfaceContainerHighest
-                                : FinavigColors.mist,
-                            valueColor: AlwaysStoppedAnimation<Color>(accent),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          _timeProgress >= 1.0
-                              ? 'Renewal window fully elapsed'
-                              : '${(100 - _timeProgress * 100).toStringAsFixed(0)}% of the renewal window left',
-                          style: TextStyle(
-                            color: isDark
-                                ? FinavigColors.textMuted
-                                : FinavigColors.textMutedLight,
-                            fontSize: 10,
-                          ),
-                        ),
-                        // Detail rows.
+                        // Headline: countdown + status on the left, exact
+                        // expiry date on the right.
                         const SizedBox(height: 10),
-                        Divider(
-                          height: 1,
-                          color: isDark
-                              ? FinavigColors.slateLight.withOpacity(0.3)
-                              : FinavigColors.fog.withOpacity(0.5),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              _daysLabel,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 18,
+                                color: accent,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: accent.withOpacity(
+                                  isDark ? 0.15 : 0.10,
+                                ),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                _statusLabel,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: accent,
+                                ),
+                              ),
+                            ),
+                            const Spacer(),
+                            Flexible(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.calendar_today_rounded,
+                                    size: 12,
+                                    color: isDark
+                                        ? FinavigColors.textMuted
+                                        : FinavigColors.textSecondaryLight,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Flexible(
+                                    child: Text(
+                                      'Expires ${ExpiryItem.formatDate(item.expiresAt)}',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                        color: isDark
+                                            ? FinavigColors.textSecondary
+                                            : FinavigColors.textPrimaryLight,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 8),
+                        // Main facts: renewal fee first (the number people
+                        // plan around), then authority and assignment.
+                        const SizedBox(height: 10),
                         Wrap(
                           spacing: 12,
                           runSpacing: 4,
                           children: [
-                            _detail(
-                              theme,
-                              Icons.calendar_today_rounded,
-                              'Expires ${ExpiryItem.formatDate(item.expiresAt)}',
-                            ),
+                            if (item.renewalFee != null &&
+                                item.renewalFee! > 0)
+                              _detail(
+                                theme,
+                                Icons.payments_outlined,
+                                'Fee ${DocumentCollectionService.instance.activeCurrency} ${item.renewalFee!.toStringAsFixed(0)}',
+                                bold: true,
+                              ),
                             _detail(
                               theme,
                               Icons.account_balance_rounded,
@@ -271,21 +258,24 @@ class DocumentCard extends StatelessWidget {
                                 Icons.person_outline_rounded,
                                 'Owner: ${item.assignedTo}',
                               ),
-                            if (item.renewalFee != null && item.renewalFee! > 0)
-                              _detail(
-                                theme,
-                                Icons.payments_outlined,
-                                'Renewal fee ${DocumentCollectionService.instance.activeCurrency} ${item.renewalFee!.toStringAsFixed(0)}',
-                              ),
-                            _detail(
-                              theme,
-                              Icons.notifications_active_outlined,
-                              _reminderText,
-                            ),
                           ],
                         ),
+                        // Slim progress bar — urgency at a glance.
+                        const SizedBox(height: 10),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: _timeProgress,
+                            minHeight: 4,
+                            backgroundColor: isDark
+                                ? theme.colorScheme.surfaceContainerHighest
+                                : FinavigColors.mist,
+                            valueColor: AlwaysStoppedAnimation<Color>(accent),
+                          ),
+                        ),
                         // Renewal warning — expiry-aware fallback keeps this
-                        // meaningful even when no warning was stored.
+                        // meaningful even when no warning was stored. Shown
+                        // only when it matters (≤30 days).
                         if (item.daysRemaining <= 30) ...[
                           const SizedBox(height: 8),
                           Text(
@@ -311,8 +301,18 @@ class DocumentCard extends StatelessWidget {
     );
   }
 
-  Widget _detail(ThemeData theme, IconData icon, String text) {
+  Widget _detail(
+    ThemeData theme,
+    IconData icon,
+    String text, {
+    bool bold = false,
+  }) {
     final isDark = theme.brightness == Brightness.dark;
+    final color = bold
+        ? (isDark ? FinavigColors.textPrimary : FinavigColors.textPrimaryLight)
+        : (isDark
+            ? FinavigColors.textSecondary
+            : FinavigColors.textPrimaryLight);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -327,10 +327,9 @@ class DocumentCard extends StatelessWidget {
         Text(
           text,
           style: TextStyle(
-            color: isDark
-                ? FinavigColors.textSecondary
-                : FinavigColors.textPrimaryLight,
+            color: color,
             fontSize: 12,
+            fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
           ),
         ),
       ],
