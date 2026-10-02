@@ -558,10 +558,25 @@ class TierBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final resolved = tier ?? EntitlementService.instance.tier;
     final info = TierInfo.all[resolved]!;
-    final color = switch (resolved) {
-      SubscriptionTier.free => Colors.white.withAlpha(230),
-      SubscriptionTier.plus => FinavigColors.cyanSecondary,
-      SubscriptionTier.business => FinavigColors.emerald,
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final gold = isDark ? FinavigColors.tierGold : FinavigColors.tierGoldDark;
+
+    // Paid tiers carry the logo gold as a premium highlight. Plus is an
+    // outlined gold badge; Business is a solid gold pill so the two read
+    // apart at a glance. Free keeps its neutral styling.
+    final badgeShape = switch (resolved) {
+      SubscriptionTier.free => BadgeShape.neutral,
+      SubscriptionTier.plus => BadgeShape.outlined,
+      SubscriptionTier.business => BadgeShape.solid,
+    };
+    final (color, textColor) = switch (badgeShape) {
+      BadgeShape.neutral => (
+        isDark ? Colors.white.withAlpha(230) : FinavigColors.textSecondaryLight,
+        isDark ? Colors.white.withAlpha(230) : FinavigColors.textSecondaryLight,
+      ),
+      BadgeShape.outlined => (gold, gold),
+      BadgeShape.solid => (gold, isDark ? FinavigColors.ink : Colors.white),
     };
 
     return Container(
@@ -570,9 +585,20 @@ class TierBadge extends StatelessWidget {
         vertical: compact ? 2 : 3,
       ),
       decoration: BoxDecoration(
-        color: color.withAlpha(28),
+        color: switch (badgeShape) {
+          BadgeShape.neutral => color.withAlpha(28),
+          BadgeShape.outlined => gold.withAlpha(24),
+          BadgeShape.solid => gold,
+        },
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withAlpha(120), width: 0.8),
+        border: Border.all(
+          color: switch (badgeShape) {
+            BadgeShape.neutral => color.withAlpha(120),
+            BadgeShape.outlined => gold.withAlpha(160),
+            BadgeShape.solid => gold,
+          },
+          width: 0.8,
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -584,7 +610,7 @@ class TierBadge extends StatelessWidget {
               SubscriptionTier.business => Icons.business_center_rounded,
             },
             size: compact ? 11 : 12,
-            color: color,
+            color: textColor,
           ),
           const SizedBox(width: 4),
           Text(
@@ -592,7 +618,7 @@ class TierBadge extends StatelessWidget {
             style: TextStyle(
               fontSize: compact ? 10 : 11,
               fontWeight: FontWeight.w600,
-              color: color,
+              color: textColor,
             ),
           ),
         ],
@@ -600,3 +626,5 @@ class TierBadge extends StatelessWidget {
     );
   }
 }
+
+enum BadgeShape { neutral, outlined, solid }

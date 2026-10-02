@@ -38,6 +38,10 @@ class FinavigColors {
   static const Color emeraldAccent = emerald;
   static const Color textPrimaryDark = textPrimary;
 
+  // ── Tier premium gold — from the logo's trace gold (#D8A848) ───────────
+  static const Color tierGold = Color(0xFFD8A848);
+  static const Color tierGoldDark = Color(0xFFA16207); // readable on light
+
   // ── Ink (hero backdrops, dark CTAs) ─────────────────────────────────────
   static const Color ink = Color(0xFF0F172A);
   static const Color inkDeep = Color(0xFF0B1120);
