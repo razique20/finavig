@@ -158,6 +158,11 @@ class _ProfileSubscriptionSectionState
                         // the app's flat button language.
                         backgroundColor: FinavigColors.ink,
                         foregroundColor: Colors.white,
+                        // Reduced radius: subtle rectangle instead of the
+                        // theme's full pill for this wide CTA.
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                     ),
                   )
