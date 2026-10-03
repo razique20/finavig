@@ -7,6 +7,9 @@ import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/dialogs/app_version_dialog.dart';
 
+/// Full-bleed splash backdrop image (dark market-chart photo).
+const String kSplashBackgroundAsset = 'assets/images/splash_bg.jpg';
+
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -104,9 +107,27 @@ class _SplashScreenState extends State<SplashScreen>
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Backdrop: flat ink — one dark, no gradient wash or glow.
+          // Backdrop: full-bleed finance image, cover-fitted to every screen.
+          Image.asset(
+            kSplashBackgroundAsset,
+            fit: BoxFit.cover,
+            alignment: Alignment.center,
+          ),
+          // Ink scrim: darkens the photo so the monogram and tagline read
+          // clearly, and blends the edges into the app's ink palette.
           const DecoratedBox(
-            decoration: BoxDecoration(color: FinavigColors.ink),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0xD90F172A), // 85% ink
+                  Color(0x990F172A), // 60% ink
+                  Color(0xE60B1120), // 90% ink-deep
+                ],
+                stops: [0.0, 0.45, 1.0],
+              ),
+            ),
           ),
           Center(
             child: Column(

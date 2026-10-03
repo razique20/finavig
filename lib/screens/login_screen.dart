@@ -15,6 +15,10 @@ import '../utils/error_messages.dart';
 import '../theme/app_theme.dart';
 import '../widgets/dialogs/legal_info_dialogs.dart';
 
+/// Same generated artwork as the splash & welcome screens — one visual
+/// identity across the whole pre-auth flow.
+const String _loginArtworkAsset = 'assets/images/splash_bg.jpg';
+
 /// Login & Sign-up — styled after the Home screen's visual language:
 ///
 /// ink/obsidian backdrop with a white-text hero (like Home's hero header),
@@ -351,17 +355,44 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       // Same backdrop recipe as Home: ink in light mode, obsidian in dark.
-      // Flat solid backdrop — no glows or gradients.
       backgroundColor: isDark ? FinavigColors.obsidian : FinavigColors.ink,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _hero(theme, isDark),
-            Expanded(child: _glassSheet(theme, isDark)),
-          ],
-        ),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Full-bleed brand artwork behind everything, matching the splash
+          // and welcome screens.
+          Image.asset(
+            _loginArtworkAsset,
+            fit: BoxFit.cover,
+            alignment: Alignment.center,
+          ),
+          // Ink scrim so the white hero text and the translucent sheet stay
+          // readable over the photo.
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0xD90F172A), // 85% ink — hero zone
+                  Color(0x730F172A), // 45% ink
+                  Color(0xCC0B1120), // 80% ink-deep
+                ],
+                stops: [0.0, 0.35, 1.0],
+              ),
+            ),
+          ),
+          SafeArea(
+            bottom: false,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _hero(theme, isDark),
+                Expanded(child: _glassSheet(theme, isDark)),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -372,9 +403,11 @@ class _LoginScreenState extends State<LoginScreen> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
+        // Near-solid tint over the artwork so the quiz fields stay crisp,
+        // while the artwork still glows through the top rounding.
         color: isDark
-            ? Colors.white.withOpacity(0.07)
-            : Colors.white.withOpacity(0.90),
+            ? FinavigColors.obsidian.withOpacity(0.88)
+            : Colors.white.withOpacity(0.94),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         border: Border(
           top: BorderSide(

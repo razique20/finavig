@@ -24,30 +24,37 @@ void main() {
     return MaterialApp.router(routerConfig: router);
   }
 
-  testWidgets('WelcomeScreen renders hero, phone preview and Get Started', (
-    tester,
-  ) async {
+  testWidgets('WelcomeScreen renders brand image, monogram and Continue to Login',
+      (tester) async {
     SharedPreferences.setMockInitialValues({});
     await tester.pumpWidget(buildTestApp());
     await tester.pumpAndSettle();
 
-    expect(find.text('Modern Fintech for\nPersonal Finance'), findsOneWidget);
-    expect(find.text('Easy ways to manage your finances'), findsOneWidget);
+    // Full-bleed brand artwork behind everything.
+    expect(
+      find.byWidgetPredicate((w) =>
+          w is Image &&
+          w.image == const AssetImage('assets/images/splash_bg.jpg')),
+      findsOneWidget,
+    );
+    // FV monogram and wordmark.
     expect(find.text('FV'), findsOneWidget);
-    // Main CTA (the in-phone pill reads "Get Started  →").
-    expect(find.widgetWithText(ElevatedButton, 'Get Started'), findsOneWidget);
+    expect(find.text('Finavig'), findsOneWidget);
+    // Single CTA.
+    expect(
+      find.widgetWithText(ElevatedButton, 'Continue to Login'),
+      findsOneWidget,
+    );
   });
 
-  testWidgets('Get Started persists flag and navigates to login', (
-    tester,
-  ) async {
+  testWidgets('Continue to Login persists flag and navigates to login',
+      (tester) async {
     SharedPreferences.setMockInitialValues({});
     await tester.pumpWidget(buildTestApp());
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.widgetWithText(ElevatedButton, 'Get Started'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Get Started'));
+    await tester
+        .tap(find.widgetWithText(ElevatedButton, 'Continue to Login'));
     await tester.pumpAndSettle();
 
     final prefs = await SharedPreferences.getInstance();
