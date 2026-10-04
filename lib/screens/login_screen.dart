@@ -366,19 +366,20 @@ class _LoginScreenState extends State<LoginScreen> {
             fit: BoxFit.cover,
             alignment: Alignment.center,
           ),
-          // Ink scrim so the white hero text and the translucent sheet stay
-          // readable over the photo.
+          // Light ink scrim: keeps the white hero text readable while the
+          // artwork's glow, grid and gold trend line show through at the
+          // top instead of reading as a flat dark fill.
           const DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Color(0xD90F172A), // 85% ink — hero zone
+                  Color(0x400F172A), // 25% ink — hero zone, image visible
                   Color(0x730F172A), // 45% ink
-                  Color(0xCC0B1120), // 80% ink-deep
+                  Color(0xCC0B1120), // 80% ink-deep at the sheet junction
                 ],
-                stops: [0.0, 0.35, 1.0],
+                stops: [0.0, 0.4, 1.0],
               ),
             ),
           ),
