@@ -438,6 +438,51 @@ void main() {
       expect(find.text('Passcode required when reopening Finavig'),
           findsOneWidget);
     });
+
+    testWidgets('tapping the switch on runs set-up and turns the lock on',
+        (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(home: Scaffold(body: ProfileSecuritySection())),
+      );
+
+      await tester.tap(find.byType(Switch));
+      await tester.pumpAndSettle();
+
+      // Set-up flow opened; choose and confirm a passcode.
+      expect(find.text('Create a passcode'), findsWidgets);
+      await _enterPin(tester, '123456');
+      expect(find.text('Confirm your passcode'), findsWidgets);
+      await _enterPin(tester, '123456');
+
+      expect(service.isEnabled, isTrue);
+      expect(tester.widget<Switch>(find.byType(Switch)).value, isTrue);
+    });
+
+    testWidgets('tapping the switch off requires the passcode', (tester) async {
+      await service.enable('123456');
+      await tester.pumpWidget(
+        const MaterialApp(home: Scaffold(body: ProfileSecuritySection())),
+      );
+      expect(tester.widget<Switch>(find.byType(Switch)).value, isTrue);
+
+      // Wrong passcode leaves the lock on and returns to the tile.
+      await tester.tap(find.byType(Switch));
+      await tester.pumpAndSettle();
+      await _enterPin(tester, '000000');
+      expect(find.text('Incorrect passcode'), findsOneWidget);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      expect(service.isEnabled, isTrue);
+      expect(tester.widget<Switch>(find.byType(Switch)).value, isTrue);
+
+      // Correct passcode turns it off and the switch follows.
+      await tester.tap(find.byType(Switch));
+      await tester.pumpAndSettle();
+      await _enterPin(tester, '123456');
+      await tester.pumpAndSettle();
+      expect(service.isEnabled, isFalse);
+      expect(tester.widget<Switch>(find.byType(Switch)).value, isFalse);
+    });
   });
 
   group('maybeOfferAppLockSetup (post-login)', () {
