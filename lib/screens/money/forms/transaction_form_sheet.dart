@@ -147,163 +147,169 @@ class _TransactionFormSheetState extends State<TransactionFormSheet> {
           20,
           20 + MediaQuery.of(context).viewInsets.bottom,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Add record',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 16),
-            SegmentedButton<FinanceKind>(
-              segments: const [
-                ButtonSegment(
-                  value: FinanceKind.expense,
-                  label: Text('Expense'),
-                  icon: Icon(Icons.call_made_rounded),
+        // Scrollable so the form can never overflow when the keyboard is up
+        // (mirrors the recurring-template sheet). Without this the last row
+        // (the Save button) gets clipped by the keyboard.
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Add record',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
                 ),
-                ButtonSegment(
-                  value: FinanceKind.income,
-                  label: Text('Income'),
-                  icon: Icon(Icons.call_received_rounded),
-                ),
-              ],
-              selected: {_kind},
-              onSelectionChanged: (selection) =>
-                  setState(() => _kind = selection.first),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _titleController,
-              decoration: const InputDecoration(
-                labelText: 'Title',
-                hintText: 'e.g. Trade licence renewal',
-                border: OutlineInputBorder(),
               ),
-            ),
-            if (_aiPrediction != null && _aiPrediction!.isHighConfidence) ...[
-              const SizedBox(height: 6),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: InkWell(
-                  onTap: () =>
-                      setState(() => _category = _aiPrediction!.category),
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: FinavigColors.cyanAccent.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: FinavigColors.cyanAccent.withOpacity(0.4),
+              const SizedBox(height: 16),
+              SegmentedButton<FinanceKind>(
+                segments: const [
+                  ButtonSegment(
+                    value: FinanceKind.expense,
+                    label: Text('Expense'),
+                    icon: Icon(Icons.call_made_rounded),
+                  ),
+                  ButtonSegment(
+                    value: FinanceKind.income,
+                    label: Text('Income'),
+                    icon: Icon(Icons.call_received_rounded),
+                  ),
+                ],
+                selected: {_kind},
+                onSelectionChanged: (selection) =>
+                    setState(() => _kind = selection.first),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _titleController,
+                decoration: const InputDecoration(
+                  labelText: 'Title',
+                  hintText: 'e.g. Trade licence renewal',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              if (_aiPrediction != null && _aiPrediction!.isHighConfidence) ...[
+                const SizedBox(height: 6),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: InkWell(
+                    onTap: () =>
+                        setState(() => _category = _aiPrediction!.category),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
                       ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.auto_awesome_rounded,
-                          size: 14,
-                          color: FinavigColors.cyanAccent,
+                      decoration: BoxDecoration(
+                        color: FinavigColors.cyanAccent.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: FinavigColors.cyanAccent.withOpacity(0.4),
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'AI Suggested: ${_aiPrediction!.category.displayName} (${(_aiPrediction!.confidence * 100).toStringAsFixed(0)}%)',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.auto_awesome_rounded,
+                            size: 14,
                             color: FinavigColors.cyanAccent,
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-            const SizedBox(height: 12),
-            TextField(
-              controller: _amountController,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              decoration: InputDecoration(
-                labelText: 'Amount (${DocumentCollectionService.instance.activeCurrency})',
-                border: const OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<FinanceCategory>(
-              initialValue: _category,
-              decoration: const InputDecoration(
-                labelText: 'Category',
-                border: OutlineInputBorder(),
-              ),
-              items: FinanceCategory.values
-                  .map(
-                    (c) => DropdownMenuItem(
-                      value: c,
-                      child: Row(
-                        children: [
-                          Icon(c.icon, size: 18),
-                          const SizedBox(width: 8),
-                          Text(c.displayName),
+                          const SizedBox(width: 6),
+                          Text(
+                            'AI Suggested: ${_aiPrediction!.category.displayName} (${(_aiPrediction!.confidence * 100).toStringAsFixed(0)}%)',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: FinavigColors.cyanAccent,
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                  )
-                  .toList(),
-              onChanged: (c) =>
-                  setState(() => _category = c ?? FinanceCategory.other),
-            ),
-            const SizedBox(height: 12),
-            if (_kind == FinanceKind.expense) ...[
-              DropdownButtonFormField<ExpiryItem?>(
-                initialValue: _linkedDocument,
-                decoration: const InputDecoration(
-                  labelText: 'Linked document (optional)',
-                  border: OutlineInputBorder(),
-                ),
-                items: [
-                  const DropdownMenuItem(value: null, child: Text('None')),
-                  ..._activeDocuments().map(
-                    (d) => DropdownMenuItem(
-                      value: d,
-                      child: Text(
-                        d.displayName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
                   ),
-                ],
-                onChanged: (d) => setState(() => _linkedDocument = d),
+                ),
+              ],
+              const SizedBox(height: 12),
+              TextField(
+                controller: _amountController,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: InputDecoration(
+                  labelText:
+                      'Amount (${DocumentCollectionService.instance.activeCurrency})',
+                  border: const OutlineInputBorder(),
+                ),
               ),
               const SizedBox(height: 12),
-            ],
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              dense: true,
-              value: _repeatMonthly,
-              onChanged: (v) => setState(() => _repeatMonthly = v),
-              title: const Text('Repeat monthly'),
-              subtitle: Text(
-                'Also create a monthly template — auto-logs this amount every month from now on.',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.outline,
-                  fontSize: 11,
+              DropdownButtonFormField<FinanceCategory>(
+                initialValue: _category,
+                decoration: const InputDecoration(
+                  labelText: 'Category',
+                  border: OutlineInputBorder(),
+                ),
+                items: FinanceCategory.values
+                    .map(
+                      (c) => DropdownMenuItem(
+                        value: c,
+                        child: Row(
+                          children: [
+                            Icon(c.icon, size: 18),
+                            const SizedBox(width: 8),
+                            Text(c.displayName),
+                          ],
+                        ),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (c) =>
+                    setState(() => _category = c ?? FinanceCategory.other),
+              ),
+              const SizedBox(height: 12),
+              if (_kind == FinanceKind.expense) ...[
+                DropdownButtonFormField<ExpiryItem?>(
+                  initialValue: _linkedDocument,
+                  decoration: const InputDecoration(
+                    labelText: 'Linked document (optional)',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: [
+                    const DropdownMenuItem(value: null, child: Text('None')),
+                    ..._activeDocuments().map(
+                      (d) => DropdownMenuItem(
+                        value: d,
+                        child: Text(
+                          d.displayName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                  ],
+                  onChanged: (d) => setState(() => _linkedDocument = d),
+                ),
+                const SizedBox(height: 12),
+              ],
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                value: _repeatMonthly,
+                onChanged: (v) => setState(() => _repeatMonthly = v),
+                title: const Text('Repeat monthly'),
+                subtitle: Text(
+                  'Also create a monthly template — auto-logs this amount every month from now on.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.outline,
+                    fontSize: 11,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 8),
-            FilledButton(onPressed: _submit, child: const Text('Save')),
-          ],
+              const SizedBox(height: 8),
+              FilledButton(onPressed: _submit, child: const Text('Save')),
+            ],
+          ),
         ),
       ),
     );
@@ -313,4 +319,3 @@ class _TransactionFormSheetState extends State<TransactionFormSheet> {
 // ====================================================================
 // Recurring transaction card + form sheet
 // ====================================================================
-

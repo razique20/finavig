@@ -3,10 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../models/subscription_tier.dart';
 import '../../services/auth_service.dart';
-import '../../services/document_scanner_service.dart';
 import '../../services/entitlement_service.dart';
-import '../../services/finance_service.dart';
-import '../../services/custom_document_type_service.dart';
 import '../../services/supabase_service.dart';
 import '../../widgets/hero_widgets.dart';
 
@@ -187,11 +184,9 @@ class ProfileHeroHeader extends StatelessWidget {
 
     if (confirmed != true) return;
 
-    await AuthService.instance.signOut();
-    DocumentScannerService.instance.clearCache();
-    FinanceService.instance.clearCache();
-    CustomDocumentTypeService.instance.reset();
-    EntitlementService.instance.reset();
+    // Signs out and clears caches, the entitlement tier and the local
+    // app-lock passcode in one place (see AuthService.signOutAndClear).
+    await AuthService.instance.signOutAndClear();
 
     if (context.mounted) context.go('/login');
   }

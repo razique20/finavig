@@ -14,6 +14,7 @@ import '../services/finance_service.dart';
 import '../utils/error_messages.dart';
 import '../theme/app_theme.dart';
 import '../widgets/dialogs/legal_info_dialogs.dart';
+import 'app_lock_flows.dart';
 
 /// Same generated artwork as the splash & welcome screens — one visual
 /// identity across the whole pre-auth flow.
@@ -249,6 +250,17 @@ class _LoginScreenState extends State<LoginScreen> {
         await EntitlementService.instance.refresh();
       } catch (e) {
         debugPrint('Post-auth refresh failed (entering app anyway): $e');
+      }
+
+      // One-time, opt-in App Lock set-up offer for returning users (never
+      // shown to brand-new sign-ups). Purely a convenience — a failure here
+      // must not surface as a login error, so entry always proceeds.
+      if (mounted && !_isSignUp) {
+        try {
+          await maybeOfferAppLockSetup(context);
+        } catch (e) {
+          debugPrint('App Lock offer skipped: $e');
+        }
       }
 
       if (mounted) context.go('/home');

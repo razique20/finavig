@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'router.dart';
 import 'services/theme_service.dart';
 import 'theme/app_theme.dart';
+import 'widgets/app_lock_gate.dart';
 
 class FinavigApp extends StatefulWidget {
   const FinavigApp({super.key});
@@ -35,6 +36,10 @@ class _FinavigAppState extends State<FinavigApp> {
       darkTheme: FinavigTheme.dark(),
       themeMode: ThemeService.instance.mode,
       routerConfig: router,
+      // Local passcode lock — overlays the lock screen above every route and
+      // dialog when the app is reopened (cold start or after the grace period).
+      builder: (context, child) =>
+          AppLockGate(child: child ?? const SizedBox.shrink()),
     );
   }
 }

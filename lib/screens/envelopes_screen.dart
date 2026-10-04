@@ -44,6 +44,9 @@ class _EnvelopesScreenState extends State<EnvelopesScreen> {
   Future<void> _showEnvelopeSheet() async {
     final result = await showModalBottomSheet<(String, double, double)>(
       context: context,
+      // Scrollable + keyboard-aware sheet (matches the Money tab's call site),
+      // so the form lifts above the keyboard instead of hiding behind it.
+      isScrollControlled: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),

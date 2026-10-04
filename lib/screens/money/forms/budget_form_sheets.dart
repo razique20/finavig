@@ -12,12 +12,10 @@ class OverallBudgetFormSheet extends StatefulWidget {
   const OverallBudgetFormSheet({this.currentLimit});
 
   @override
-  State<OverallBudgetFormSheet> createState() =>
-      _OverallBudgetFormSheetState();
+  State<OverallBudgetFormSheet> createState() => _OverallBudgetFormSheetState();
 }
 
-class _OverallBudgetFormSheetState
-    extends State<OverallBudgetFormSheet> {
+class _OverallBudgetFormSheetState extends State<OverallBudgetFormSheet> {
   late final TextEditingController _limitController;
 
   @override
@@ -51,55 +49,64 @@ class _OverallBudgetFormSheetState
     final theme = Theme.of(context);
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              widget.currentLimit == null
-                  ? 'Set overall monthly budget'
-                  : 'Edit overall monthly budget',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Set the overall monthly limit across all spending categories. Individual category budgets will be constrained within this amount.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _limitController,
-              autofocus: true,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              decoration: InputDecoration(
-                labelText: 'Total Monthly Budget (${DocumentCollectionService.instance.activeCurrency})',
-                border: const OutlineInputBorder(),
-                prefixIcon: const Icon(Icons.account_balance_rounded),
-              ),
-            ),
-            const SizedBox(height: 20),
-            FilledButton(
-              onPressed: _submit,
-              child: const Text('Save overall budget'),
-            ),
-            if (widget.currentLimit != null) ...[
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: _clear,
-                style: TextButton.styleFrom(
-                  foregroundColor: theme.colorScheme.error,
+        padding: EdgeInsets.fromLTRB(
+          20,
+          20,
+          20,
+          20 + MediaQuery.of(context).viewInsets.bottom,
+        ),
+        // Scrollable so the form can't overflow when the keyboard is up.
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                widget.currentLimit == null
+                    ? 'Set overall monthly budget'
+                    : 'Edit overall monthly budget',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
                 ),
-                child: const Text('Remove overall budget cap'),
               ),
+              const SizedBox(height: 6),
+              Text(
+                'Set the overall monthly limit across all spending categories. Individual category budgets will be constrained within this amount.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _limitController,
+                autofocus: true,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: InputDecoration(
+                  labelText:
+                      'Total Monthly Budget (${DocumentCollectionService.instance.activeCurrency})',
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.account_balance_rounded),
+                ),
+              ),
+              const SizedBox(height: 20),
+              FilledButton(
+                onPressed: _submit,
+                child: const Text('Save overall budget'),
+              ),
+              if (widget.currentLimit != null) ...[
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: _clear,
+                  style: TextButton.styleFrom(
+                    foregroundColor: theme.colorScheme.error,
+                  ),
+                  child: const Text('Remove overall budget cap'),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -117,8 +124,7 @@ class CategoryBudgetFormSheet extends StatefulWidget {
   const CategoryBudgetFormSheet({this.existing, this.maxAllowedLimit});
 
   @override
-  State<CategoryBudgetFormSheet> createState() =>
-      _BudgetFormSheetState();
+  State<CategoryBudgetFormSheet> createState() => _BudgetFormSheetState();
 }
 
 class _BudgetFormSheetState extends State<CategoryBudgetFormSheet> {
@@ -192,103 +198,114 @@ class _BudgetFormSheetState extends State<CategoryBudgetFormSheet> {
 
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              widget.existing == null ? 'Add budget' : 'Edit budget',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
+        padding: EdgeInsets.fromLTRB(
+          20,
+          20,
+          20,
+          20 + MediaQuery.of(context).viewInsets.bottom,
+        ),
+        // Scrollable so the form can't overflow when the keyboard is up.
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                widget.existing == null ? 'Add budget' : 'Edit budget',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-            if (maxLimit != null) ...[
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: maxLimit <= 0
-                      ? theme.colorScheme.errorContainer.withValues(alpha: 0.3)
-                      : theme.colorScheme.primaryContainer.withValues(
-                          alpha: 0.3,
-                        ),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      maxLimit <= 0
-                          ? Icons.warning_amber_rounded
-                          : Icons.info_outline_rounded,
-                      size: 16,
-                      color: maxLimit <= 0
-                          ? theme.colorScheme.error
-                          : theme.colorScheme.primary,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
+              if (maxLimit != null) ...[
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: maxLimit <= 0
+                        ? theme.colorScheme.errorContainer.withValues(
+                            alpha: 0.3,
+                          )
+                        : theme.colorScheme.primaryContainer.withValues(
+                            alpha: 0.3,
+                          ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
                         maxLimit <= 0
-                            ? 'Overall monthly budget is 100% allocated.'
-                            : 'Available from overall monthly budget: ${MoneyFormat.aed(maxLimit)}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: maxLimit <= 0
-                              ? theme.colorScheme.error
-                              : theme.colorScheme.onSurfaceVariant,
-                          fontWeight: FontWeight.w500,
+                            ? Icons.warning_amber_rounded
+                            : Icons.info_outline_rounded,
+                        size: 16,
+                        color: maxLimit <= 0
+                            ? theme.colorScheme.error
+                            : theme.colorScheme.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          maxLimit <= 0
+                              ? 'Overall monthly budget is 100% allocated.'
+                              : 'Available from overall monthly budget: ${MoneyFormat.aed(maxLimit)}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: maxLimit <= 0
+                                ? theme.colorScheme.error
+                                : theme.colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
+              ],
+              const SizedBox(height: 16),
+              DropdownButtonFormField<FinanceCategory>(
+                initialValue: _category,
+                decoration: const InputDecoration(
+                  labelText: 'Category',
+                  border: OutlineInputBorder(),
+                ),
+                items: FinanceCategory.values
+                    .map(
+                      (c) => DropdownMenuItem(
+                        value: c,
+                        child: Row(
+                          children: [
+                            Icon(c.icon, size: 18),
+                            const SizedBox(width: 8),
+                            Text(c.displayName),
+                          ],
+                        ),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (c) =>
+                    setState(() => _category = c ?? FinanceCategory.other),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _limitController,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: InputDecoration(
+                  labelText:
+                      'Monthly limit (${DocumentCollectionService.instance.activeCurrency})',
+                  border: const OutlineInputBorder(),
+                  errorText: _errorText,
+                ),
+              ),
+              const SizedBox(height: 20),
+              FilledButton(
+                onPressed: _errorText != null ? null : _submit,
+                child: const Text('Save budget'),
               ),
             ],
-            const SizedBox(height: 16),
-            DropdownButtonFormField<FinanceCategory>(
-              initialValue: _category,
-              decoration: const InputDecoration(
-                labelText: 'Category',
-                border: OutlineInputBorder(),
-              ),
-              items: FinanceCategory.values
-                  .map(
-                    (c) => DropdownMenuItem(
-                      value: c,
-                      child: Row(
-                        children: [
-                          Icon(c.icon, size: 18),
-                          const SizedBox(width: 8),
-                          Text(c.displayName),
-                        ],
-                      ),
-                    ),
-                  )
-                  .toList(),
-              onChanged: (c) =>
-                  setState(() => _category = c ?? FinanceCategory.other),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _limitController,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              decoration: InputDecoration(
-                labelText: 'Monthly limit (${DocumentCollectionService.instance.activeCurrency})',
-                border: const OutlineInputBorder(),
-                errorText: _errorText,
-              ),
-            ),
-            const SizedBox(height: 20),
-            FilledButton(
-              onPressed: _errorText != null ? null : _submit,
-              child: const Text('Save budget'),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -298,4 +315,3 @@ class _BudgetFormSheetState extends State<CategoryBudgetFormSheet> {
 // ====================================================================
 // Envelope form sheet
 // ====================================================================
-

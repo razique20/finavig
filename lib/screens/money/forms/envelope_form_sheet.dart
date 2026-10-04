@@ -38,7 +38,12 @@ class _EnvelopeFormSheetState extends State<EnvelopeFormSheet> {
     final theme = Theme.of(context);
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+        padding: EdgeInsets.fromLTRB(
+          20,
+          20,
+          20,
+          20 + MediaQuery.of(context).viewInsets.bottom,
+        ),
         // Scrollable so the form also fits small screens.
         child: SingleChildScrollView(
           child: Column(
@@ -67,7 +72,8 @@ class _EnvelopeFormSheetState extends State<EnvelopeFormSheet> {
                   decimal: true,
                 ),
                 decoration: InputDecoration(
-                  labelText: 'Target amount (${DocumentCollectionService.instance.activeCurrency})',
+                  labelText:
+                      'Target amount (${DocumentCollectionService.instance.activeCurrency})',
                   border: const OutlineInputBorder(),
                 ),
               ),

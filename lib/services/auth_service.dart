@@ -1,6 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'app_lock_service.dart';
 import 'collection_service.dart';
 import 'custom_document_type_service.dart';
 import 'document_scanner_service.dart';
@@ -77,6 +78,21 @@ class AuthService {
     await SupabaseService.client.auth.signOut();
   }
 
+  /// Signs out **and** tears down device-local session state: the per-user
+  /// caches, the resolved entitlement tier, and the local app-lock passcode.
+  ///
+  /// Used by the Profile sign-out and the app-lock "Forgot passcode" escape
+  /// hatch, so a passcode can never linger after its account leaves the
+  /// device.
+  Future<void> signOutAndClear() async {
+    await signOut();
+    DocumentScannerService.instance.clearCache();
+    FinanceService.instance.clearCache();
+    CustomDocumentTypeService.instance.reset();
+    EntitlementService.instance.reset();
+    await AppLockService.instance.disable();
+  }
+
   /// Permanently delete the signed-in user's account and all their data.
   ///
   /// Calls the `delete_own_account` security-definer Postgres function (see
@@ -133,6 +149,7 @@ class AuthService {
     EntitlementService.instance.reset();
     await CustomDocumentTypeService.instance.reset();
     await DocumentCollectionService.instance.reset();
+    await AppLockService.instance.disable();
   }
 
   /// Listen to auth changes (sign-in, sign-out, token refresh). Used by the

@@ -10,6 +10,7 @@ import '../services/finance_service.dart';
 import '../services/tab_scroll_registry.dart';
 import '../theme/app_theme.dart';
 import '../widgets/widgets.dart';
+import 'profile/app_lock_section.dart';
 import 'profile/profile_account_section.dart';
 import 'profile/profile_appearance_section.dart';
 import 'profile/profile_backup_nudge.dart';
@@ -352,6 +353,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             const ProfileAppearanceSection(),
                             const SizedBox(height: 16),
                             const ProfilePreferencesSection(),
+                            const SizedBox(height: 16),
+                            const ProfileSecuritySection(),
                             const SizedBox(height: 16),
                             ProfileAiSection(
                               geminiKey: _geminiKey,

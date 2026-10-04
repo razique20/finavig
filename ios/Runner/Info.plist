@@ -28,6 +28,9 @@
 	<string>Finavig uses the microphone so you can add expenses and document renewals hands-free by speaking (e.g. "Paid 450 AED for DEWA yesterday").</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Finavig uses speech recognition to transcribe your spoken expenses and document details into the quick-add form.</string>
+	<!-- App Lock: Face ID unlocks the app instead of typing the passcode -->
+	<key>NSFaceIDUsageDescription</key>
+	<string>Finavig uses Face ID so you can unlock the app with a glance instead of typing your passcode.</string>
 	<!-- AI Executive Summary: allow HTTPS call to Google Gemini API -->
 	<key>NSAppTransportSecurity</key>
 	<dict>

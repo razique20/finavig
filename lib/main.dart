@@ -5,6 +5,7 @@ import 'dart:async';
 
 import 'app.dart';
 import 'services/alert_preferences_service.dart';
+import 'services/app_lock_service.dart';
 import 'services/auth_service.dart';
 import 'services/budget_alert_service.dart';
 import 'services/gemini_api_service.dart';
@@ -50,6 +51,10 @@ void main() async {
   // Credentials come from AppCredentials (lib/config/app_credentials.dart).
   // Without them the app runs in local-only mode.
   await SupabaseService.initialize();
+
+  // Local app-lock state must be known before the first frame so a cold start
+  // with a passcode set is already protected (see AppLockGate).
+  await AppLockService.instance.init();
 
   // Alert toggles must load before the budget alert engine starts
   // evaluating, so a disabled alert never fires on cold start.
