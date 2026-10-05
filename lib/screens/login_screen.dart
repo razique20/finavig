@@ -263,7 +263,20 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       }
 
-      if (mounted) context.go('/home');
+      if (mounted) {
+        // Brand-new accounts go through the onboarding tour once, right
+        // after sign-up. Returning sign-ins (and anyone who has already
+        // onboarded) land straight on Home. Without this, onboarding was
+        // only reachable from the splash screen — i.e. on the *next* cold
+        // start — so a fresh sign-up never saw it.
+        final prefs = await SharedPreferences.getInstance();
+        final hasOnboarded = prefs.getBool('hasOnboarded') ?? false;
+        if (_isSignUp && !hasOnboarded) {
+          context.go('/onboarding');
+        } else {
+          context.go('/home');
+        }
+      }
     } catch (e) {
       setState(() {
         _error = friendlyError(e);

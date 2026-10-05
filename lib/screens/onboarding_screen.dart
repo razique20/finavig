@@ -195,14 +195,27 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     // Action button / next button
                     if (_page < pages.length - 1)
                       TextButton(
-                        onPressed: () => setState(() => _page++),
+                        onPressed: () {
+                          // The notification page is the only step with a
+                          // side effect — it fires the OS permission prompt
+                          // that the page just explained. Every other step
+                          // simply advances.
+                          if (page.action != null) {
+                            page.action!();
+                          } else {
+                            setState(() => _page++);
+                          }
+                        },
                         style: TextButton.styleFrom(
                           foregroundColor: FinavigColors.cyanAccent,
                         ),
                         child: Text(
-                          _page == pages.length - 2
-                              ? 'Got it'
-                              : 'Skip',
+                          // This is the flow's only forward control, so it
+                          // is a "Next" — the old "Skip" label promised a
+                          // jump it never performed. Kept short ("Continue"
+                          // rather than "Allow notifications") so the row
+                          // never overflows on 320dp phones.
+                          _page == pages.length - 2 ? 'Continue' : 'Next',
                           style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
@@ -210,21 +223,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                       )
                     else
-                      ElevatedButton.icon(
-                        onPressed: page.action,
-                        icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-                        label: const Text('Get started'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: FinavigColors.cyanAccent,
-                          foregroundColor: const Color(0xFF0A0E1A),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 12,
+                      // The final CTA (icon + "Get started") is the widest
+                      // control in the flow — scale it down instead of
+                      // overflowing the row on 320dp phones.
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerRight,
+                          child: ElevatedButton.icon(
+                            onPressed: page.action,
+                            icon: const Icon(Icons.arrow_forward_rounded,
+                                size: 18),
+                            label: const Text('Get started'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: FinavigColors.cyanAccent,
+                              foregroundColor: const Color(0xFF0A0E1A),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 0,
+                            ),
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 0,
                         ),
                       ),
                   ],
