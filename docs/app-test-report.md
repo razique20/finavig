@@ -45,7 +45,7 @@ auth redirect is off and no live cloud/OS dependencies are exercised.
 
 | Screen | Primary contract asserted |
 | --- | --- |
-| `WelcomeScreen` | `FV` monogram, `Finavig`, `Continue to Login` CTA |
+| `WelcomeScreen` | `Finavig` headline, WhatsApp-style quote thread, `Continue to Login` CTA |
 | `LoginScreen` | `GCC Edition`, `Sign in` / `Sign up` toggle, `Continue` |
 | `HomeScreen` | `Net this month` hero, `Categories` grid, `Record` pill |
 | `DocumentsScreen` | `Documents` hero, `Search documents…`, `Filter`, `Sort` |

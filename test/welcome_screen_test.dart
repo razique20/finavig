@@ -24,7 +24,7 @@ void main() {
     return MaterialApp.router(routerConfig: router);
   }
 
-  testWidgets('WelcomeScreen renders brand image, monogram and Continue to Login',
+  testWidgets('WelcomeScreen renders headline, quote thread and CTA',
       (tester) async {
     SharedPreferences.setMockInitialValues({});
     await tester.pumpWidget(buildTestApp());
@@ -37,9 +37,27 @@ void main() {
           w.image == const AssetImage('assets/images/splash_bg.jpg')),
       findsOneWidget,
     );
-    // FV monogram and wordmark.
-    expect(find.text('FV'), findsOneWidget);
+    // Main headline — no logo mark on this screen.
     expect(find.text('Finavig'), findsOneWidget);
+    expect(find.text('FV'), findsNothing);
+    // WhatsApp-style quote thread: two incoming quotes + a reply.
+    expect(
+      find.text('Do not save what is left after spending; '
+          'spend what is left after saving.'),
+      findsOneWidget,
+    );
+    expect(find.text('— Warren Buffett'), findsOneWidget);
+    expect(
+      find.text('An investment in knowledge pays the best interest.'),
+      findsOneWidget,
+    );
+    expect(find.text('— Benjamin Franklin'), findsOneWidget);
+    expect(find.text('Warren Buffett'), findsOneWidget);
+    expect(
+      find.text("That's Finavig — budgets, cash flow and "
+          'document alerts in one secure place.'),
+      findsOneWidget,
+    );
     // Single CTA.
     expect(
       find.widgetWithText(ElevatedButton, 'Continue to Login'),

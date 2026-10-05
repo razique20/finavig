@@ -237,8 +237,12 @@ void main() {
 
     testWidgets('WelcomeScreen shows brand and CTA', (tester) async {
       await pumpScreen(tester, const WelcomeScreen());
-      expect(find.text('FV'), findsOneWidget);
       expect(find.text('Finavig'), findsOneWidget);
+      expect(
+        find.text('Do not save what is left after spending; '
+            'spend what is left after saving.'),
+        findsOneWidget,
+      );
       expect(
         find.widgetWithText(ElevatedButton, 'Continue to Login'),
         findsOneWidget,

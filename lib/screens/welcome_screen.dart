@@ -11,9 +11,11 @@ const String _welcomeImageAsset = 'assets/images/splash_bg.jpg';
 /// Pre-login welcome screen — the first thing a brand-new user sees after
 /// the splash.
 ///
-/// Full-bleed brand artwork (the generated cash-flow image) with the FV
-/// monogram, the Finavig wordmark and a single "Continue to Login" CTA that
-/// marks onboarding-seen and advances to the login page.
+/// No logo mark: a single main headline up top, a short thread of
+/// quotes styled like a WhatsApp conversation (an incoming quote, a
+/// reply bubble with the quoted-reply block, and one more quote), and
+/// a single "Continue to Login" CTA that marks onboarding-seen and
+/// advances to the login page.
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
 
@@ -66,8 +68,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             fit: BoxFit.cover,
             alignment: Alignment.center,
           ),
-          // Ink scrim: readable monogram up top, strong contrast behind the
-          // bottom CTA.
+          // Ink scrim: readable headline up top, strong contrast behind
+          // the bottom CTA.
           const DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -89,39 +91,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 position: _slide,
                 child: Column(
                   children: [
-                    const Spacer(flex: 5),
-                    // FV monogram — echoes the splash mark.
-                    Container(
-                      width: 92,
-                      height: 92,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withOpacity(0.06),
-                        border: Border.all(
-                          color: FinavigColors.cyanAccent.withOpacity(0.35),
-                          width: 1.5,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: FinavigColors.accentBright.withOpacity(0.25),
-                            blurRadius: 40,
-                            spreadRadius: 2,
-                          ),
-                        ],
-                      ),
-                      alignment: Alignment.center,
-                      child: const Text(
-                        'FV',
-                        style: TextStyle(
-                          fontSize: 34,
-                          height: 1.0,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 3.0,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 28),
+                    // Main headline — the wordmark itself, no logo mark.
                     const Text(
                       'Finavig',
                       style: TextStyle(
@@ -142,7 +113,40 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                         color: Colors.white.withOpacity(0.75),
                       ),
                     ),
-                    const Spacer(flex: 4),
+                    const Spacer(flex: 3),
+                    // Quote thread — styled like a WhatsApp conversation.
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          _IncomingQuoteBubble(
+                            quote:
+                                'Do not save what is left after spending; '
+                                'spend what is left after saving.',
+                            attribution: 'Warren Buffett',
+                          ),
+                          SizedBox(height: 10),
+                          _ReplyBubble(
+                            replyToName: 'Warren Buffett',
+                            quotedText:
+                                '…spend what is left after saving.',
+                            message:
+                                "That's Finavig — budgets, cash flow and "
+                                'document alerts in one secure place.',
+                            timestamp: '9:39 PM',
+                          ),
+                          SizedBox(height: 10),
+                          _IncomingQuoteBubble(
+                            quote:
+                                'An investment in knowledge pays the best '
+                                'interest.',
+                            attribution: 'Benjamin Franklin',
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Spacer(flex: 6),
                     // CTA pinned to the bottom over the deep-scrim zone.
                     Padding(
                       padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
@@ -189,6 +193,184 @@ class _WelcomeScreenState extends State<WelcomeScreen>
           ),
         ],
       ),
+    );
+  }
+}
+
+/// An incoming chat bubble carrying a quote and its attribution
+/// (WhatsApp-style, tail corner on the top-left).
+class _IncomingQuoteBubble extends StatelessWidget {
+  final String quote;
+  final String attribution;
+
+  const _IncomingQuoteBubble({
+    required this.quote,
+    required this.attribution,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        Flexible(
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(12, 9, 12, 9),
+            decoration: BoxDecoration(
+              color: FinavigColors.slate.withOpacity(0.85),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(4),
+                topRight: Radius.circular(18),
+                bottomLeft: Radius.circular(18),
+                bottomRight: Radius.circular(18),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.25),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  quote,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    height: 1.3,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  '— $attribution',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: FinavigColors.accentBright,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// An outgoing reply bubble with the WhatsApp-style quoted-reply block
+/// (accent bar, sender name, snippet) above the message itself.
+class _ReplyBubble extends StatelessWidget {
+  final String replyToName;
+  final String quotedText;
+  final String message;
+  final String timestamp;
+
+  const _ReplyBubble({
+    required this.replyToName,
+    required this.quotedText,
+    required this.message,
+    required this.timestamp,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Flexible(
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(12, 9, 12, 8),
+            decoration: BoxDecoration(
+              color: FinavigColors.accentBright,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(18),
+                topRight: Radius.circular(4),
+                bottomLeft: Radius.circular(18),
+                bottomRight: Radius.circular(18),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: FinavigColors.accentBright.withOpacity(0.35),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Quoted-reply block.
+                Container(
+                  padding: const EdgeInsets.fromLTRB(8, 7, 8, 7),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.18),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border(
+                      left: BorderSide(
+                        color: Colors.white.withOpacity(0.75),
+                        width: 3,
+                      ),
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        replyToName,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        quotedText,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          height: 1.3,
+                          color: Colors.white.withOpacity(0.75),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 7),
+                Text(
+                  message,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    height: 1.3,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    timestamp,
+                    style: TextStyle(
+                      fontSize: 9,
+                      color: Colors.white.withOpacity(0.7),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
