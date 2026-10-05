@@ -100,7 +100,7 @@ Run the comprehensive unit and integration test suite:
 ```bash
 flutter test
 ```
-*Current test suite: **131 passing unit & integration tests** covering document expiry math, financial category rules, anomaly detection thresholds, and budget tracking.*
+*Current test suite: **400 passing unit & widget tests** covering document expiry math, financial category rules, anomaly detection thresholds, budget tracking, and complete end-to-end flows (see [`docs/app-test-report.md`](docs/app-test-report.md)).*
 
 ---
 
