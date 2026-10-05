@@ -49,6 +49,7 @@ void main() {
 
   tearDown(() {
     BiometricService.instance.supportedOverride = null;
+    BiometricService.instance.authenticateResultOverride = false;
   });
 
   group('AppLockService', () {
@@ -366,6 +367,123 @@ void main() {
       expect(service.isEnabled, isFalse);
       expect(find.text('Enter your passcode'), findsNothing);
       expect(find.text('CONTENT'), findsOneWidget);
+    });
+
+    testWidgets('complete flow: post-login offer → cold-start lock → unlock',
+        (tester) async {
+      // 1. The one-time post-login offer appears and the user sets it up.
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: Center(
+                child: ElevatedButton(
+                  onPressed: () => maybeOfferAppLockSetup(context),
+                  child: const Text('after-login'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('after-login'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Set up'));
+      await tester.pumpAndSettle();
+      await _enterPin(tester, '123456'); // choose
+      await _enterPin(tester, '123456'); // confirm
+      expect(service.isEnabled, isTrue);
+
+      // 2. The next cold start comes up locked over the app content.
+      service.lock();
+      await tester.pumpWidget(
+        wrap(const Scaffold(body: Text('SECRET CONTENT'))),
+      );
+      await tester.pump();
+      expect(find.text('Enter your passcode'), findsOneWidget);
+
+      // 3. The right passcode reveals the app.
+      await _enterPin(tester, '123456');
+      expect(find.text('Enter your passcode'), findsNothing);
+      expect(find.text('SECRET CONTENT'), findsOneWidget);
+    });
+
+    testWidgets('five wrong attempts show the lockout overlay and block even '
+        'the right passcode', (tester) async {
+      await service.enable('123456');
+      service.lock();
+
+      await tester.pumpWidget(
+        wrap(const Scaffold(body: Text('CONTENT'))),
+      );
+      await tester.pump();
+
+      // The four attempts before the limit keep the overlay interactive.
+      for (var i = 0; i < AppLockService.maxAttempts - 1; i++) {
+        await _enterPin(tester, '000000');
+        expect(find.text('Incorrect passcode'), findsOneWidget);
+      }
+
+      // The final attempt trips the lockout. Do not `pumpAndSettle` here: the
+      // countdown ticker schedules a frame every second while it is active.
+      for (final digit in '000000'.split('')) {
+        await tester.tap(find.text(digit));
+        await tester.pump();
+      }
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(find.text('Locked for now'), findsOneWidget);
+      expect(find.textContaining('Too many incorrect attempts'), findsOneWidget);
+
+      // Even the correct passcode is refused while locked out: the panel does
+      // not dismiss, and the escape hatch is disabled too.
+      expect(await service.verify('123456'), PasscodeResult.lockedOut);
+      final forgot = tester.widget<TextButton>(
+        find.ancestor(
+          of: find.text('Forgot passcode?'),
+          matching: find.byType(TextButton),
+        ),
+      );
+      expect(forgot.onPressed, isNull);
+      // The lock overlay stays up, now in its locked-out presentation.
+      expect(find.text('Locked for now'), findsOneWidget);
+    });
+
+    testWidgets('a successful biometric match unlocks the cold start',
+        (tester) async {
+      BiometricService.instance.supportedOverride = true;
+      BiometricService.instance.authenticateResultOverride = true;
+      await service.enable('123456', biometric: true);
+      service.lock();
+
+      await tester.pumpWidget(
+        wrap(const Scaffold(body: Text('SECRET CONTENT'))),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Enter your passcode'), findsNothing);
+      expect(find.text('SECRET CONTENT'), findsOneWidget);
+    });
+
+    testWidgets('a cancelled biometric leaves the passcode lock in place and '
+        'offers the button', (tester) async {
+      BiometricService.instance.supportedOverride = true;
+      BiometricService.instance.authenticateResultOverride = false;
+      await service.enable('123456', biometric: true);
+      service.lock();
+
+      await tester.pumpWidget(
+        wrap(const Scaffold(body: Text('SECRET CONTENT'))),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Enter your passcode'), findsOneWidget);
+      expect(find.byIcon(Icons.fingerprint_rounded), findsOneWidget);
+
+      // The passcode remains the fallback and still works.
+      await _enterPin(tester, '123456');
+      expect(find.text('SECRET CONTENT'), findsOneWidget);
     });
   });
 
