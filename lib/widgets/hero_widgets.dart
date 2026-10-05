@@ -47,6 +47,10 @@ class HeroActionPill extends StatelessWidget {
   final bool outlined;
   final VoidCallback onTap;
 
+  /// Screen-reader / long-press label. Essential for the icon-only pill
+  /// (empty [label]), where the meaning is otherwise invisible.
+  final String? tooltip;
+
   const HeroActionPill({
     super.key,
     required this.icon,
@@ -54,6 +58,7 @@ class HeroActionPill extends StatelessWidget {
     required this.onTap,
     this.filled = false,
     this.outlined = false,
+    this.tooltip,
   });
 
   @override
@@ -72,7 +77,7 @@ class HeroActionPill extends StatelessWidget {
       side = BorderSide(color: Colors.white.withOpacity(0.22));
     }
 
-    return Material(
+    final pill = Material(
       color: bg,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(22),
@@ -108,5 +113,7 @@ class HeroActionPill extends StatelessWidget {
         ),
       ),
     );
+    if (tooltip == null) return pill;
+    return Tooltip(message: tooltip, child: pill);
   }
 }

@@ -135,6 +135,7 @@ class HomeHeroHeader extends StatelessWidget {
               // Dark mode toggle.
               HeroIconButton(
                 icon: isDark ? Icons.light_mode_rounded : Icons.dark_mode_outlined,
+                tooltip: isDark ? 'Switch to light mode' : 'Switch to dark mode',
                 onTap: () async {
                   final mode = ThemeService.instance.mode;
                   await ThemeService.instance.setMode(
@@ -236,6 +237,7 @@ class HomeHeroHeader extends StatelessWidget {
                 icon: Icons.more_horiz_rounded,
                 label: '',
                 outlined: true,
+                tooltip: 'Switch collection',
                 onTap: onCollectionSwitcherTap,
               ),
             ],
@@ -287,19 +289,22 @@ class HomeNotificationBell extends StatelessWidget {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        Material(
-          color: Colors.white.withOpacity(0.12),
-          borderRadius: BorderRadius.circular(13),
-          child: InkWell(
+        Tooltip(
+          message: 'Alerts & notifications',
+          child: Material(
+            color: Colors.white.withOpacity(0.12),
             borderRadius: BorderRadius.circular(13),
-            onTap: () => _showNotificationsSheet(context),
-            child: const SizedBox(
-              width: 40,
-              height: 40,
-              child: Icon(
-                Icons.notifications_outlined,
-                color: Colors.white,
-                size: 20,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(13),
+              onTap: () => _showNotificationsSheet(context),
+              child: const SizedBox(
+                width: 40,
+                height: 40,
+                child: Icon(
+                  Icons.notifications_outlined,
+                  color: Colors.white,
+                  size: 20,
+                ),
               ),
             ),
           ),

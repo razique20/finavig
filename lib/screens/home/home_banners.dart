@@ -239,8 +239,14 @@ class HomeExpiredAlert extends StatelessWidget {
   Widget build(BuildContext context) {
     if (expiredItems.isEmpty) return const SizedBox.shrink();
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final expired = expiredItems;
     final worst = expired.first;
+
+    // Dark mode uses the deep-red surface + lighter accent (same treatment as
+    // [HomeAttentionBanner]); light mode keeps the soft red tint.
+    final cardBg = isDark ? FinavigColors.dangerBg : FinavigColors.redTint;
+    final accentColor = isDark ? const Color(0xFFFCA5A5) : FinavigColors.red;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -251,7 +257,7 @@ class HomeExpiredAlert extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: FinavigColors.redTint,
+            color: cardBg,
             borderRadius: BorderRadius.circular(FinavigRadius.card),
           ),
           child: Row(
@@ -260,12 +266,12 @@ class HomeExpiredAlert extends StatelessWidget {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: FinavigColors.red.withOpacity(0.12),
+                  color: accentColor.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(13),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.event_busy_rounded,
-                  color: FinavigColors.red,
+                  color: accentColor,
                   size: 20,
                 ),
               ),
@@ -278,7 +284,7 @@ class HomeExpiredAlert extends StatelessWidget {
                       '${expired.length} document${expired.length == 1 ? '' : 's'} already expired',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: FinavigColors.red,
+                        color: accentColor,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -287,7 +293,9 @@ class HomeExpiredAlert extends StatelessWidget {
                           ? '${worst.displayName} — expired ${-worst.daysRemaining} day${-worst.daysRemaining == 1 ? '' : 's'} ago'
                           : 'Most urgent: ${worst.displayName}',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.outline,
+                        color: isDark
+                            ? const Color(0xFFFECACA)
+                            : theme.colorScheme.outline,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -295,7 +303,7 @@ class HomeExpiredAlert extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded, color: FinavigColors.red),
+              Icon(Icons.chevron_right_rounded, color: accentColor),
             ],
           ),
         ),
