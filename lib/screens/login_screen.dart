@@ -16,17 +16,14 @@ import '../theme/app_theme.dart';
 import '../widgets/dialogs/legal_info_dialogs.dart';
 import 'app_lock_flows.dart';
 
-/// Same generated artwork as the splash & welcome screens — one visual
-/// identity across the whole pre-auth flow.
-const String _loginArtworkAsset = 'assets/images/splash_bg.jpg';
-
-/// Login & Sign-up — styled after the Home screen's visual language:
+/// Login & Sign-up — form-first: the surface sheet is the whole
+/// screen, topped by a compact brand header (wordmark + GCC Edition
+/// pill). No dark artwork hero — the quiz flow owns the page.
 ///
-/// ink/obsidian backdrop with a white-text hero (like Home's hero header),
-/// then a rounded surface sheet holding the quiz flow. Violet is the single
-/// accent: toggle, progress, CTAs and links all use [FinavigColors.violet],
-/// exactly like the app's bento tiles and FilledButtons. The screen follows
-/// the app's light/dark theme like every other screen.
+/// Violet is the single accent: toggle, progress, CTAs and links all
+/// use [FinavigColors.violet], exactly like the app's bento tiles and
+/// FilledButtons. The screen follows the app's light/dark theme like
+/// every other screen.
 ///
 /// Flow is a quiz: one question per step, per-step validation, keyboard
 /// submit advances. Sign-in = 2 steps; sign-up adds country + phone.
@@ -379,72 +376,27 @@ class _LoginScreenState extends State<LoginScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      // Same backdrop recipe as Home: ink in light mode, obsidian in dark.
+      // Same surface recipe as the rest of the app: ink in light
+      // mode, obsidian in dark.
       backgroundColor: isDark ? FinavigColors.obsidian : FinavigColors.ink,
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          // Full-bleed brand artwork behind everything, matching the splash
-          // and welcome screens.
-          Image.asset(
-            _loginArtworkAsset,
-            fit: BoxFit.cover,
-            alignment: Alignment.center,
-          ),
-          // Light ink scrim: keeps the white hero text readable while the
-          // artwork's glow, grid and gold trend line show through at the
-          // top instead of reading as a flat dark fill.
-          const DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0x400F172A), // 25% ink — hero zone, image visible
-                  Color(0x730F172A), // 45% ink
-                  Color(0xCC0B1120), // 80% ink-deep at the sheet junction
-                ],
-                stops: [0.0, 0.4, 1.0],
-              ),
-            ),
-          ),
-          SafeArea(
-            bottom: false,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _hero(theme, isDark),
-                Expanded(child: _glassSheet(theme, isDark)),
-              ],
-            ),
-          ),
-        ],
+      // Form-first: the sheet IS the screen — the dark artwork hero
+      // is gone, leaving the brand header and the quiz flow.
+      body: SafeArea(
+        bottom: false,
+        child: _glassSheet(theme, isDark),
       ),
     );
   }
 
-  /// The sheet holding toggle / progress / steps / footer. Slightly
-  /// translucent so the ink backdrop reads as one continuous surface.
+  /// The full-screen surface holding the brand header, mode toggle,
+  /// progress, steps and footer.
   Widget _glassSheet(ThemeData theme, bool isDark) {
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-        // Near-solid tint over the artwork so the quiz fields stay crisp,
-        // while the artwork still glows through the top rounding.
-        color: isDark
-            ? FinavigColors.obsidian.withOpacity(0.88)
-            : Colors.white.withOpacity(0.94),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        border: Border(
-          top: BorderSide(
-            color: isDark
-                ? Colors.white.withOpacity(0.16)
-                : Colors.white.withOpacity(0.90),
-          ),
-        ),
-      ),
+      color: isDark ? FinavigColors.obsidian : Colors.white,
       child: Column(
         children: [
+          _brandHeader(isDark),
           _chrome(theme, isDark),
           Expanded(child: _stepsArea(theme, isDark)),
           _footer(theme, isDark),
@@ -453,64 +405,41 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // ── Hero (on the ink backdrop, like Home's hero header) ──────────────────
+  // ── Brand header (compact wordmark — identity without the dark hero) ──
 
-  Widget _hero(ThemeData theme, bool isDark) {
+  Widget _brandHeader(bool isDark) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 22),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 4),
+      child: Row(
         children: [
-          Row(
-            children: [
-              ShaderMask(
-                shaderCallback: (bounds) => const LinearGradient(
-                  colors: [Colors.white, FinavigColors.cyanAccent],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ).createShader(bounds),
-                blendMode: BlendMode.srcIn,
-                child: Text(
-                  'FV',
-                  style: GoogleFonts.playfairDisplay(
-                    fontSize: 30,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 2,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: FinavigColors.violet.withOpacity(0.25),
-                  borderRadius: BorderRadius.circular(99),
-                  border: Border.all(
-                    color: FinavigColors.violet.withOpacity(0.55),
-                  ),
-                ),
-                child: const Text(
-                  'GCC Edition',
-                  style: TextStyle(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.3,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
           Text(
-            'Track document expiries, manage cash flow, and stay compliant '
-            'across the GCC.',
-            style: TextStyle(
-              fontSize: 12.5,
-              height: 1.5,
-              color: Colors.white.withOpacity(0.70),
+            'Finavig',
+            style: GoogleFonts.playfairDisplay(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+              color: isDark ? Colors.white : FinavigColors.ink,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: FinavigColors.violet.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(99),
+              border: Border.all(
+                color: FinavigColors.violet.withOpacity(0.4),
+              ),
+            ),
+            child: const Text(
+              'GCC Edition',
+              style: TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.3,
+                color: FinavigColors.violet,
+              ),
             ),
           ),
         ],
