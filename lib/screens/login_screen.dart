@@ -412,12 +412,14 @@ class _LoginScreenState extends State<LoginScreen> {
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 4),
       child: Row(
         children: [
+          // Inter — the app's system typeface (matches the
+          // welcome screen's wordmark), not a serif display font.
           Text(
             'Finavig',
-            style: GoogleFonts.playfairDisplay(
+            style: GoogleFonts.inter(
               fontSize: 24,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.5,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.5,
               color: isDark ? Colors.white : FinavigColors.ink,
             ),
           ),
