@@ -532,11 +532,6 @@ class _LoginScreenState extends State<LoginScreen> {
             decoration: BoxDecoration(
               color: isDark ? FinavigColors.charcoal : Colors.white,
               borderRadius: BorderRadius.circular(FinavigRadius.card),
-              border: Border.all(
-                color: isDark
-                    ? FinavigColors.glassBorderWhite
-                    : FinavigColors.fog,
-              ),
               boxShadow: FinavigShadows.adaptive(isDark),
             ),
             child: SingleChildScrollView(
