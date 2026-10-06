@@ -204,6 +204,14 @@ class _MoneyScreenState extends State<MoneyScreen> {
                               ),
                             ),
                             const SizedBox(height: 12),
+                            // Credit shortcut — relocated out of the
+                            // dark hero into the light sheet.
+                            _sheetPadding(
+                              _CreditShortcutCard(
+                                onTap: () => context.push('/credits'),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
                             // 1. Budget control.
                             _sheetPadding(
                               BudgetsSection(
@@ -453,7 +461,11 @@ class _MoneyScreenState extends State<MoneyScreen> {
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 16),
-          // 4 Navigation Pills in an equal-width row
+          // 3 navigation pills in an equal-width row. Credit
+          // moved out of the dark hero into the light sheet
+          // below (see _CreditShortcutCard); three across still
+          // fits every label thanks to the pill's tightened
+          // metrics.
           Row(
             children: [
               Expanded(
@@ -477,14 +489,6 @@ class _MoneyScreenState extends State<MoneyScreen> {
                   icon: Icons.savings_rounded,
                   label: 'Envelopes',
                   onTap: () => context.push('/envelopes'),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _MoneyActionPill(
-                  icon: Icons.handshake_rounded,
-                  label: 'Credit',
-                  onTap: () => context.push('/credits'),
                 ),
               ),
             ],
@@ -875,6 +879,71 @@ class _MoneyAddCard extends StatelessWidget {
   }
 }
 
+/// Credit quick-access card at the top of the Money sheet —
+/// relocated from the dark hero's pill row so the entry point
+/// lives outside the dark section, in the light content area.
+class _CreditShortcutCard extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _CreditShortcutCard({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final accent = theme.colorScheme.primary;
+    return Material(
+      color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.4),
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: accent.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.handshake_rounded, size: 20, color: accent),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Credit',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Borrowed, lent & deadlines',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.outline,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 16,
+                color: theme.colorScheme.outline,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Frosted glass action pill used in the hero row.
 class _MoneyActionPill extends StatelessWidget {
   final IconData icon;
@@ -896,12 +965,14 @@ class _MoneyActionPill extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+          // Tightened so three pills side by side still fit their
+          // longest label ("Transactions") without ellipsizing.
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 9),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 15, color: Colors.white),
-              const SizedBox(width: 6),
+              Icon(icon, size: 14, color: Colors.white),
+              const SizedBox(width: 5),
               Flexible(
                 child: Text(
                   label,
