@@ -17,10 +17,8 @@ import '../widgets/dialogs/legal_info_dialogs.dart';
 import 'app_lock_flows.dart';
 
 /// Login & Sign-up — a Material-3 centred auth screen: a quiet
-/// brand header (wordmark + GCC Edition pill, the welcome
-/// screen's tagline and feature chips) above the quiz flow,
-/// which sits in a soft card on a chart-motif backdrop borrowed
-/// from the splash / welcome artwork.
+/// brand header (wordmark + GCC Edition pill) above the quiz
+/// flow, which sits in a soft card on a flat surface.
 ///
 /// Violet is the single accent: toggle, progress, CTAs and links all
 /// use [FinavigColors.violet], exactly like the app's bento tiles and
@@ -419,45 +417,30 @@ class _LoginScreenState extends State<LoginScreen> {
       // Same surface recipe as the rest of the app: ink in light
       // mode, obsidian in dark.
       backgroundColor: isDark ? FinavigColors.obsidian : FinavigColors.ink,
-      // The sheet IS the screen — a quiet brand backdrop under a
+      // The sheet IS the screen — a flat surface under a
       // centred header, with the quiz flow in a soft M3 card.
       body: SafeArea(bottom: false, child: _glassSheet(theme, isDark)),
     );
   }
 
-  /// The full-screen surface: a quiet chart-motif backdrop (the same
-  /// motif as the splash / welcome art), the centred brand header and
-  /// feature chips, the mode toggle + progress, the quiz flow in a
-  /// soft card, and the footer.
+  /// The full-screen surface: the centred brand header, the mode
+  /// toggle + progress, the quiz flow in a soft card, and the
+  /// footer, over the flat scaffold surface.
   Widget _glassSheet(ThemeData theme, bool isDark) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: isDark
-            ? FinavigGradients.surfaceDark
-            : FinavigGradients.splashLight,
-      ),
-      child: Stack(
+    return SafeArea(
+      bottom: false,
+      child: Column(
         children: [
-          Positioned.fill(child: _BackdropArt(isDark: isDark)),
-          SafeArea(
-            bottom: false,
-            child: Column(
-              children: [
-                _brandHeader(isDark),
-                _featureStrip(isDark),
-                _chrome(theme, isDark),
-                Expanded(child: _stepsArea(theme, isDark)),
-                _footer(theme, isDark),
-              ],
-            ),
-          ),
+          _brandHeader(isDark),
+          _chrome(theme, isDark),
+          Expanded(child: _stepsArea(theme, isDark)),
+          _footer(theme, isDark),
         ],
       ),
     );
   }
 
-  // ── Brand header (centred: wordmark + pill, tagline) ──
+  // ── Brand header (centred: wordmark + GCC pill) ──
 
   Widget _brandHeader(bool isDark) {
     return Padding(
@@ -518,52 +501,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 6),
-          // The welcome screen's positioning line, repeated here so
-          // the two pre-auth screens tell one story.
-          Text(
-            'AI-powered financial & document intelligence',
-            style: TextStyle(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 0.1,
-              color: isDark
-                  ? FinavigColors.textSecondary
-                  : FinavigColors.textSecondaryLight,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Feature chips (the welcome screen's promise) ────────────────
-
-  /// Budgets · cash flow · document alerts — the welcome screen's
-  /// tagline as a quiet strip of violet chips under the header.
-  Widget _featureStrip(bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
-      child: Wrap(
-        alignment: WrapAlignment.center,
-        spacing: 8,
-        runSpacing: 6,
-        children: [
-          _FeatureChip(
-            icon: Icons.pie_chart_rounded,
-            label: 'Budgets',
-            isDark: isDark,
-          ),
-          _FeatureChip(
-            icon: Icons.show_chart_rounded,
-            label: 'Cash flow',
-            isDark: isDark,
-          ),
-          _FeatureChip(
-            icon: Icons.description_rounded,
-            label: 'Doc alerts',
-            isDark: isDark,
           ),
         ],
       ),
@@ -1886,51 +1823,6 @@ class _LegalLink extends StatelessWidget {
   }
 }
 
-/// Small violet-tint chip — one per core promise from the
-/// welcome screen's tagline.
-class _FeatureChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isDark;
-
-  const _FeatureChip({
-    required this.icon,
-    required this.label,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: FinavigColors.violet.withValues(alpha: isDark ? 0.14 : 0.09),
-        borderRadius: BorderRadius.circular(99),
-        border: Border.all(
-          color: FinavigColors.violet.withValues(alpha: isDark ? 0.30 : 0.22),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 13, color: FinavigColors.violet),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w600,
-              color: isDark
-                  ? FinavigColors.textPrimary
-                  : FinavigColors.textPrimaryLight,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 /// Quiet security line under the CTA — a fintech trust cue.
 class _TrustRow extends StatelessWidget {
   final bool isDark;
@@ -1958,100 +1850,6 @@ class _TrustRow extends StatelessWidget {
       ],
     );
   }
-}
-
-/// Quiet brand backdrop: a soft accent glow, faint market-chart
-/// lines and ghosted bento tiles — the splash / welcome artwork's
-/// motifs, at a whisper, so the login feels branded without a
-/// dark hero image.
-class _BackdropArt extends StatelessWidget {
-  final bool isDark;
-
-  const _BackdropArt({required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(painter: _BackdropPainter(isDark: isDark));
-  }
-}
-
-class _BackdropPainter extends CustomPainter {
-  final bool isDark;
-
-  _BackdropPainter({required this.isDark});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-    final accent = isDark ? FinavigColors.accentBright : FinavigColors.accent;
-
-    // 1. Soft radial glow behind the brand header.
-    canvas.drawRect(
-      Offset.zero & size,
-      Paint()
-        ..shader =
-            RadialGradient(
-              colors: [
-                accent.withValues(alpha: isDark ? 0.16 : 0.10),
-                accent.withValues(alpha: 0.0),
-              ],
-            ).createShader(
-              Rect.fromCircle(center: Offset(w / 2, h * 0.16), radius: w * 0.9),
-            ),
-    );
-
-    // 2. Faint market-chart lines — the splash / welcome
-    // backdrop's motif, barely there so the form stays the hero.
-    final mainLine = Paint()
-      ..color = accent.withValues(alpha: isDark ? 0.22 : 0.14)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..strokeCap = StrokeCap.round;
-    final goldLine = Paint()
-      ..color = FinavigColors.tierGold.withValues(alpha: isDark ? 0.18 : 0.12)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5
-      ..strokeCap = StrokeCap.round;
-
-    final y = h * 0.08;
-    canvas.drawPath(
-      Path()
-        ..moveTo(-24, y + 36)
-        ..cubicTo(w * 0.18, y - 12, w * 0.34, y + 52, w * 0.52, y + 8)
-        ..cubicTo(w * 0.68, y - 24, w * 0.84, y + 20, w + 24, y - 6),
-      mainLine,
-    );
-    canvas.drawPath(
-      Path()
-        ..moveTo(-24, y + 66)
-        ..cubicTo(w * 0.22, y + 30, w * 0.40, y + 80, w * 0.58, y + 38)
-        ..cubicTo(w * 0.74, y + 10, w * 0.88, y + 44, w + 24, y + 26),
-      goldLine,
-    );
-
-    // 3. Ghosted bento tiles in the top corners — the home grid,
-    // outlined at a whisper.
-    final tile = Paint()
-      ..color = accent.withValues(alpha: isDark ? 0.08 : 0.05)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-    const radius = Radius.circular(18);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromLTWH(-18, 10, w * 0.24, 60), radius),
-      tile,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(w * 0.76, 10, w * 0.24 + 18, 60),
-        radius,
-      ),
-      tile,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_BackdropPainter old) => old.isDark != isDark;
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
