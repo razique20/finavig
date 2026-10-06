@@ -426,35 +426,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _brandHeader(bool isDark) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
       child: Column(
         children: [
-          // FV monogram — the same glyph as the splash mark, in a
-          // rounded badge so the login carries the app's identity.
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: FinavigColors.violet
-                  .withValues(alpha: isDark ? 0.20 : 0.12),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: FinavigColors.violet.withValues(alpha: 0.40),
-              ),
-            ),
-            child: Center(
-              child: Text(
-                'FV',
-                style: GoogleFonts.inter(
-                  fontSize: 23,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.4,
-                  color: FinavigColors.violet,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
