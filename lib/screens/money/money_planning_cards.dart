@@ -21,6 +21,8 @@ class BudgetsSection extends StatelessWidget {
   final void Function(CategoryBudget) onEditCategory;
   final void Function(CategoryBudget) onDeleteCategory;
   final VoidCallback onEditOverall;
+  final bool collapsed;
+  final VoidCallback? onToggleSection;
 
   const BudgetsSection({
     super.key,
@@ -31,6 +33,8 @@ class BudgetsSection extends StatelessWidget {
     required this.onEditCategory,
     required this.onDeleteCategory,
     required this.onEditOverall,
+    this.collapsed = false,
+    this.onToggleSection,
   });
 
   @override
@@ -48,148 +52,157 @@ class BudgetsSection extends StatelessWidget {
           title: 'Monthly budgets',
           actionLabel: 'Add category',
           onAction: onAddCategory,
+          collapsed: collapsed,
+          onToggle: onToggleSection,
         ),
-        const SizedBox(height: 12),
-        Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(
-              color: isOverAllocated
-                  ? theme.colorScheme.error
-                  : theme.colorScheme.outlineVariant,
-            ),
-          ),
-          color: isOverAllocated
-              ? theme.colorScheme.errorContainer.withValues(alpha: 0.15)
-              : theme.colorScheme.surfaceContainerLow,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.account_balance_rounded,
-                      size: 20,
-                      color: isOverAllocated
-                          ? theme.colorScheme.error
-                          : theme.colorScheme.primary,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Overall Monthly Budget',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    TextButton.icon(
-                      onPressed: onEditOverall,
-                      icon: Icon(
-                        overallBudget == null
-                            ? Icons.add_rounded
-                            : Icons.edit_rounded,
-                        size: 16,
-                      ),
-                      label: Text(
-                        overallBudget == null ? 'Set budget' : 'Edit',
-                      ),
-                    ),
-                  ],
+        CollapsibleSectionBody(
+          collapsed: collapsed,
+          children: [
+            const SizedBox(height: 12),
+            Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(
+                  color: isOverAllocated
+                      ? theme.colorScheme.error
+                      : theme.colorScheme.outlineVariant,
                 ),
-                if (overallBudget != null) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    MoneyFormat.aed(overallBudget!),
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onSurface,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Allocated: ${MoneyFormat.aed(totalAllocated)}',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: isOverAllocated
-                              ? theme.colorScheme.error
-                              : theme.colorScheme.onSurfaceVariant,
-                          fontWeight: isOverAllocated
-                              ? FontWeight.bold
-                              : FontWeight.w500,
-                        ),
-                      ),
-                      Text(
-                        isOverAllocated
-                            ? 'Over: ${MoneyFormat.aed(totalAllocated - overallBudget!)}'
-                            : 'Remaining: ${MoneyFormat.aed(overallBudget! - totalAllocated)}',
-                        style: theme.textTheme.bodyMedium?.copyWith(
+              ),
+              color: isOverAllocated
+                  ? theme.colorScheme.errorContainer.withValues(alpha: 0.15)
+                  : theme.colorScheme.surfaceContainerLow,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.account_balance_rounded,
+                          size: 20,
                           color: isOverAllocated
                               ? theme.colorScheme.error
                               : theme.colorScheme.primary,
-                          fontWeight: FontWeight.w600,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Overall Monthly Budget',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        TextButton.icon(
+                          onPressed: onEditOverall,
+                          icon: Icon(
+                            overallBudget == null
+                                ? Icons.add_rounded
+                                : Icons.edit_rounded,
+                            size: 16,
+                          ),
+                          label: Text(
+                            overallBudget == null ? 'Set budget' : 'Edit',
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (overallBudget != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        MoneyFormat.aed(overallBudget!),
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Allocated: ${MoneyFormat.aed(totalAllocated)}',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: isOverAllocated
+                                  ? theme.colorScheme.error
+                                  : theme.colorScheme.onSurfaceVariant,
+                              fontWeight: isOverAllocated
+                                  ? FontWeight.bold
+                                  : FontWeight.w500,
+                            ),
+                          ),
+                          Text(
+                            isOverAllocated
+                                ? 'Over: ${MoneyFormat.aed(totalAllocated - overallBudget!)}'
+                                : 'Remaining: ${MoneyFormat.aed(overallBudget! - totalAllocated)}',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: isOverAllocated
+                                  ? theme.colorScheme.error
+                                  : theme.colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: (totalAllocated / overallBudget!).clamp(
+                            0.0,
+                            1.0,
+                          ),
+                          minHeight: 8,
+                          backgroundColor:
+                              theme.colorScheme.surfaceContainerHighest,
+                          color: isOverAllocated
+                              ? theme.colorScheme.error
+                              : (totalAllocated == overallBudget
+                                    ? Colors.orange
+                                    : theme.colorScheme.primary),
+                        ),
+                      ),
+                    ] else ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'No overall monthly budget set. Tap "Set budget" to set a total monthly spending limit across all categories.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 10),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value:
-                          (totalAllocated / overallBudget!).clamp(0.0, 1.0),
-                      minHeight: 8,
-                      backgroundColor:
-                          theme.colorScheme.surfaceContainerHighest,
-                      color: isOverAllocated
-                          ? theme.colorScheme.error
-                          : (totalAllocated == overallBudget
-                              ? Colors.orange
-                              : theme.colorScheme.primary),
-                    ),
-                  ),
-                ] else ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    'No overall monthly budget set. Tap "Set budget" to set a total monthly spending limit across all categories.',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        if (budgets.isEmpty)
-          HintCard(
-            overallBudget != null
-                ? 'No category budgets added yet. Tap "Add category" to allocate your monthly budget.'
-                : 'Set a monthly limit for any category to see progress here.',
-            scene: EmptyStateScene.growth,
-          )
-        else
-          ...budgets.map((budget) {
-            final spent = spendByCategory[budget.category] ?? 0;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: BudgetRow(
-                budget: budget,
-                spent: spent,
-                onEdit: () => onEditCategory(budget),
-                onDelete: () => onDeleteCategory(budget),
+                  ],
+                ),
               ),
-            );
-          }),
+            ),
+            const SizedBox(height: 16),
+            if (budgets.isEmpty)
+              HintCard(
+                overallBudget != null
+                    ? 'No category budgets added yet. Tap "Add category" to allocate your monthly budget.'
+                    : 'Set a monthly limit for any category to see progress here.',
+                scene: EmptyStateScene.growth,
+              )
+            else
+              ...budgets.map((budget) {
+                final spent = spendByCategory[budget.category] ?? 0;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: BudgetRow(
+                    budget: budget,
+                    spent: spent,
+                    onEdit: () => onEditCategory(budget),
+                    onDelete: () => onDeleteCategory(budget),
+                  ),
+                );
+              }),
+          ],
+        ),
       ],
     );
   }
@@ -203,6 +216,8 @@ class RecurringSection extends StatelessWidget {
   final void Function(RecurringTransaction) onEdit;
   final void Function(RecurringTransaction) onDelete;
   final void Function(RecurringTransaction) onToggle;
+  final bool collapsed;
+  final VoidCallback? onToggleSection;
 
   const RecurringSection({
     super.key,
@@ -212,6 +227,8 @@ class RecurringSection extends StatelessWidget {
     required this.onEdit,
     required this.onDelete,
     required this.onToggle,
+    this.collapsed = false,
+    this.onToggleSection,
   });
 
   @override
@@ -225,30 +242,39 @@ class RecurringSection extends StatelessWidget {
           actionLabel: 'Add',
           actionKey: const Key('recurring-add'),
           onAction: onAdd,
+          collapsed: collapsed,
+          onToggle: onToggleSection,
         ),
-        const SizedBox(height: 12),
-        if (recurring.isEmpty)
-          const HintCard(
-            'Mark rent, salaries or software as monthly and they are auto-logged here — no manual repeats.',
-            scene: EmptyStateScene.document,
-          )
-        else
-          ...recurring.map(
-            (r) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: RecurringCard(
-                template: r,
-                loggedCount: transactions
-                    .where((t) =>
-                        t.note != null &&
-                        t.note!.contains('recurring template'))
-                    .length,
-                onToggle: () => onToggle(r),
-                onEdit: () => onEdit(r),
-                onDelete: () => onDelete(r),
+        CollapsibleSectionBody(
+          collapsed: collapsed,
+          children: [
+            const SizedBox(height: 12),
+            if (recurring.isEmpty)
+              const HintCard(
+                'Mark rent, salaries or software as monthly and they are auto-logged here — no manual repeats.',
+                scene: EmptyStateScene.document,
+              )
+            else
+              ...recurring.map(
+                (r) => Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: RecurringCard(
+                    template: r,
+                    loggedCount: transactions
+                        .where(
+                          (t) =>
+                              t.note != null &&
+                              t.note!.contains('recurring template'),
+                        )
+                        .length,
+                    onToggle: () => onToggle(r),
+                    onEdit: () => onEdit(r),
+                    onDelete: () => onDelete(r),
+                  ),
+                ),
               ),
-            ),
-          ),
+          ],
+        ),
       ],
     );
   }
@@ -261,6 +287,8 @@ class EnvelopesSection extends StatelessWidget {
   final void Function(SavingsEnvelope) onAdjust;
   final void Function(SavingsEnvelope) onWithdraw;
   final void Function(SavingsEnvelope) onDelete;
+  final bool collapsed;
+  final VoidCallback? onToggleSection;
 
   const EnvelopesSection({
     super.key,
@@ -269,6 +297,8 @@ class EnvelopesSection extends StatelessWidget {
     required this.onAdjust,
     required this.onWithdraw,
     required this.onDelete,
+    this.collapsed = false,
+    this.onToggleSection,
   });
 
   @override
@@ -281,27 +311,34 @@ class EnvelopesSection extends StatelessWidget {
           title: 'Savings envelopes',
           actionLabel: 'Add',
           onAction: onAdd,
+          collapsed: collapsed,
+          onToggle: onToggleSection,
         ),
-        const SizedBox(height: 12),
-        if (envelopes.isEmpty)
-          const HintCard(
-            'Set aside money for big renewals — tracked only, no real money moves.',
-            scene: EmptyStateScene.wallet,
-          )
-        else
-          ...envelopes.map(
-            (envelope) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: EnvelopeCard(
-                envelope: envelope,
-                // + adds and − withdraws: two distinct callbacks so the
-                // card's two buttons can never collapse to one action.
-                onAdd: () => onAdjust(envelope),
-                onWithdraw: () => onWithdraw(envelope),
-                onDelete: () => onDelete(envelope),
+        CollapsibleSectionBody(
+          collapsed: collapsed,
+          children: [
+            const SizedBox(height: 12),
+            if (envelopes.isEmpty)
+              const HintCard(
+                'Set aside money for big renewals — tracked only, no real money moves.',
+                scene: EmptyStateScene.wallet,
+              )
+            else
+              ...envelopes.map(
+                (envelope) => Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: EnvelopeCard(
+                    envelope: envelope,
+                    // + adds and − withdraws: two distinct callbacks so the
+                    // card's two buttons can never collapse to one action.
+                    onAdd: () => onAdjust(envelope),
+                    onWithdraw: () => onWithdraw(envelope),
+                    onDelete: () => onDelete(envelope),
+                  ),
+                ),
               ),
-            ),
-          ),
+          ],
+        ),
       ],
     );
   }
@@ -316,8 +353,15 @@ class EnvelopesSection extends StatelessWidget {
 ///   repaint its neighbours.
 class TransactionsSection extends StatefulWidget {
   final List<FinanceTransaction> transactions;
+  final bool collapsed;
+  final VoidCallback? onToggleSection;
 
-  const TransactionsSection({super.key, required this.transactions});
+  const TransactionsSection({
+    super.key,
+    required this.transactions,
+    this.collapsed = false,
+    this.onToggleSection,
+  });
 
   @override
   State<TransactionsSection> createState() => _TransactionsSectionState();
@@ -348,32 +392,42 @@ class _TransactionsSectionState extends State<TransactionsSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionHeader(
+        SectionHeader(
           icon: Icons.receipt_long_rounded,
           title: 'Transactions',
+          collapsed: widget.collapsed,
+          onToggle: widget.onToggleSection,
         ),
-        const SizedBox(height: 12),
-        if (recent.isEmpty)
-          const HintCard(
-            'No records yet. Add your first expense or income.',
-            scene: EmptyStateScene.wallet,
-          )
-        else
-          Container(
-            decoration: BoxDecoration(
-              color:
-                  theme.colorScheme.surfaceContainerHighest.withOpacity(0.4),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Column(
-              children: [
-                for (var i = 0; i < recent.length; i++) ...[
-                  if (i > 0) InsetDivider(indent: 56),
-                  RepaintBoundary(child: TransactionTile(transaction: recent[i])),
-                ],
-              ],
-            ),
-          ),
+        CollapsibleSectionBody(
+          collapsed: widget.collapsed,
+          children: [
+            const SizedBox(height: 12),
+            if (recent.isEmpty)
+              const HintCard(
+                'No records yet. Add your first expense or income.',
+                scene: EmptyStateScene.wallet,
+              )
+            else
+              Container(
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest.withOpacity(
+                    0.4,
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Column(
+                  children: [
+                    for (var i = 0; i < recent.length; i++) ...[
+                      if (i > 0) InsetDivider(indent: 56),
+                      RepaintBoundary(
+                        child: TransactionTile(transaction: recent[i]),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+          ],
+        ),
       ],
     );
   }

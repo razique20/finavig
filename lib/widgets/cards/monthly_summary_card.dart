@@ -115,6 +115,8 @@ class _MonthlySummaryCardState extends State<MonthlySummaryCard> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Card(
+      // Flush with the neighbouring at-a-glance cards.
+      margin: EdgeInsets.zero,
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
@@ -237,8 +239,10 @@ class _MonthlySummaryCardState extends State<MonthlySummaryCard> {
                                   FinavigColors.danger,
                                 MonthlyInsightKind.budgetAlert =>
                                   FinavigColors.warning,
-                                MonthlyInsightKind.savings => FinavigColors.safe,
-                                MonthlyInsightKind.positive => FinavigColors.safe,
+                                MonthlyInsightKind.savings =>
+                                  FinavigColors.safe,
+                                MonthlyInsightKind.positive =>
+                                  FinavigColors.safe,
                               },
                             ),
                             const SizedBox(width: 8),

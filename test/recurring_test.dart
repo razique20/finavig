@@ -43,7 +43,11 @@ void main() {
         DateTime(2026, 4, 30),
       );
       expect(
-        RecurrenceMath.occurrenceInMonth(2026, 2, 31), // 2026 is not a leap year
+        RecurrenceMath.occurrenceInMonth(
+          2026,
+          2,
+          31,
+        ), // 2026 is not a leap year
         DateTime(2026, 2, 28),
       );
     });
@@ -163,10 +167,7 @@ void main() {
         DateTime(2026, 4, 15),
       );
       // Strictly after the last logged occurrence.
-      expect(
-        due,
-        equals([DateTime(2026, 3, 1), DateTime(2026, 4, 1)]),
-      );
+      expect(due, equals([DateTime(2026, 3, 1), DateTime(2026, 4, 1)]));
     });
 
     test('inactive templates produce nothing', () {
@@ -220,15 +221,12 @@ void main() {
       FinanceService.instance.clearCache();
     });
 
-    test('logs due transactions, stamps lastLoggedAt, is idempotent',
-        () async {
+    test('logs due transactions, stamps lastLoggedAt, is idempotent', () async {
       final service = FinanceService.instance;
       // Due on the 1st of every month; 3 months are in the past.
-      await service.addRecurring(_template(
-        id: 'auto-1',
-        dayOfMonth: 1,
-        startDate: DateTime(2026, 1, 1),
-      ));
+      await service.addRecurring(
+        _template(id: 'auto-1', dayOfMonth: 1, startDate: DateTime(2026, 1, 1)),
+      );
 
       final until = DateTime(2026, 4, 15);
       final logged = await service.runDueRecurrences(until: until);
@@ -255,15 +253,18 @@ void main() {
 
     test('paused templates do not log', () async {
       final service = FinanceService.instance;
-      await service.addRecurring(_template(
-        id: 'auto-2',
-        dayOfMonth: 1,
-        startDate: DateTime(2026, 1, 1),
-        active: false,
-      ));
+      await service.addRecurring(
+        _template(
+          id: 'auto-2',
+          dayOfMonth: 1,
+          startDate: DateTime(2026, 1, 1),
+          active: false,
+        ),
+      );
 
-      final logged =
-          await service.runDueRecurrences(until: DateTime(2026, 3, 1));
+      final logged = await service.runDueRecurrences(
+        until: DateTime(2026, 3, 1),
+      );
 
       expect(logged, 0);
       expect(service.activeTransactions, isEmpty);
@@ -290,10 +291,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Recurring'), findsOneWidget);
-      expect(
-        find.textContaining('auto-logged'),
-        findsWidgets,
-      );
+      // Sections start minimized — expand Recurring from
+      // its header to reveal the body before asserting on it.
+      await tester.tap(find.text('Recurring'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('auto-logged'), findsWidgets);
 
       // Open the recurring form sheet via its stable key.
       await tester.tap(find.byKey(const Key('recurring-add')));
@@ -304,8 +306,9 @@ void main() {
       expect(find.text('End date (optional)'), findsOneWidget);
     });
 
-    testWidgets('Add Record sheet offers the Repeat monthly toggle',
-        (tester) async {
+    testWidgets('Add Record sheet offers the Repeat monthly toggle', (
+      tester,
+    ) async {
       await tester.pumpWidget(const MaterialApp(home: MoneyScreen()));
       await tester.pumpAndSettle();
 
@@ -316,8 +319,9 @@ void main() {
       expect(find.text('Save'), findsOneWidget);
     });
 
-    testWidgets('Add Record sheet shows Linked document picker for expenses',
-        (tester) async {
+    testWidgets('Add Record sheet shows Linked document picker for expenses', (
+      tester,
+    ) async {
       SharedPreferences.setMockInitialValues({});
       FinanceService.instance.clearCache();
 
@@ -348,7 +352,9 @@ void main() {
       final item = ExpiryItem.create(
         id: 'glue-doc',
         displayName: 'Trade licence',
-        docType: DocumentTypeRegistry.instance.byEnum(DocumentType.tradeLicence),
+        docType: DocumentTypeRegistry.instance.byEnum(
+          DocumentType.tradeLicence,
+        ),
         expiresAt: DateTime(2026, 10, 1),
         collectionId: 'personal',
         renewalFee: 500,
@@ -364,22 +370,29 @@ void main() {
       expect(renewed.daysRemaining, greaterThan(0));
     });
 
-    test('markAsRenewed without newExpiryDate archives (legacy behaviour)',
-        () async {
-      final service = DocumentScannerService.instance;
-      final item = ExpiryItem.create(
-        id: 'glue-doc-2',
-        displayName: 'Old licence',
-        docType: DocumentTypeRegistry.instance.byEnum(DocumentType.tradeLicence),
-        expiresAt: DateTime(2026, 10, 1),
-        collectionId: 'personal',
-      );
-      await service.addItem(item);
+    test(
+      'markAsRenewed without newExpiryDate archives (legacy behaviour)',
+      () async {
+        final service = DocumentScannerService.instance;
+        final item = ExpiryItem.create(
+          id: 'glue-doc-2',
+          displayName: 'Old licence',
+          docType: DocumentTypeRegistry.instance.byEnum(
+            DocumentType.tradeLicence,
+          ),
+          expiresAt: DateTime(2026, 10, 1),
+          collectionId: 'personal',
+        );
+        await service.addItem(item);
 
-      await service.markAsRenewed('glue-doc-2');
+        await service.markAsRenewed('glue-doc-2');
 
-      expect(await service.getItemById('glue-doc-2'), isNull,
-          reason: 'archived documents leave the active cache');
-    });
+        expect(
+          await service.getItemById('glue-doc-2'),
+          isNull,
+          reason: 'archived documents leave the active cache',
+        );
+      },
+    );
   });
 }

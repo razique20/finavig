@@ -58,8 +58,9 @@ class BillSpikeAlertsCard extends StatelessWidget {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: FinavigColors.warning
-                        .withOpacity(isDark ? 0.2 : 0.14),
+                    color: FinavigColors.warning.withOpacity(
+                      isDark ? 0.2 : 0.14,
+                    ),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
@@ -81,8 +82,10 @@ class BillSpikeAlertsCard extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: FinavigColors.warning.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(6),
@@ -141,7 +144,9 @@ class BillSpikeAlertsCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 6, vertical: 2),
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.red.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(4),
@@ -165,120 +170,26 @@ class BillSpikeAlertsCard extends StatelessWidget {
   }
 }
 
-/// Compact 90-day renewal outlook strip.
-class RenewalOutlookCard extends StatelessWidget {
-  final double outlook90;
-
-  const RenewalOutlookCard({super.key, required this.outlook90});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: theme.colorScheme.outlineVariant.withAlpha(80)),
-      ),
-      color: isDark ? const Color(0xFF1E2430) : Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: FinavigColors.caution.withAlpha(25),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(
-                Icons.event_repeat_rounded,
-                color: FinavigColors.caution,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '90-Day Renewal Outlook',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: theme.colorScheme.outline,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    MoneyFormat.aed(outlook90),
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: (outlook90 > 0
-                        ? FinavigColors.warning
-                        : FinavigColors.safe)
-                    .withAlpha(20),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                outlook90 > 0 ? 'Upcoming Fees' : 'Clear',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: outlook90 > 0
-                      ? FinavigColors.warning
-                      : FinavigColors.safe,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Cash-flow forecast teaser card (Track 1 gated).
+/// Cash-flow forecast card (Track 1 gated). A plain tap-through
+/// strip — the forecast has its own page, so the card carries no
+/// detail of its own: tapping it opens the forecast, or the upgrade
+/// dialog on Free.
 class CashFlowTeaserCard extends StatelessWidget {
-  final List<FinanceTransaction> transactions;
-  final List<RecurringTransaction> recurring;
-  final List<ExpiryItem> items;
-
-  const CashFlowTeaserCard({
-    super.key,
-    required this.transactions,
-    required this.recurring,
-    required this.items,
-  });
+  const CashFlowTeaserCard({super.key});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     // Track 1 gate: the 90-day forecast is a Plus feature. On Free the card
-    // renders locked and taps open the upgrade dialog instead of the screen.
+    // taps open the upgrade dialog instead of the screen.
     final forecastLocked = !EntitlementService.instance.allows(
       EntitlementFeature.cashFlowForecast,
     );
-    final forecast = FinanceMath.calculate90DayCashFlow(
-      transactions: transactions,
-      recurringTemplates: recurring,
-      expiryItems: items,
-    );
-    final netPositive = forecast.netChange >= 0;
 
     return Card(
+      // Flush with the neighbouring at-a-glance cards.
+      margin: EdgeInsets.zero,
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
@@ -298,7 +209,7 @@ class CashFlowTeaserCard extends StatelessWidget {
           await context.push('/cash-flow-forecast');
         },
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           child: Row(
             children: [
               Container(
@@ -315,69 +226,15 @@ class CashFlowTeaserCard extends StatelessWidget {
               ),
               const SizedBox(width: 14),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            'Cash-Flow Forecast',
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        if (forecastLocked)
-                          Icon(
-                            Icons.lock_rounded,
-                            size: 14,
-                            color: theme.colorScheme.outline,
-                          )
-                        else
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: (netPositive
-                                      ? FinavigColors.safe
-                                      : FinavigColors.danger)
-                                  .withAlpha(25),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              '${netPositive ? '+' : ''}${forecast.percentChange.toStringAsFixed(1)}% (90D)',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: netPositive
-                                    ? FinavigColors.safe
-                                    : FinavigColors.danger,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      forecastLocked
-                          ? 'Plus feature — project your balance 90 days ahead'
-                          : 'Projected 90D: ${MoneyFormat.aed(forecast.projectedEndBalance)} • Renewals: ${MoneyFormat.aed(forecast.totalRenewalOutflow)}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.outline,
-                        fontSize: 11,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                child: Text(
+                  'Cash-Flow Forecast',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded, color: Colors.grey),
             ],
           ),
         ),
@@ -386,12 +243,18 @@ class CashFlowTeaserCard extends StatelessWidget {
   }
 }
 
-
 /// Spending pace strip: avg/day, projected month-end, safe-to-spend/day.
 class SpendingPaceCard extends StatelessWidget {
   final ({double income, double expense, double net}) summary;
+  final bool collapsed;
+  final VoidCallback? onToggleSection;
 
-  const SpendingPaceCard({super.key, required this.summary});
+  const SpendingPaceCard({
+    super.key,
+    required this.summary,
+    this.collapsed = false,
+    this.onToggleSection,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -405,69 +268,106 @@ class SpendingPaceCard extends StatelessWidget {
         ? summary.net / remainingDays
         : 0.0;
 
-    return TintedCardBox(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.speed_rounded,
-                size: 18,
-                color: theme.colorScheme.primary,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Spending pace · day ${now.day} of $daysInMonth',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header sits outside the tinted box, like every other Money
+        // section, so its collapse chevron lines up with theirs.
+        _paceHeader(
+          theme,
+          now,
+          daysInMonth,
+          collapsed: collapsed,
+          onToggleSection: onToggleSection,
+        ),
+        CollapsibleSectionBody(
+          collapsed: collapsed,
+          children: [
+            const SizedBox(height: 12),
+            TintedCardBox(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _paceColumn(
+                          theme,
+                          'Avg / day',
+                          MoneyFormat.aed(dailyPace),
+                        ),
+                      ),
+                      Expanded(
+                        child: _paceColumn(
+                          theme,
+                          'Projected month-end',
+                          MoneyFormat.aed(projected),
+                          color: summary.net < 0 ? Colors.red : Colors.teal,
+                        ),
+                      ),
+                      Expanded(
+                        child: _paceColumn(
+                          theme,
+                          'Safe to spend / day',
+                          summary.net > 0
+                              ? MoneyFormat.aed(affordableDaily)
+                              : '—',
+                          color: summary.net > 0 ? Colors.green : Colors.red,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _paceColumn(
-                  theme,
-                  'Avg / day',
-                  MoneyFormat.aed(dailyPace),
-                ),
-              ),
-              Expanded(
-                child: _paceColumn(
-                  theme,
-                  'Projected month-end',
-                  MoneyFormat.aed(projected),
-                  color: summary.net < 0 ? Colors.red : Colors.teal,
-                ),
-              ),
-              Expanded(
-                child: _paceColumn(
-                  theme,
-                  'Safe to spend / day',
-                  summary.net > 0 ? MoneyFormat.aed(affordableDaily) : '—',
-                  color: summary.net > 0 ? Colors.green : Colors.red,
-                ),
-              ),
-            ],
-          ),
-          if (summary.net < 0 && remainingDays > 0)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Text(
-                'You are spending more than you earn this month — consider cutting back for the remaining $remainingDays days.',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: Colors.red,
-                  fontSize: 11,
-                ),
+                  if (summary.net < 0 && remainingDays > 0)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        'You are spending more than you earn this month — consider cutting back for the remaining $remainingDays days.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.red,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
-        ],
-      ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// Header row of the spending-pace card: icon + title, with a
+  /// minimize/expand chevron when [onToggleSection] is provided.
+  Widget _paceHeader(
+    ThemeData theme,
+    DateTime now,
+    int daysInMonth, {
+    required bool collapsed,
+    VoidCallback? onToggleSection,
+  }) {
+    final row = Row(
+      children: [
+        Icon(Icons.speed_rounded, size: 18, color: theme.colorScheme.primary),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            'Spending pace · day ${now.day} of $daysInMonth',
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        if (onToggleSection != null)
+          SectionCollapseChevron(collapsed: collapsed),
+      ],
+    );
+    if (onToggleSection == null) return row;
+    return InkWell(
+      onTap: onToggleSection,
+      borderRadius: BorderRadius.circular(10),
+      child: row,
     );
   }
 
@@ -512,8 +412,15 @@ class SpendingPaceCard extends StatelessWidget {
 /// RepaintBoundaries so scrolling never repaints the whole chart.
 class WeeklySpendChart extends StatefulWidget {
   final List<FinanceTransaction> transactions;
+  final bool collapsed;
+  final VoidCallback? onToggleSection;
 
-  const WeeklySpendChart({super.key, required this.transactions});
+  const WeeklySpendChart({
+    super.key,
+    required this.transactions,
+    this.collapsed = false,
+    this.onToggleSection,
+  });
 
   @override
   State<WeeklySpendChart> createState() => _WeeklySpendChartState();
@@ -526,7 +433,8 @@ class _WeeklySpendChartState extends State<WeeklySpendChart> {
   // Recompute buckets only when the transaction list identity changes —
   // not on every theme/scroll-driven rebuild.
   List<_WeekBucket> _buckets() {
-    if (_cachedBuckets != null && identical(_cachedSource, widget.transactions)) {
+    if (_cachedBuckets != null &&
+        identical(_cachedSource, widget.transactions)) {
       return _cachedBuckets!;
     }
     final now = DateTime.now();
@@ -545,8 +453,7 @@ class _WeeklySpendChartState extends State<WeeklySpendChart> {
     for (final t in widget.transactions) {
       if (t.kind != FinanceKind.expense) continue;
       for (final b in buckets) {
-        if (!t.occurredAt.isBefore(b.start) &&
-            t.occurredAt.isBefore(b.end)) {
+        if (!t.occurredAt.isBefore(b.start) && t.occurredAt.isBefore(b.end)) {
           b.spend += t.amount;
         }
       }
@@ -568,51 +475,58 @@ class _WeeklySpendChartState extends State<WeeklySpendChart> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionHeader(icon: Icons.bar_chart_rounded, title: 'Last 6 weeks'),
-        const SizedBox(height: 12),
-        TintedCardBox(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
-          child: Column(
-            children: [
-              SizedBox(
-                height: 120,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    for (final b in buckets) ...[
-                      Expanded(
-                        child: RepaintBoundary(
-                          child: _WeekBar(
-                            bucket: b,
-                            maxSpend: maxSpend,
+        SectionHeader(
+          icon: Icons.bar_chart_rounded,
+          title: 'Last 6 weeks',
+          collapsed: widget.collapsed,
+          onToggle: widget.onToggleSection,
+        ),
+        CollapsibleSectionBody(
+          collapsed: widget.collapsed,
+          children: [
+            const SizedBox(height: 12),
+            TintedCardBox(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+              child: Column(
+                children: [
+                  SizedBox(
+                    height: 120,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        for (final b in buckets) ...[
+                          Expanded(
+                            child: RepaintBoundary(
+                              child: _WeekBar(bucket: b, maxSpend: maxSpend),
+                            ),
+                          ),
+                          if (b != buckets.last) const SizedBox(width: 10),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      for (final b in buckets) ...[
+                        Expanded(
+                          child: Text(
+                            '${b.start.day}/${b.start.month}',
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              fontSize: 9,
+                              color: theme.colorScheme.outline,
+                            ),
                           ),
                         ),
-                      ),
-                      if (b != buckets.last) const SizedBox(width: 10),
+                        if (b != buckets.last) const SizedBox(width: 10),
+                      ],
                     ],
-                  ],
-                ),
-              ),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  for (final b in buckets) ...[
-                    Expanded(
-                      child: Text(
-                        '${b.start.day}/${b.start.month}',
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          fontSize: 9,
-                          color: theme.colorScheme.outline,
-                        ),
-                      ),
-                    ),
-                    if (b != buckets.last) const SizedBox(width: 10),
-                  ],
+                  ),
                 ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ],
     );
@@ -644,8 +558,7 @@ class _WeekBar extends StatelessWidget {
             ),
           ),
         Container(
-          height:
-              maxSpend <= 0 ? 4 : 8 + (bucket.spend / maxSpend) * 84,
+          height: maxSpend <= 0 ? 4 : 8 + (bucket.spend / maxSpend) * 84,
           width: 22,
           decoration: BoxDecoration(
             color: bucket.spend > 0
@@ -671,11 +584,15 @@ class _WeekBucket {
 class CategoryBreakdownCard extends StatelessWidget {
   final Map<FinanceCategory, double> spendByCategory;
   final double totalExpense;
+  final bool collapsed;
+  final VoidCallback? onToggleSection;
 
   const CategoryBreakdownCard({
     super.key,
     required this.spendByCategory,
     required this.totalExpense,
+    this.collapsed = false,
+    this.onToggleSection,
   });
 
   @override
@@ -687,70 +604,80 @@ class CategoryBreakdownCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionHeader(icon: Icons.pie_chart_rounded, title: 'Where money goes'),
-        const SizedBox(height: 12),
-        if (entries.isEmpty)
-          const HintCard(
-            'Add expenses to see a breakdown by category.',
-            scene: EmptyStateScene.growth,
-          )
-        else
-          TintedCardBox(
-            child: Column(
-              children: [
-                for (final e in entries) ...[
-                  Row(
-                    children: [
-                      Icon(
-                        e.key.icon,
-                        size: 16,
-                        color: theme.colorScheme.primary,
+        SectionHeader(
+          icon: Icons.pie_chart_rounded,
+          title: 'Where money goes',
+          collapsed: collapsed,
+          onToggle: onToggleSection,
+        ),
+        CollapsibleSectionBody(
+          collapsed: collapsed,
+          children: [
+            const SizedBox(height: 12),
+            if (entries.isEmpty)
+              const HintCard(
+                'Add expenses to see a breakdown by category.',
+                scene: EmptyStateScene.growth,
+              )
+            else
+              TintedCardBox(
+                child: Column(
+                  children: [
+                    for (final e in entries) ...[
+                      Row(
+                        children: [
+                          Icon(
+                            e.key.icon,
+                            size: 16,
+                            color: theme.colorScheme.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              e.key.displayName,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            '${(e.value / (totalExpense <= 0 ? 1 : totalExpense) * 100).toStringAsFixed(0)}%',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.outline,
+                              fontSize: 11,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            MoneyFormat.aed(e.value),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          e.key.displayName,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.w500,
+                      const SizedBox(height: 4),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(3),
+                        child: LinearProgressIndicator(
+                          value: totalExpense <= 0
+                              ? 0
+                              : (e.value / totalExpense).clamp(0.0, 1.0),
+                          minHeight: 4,
+                          backgroundColor:
+                              theme.colorScheme.surfaceContainerHighest,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            theme.colorScheme.primary.withOpacity(0.6),
                           ),
                         ),
                       ),
-                      Text(
-                        '${(e.value / (totalExpense <= 0 ? 1 : totalExpense) * 100).toStringAsFixed(0)}%',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.outline,
-                          fontSize: 11,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        MoneyFormat.aed(e.value),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      const SizedBox(height: 10),
                     ],
-                  ),
-                  const SizedBox(height: 4),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(3),
-                    child: LinearProgressIndicator(
-                      value: totalExpense <= 0
-                          ? 0
-                          : (e.value / totalExpense).clamp(0.0, 1.0),
-                      minHeight: 4,
-                      backgroundColor:
-                          theme.colorScheme.surfaceContainerHighest,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        theme.colorScheme.primary.withOpacity(0.6),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                ],
-              ],
-            ),
-          ),
+                  ],
+                ),
+              ),
+          ],
+        ),
       ],
     );
   }
@@ -759,8 +686,15 @@ class CategoryBreakdownCard extends StatelessWidget {
 /// Top expenses this month.
 class TopExpensesCard extends StatefulWidget {
   final List<FinanceTransaction> transactions;
+  final bool collapsed;
+  final VoidCallback? onToggleSection;
 
-  const TopExpensesCard({super.key, required this.transactions});
+  const TopExpensesCard({
+    super.key,
+    required this.transactions,
+    this.collapsed = false,
+    this.onToggleSection,
+  });
 
   @override
   State<TopExpensesCard> createState() => _TopExpensesCardState();
@@ -775,15 +709,16 @@ class _TopExpensesCardState extends State<TopExpensesCard> {
       return _cachedTop!;
     }
     final now = DateTime.now();
-    final expenses = widget.transactions
-        .where(
-          (t) =>
-              t.kind == FinanceKind.expense &&
-              t.occurredAt.year == now.year &&
-              t.occurredAt.month == now.month,
-        )
-        .toList()
-      ..sort((a, b) => b.amount.compareTo(a.amount));
+    final expenses =
+        widget.transactions
+            .where(
+              (t) =>
+                  t.kind == FinanceKind.expense &&
+                  t.occurredAt.year == now.year &&
+                  t.occurredAt.month == now.month,
+            )
+            .toList()
+          ..sort((a, b) => b.amount.compareTo(a.amount));
     final top = expenses.take(5).toList();
 
     _cachedSource = widget.transactions;
@@ -799,73 +734,80 @@ class _TopExpensesCardState extends State<TopExpensesCard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionHeader(
+        SectionHeader(
           icon: Icons.local_fire_department_rounded,
           title: 'Biggest expenses',
+          collapsed: widget.collapsed,
+          onToggle: widget.onToggleSection,
         ),
-        const SizedBox(height: 12),
-        if (top.isEmpty)
-          const HintCard(
-            'No expenses recorded this month yet.',
-            scene: EmptyStateScene.growth,
-          )
-        else
-          Container(
-            decoration: BoxDecoration(
-              color:
-                  theme.colorScheme.surfaceContainerHighest.withOpacity(0.4),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Column(
-              children: [
-                for (var i = 0; i < top.length; i++) ...[
-                  if (i > 0)
-                    InsetDivider(indent: 52),
-                  ListTile(
-                    dense: true,
-                    leading: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          '#${i + 1}',
+        CollapsibleSectionBody(
+          collapsed: widget.collapsed,
+          children: [
+            const SizedBox(height: 12),
+            if (top.isEmpty)
+              const HintCard(
+                'No expenses recorded this month yet.',
+                scene: EmptyStateScene.growth,
+              )
+            else
+              Container(
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest.withOpacity(
+                    0.4,
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Column(
+                  children: [
+                    for (var i = 0; i < top.length; i++) ...[
+                      if (i > 0) InsetDivider(indent: 52),
+                      ListTile(
+                        dense: true,
+                        leading: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(
+                              '#${i + 1}',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                        ),
+                        title: Text(
+                          top[i].title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        subtitle: Text(
+                          '${top[i].category.displayName} • ${top[i].occurredAt.day}/${top[i].occurredAt.month}',
                           style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.outline,
+                          ),
+                        ),
+                        trailing: Text(
+                          MoneyFormat.aed(top[i].amount),
+                          style: theme.textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.primary,
+                            color: Colors.red,
                           ),
                         ),
                       ),
-                    ),
-                    title: Text(
-                      top[i].title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    subtitle: Text(
-                      '${top[i].category.displayName} • ${top[i].occurredAt.day}/${top[i].occurredAt.month}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.outline,
-                      ),
-                    ),
-                    trailing: Text(
-                      MoneyFormat.aed(top[i].amount),
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.red,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
+                    ],
+                  ],
+                ),
+              ),
+          ],
+        ),
       ],
     );
   }
@@ -874,8 +816,15 @@ class _TopExpensesCardState extends State<TopExpensesCard> {
 /// Renewal breakdown — which documents drive the outlook.
 class RenewalBreakdownCard extends StatefulWidget {
   final List<ExpiryItem> items;
+  final bool collapsed;
+  final VoidCallback? onToggleSection;
 
-  const RenewalBreakdownCard({super.key, required this.items});
+  const RenewalBreakdownCard({
+    super.key,
+    required this.items,
+    this.collapsed = false,
+    this.onToggleSection,
+  });
 
   @override
   State<RenewalBreakdownCard> createState() => _RenewalBreakdownCardState();
@@ -886,22 +835,22 @@ class _RenewalBreakdownCardState extends State<RenewalBreakdownCard> {
   List<ExpiryItem>? _cachedSource;
 
   List<ExpiryItem> _upcoming() {
-    if (_cachedUpcoming != null &&
-        identical(_cachedSource, widget.items)) {
+    if (_cachedUpcoming != null && identical(_cachedSource, widget.items)) {
       return _cachedUpcoming!;
     }
     final now = DateTime.now();
     final cutoff = now.add(const Duration(days: 90));
-    final upcoming = widget.items
-        .where(
-          (i) =>
-              i.isActive &&
-              i.expiresAt.isAfter(now) &&
-              i.expiresAt.isBefore(cutoff) &&
-              (i.renewalFee ?? 0) > 0,
-        )
-        .toList()
-      ..sort((a, b) => a.expiresAt.compareTo(b.expiresAt));
+    final upcoming =
+        widget.items
+            .where(
+              (i) =>
+                  i.isActive &&
+                  i.expiresAt.isAfter(now) &&
+                  i.expiresAt.isBefore(cutoff) &&
+                  (i.renewalFee ?? 0) > 0,
+            )
+            .toList()
+          ..sort((a, b) => a.expiresAt.compareTo(b.expiresAt));
 
     _cachedSource = widget.items;
     _cachedUpcoming = upcoming;
@@ -917,63 +866,70 @@ class _RenewalBreakdownCardState extends State<RenewalBreakdownCard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionHeader(
+        SectionHeader(
           icon: Icons.event_repeat_rounded,
           title: 'Upcoming renewals',
+          collapsed: widget.collapsed,
+          onToggle: widget.onToggleSection,
         ),
-        const SizedBox(height: 12),
-        Container(
-          decoration: BoxDecoration(
-            color:
-                theme.colorScheme.surfaceContainerHighest.withOpacity(0.4),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Column(
-            children: [
-              for (var idx = 0; idx < upcoming.length; idx++) ...[
-                if (idx > 0) InsetDivider(indent: 56),
-                ListTile(
-                  dense: true,
-                  leading: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: upcoming[idx]
-                          .docType
-                          .primaryColor
-                          .withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      upcoming[idx].docType.icon,
-                      size: 18,
-                      color: upcoming[idx].docType.primaryColor,
-                    ),
-                  ),
-                  title: Text(
-                    upcoming[idx].displayName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  subtitle: Text(
-                    'Due ${ExpiryItem.formatDate(upcoming[idx].expiresAt)}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.outline,
-                    ),
-                  ),
-                  trailing: Text(
-                    MoneyFormat.aed(upcoming[idx].renewalFee!),
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+        CollapsibleSectionBody(
+          collapsed: widget.collapsed,
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest.withOpacity(
+                  0.4,
                 ),
-              ],
-            ],
-          ),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Column(
+                children: [
+                  for (var idx = 0; idx < upcoming.length; idx++) ...[
+                    if (idx > 0) InsetDivider(indent: 56),
+                    ListTile(
+                      dense: true,
+                      leading: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: upcoming[idx].docType.primaryColor.withOpacity(
+                            0.12,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          upcoming[idx].docType.icon,
+                          size: 18,
+                          color: upcoming[idx].docType.primaryColor,
+                        ),
+                      ),
+                      title: Text(
+                        upcoming[idx].displayName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      subtitle: Text(
+                        'Due ${ExpiryItem.formatDate(upcoming[idx].expiresAt)}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.outline,
+                        ),
+                      ),
+                      trailing: Text(
+                        MoneyFormat.aed(upcoming[idx].renewalFee!),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
         ),
       ],
     );

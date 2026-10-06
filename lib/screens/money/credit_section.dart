@@ -16,6 +16,12 @@ class CreditSection extends StatelessWidget {
   final void Function(CreditEntry entry) onDelete;
   final void Function(CreditEntry entry) onExtend;
 
+  /// Collapse state for the Money tab, where every section can be
+  /// minimized to its header. Optional so [CreditScreen] keeps
+  /// using this widget as a plain, always-expanded section.
+  final bool collapsed;
+  final VoidCallback? onToggleSection;
+
   const CreditSection({
     super.key,
     required this.credits,
@@ -23,24 +29,34 @@ class CreditSection extends StatelessWidget {
     required this.onEdit,
     required this.onDelete,
     required this.onExtend,
+    this.collapsed = false,
+    this.onToggleSection,
   });
 
   @override
   Widget build(BuildContext context) {
+    final header = SectionHeader(
+      icon: Icons.handshake_rounded,
+      title: 'Credit',
+      actionLabel: 'Add',
+      onAction: onAdd,
+      collapsed: collapsed,
+      onToggle: onToggleSection,
+    );
+
     if (credits.isEmpty) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SectionHeader(
-            icon: Icons.handshake_rounded,
-            title: 'Credit',
-            actionLabel: 'Add',
-            onAction: onAdd,
-          ),
-          const SizedBox(height: 10),
-          const HintCard(
-            'Track money you borrowed from — or lent to — someone. '
-            'Deadlines, extensions and WhatsApp follow-ups in one place.',
+          header,
+          CollapsibleSectionBody(
+            collapsed: collapsed,
+            children: const [
+              HintCard(
+                'Track money you borrowed from — or lent to — someone. '
+                'Deadlines, extensions and WhatsApp follow-ups in one place.',
+              ),
+            ],
           ),
         ],
       );
@@ -52,25 +68,24 @@ class CreditSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionHeader(
-          icon: Icons.handshake_rounded,
-          title: 'Credit',
-          actionLabel: 'Add',
-          onAction: onAdd,
+        header,
+        CollapsibleSectionBody(
+          collapsed: collapsed,
+          children: [
+            _TotalsRow(totals: totals),
+            const SizedBox(height: 12),
+            for (final entry in sorted) ...[
+              _CreditCard(
+                entry: entry,
+                onEdit: () => onEdit(entry),
+                onDelete: () => onDelete(entry),
+                onExtend: () => onExtend(entry),
+                onWhatsApp: () => _showFollowUpSheet(context, entry),
+              ),
+              const SizedBox(height: 10),
+            ],
+          ],
         ),
-        const SizedBox(height: 10),
-        _TotalsRow(totals: totals),
-        const SizedBox(height: 12),
-        for (final entry in sorted) ...[
-          _CreditCard(
-            entry: entry,
-            onEdit: () => onEdit(entry),
-            onDelete: () => onDelete(entry),
-            onExtend: () => onExtend(entry),
-            onWhatsApp: () => _showFollowUpSheet(context, entry),
-          ),
-          const SizedBox(height: 10),
-        ],
       ],
     );
   }

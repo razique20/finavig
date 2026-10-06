@@ -34,8 +34,8 @@ class BudgetRow extends StatelessWidget {
     final barColor = over
         ? Colors.red
         : ratio > 0.8
-            ? Colors.orange
-            : theme.colorScheme.primary;
+        ? Colors.orange
+        : theme.colorScheme.primary;
 
     return InkWell(
       onTap: onEdit,

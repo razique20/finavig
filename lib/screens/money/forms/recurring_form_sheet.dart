@@ -66,7 +66,9 @@ class RecurringFormSheetState extends State<RecurringFormSheet> {
         category: _category,
         title: title,
         amount: amount,
-        currency: existing?.currency ?? DocumentCollectionService.instance.activeCurrency,
+        currency:
+            existing?.currency ??
+            DocumentCollectionService.instance.activeCurrency,
         frequency: _frequency,
         dayOfMonth: _dayOfMonth,
         startDate: existing?.startDate ?? DateTime(now.year, now.month, 1),
@@ -140,7 +142,8 @@ class RecurringFormSheetState extends State<RecurringFormSheet> {
                   decimal: true,
                 ),
                 decoration: InputDecoration(
-                  labelText: 'Amount (${DocumentCollectionService.instance.activeCurrency})',
+                  labelText:
+                      'Amount (${DocumentCollectionService.instance.activeCurrency})',
                   border: const OutlineInputBorder(),
                 ),
               ),
@@ -238,4 +241,3 @@ class RecurringFormSheetState extends State<RecurringFormSheet> {
 // ====================================================================
 // Overall Budget form sheet
 // ====================================================================
-

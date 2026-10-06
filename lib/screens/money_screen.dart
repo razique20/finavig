@@ -77,13 +77,33 @@ class _MoneyScreenState extends State<MoneyScreen> {
   List<RecurringTransaction> _recurring = [];
   List<CreditEntry> _credits = [];
   List<ExpiryItem> _items = [];
-  double _renewalOutlook90 = 0;
   bool _loading = true;
 
   /// Bill-spike transaction ids the user dismissed this session; keeps the
   /// card hidden until a *new* anomaly appears. Cleared when the user
   /// re-enables bill spike alerts in Profile.
   final Set<String> _dismissedSpikeIds = {};
+
+  /// Section ids currently minimized on this tab. Each section in the
+  /// light sheet collapses to its header; tapping the header again
+  /// expands it. Every section starts minimized, so the sheet opens
+  /// as a compact index of headers the user can expand on demand.
+  final Set<String> _collapsedSections = {
+    'budgets',
+    'pace',
+    'weekly',
+    'categories',
+    'top',
+    'renewalBreakdown',
+    'recurring',
+    'envelopes',
+    'credit',
+    'transactions',
+  };
+
+  void _toggleSection(String id) => setState(() {
+    if (!_collapsedSections.remove(id)) _collapsedSections.add(id);
+  });
 
   StreamSubscription<BudgetAlertEvent>? _alertSub;
 
@@ -99,7 +119,6 @@ class _MoneyScreenState extends State<MoneyScreen> {
       _credits = CreditService.instance.activeCredits;
       if (DocumentScannerService.instance.isInitialized) {
         _items = DocumentScannerService.instance.activeItems;
-        _renewalOutlook90 = FinanceMath.renewalOutlook(_items, 90);
       }
       _loading = false;
     }
@@ -150,7 +169,6 @@ class _MoneyScreenState extends State<MoneyScreen> {
       _recurring = FinanceService.instance.activeRecurring;
       _credits = CreditService.instance.activeCredits;
       _items = items;
-      _renewalOutlook90 = FinanceMath.renewalOutlook(items, 90);
       _loading = false;
     });
   }
@@ -204,6 +222,22 @@ class _MoneyScreenState extends State<MoneyScreen> {
                               ),
                             ),
                             const SizedBox(height: 12),
+                            // 1. At a glance: the month's summary, the
+                            //    upcoming renewal fees, the forecast and
+                            //    the credit shortcut stack flush as one
+                            //    group — no gap between them.
+                            _sheetPadding(const MonthlySummaryCard()),
+                            _sheetPadding(
+                              RenewalBreakdownCard(
+                                items: _items,
+                                collapsed: _collapsedSections.contains(
+                                  'renewalBreakdown',
+                                ),
+                                onToggleSection: () =>
+                                    _toggleSection('renewalBreakdown'),
+                              ),
+                            ),
+                            _sheetPadding(const CashFlowTeaserCard()),
                             // Credit shortcut — relocated out of the
                             // dark hero into the light sheet.
                             _sheetPadding(
@@ -212,7 +246,15 @@ class _MoneyScreenState extends State<MoneyScreen> {
                               ),
                             ),
                             const SizedBox(height: 24),
-                            // 1. Budget control.
+                            // 2. Spending pace, then budget control.
+                            _sheetPadding(
+                              SpendingPaceCard(
+                                summary: summary,
+                                collapsed: _collapsedSections.contains('pace'),
+                                onToggleSection: () => _toggleSection('pace'),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
                             _sheetPadding(
                               BudgetsSection(
                                 budgets: _budgets,
@@ -225,47 +267,46 @@ class _MoneyScreenState extends State<MoneyScreen> {
                                 onDeleteCategory: (b) =>
                                     FinanceService.instance.deleteBudget(b.id),
                                 onEditOverall: _showOverallBudgetSheet,
+                                collapsed: _collapsedSections.contains(
+                                  'budgets',
+                                ),
+                                onToggleSection: () =>
+                                    _toggleSection('budgets'),
                               ),
                             ),
                             const SizedBox(height: 24),
-                            // 2. Spending analysis.
-                            _sheetPadding(SpendingPaceCard(summary: summary)),
-                            const SizedBox(height: 24),
+                            // 3. Spending analysis.
                             _sheetPadding(
-                              WeeklySpendChart(transactions: _transactions),
+                              WeeklySpendChart(
+                                transactions: _transactions,
+                                collapsed: _collapsedSections.contains(
+                                  'weekly',
+                                ),
+                                onToggleSection: () => _toggleSection('weekly'),
+                              ),
                             ),
                             const SizedBox(height: 24),
                             _sheetPadding(
                               CategoryBreakdownCard(
                                 spendByCategory: spendByCategory,
                                 totalExpense: summary.expense,
+                                collapsed: _collapsedSections.contains(
+                                  'categories',
+                                ),
+                                onToggleSection: () =>
+                                    _toggleSection('categories'),
                               ),
                             ),
                             const SizedBox(height: 24),
                             _sheetPadding(
-                              TopExpensesCard(transactions: _transactions),
-                            ),
-                            const SizedBox(height: 24),
-                            // 3. Compact AI summary, below the spending story
-                            //    it reports on.
-                            _sheetPadding(const MonthlySummaryCard()),
-                            const SizedBox(height: 24),
-                            // 4. Upcoming renewals & forecast.
-                            _sheetPadding(
-                              RenewalOutlookCard(outlook90: _renewalOutlook90),
-                            ),
-                            const SizedBox(height: 24),
-                            _sheetPadding(RenewalBreakdownCard(items: _items)),
-                            const SizedBox(height: 24),
-                            _sheetPadding(
-                              CashFlowTeaserCard(
+                              TopExpensesCard(
                                 transactions: _transactions,
-                                recurring: _recurring,
-                                items: _items,
+                                collapsed: _collapsedSections.contains('top'),
+                                onToggleSection: () => _toggleSection('top'),
                               ),
                             ),
                             const SizedBox(height: 24),
-                            // 5. Planning & history.
+                            // 4. Planning & history.
                             _sheetPadding(
                               RecurringSection(
                                 recurring: _recurring,
@@ -276,6 +317,11 @@ class _MoneyScreenState extends State<MoneyScreen> {
                                     .deleteRecurring(r.id),
                                 onToggle: (r) => FinanceService.instance
                                     .setRecurringActive(r.id, !r.isActive),
+                                collapsed: _collapsedSections.contains(
+                                  'recurring',
+                                ),
+                                onToggleSection: () =>
+                                    _toggleSection('recurring'),
                               ),
                             ),
                             const SizedBox(height: 24),
@@ -292,10 +338,15 @@ class _MoneyScreenState extends State<MoneyScreen> {
                                     _adjustEnvelope(e, -e.adjustStep),
                                 onDelete: (e) => FinanceService.instance
                                     .deleteEnvelope(e.id),
+                                collapsed: _collapsedSections.contains(
+                                  'envelopes',
+                                ),
+                                onToggleSection: () =>
+                                    _toggleSection('envelopes'),
                               ),
                             ),
                             const SizedBox(height: 24),
-                            // 6. Credit obligations.
+                            // 5. Credit obligations.
                             _sheetPadding(
                               CreditSection(
                                 credits: _credits,
@@ -304,11 +355,22 @@ class _MoneyScreenState extends State<MoneyScreen> {
                                 onDelete: (c) =>
                                     CreditService.instance.deleteCredit(c.id),
                                 onExtend: _showExtendDeadlineSheet,
+                                collapsed: _collapsedSections.contains(
+                                  'credit',
+                                ),
+                                onToggleSection: () => _toggleSection('credit'),
                               ),
                             ),
                             const SizedBox(height: 24),
                             _sheetPadding(
-                              TransactionsSection(transactions: _transactions),
+                              TransactionsSection(
+                                transactions: _transactions,
+                                collapsed: _collapsedSections.contains(
+                                  'transactions',
+                                ),
+                                onToggleSection: () =>
+                                    _toggleSection('transactions'),
+                              ),
                             ),
                             // Keep the last card scrollable clear of the
                             // floating nav pill (height + margins ≈ 80).
@@ -930,11 +992,6 @@ class _CreditShortcutCard extends StatelessWidget {
                     ),
                   ],
                 ),
-              ),
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 16,
-                color: theme.colorScheme.outline,
               ),
             ],
           ),
