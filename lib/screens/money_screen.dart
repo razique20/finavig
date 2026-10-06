@@ -7,16 +7,16 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../models/credit.dart';
 import '../models/expiry_item.dart';
 import '../models/finance.dart';
 import '../models/subscription_tier.dart';
 import '../services/alert_preferences_service.dart';
 import '../services/budget_alert_service.dart';
-import '../services/collection_service.dart';
+import '../services/credit_service.dart';
 import '../services/document_scanner_service.dart';
 import '../services/entitlement_service.dart';
 import '../services/finance_service.dart';
-import '../services/smart_category_engine.dart';
 import '../services/tab_scroll_registry.dart';
 import '../theme/app_theme.dart';
 import '../widgets/dialogs/ai_budget_plan_sheet.dart';
@@ -24,26 +24,25 @@ import '../widgets/dialogs/ask_finavig_sheet.dart';
 import '../widgets/dialogs/upgrade_dialog.dart';
 import '../widgets/cards/monthly_summary_card.dart';
 import '../widgets/shimmer_skeleton.dart';
-import 'package:uuid/uuid.dart';
 
 // Modularized Money tab building blocks. The screen is now a slim stateful
 // shell: state, data loading and the hero header live here; every content
 // section is a standalone memoized widget in money/ — so tab switches and
 // data refreshes rebuild small subtrees instead of the whole 3000-line tree.
+import 'money/credit_section.dart';
 import 'money/forms/budget_form_sheets.dart';
+import 'money/forms/credit_extend_sheet.dart';
+import 'money/forms/credit_form_sheet.dart';
 import 'money/forms/envelope_form_sheet.dart';
 import 'money/forms/recurring_form_sheet.dart';
 import 'money/forms/transaction_form_sheet.dart';
 import 'money/money_planning_cards.dart';
-import 'money/money_rows.dart';
 import 'money/money_summary_cards.dart';
 
 // Public API kept import-stable for envelopes/budgets/records/home screens,
 // quick actions and tests: they import money_screen.dart for these.
-export 'money/money_rows.dart'
-    show BudgetRow, EnvelopeCard, TransactionTile;
-export 'money/forms/transaction_form_sheet.dart'
-    show TransactionFormSheet;
+export 'money/money_rows.dart' show BudgetRow, EnvelopeCard, TransactionTile;
+export 'money/forms/transaction_form_sheet.dart' show TransactionFormSheet;
 export 'money/forms/budget_form_sheets.dart'
     show OverallBudgetFormSheet, CategoryBudgetFormSheet;
 export 'money/forms/envelope_form_sheet.dart' show EnvelopeFormSheet;
@@ -76,6 +75,7 @@ class _MoneyScreenState extends State<MoneyScreen> {
   List<CategoryBudget> _budgets = [];
   List<SavingsEnvelope> _envelopes = [];
   List<RecurringTransaction> _recurring = [];
+  List<CreditEntry> _credits = [];
   List<ExpiryItem> _items = [];
   double _renewalOutlook90 = 0;
   bool _loading = true;
@@ -96,6 +96,7 @@ class _MoneyScreenState extends State<MoneyScreen> {
       _budgets = FinanceService.instance.activeBudgets;
       _envelopes = FinanceService.instance.activeEnvelopes;
       _recurring = FinanceService.instance.activeRecurring;
+      _credits = CreditService.instance.activeCredits;
       if (DocumentScannerService.instance.isInitialized) {
         _items = DocumentScannerService.instance.activeItems;
         _renewalOutlook90 = FinanceMath.renewalOutlook(_items, 90);
@@ -103,6 +104,7 @@ class _MoneyScreenState extends State<MoneyScreen> {
       _loading = false;
     }
     FinanceService.instance.addListener(_reload);
+    CreditService.instance.addListener(_reload);
     _alertSub = BudgetAlertService.instance.stream.listen(_showBudgetAlert);
     _reload();
   }
@@ -112,6 +114,7 @@ class _MoneyScreenState extends State<MoneyScreen> {
     TabScrollRegistry.unregister(1, _scrollController);
     _scrollController.dispose();
     FinanceService.instance.removeListener(_reload);
+    CreditService.instance.removeListener(_reload);
     _alertSub?.cancel();
     super.dispose();
   }
@@ -137,6 +140,7 @@ class _MoneyScreenState extends State<MoneyScreen> {
 
   Future<void> _reload() async {
     await FinanceService.instance.init();
+    await CreditService.instance.init();
     final items = await DocumentScannerService().getAllItems();
     if (!mounted) return;
     setState(() {
@@ -144,6 +148,7 @@ class _MoneyScreenState extends State<MoneyScreen> {
       _budgets = FinanceService.instance.activeBudgets;
       _envelopes = FinanceService.instance.activeEnvelopes;
       _recurring = FinanceService.instance.activeRecurring;
+      _credits = CreditService.instance.activeCredits;
       _items = items;
       _renewalOutlook90 = FinanceMath.renewalOutlook(items, 90);
       _loading = false;
@@ -172,9 +177,7 @@ class _MoneyScreenState extends State<MoneyScreen> {
             controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
-              SliverToBoxAdapter(
-                child: _buildHeroHeader(theme, summary),
-              ),
+              SliverToBoxAdapter(child: _buildHeroHeader(theme, summary)),
               SliverToBoxAdapter(
                 child: Container(
                   width: double.infinity,
@@ -221,7 +224,8 @@ class _MoneyScreenState extends State<MoneyScreen> {
                             _sheetPadding(SpendingPaceCard(summary: summary)),
                             const SizedBox(height: 24),
                             _sheetPadding(
-                                WeeklySpendChart(transactions: _transactions)),
+                              WeeklySpendChart(transactions: _transactions),
+                            ),
                             const SizedBox(height: 24),
                             _sheetPadding(
                               CategoryBreakdownCard(
@@ -231,7 +235,8 @@ class _MoneyScreenState extends State<MoneyScreen> {
                             ),
                             const SizedBox(height: 24),
                             _sheetPadding(
-                                TopExpensesCard(transactions: _transactions)),
+                              TopExpensesCard(transactions: _transactions),
+                            ),
                             const SizedBox(height: 24),
                             // 3. Compact AI summary, below the spending story
                             //    it reports on.
@@ -239,10 +244,10 @@ class _MoneyScreenState extends State<MoneyScreen> {
                             const SizedBox(height: 24),
                             // 4. Upcoming renewals & forecast.
                             _sheetPadding(
-                                RenewalOutlookCard(outlook90: _renewalOutlook90)),
+                              RenewalOutlookCard(outlook90: _renewalOutlook90),
+                            ),
                             const SizedBox(height: 24),
-                            _sheetPadding(
-                                RenewalBreakdownCard(items: _items)),
+                            _sheetPadding(RenewalBreakdownCard(items: _items)),
                             const SizedBox(height: 24),
                             _sheetPadding(
                               CashFlowTeaserCard(
@@ -259,8 +264,8 @@ class _MoneyScreenState extends State<MoneyScreen> {
                                 transactions: _transactions,
                                 onAdd: _showRecurringSheet,
                                 onEdit: (r) => _showRecurringSheet(existing: r),
-                                onDelete: (r) =>
-                                    FinanceService.instance.deleteRecurring(r.id),
+                                onDelete: (r) => FinanceService.instance
+                                    .deleteRecurring(r.id),
                                 onToggle: (r) => FinanceService.instance
                                     .setRecurringActive(r.id, !r.isActive),
                               ),
@@ -273,21 +278,35 @@ class _MoneyScreenState extends State<MoneyScreen> {
                                 // + adds and − withdraws the envelope's
                                 // step (plan amount, or AED 50). Both signs
                                 // are decided here, per envelope.
-                                onAdjust: (e) => _adjustEnvelope(e, e.adjustStep),
+                                onAdjust: (e) =>
+                                    _adjustEnvelope(e, e.adjustStep),
                                 onWithdraw: (e) =>
                                     _adjustEnvelope(e, -e.adjustStep),
-                                onDelete: (e) =>
-                                    FinanceService.instance.deleteEnvelope(e.id),
+                                onDelete: (e) => FinanceService.instance
+                                    .deleteEnvelope(e.id),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            // 6. Credit obligations.
+                            _sheetPadding(
+                              CreditSection(
+                                credits: _credits,
+                                onAdd: _showCreditSheet,
+                                onEdit: (c) => _showCreditSheet(existing: c),
+                                onDelete: (c) =>
+                                    CreditService.instance.deleteCredit(c.id),
+                                onExtend: _showExtendDeadlineSheet,
                               ),
                             ),
                             const SizedBox(height: 24),
                             _sheetPadding(
-                                TransactionsSection(
-                                    transactions: _transactions)),
+                              TransactionsSection(transactions: _transactions),
+                            ),
                             // Keep the last card scrollable clear of the
                             // floating nav pill (height + margins ≈ 80).
                             SizedBox(
-                              height: 8 +
+                              height:
+                                  8 +
                                   MediaQuery.of(context).padding.bottom +
                                   80,
                             ),
@@ -434,7 +453,7 @@ class _MoneyScreenState extends State<MoneyScreen> {
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 16),
-          // 3 Navigation Pills in an equal-width row
+          // 4 Navigation Pills in an equal-width row
           Row(
             children: [
               Expanded(
@@ -458,6 +477,14 @@ class _MoneyScreenState extends State<MoneyScreen> {
                   icon: Icons.savings_rounded,
                   label: 'Envelopes',
                   onTap: () => context.push('/envelopes'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _MoneyActionPill(
+                  icon: Icons.handshake_rounded,
+                  label: 'Credit',
+                  onTap: () => context.push('/credits'),
                 ),
               ),
             ],
@@ -492,9 +519,9 @@ class _MoneyScreenState extends State<MoneyScreen> {
   /// Horizontal inset for cards inside the content sheet (the old layout
   /// relied on the ListView's global padding).
   Widget _sheetPadding(Widget child) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: child,
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 16),
+    child: child,
+  );
 
   // ------------------------------------------------------------------
   // Sheets & dialogs
@@ -657,6 +684,38 @@ class _MoneyScreenState extends State<MoneyScreen> {
     }
   }
 
+  Future<void> _showCreditSheet({CreditEntry? existing}) async {
+    final result = await showModalBottomSheet<CreditEntry>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => CreditFormSheet(existing: existing),
+    );
+    if (result == null) return;
+    if (existing == null) {
+      await CreditService.instance.addCredit(result);
+    } else {
+      await CreditService.instance.updateCredit(result);
+    }
+  }
+
+  Future<void> _showExtendDeadlineSheet(CreditEntry entry) async {
+    final newDeadline = await showModalBottomSheet<DateTime>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => CreditExtendSheet(entry: entry),
+    );
+    if (newDeadline == null) return;
+    await CreditService.instance.extendDeadline(entry.id, newDeadline);
+  }
+
   Future<void> _adjustEnvelope(SavingsEnvelope envelope, double delta) async {
     await FinanceService.instance.adjustEnvelope(envelope.id, delta);
     if (!mounted) return;
@@ -759,9 +818,7 @@ class _MoneyHeroIconButton extends StatelessWidget {
             height: 40,
             child: Icon(
               icon,
-              color: enabled
-                  ? Colors.white
-                  : Colors.white.withOpacity(0.35),
+              color: enabled ? Colors.white : Colors.white.withOpacity(0.35),
               size: 20,
             ),
           ),
@@ -851,9 +908,9 @@ class _MoneyActionPill extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],

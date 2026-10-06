@@ -23,6 +23,7 @@ import 'screens/money_screen.dart';
 import 'screens/budgets_screen.dart';
 import 'screens/envelopes_screen.dart';
 import 'screens/records_screen.dart';
+import 'screens/credits_screen.dart';
 import 'screens/cash_flow_forecast_screen.dart';
 import 'screens/global_search_screen.dart';
 import 'screens/ai_summary_screen.dart';
@@ -134,6 +135,11 @@ final router = GoRouter(
       path: '/records',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const RecordsScreen(),
+    ),
+    GoRoute(
+      path: '/credits',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const CreditsScreen(),
     ),
     GoRoute(
       path: '/ai-summary',
