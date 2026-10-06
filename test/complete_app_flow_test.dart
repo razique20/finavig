@@ -249,11 +249,12 @@ void main() {
       );
     });
 
-    testWidgets('LoginScreen shows sign-in / sign-up toggle', (tester) async {
+    testWidgets('LoginScreen shows the user-type quiz', (tester) async {
       await pumpScreen(tester, const LoginScreen());
       expect(find.text('GCC Edition'), findsWidgets);
-      expect(find.text('Sign in'), findsWidgets);
-      expect(find.text('Sign up'), findsWidgets);
+      expect(find.text('What type of user are you?'), findsWidgets);
+      expect(find.text('New to Finavig'), findsWidgets);
+      expect(find.text('Already a member?'), findsWidgets);
       expect(find.text('Continue'), findsWidgets);
       expect(tester.takeException(), isNull);
     });

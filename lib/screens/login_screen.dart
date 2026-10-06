@@ -189,7 +189,10 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _focusCurrent() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // Wait for the step-slide transition (320 ms) to finish before
+    // requesting focus, so the keyboard's own slide-in doesn't fight
+    // the step animation and cause a mid-transition layout jump.
+    Future<void>.delayed(const Duration(milliseconds: 360), () {
       if (!mounted) return;
       final FocusNode? node;
       if (_step == 1) {
@@ -532,17 +535,11 @@ class _LoginScreenState extends State<LoginScreen> {
       padding: const EdgeInsets.fromLTRB(24, 14, 24, 4),
       child: LayoutBuilder(
         builder: (context, viewport) {
-          // The quiz flow sits in a soft, rounded card — the
-          // Material-3 "centred card" auth layout, so the space
-          // around the form reads as designed, not empty.
+          // No card: the form sits directly on the ink canvas so the
+          // whole screen reads as one flat surface.
           return Container(
             width: double.infinity,
             constraints: BoxConstraints(minHeight: viewport.maxHeight),
-            decoration: BoxDecoration(
-              color: isDark ? FinavigColors.charcoal : Colors.white,
-              borderRadius: BorderRadius.circular(FinavigRadius.card),
-              boxShadow: FinavigShadows.adaptive(isDark),
-            ),
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
@@ -802,7 +799,11 @@ class _LoginScreenState extends State<LoginScreen> {
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         children: [
-          Icon(Icons.mark_email_read_outlined, size: 14, color: subColor),
+          const Icon(
+            Icons.mark_email_read_outlined,
+            size: 14,
+            color: Colors.white,
+          ),
           const SizedBox(width: 6),
           Flexible(
             child: Text(
@@ -939,9 +940,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ? Icons.visibility_off_rounded
                       : Icons.visibility_rounded,
                   size: 20,
-                  color: isDark
-                      ? FinavigColors.textSecondary
-                      : FinavigColors.textSecondaryLight,
+                  color: Colors.white,
                 ),
                 onPressed: () {
                   setState(() {
@@ -1011,7 +1010,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const Icon(
                   Icons.cake_rounded,
                   size: 19,
-                  color: FinavigColors.violet,
+                  color: Colors.white,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -1036,7 +1035,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: const Icon(
                       Icons.close_rounded,
                       size: 18,
-                      color: FinavigColors.textSecondary,
+                      color: Colors.white,
                     ),
                   ),
               ],
@@ -1171,12 +1170,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
                 ),
-                Icon(
+                const Icon(
                   Icons.expand_more_rounded,
                   size: 22,
-                  color: isDark
-                      ? FinavigColors.textSecondary
-                      : FinavigColors.textSecondaryLight,
+                  color: Colors.white,
                 ),
               ],
             ),
@@ -1406,7 +1403,7 @@ class _LoginScreenState extends State<LoginScreen> {
         fontSize: 13,
       ),
       errorText: errorText,
-      prefixIcon: Icon(icon, size: 19, color: FinavigColors.accentBright),
+      prefixIcon: Icon(icon, size: 19, color: Colors.white),
       prefixIconConstraints: iconSlot,
       suffixIconConstraints: iconSlot,
       suffixIcon: suffixIcon,
@@ -1562,47 +1559,40 @@ class _PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Flat single-dark-color CTA: solid ink in both themes (hairline border
-    // keeps it visible on the dark glass sheet). No gradient, no halo.
+    // Inverted CTA: solid white with ink text — the opposite of the
+    // old dark button — so the action pops off the ink canvas.
     return SizedBox(
       height: 52,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(FinavigRadius.button),
-          border: isDark
-              ? Border.all(color: Colors.white.withOpacity(0.14))
-              : null,
-        ),
-        child: FilledButton(
-          onPressed: busy ? null : onPressed,
-          style: FilledButton.styleFrom(
-            backgroundColor: FinavigColors.ink,
-            foregroundColor: Colors.white,
-            disabledBackgroundColor: FinavigColors.ink.withOpacity(0.55),
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(FinavigRadius.button),
-            ),
+      child: FilledButton(
+        onPressed: busy ? null : onPressed,
+        style: FilledButton.styleFrom(
+          backgroundColor: Colors.white,
+          foregroundColor: FinavigColors.ink,
+          disabledBackgroundColor: Colors.white.withOpacity(0.5),
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(FinavigRadius.button),
           ),
-          child: busy
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                )
-              : Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 15.5,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.2,
+        ),
+        child: busy
+            ? SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: const AlwaysStoppedAnimation<Color>(
+                    FinavigColors.ink,
                   ),
                 ),
-        ),
+              )
+            : Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 15.5,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.2,
+                ),
+              ),
       ),
     );
   }
@@ -1695,10 +1685,10 @@ class _ModeOption extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: FinavigColors.violet.withOpacity(0.15),
+                color: Colors.white.withOpacity(0.10),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, size: 20, color: FinavigColors.violet),
+              child: Icon(icon, size: 20, color: Colors.white),
             ),
             const SizedBox(width: 14),
             Expanded(
