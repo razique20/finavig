@@ -17,8 +17,8 @@ import '../widgets/dialogs/legal_info_dialogs.dart';
 import 'app_lock_flows.dart';
 
 /// Login & Sign-up — a Material-3 centred auth screen: a quiet
-/// brand header (FV monogram, wordmark + GCC Edition pill, the
-/// welcome screen's tagline and feature chips) above the quiz flow,
+/// brand header (wordmark + GCC Edition pill, the welcome
+/// screen's tagline and feature chips) above the quiz flow,
 /// which sits in a soft card on a chart-motif backdrop borrowed
 /// from the splash / welcome artwork.
 ///
@@ -422,7 +422,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // ── Brand header (centred: FV monogram, wordmark + pill, tagline) ──
+  // ── Brand header (centred: wordmark + pill, tagline) ──
 
   Widget _brandHeader(bool isDark) {
     return Padding(
