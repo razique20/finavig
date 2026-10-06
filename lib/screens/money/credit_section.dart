@@ -16,6 +16,10 @@ class CreditSection extends StatelessWidget {
   final void Function(CreditEntry entry) onDelete;
   final void Function(CreditEntry entry) onExtend;
 
+  /// Close an obligation by marking it settled (and optionally mirroring the
+  /// repayment into Money).
+  final void Function(CreditEntry entry) onSettle;
+
   /// Collapse state for the Money tab, where every section can be
   /// minimized to its header. Optional so [CreditScreen] keeps
   /// using this widget as a plain, always-expanded section.
@@ -29,6 +33,7 @@ class CreditSection extends StatelessWidget {
     required this.onEdit,
     required this.onDelete,
     required this.onExtend,
+    required this.onSettle,
     this.collapsed = false,
     this.onToggleSection,
   });
@@ -80,6 +85,7 @@ class CreditSection extends StatelessWidget {
                 onEdit: () => onEdit(entry),
                 onDelete: () => onDelete(entry),
                 onExtend: () => onExtend(entry),
+                onSettle: () => onSettle(entry),
                 onWhatsApp: () => _showFollowUpSheet(context, entry),
               ),
               const SizedBox(height: 10),
@@ -224,6 +230,7 @@ class _CreditCard extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final VoidCallback onExtend;
+  final VoidCallback onSettle;
   final VoidCallback onWhatsApp;
 
   const _CreditCard({
@@ -231,6 +238,7 @@ class _CreditCard extends StatelessWidget {
     required this.onEdit,
     required this.onDelete,
     required this.onExtend,
+    required this.onSettle,
     required this.onWhatsApp,
   });
 
@@ -239,6 +247,7 @@ class _CreditCard extends StatelessWidget {
     final theme = Theme.of(context);
     final borrowed = entry.direction == CreditDirection.borrowed;
     final flowColor = borrowed ? Colors.red : Colors.green;
+    final settled = entry.isSettled;
     final overdue = CreditMath.isOverdue(entry);
     final hasPhone =
         (entry.counterpartyPhone?.replaceAll(RegExp(r'\D'), '') ?? '')
@@ -295,6 +304,26 @@ class _CreditCard extends StatelessWidget {
                         color: theme.colorScheme.outline,
                       ),
                     ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${entry.direction.startLabel} '
+                      '${CreditMath.formatDate(entry.startDate)}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.outline,
+                        fontSize: 11,
+                      ),
+                    ),
+                    if ((entry.description ?? '').trim().isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        entry.description!.trim(),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -314,6 +343,8 @@ class _CreditCard extends StatelessWidget {
               PopupMenuButton<String>(
                 onSelected: (value) {
                   switch (value) {
+                    case 'settle':
+                      onSettle();
                     case 'edit':
                       onEdit();
                     case 'extend':
@@ -322,8 +353,23 @@ class _CreditCard extends StatelessWidget {
                       onDelete();
                   }
                 },
-                itemBuilder: (_) => const [
-                  PopupMenuItem(
+                itemBuilder: (_) => [
+                  if (!settled)
+                    PopupMenuItem(
+                      value: 'settle',
+                      child: ListTile(
+                        leading: Icon(
+                          Icons.check_circle_outline_rounded,
+                          size: 18,
+                          color: Colors.green,
+                        ),
+                        title: Text(
+                          borrowed ? 'Mark as repaid' : 'Money received back',
+                        ),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                  const PopupMenuItem(
                     value: 'edit',
                     child: ListTile(
                       leading: Icon(Icons.edit_rounded, size: 18),
@@ -331,15 +377,16 @@ class _CreditCard extends StatelessWidget {
                       contentPadding: EdgeInsets.zero,
                     ),
                   ),
-                  PopupMenuItem(
-                    value: 'extend',
-                    child: ListTile(
-                      leading: Icon(Icons.event_repeat_rounded, size: 18),
-                      title: Text('Extend deadline'),
-                      contentPadding: EdgeInsets.zero,
+                  if (!settled)
+                    const PopupMenuItem(
+                      value: 'extend',
+                      child: ListTile(
+                        leading: Icon(Icons.event_repeat_rounded, size: 18),
+                        title: Text('Extend deadline'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
                     ),
-                  ),
-                  PopupMenuItem(
+                  const PopupMenuItem(
                     value: 'delete',
                     child: ListTile(
                       leading: Icon(
@@ -361,13 +408,16 @@ class _CreditCard extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: [
-              _DeadlineChip(entry: entry),
+              if (settled)
+                _SettledChip(settledAt: entry.settledAt!)
+              else
+                _DeadlineChip(entry: entry),
               if (entry.extensionCount > 0) ...[
                 const SizedBox(width: 6),
                 _ExtensionBadge(count: entry.extensionCount),
               ],
               const Spacer(),
-              if (hasPhone)
+              if (hasPhone && !settled)
                 IconButton(
                   onPressed: onWhatsApp,
                   tooltip: 'Follow up on WhatsApp',
@@ -411,6 +461,40 @@ class _DeadlineChip extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             CreditMath.deadlineLabel(entry),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Settled" chip — the obligation is closed; the entry stays as history.
+class _SettledChip extends StatelessWidget {
+  final DateTime settledAt;
+
+  const _SettledChip({required this.settledAt});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    const color = Colors.green;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.check_circle_rounded, size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(
+            'Settled ${CreditMath.formatDate(settledAt)}',
             style: theme.textTheme.bodySmall?.copyWith(
               color: color,
               fontWeight: FontWeight.w700,

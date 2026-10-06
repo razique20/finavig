@@ -13,6 +13,14 @@ extension CreditDirectionX on CreditDirection {
   /// Short money-flow label, e.g. "I owe" / "Owed to me".
   String get flowLabel =>
       this == CreditDirection.borrowed ? 'I owe' : 'Owed to me';
+
+  /// Label for the date the obligation began, from the user's view.
+  String get startLabel =>
+      this == CreditDirection.borrowed ? 'Borrowed on' : 'Lent on';
+
+  /// Field label for the date the obligation began.
+  String get startDateFieldLabel =>
+      this == CreditDirection.borrowed ? 'Borrowed date' : 'Lent date';
 }
 
 /// One recorded deadline extension: the deadline moved from [from] to
@@ -58,10 +66,33 @@ class CreditEntry {
   final String currency;
   DateTime deadline;
 
+  /// When the money actually changed hands — the date the user
+  /// borrowed or lent it, which the user can set. Distinct from
+  /// [createdAt] (when the record was entered).
+  final DateTime startDate;
+
+  /// Short free-text note explaining why the obligation exists,
+  /// e.g. "Borrowed for car repair". Optional.
+  final String? description;
+
   /// Deadline extensions, oldest first. Empty when the deadline was
   /// never moved. The first entry's `from` is the original deadline.
   final List<CreditExtension> extensionHistory;
   final DateTime createdAt;
+
+  /// When the obligation was closed (money repaid / received back).
+  /// Null while the entry is still outstanding. Settled entries drop
+  /// out of the totals, overdue math and the AI prompts, but stay in
+  /// history so the extension trail is preserved.
+  final DateTime? settledAt;
+
+  /// The Money transaction that mirrored the principal changing hands,
+  /// when the user opted to sync the origin into Money.
+  final String? disbursementTransactionId;
+
+  /// The Money transaction that settled this obligation, when the user
+  /// opted to log the repayment in Money.
+  final String? settlementTransactionId;
 
   CreditEntry({
     required this.id,
@@ -70,11 +101,19 @@ class CreditEntry {
     required this.counterpartyName,
     required this.amount,
     required this.deadline,
+    required this.startDate,
     this.counterpartyPhone,
     this.currency = 'AED',
+    this.description,
     this.extensionHistory = const [],
     required this.createdAt,
+    this.settledAt,
+    this.disbursementTransactionId,
+    this.settlementTransactionId,
   });
+
+  /// Whether the obligation has been closed.
+  bool get isSettled => settledAt != null;
 
   /// Number of times the deadline has been extended.
   int get extensionCount => extensionHistory.length;
@@ -100,6 +139,8 @@ class CreditEntry {
       amount: amount,
       currency: currency,
       deadline: newDeadline,
+      startDate: startDate,
+      description: description,
       extensionHistory: [
         ...extensionHistory,
         CreditExtension(
@@ -109,6 +150,9 @@ class CreditEntry {
         ),
       ],
       createdAt: createdAt,
+      settledAt: settledAt,
+      disbursementTransactionId: disbursementTransactionId,
+      settlementTransactionId: settlementTransactionId,
     );
   }
 
@@ -120,7 +164,12 @@ class CreditEntry {
     double? amount,
     String? currency,
     DateTime? deadline,
+    DateTime? startDate,
+    Object? description = _unset,
     List<CreditExtension>? extensionHistory,
+    Object? settledAt = _unset,
+    Object? disbursementTransactionId = _unset,
+    Object? settlementTransactionId = _unset,
   }) {
     return CreditEntry(
       id: id,
@@ -133,10 +182,31 @@ class CreditEntry {
       amount: amount ?? this.amount,
       currency: currency ?? this.currency,
       deadline: deadline ?? this.deadline,
+      startDate: startDate ?? this.startDate,
+      description: identical(description, _unset)
+          ? this.description
+          : description as String?,
       extensionHistory: extensionHistory ?? this.extensionHistory,
       createdAt: createdAt,
+      settledAt: identical(settledAt, _unset)
+          ? this.settledAt
+          : settledAt as DateTime?,
+      disbursementTransactionId: identical(disbursementTransactionId, _unset)
+          ? this.disbursementTransactionId
+          : disbursementTransactionId as String?,
+      settlementTransactionId: identical(settlementTransactionId, _unset)
+          ? this.settlementTransactionId
+          : settlementTransactionId as String?,
     );
   }
+
+  /// Marks this obligation settled at [at], optionally linking the Money
+  /// transaction that mirrors the repayment.
+  CreditEntry markSettled({
+    required DateTime at,
+    String? transactionId,
+  }) =>
+      copyWith(settledAt: at, settlementTransactionId: transactionId);
 
   static const Object _unset = Object();
 
@@ -154,12 +224,23 @@ class CreditEntry {
       deadline:
           DateTime.tryParse(json['deadline'] as String? ?? '') ??
           DateTime.now(),
+      // Older records predate startDate — fall back to when the
+      // record was created rather than losing the date entirely.
+      startDate:
+          DateTime.tryParse(json['startDate'] as String? ?? '') ??
+          DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+          DateTime.now(),
+      description: json['description'] as String?,
       extensionHistory: (json['extensionHistory'] as List<dynamic>? ?? const [])
           .map((e) => CreditExtension.fromJson(e as Map<String, dynamic>))
           .toList(),
       createdAt:
           DateTime.tryParse(json['createdAt'] as String? ?? '') ??
           DateTime.now(),
+      settledAt: DateTime.tryParse(json['settledAt'] as String? ?? ''),
+      disbursementTransactionId:
+          json['disbursementTransactionId'] as String?,
+      settlementTransactionId: json['settlementTransactionId'] as String?,
     );
   }
 
@@ -172,8 +253,13 @@ class CreditEntry {
     'amount': amount,
     'currency': currency,
     'deadline': deadline.toIso8601String(),
+    'startDate': startDate.toIso8601String(),
+    'description': description,
     'extensionHistory': extensionHistory.map((e) => e.toJson()).toList(),
     'createdAt': createdAt.toIso8601String(),
+    'settledAt': settledAt?.toIso8601String(),
+    'disbursementTransactionId': disbursementTransactionId,
+    'settlementTransactionId': settlementTransactionId,
   };
 }
 
@@ -191,8 +277,14 @@ class CreditMath {
     ).difference(DateTime(n.year, n.month, n.day)).inDays;
   }
 
+  /// Settled obligations are never "overdue" — they are closed.
   static bool isOverdue(CreditEntry entry, {DateTime? now}) =>
-      daysUntil(entry, now: now) < 0;
+      !entry.isSettled && daysUntil(entry, now: now) < 0;
+
+  /// The open (unsettled) subset — what the totals, deadlines and AI
+  /// prompts care about.
+  static List<CreditEntry> openOnly(List<CreditEntry> credits) =>
+      credits.where((c) => !c.isSettled).toList();
 
   /// Human deadline label: "Overdue by N days", "Due today",
   /// "Due tomorrow", "Due in N days" (next two weeks) or a date.
@@ -213,12 +305,15 @@ class CreditMath {
   static String formatDate(DateTime d) =>
       '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
 
+  /// Outstanding totals only — settled entries are skipped so the strip
+  /// shows what is still owed / still to come back.
   static ({double borrowed, double lent, double net}) totals(
     List<CreditEntry> credits,
   ) {
     var borrowed = 0.0;
     var lent = 0.0;
     for (final c in credits) {
+      if (c.isSettled) continue;
       if (c.direction == CreditDirection.borrowed) {
         borrowed += c.amount;
       } else {
@@ -229,15 +324,17 @@ class CreditMath {
   }
 
   /// Overdue entries first (most overdue at the top), then soonest
-  /// deadline first.
+  /// deadline first. Settled entries sink to the bottom — kept visible as
+  /// history, but never ahead of an open obligation.
   static List<CreditEntry> sortedForDisplay(
     List<CreditEntry> credits, {
     DateTime? now,
   }) {
     final list = [...credits];
-    list.sort(
-      (a, b) => daysUntil(a, now: now).compareTo(daysUntil(b, now: now)),
-    );
+    list.sort((a, b) {
+      if (a.isSettled != b.isSettled) return a.isSettled ? 1 : -1;
+      return daysUntil(a, now: now).compareTo(daysUntil(b, now: now));
+    });
     return list;
   }
 
@@ -261,7 +358,7 @@ class CreditMath {
             'I owe you by $due. Thanks for your patience!';
       }
       return 'Hello $name, this is a reminder that $amount borrowed on '
-          '${formatDate(entry.createdAt)} is due on $due. Please let me '
+          '${formatDate(entry.startDate)} is due on $due. Please let me '
           'know your preferred repayment date.';
     }
     if (friendly) {
@@ -270,7 +367,7 @@ class CreditMath {
           'thanks!';
     }
     return 'Hello $name, this is a reminder that $amount lent on '
-        '${formatDate(entry.createdAt)} was due on $due. Please arrange '
+        '${formatDate(entry.startDate)} was due on $due. Please arrange '
         'repayment at your earliest convenience.';
   }
 

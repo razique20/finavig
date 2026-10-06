@@ -637,6 +637,8 @@ class FinanceService extends ChangeNotifier {
               DateTime.now(),
       note: row['note'] as String?,
       documentId: row['document_id'] as String?,
+      creditId: row['credit_id'] as String?,
+      creditLeg: CreditLegX.fromName(row['credit_leg'] as String?),
     );
   }
 
@@ -655,6 +657,8 @@ class FinanceService extends ChangeNotifier {
       'occurred_at': t.occurredAt.toIso8601String().split('T').first,
       'note': t.note,
       'document_id': t.documentId,
+      'credit_id': t.creditId,
+      'credit_leg': t.creditLeg?.name,
     };
     if (ownerId != null) row['owner_id'] = ownerId;
     return row;

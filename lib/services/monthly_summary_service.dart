@@ -126,6 +126,9 @@ class MonthlySummaryAggregator {
     final prevByCategory = <FinanceCategory, double>{};
 
     for (final t in transactions) {
+      // Loan legs mirror a credit obligation, not real income/spending —
+      // counting them would double up against the credit block.
+      if (t.isCreditLinked) continue;
       if (collectionId != null && t.collectionId != collectionId) continue;
       final d = t.occurredAt;
       if (d.year == ref.year && d.month == ref.month) {

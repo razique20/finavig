@@ -27,10 +27,35 @@ create table if not exists public.credit_entries (
   counterparty_phone text,
   amount numeric(12,2) not null check (amount >= 0),
   currency text not null default 'AED',
+  -- The date the money actually changed hands (when the user
+  -- borrowed or lent it). Optional for rows created before this
+  -- column existed; the app then falls back to created_at.
+  start_date date,
+  -- Short free-text note explaining why the obligation exists.
+  description text,
   deadline date not null,
   extension_history jsonb not null default '[]'::jsonb,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  -- When the obligation was closed. Null while still outstanding.
+  settled_at date,
+  -- The Money transactions mirroring this credit's cash movements,
+  -- set only when the user opted to sync them into Money.
+  disbursement_transaction_id uuid,
+  settlement_transaction_id uuid
 );
+
+-- Backfill the columns on databases created by an earlier version
+-- of this script (create table if not exists won't alter them).
+alter table public.credit_entries
+  add column if not exists start_date date;
+alter table public.credit_entries
+  add column if not exists description text;
+alter table public.credit_entries
+  add column if not exists settled_at date;
+alter table public.credit_entries
+  add column if not exists disbursement_transaction_id uuid;
+alter table public.credit_entries
+  add column if not exists settlement_transaction_id uuid;
 
 create index if not exists idx_credit_owner
   on public.credit_entries(owner_id);

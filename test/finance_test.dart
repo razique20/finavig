@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:finavig/models/finance.dart';
@@ -449,6 +451,84 @@ void main() {
       );
       expect(FinanceMath.worstBudgetStatus([ok]), isNull);
       expect(FinanceMath.worstBudgetStatus(const []), isNull);
+    });
+  });
+
+  group('FinanceTransaction credit link', () {
+    FinanceTransaction creditTx({
+      String id = 'tx-loan',
+      FinanceKind kind = FinanceKind.expense,
+      FinanceCategory category = FinanceCategory.other,
+      double amount = 500,
+      required CreditLeg leg,
+      String creditId = 'c1',
+      DateTime? when,
+    }) =>
+        FinanceTransaction(
+          id: id,
+          collectionId: 'personal',
+          kind: kind,
+          category: category,
+          title: 'Loan leg',
+          amount: amount,
+          occurredAt: when ?? DateTime(2026, 3, 2),
+          creditId: creditId,
+          creditLeg: leg,
+        );
+
+    test('round-trips creditId and creditLeg', () {
+      final tx = creditTx(leg: CreditLeg.settlement);
+      final restored = FinanceTransaction.fromJson(
+        jsonDecode(jsonEncode(tx.toJson())) as Map<String, dynamic>,
+      );
+      expect(restored.creditId, 'c1');
+      expect(restored.creditLeg, CreditLeg.settlement);
+      expect(restored.isCreditLinked, isTrue);
+    });
+
+    test('ordinary records are not credit-linked', () {
+      final tx = _tx(
+        100,
+        FinanceKind.expense,
+        FinanceCategory.foodAndBeverages,
+        DateTime(2026, 3, 1),
+      );
+      expect(tx.isCreditLinked, isFalse);
+      expect(tx.creditLeg, isNull);
+    });
+
+    test('a loan principal is not counted as income', () {
+      final march = DateTime(2026, 3, 15);
+      final transactions = [
+        _tx(1000, FinanceKind.income, FinanceCategory.sales, DateTime(2026, 3, 1)),
+        creditTx(
+          kind: FinanceKind.income,
+          amount: 5000,
+          leg: CreditLeg.disbursement,
+          when: DateTime(2026, 3, 2),
+        ),
+      ];
+      final summary = FinanceMath.summaryForMonth(
+        transactions,
+        march,
+        collectionId: 'personal',
+      );
+      expect(summary.income, 1000);
+    });
+
+    test('a repayment does not consume a category budget', () {
+      final month = DateTime(2026, 3);
+      final transactions = [
+        _tx(300, FinanceKind.expense, FinanceCategory.rent, DateTime(2026, 3, 2)),
+        creditTx(
+          amount: 900,
+          leg: CreditLeg.settlement,
+          when: DateTime(2026, 3, 2),
+        ),
+      ];
+      final spend = FinanceMath.spendByCategory(transactions, month);
+      expect(spend[FinanceCategory.rent], 300);
+      expect(spend.containsKey(FinanceCategory.other), isFalse);
     });
   });
 }

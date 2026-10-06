@@ -151,12 +151,17 @@ class AnomalyDetectionService {
     final now = DateTime.now();
     final recentCutoff = now.subtract(Duration(days: recentDays));
 
+    // Loan legs are not bills — they must not be flagged as spikes, and
+    // they must not skew the historical averages they are compared against.
+    final history =
+        transactions.where((t) => !t.isCreditLinked).toList();
+
     final anomalies = <BillAnomaly>[];
-    for (final tx in transactions) {
+    for (final tx in history) {
       if (tx.kind != FinanceKind.expense) continue;
       if (tx.occurredAt.isBefore(recentCutoff)) continue;
 
-      final anomaly = evaluateTransaction(tx, transactions);
+      final anomaly = evaluateTransaction(tx, history);
       if (anomaly != null) {
         anomalies.add(anomaly);
       }

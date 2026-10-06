@@ -25,8 +25,18 @@ create table if not exists public.finance_transactions (
   occurred_at date not null default current_date,
   note text,
   document_id uuid references public.documents(id) on delete set null,
+  -- Set when the row mirrors a credit obligation's cash movement;
+  -- credit_leg is 'disbursement' (principal) or 'settlement' (repayment).
+  credit_id uuid,
+  credit_leg text check (credit_leg in ('disbursement','settlement')),
   created_at timestamptz not null default now()
 );
+
+-- Backfill for databases created before the credit-sync columns existed.
+alter table public.finance_transactions
+  add column if not exists credit_id uuid;
+alter table public.finance_transactions
+  add column if not exists credit_leg text;
 
 create index if not exists idx_finance_tx_owner
   on public.finance_transactions(owner_id);

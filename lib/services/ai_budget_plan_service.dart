@@ -4,11 +4,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/credit.dart';
 import '../models/finance.dart';
 
 import 'anomaly_detection_service.dart';
 import 'auth_service.dart';
 import 'collection_service.dart';
+import 'credit_service.dart';
 import 'document_scanner_service.dart';
 import 'entitlement_service.dart';
 import 'finance_service.dart';
@@ -422,6 +424,12 @@ class AiBudgetPlanService {
       );
     }
 
+    // Credit obligations are part of the user's real cash position — pull
+    // them once so the prompt and the offline fallback both see them.
+    await CreditService.instance.init();
+    final credits = CreditService.instance.activeCredits;
+    final borrowedOutstanding = CreditMath.totals(credits).borrowed;
+
     // Enforce the monthly tier quota before a new Groq call.
     final remaining = await getRemainingQuotaThisMonth(ref);
     if (remaining <= 0) {
@@ -431,6 +439,7 @@ class AiBudgetPlanService {
         targetAmount: targetAmount,
         targetMonths: targetMonths,
         monthlySpare: fin.monthlySpare,
+        outstandingBorrowed: borrowedOutstanding,
         now: ref,
       );
       _lastPlan = fallback;
@@ -443,6 +452,7 @@ class AiBudgetPlanService {
       goalDescription: goalDescription,
       targetAmount: targetAmount,
       targetMonths: targetMonths,
+      credits: credits,
       now: ref,
     );
 
@@ -467,6 +477,10 @@ class AiBudgetPlanService {
         'that needs no in-app change. Mix the types — never make every action '
         'an envelope. Write for a normal person: simple everyday words, use '
         'the user\'s own numbers, no jargon like "discretionary spend". '
+        'If credit obligations are provided, factor them in: clearing overdue '
+        'money the user owes takes priority over new discretionary savings, and '
+        'money owed to the user should not be treated as cash in hand until it '
+        'is actually repaid. '
         'Give 3-5 actions. Keep the summary under 60 words. '
         'All money values in ${_cur()}.';
 
@@ -506,6 +520,7 @@ class AiBudgetPlanService {
       targetAmount: targetAmount,
       targetMonths: targetMonths,
       monthlySpare: fin.monthlySpare,
+      outstandingBorrowed: borrowedOutstanding,
       now: ref,
     );
     _lastPlan = fallback;
@@ -555,6 +570,7 @@ class AiBudgetPlanService {
     final txs = transactions ?? FinanceService.instance.activeTransactions;
     final byCategory = <FinanceCategory, double>{};
     for (final t in txs) {
+      if (t.isCreditLinked) continue;
       if (t.kind != FinanceKind.expense) continue;
       final d = t.occurredAt;
       if (d.isBefore(ref.subtract(Duration(days: 30 * months)))) continue;
@@ -742,6 +758,7 @@ class AiBudgetPlanService {
     required String goalDescription,
     required double targetAmount,
     required int? targetMonths,
+    required List<CreditEntry> credits,
     required DateTime now,
   }) async {
     final fin = _gatherFinances();
@@ -771,6 +788,7 @@ class AiBudgetPlanService {
     // monthly pace so it compares directly against budget limits.
     final byCategory = <FinanceCategory, double>{};
     for (final t in txs) {
+      if (t.isCreditLinked) continue;
       if (t.kind != FinanceKind.expense) continue;
       final d = t.occurredAt;
       final isRecent = d.isAfter(now.subtract(const Duration(days: 90)));
@@ -850,9 +868,34 @@ class AiBudgetPlanService {
           '${_cur()} ${_fmt(a.historicalAverage)} — worth reviewing.');
     }
 
+    // ── Credit obligations: money the user owes people or is owed ──
+    // Settled obligations are history and never affect the plan.
+    final openCredits = CreditMath.openOnly(credits);
+    if (openCredits.isNotEmpty) {
+      final totals = CreditMath.totals(openCredits);
+      final overdue =
+          openCredits.where((c) => CreditMath.isOverdue(c, now: now)).toList();
+      sb.writeln('- Credit obligations (money borrowed from / lent to people):');
+      sb.writeln('  * You owe (borrowed): ${_cur()} ${_fmt(totals.borrowed)}');
+      sb.writeln('  * Owed to you (lent): ${_cur()} ${_fmt(totals.lent)}');
+      if (overdue.isNotEmpty) {
+        sb.writeln('  * Overdue: ${overdue.length} — clear these before new '
+            'discretionary savings');
+        for (final c in overdue.take(3)) {
+          sb.writeln('    - ${c.counterpartyName}: ${_cur()} ${_fmt(c.amount)} '
+              '(${CreditMath.deadlineLabel(c, now: now)})');
+        }
+      }
+    }
+
     sb.writeln();
     sb.writeln('Use the monthly-normalised figures above. Account for upcoming '
-        'renewal fees when setting monthly savings so the plan stays cash-safe.');
+        'renewal fees when setting monthly savings so the plan stays cash-safe. '
+        'If credit obligations are listed, prioritise repaying overdue money '
+        'the user owes over new savings, and do not count money owed to the '
+        'user as available cash until it is repaid. Transactions that mirror a '
+        'credit obligation are already excluded from the spending figures — do '
+        'not add them back in.');
 
     return sb.toString();
   }
@@ -943,6 +986,7 @@ class AiBudgetPlanService {
     required double targetAmount,
     required int? targetMonths,
     required double monthlySpare,
+    double outstandingBorrowed = 0,
     required DateTime now,
   }) {
     final goalLabel = goalDescription.trim().isEmpty
@@ -976,6 +1020,14 @@ class AiBudgetPlanService {
     }
 
     final actions = <AiBudgetPlanAction>[
+      if (outstandingBorrowed > 0)
+        AiBudgetPlanAction(
+          type: AiBudgetPlanActionType.tip,
+          title: 'Clear the ${_cur()} ${_fmt(outstandingBorrowed)} you owe first',
+          detail: 'You have outstanding credit obligations. Settling what you '
+              'owe takes priority over new savings — then put the freed-up '
+              'monthly cash toward "$goalLabel".',
+        ),
       AiBudgetPlanAction(
         type: AiBudgetPlanActionType.envelope,
         title: 'Save ${_cur()} ${(targetMonths != null ? targetAmount / targetMonths : monthlySpare).toStringAsFixed(0)} per month',

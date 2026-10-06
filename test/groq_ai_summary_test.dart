@@ -1,8 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:finavig/models/credit.dart';
 import 'package:finavig/models/subscription_tier.dart';
 import 'package:finavig/services/ai_executive_summary_service.dart';
+import 'package:finavig/services/credit_service.dart';
 import 'package:finavig/services/entitlement_service.dart';
 import 'package:finavig/services/groq_api_service.dart';
 
@@ -11,6 +13,7 @@ void main() {
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
+    CreditService.instance.clearCache();
     await EntitlementService.instance.refresh();
     await AiExecutiveSummaryService.instance.resetUsageCounter();
   });
@@ -70,6 +73,77 @@ void main() {
       expect(EntitlementService.instance.tier, SubscriptionTier.business);
       final service = AiExecutiveSummaryService.instance;
       expect(service.getMonthlyQuotaLimit(), 40);
+    });
+  });
+
+  group('Credit obligations in the AI summary', () {
+    CreditEntry credit({
+      double amount = 2500,
+      CreditDirection direction = CreditDirection.borrowed,
+      DateTime? deadline,
+    }) =>
+        CreditEntry(
+          id: 'credit-ai-${amount.toInt()}',
+          collectionId: 'personal',
+          direction: direction,
+          counterpartyName: 'Ahmed',
+          amount: amount,
+          currency: 'AED',
+          startDate: DateTime(2026, 9, 1),
+          deadline: deadline ?? DateTime(2026, 9, 15),
+          createdAt: DateTime(2026, 9, 1),
+        );
+
+    test('feeds outstanding credit into the Groq prompt and insights',
+        () async {
+      await CreditService.instance.init();
+      await CreditService.instance.addCredit(credit());
+
+      final service = AiExecutiveSummaryService.instance;
+      String? capturedUser;
+      service.groqCallOverride = (system, user) async {
+        capturedUser = user;
+        return 'Executive summary incl. credit.';
+      };
+
+      final now = DateTime(2026, 9, 21);
+      final result = await service.generateSummary(
+        forceRegenerate: true,
+        now: now,
+      );
+
+      expect(capturedUser, isNotNull);
+      expect(capturedUser, contains('CREDIT OBLIGATIONS'));
+      expect(capturedUser, contains('Ahmed'));
+      expect(capturedUser, contains('2,500'));
+      // Overdue borrowed obligation should surface as an alert insight plus
+      // an overall credit-position insight.
+      final labels = result.insights.map((i) => i.categoryLabel).toList();
+      expect(labels, contains('Credit Position'));
+      expect(labels, contains('Credit Due'));
+    });
+
+    test('offline fallback narrative mentions credit obligations', () async {
+      await CreditService.instance.init();
+      await CreditService.instance.addCredit(credit(amount: 800));
+
+      final service = AiExecutiveSummaryService.instance;
+      service.groqCallOverride = (system, user) async => 'ok';
+
+      // Consume the free-tier quota (3), then the 4th call uses the
+      // deterministic fallback narrative.
+      final now = DateTime(2026, 9, 21);
+      await service.generateSummary(forceRegenerate: true, now: now);
+      await service.generateSummary(forceRegenerate: true, now: now);
+      await service.generateSummary(forceRegenerate: true, now: now);
+      final overflow = await service.generateSummary(
+        forceRegenerate: true,
+        now: now,
+      );
+
+      expect(overflow.quotaExceeded, isTrue);
+      expect(overflow.narrative, contains('On credit'));
+      expect(overflow.narrative, contains('800'));
     });
   });
 

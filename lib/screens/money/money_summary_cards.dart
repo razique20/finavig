@@ -451,6 +451,9 @@ class _WeeklySpendChartState extends State<WeeklySpendChart> {
     });
 
     for (final t in widget.transactions) {
+      // Loan legs mirror a credit obligation — not spending; keeping them
+      // out here keeps the chart consistent with the summary totals.
+      if (t.isCreditLinked) continue;
       if (t.kind != FinanceKind.expense) continue;
       for (final b in buckets) {
         if (!t.occurredAt.isBefore(b.start) && t.occurredAt.isBefore(b.end)) {
@@ -713,6 +716,8 @@ class _TopExpensesCardState extends State<TopExpensesCard> {
         widget.transactions
             .where(
               (t) =>
+                  // Loan legs are not real spending (see summaryForMonth).
+                  !t.isCreditLinked &&
                   t.kind == FinanceKind.expense &&
                   t.occurredAt.year == now.year &&
                   t.occurredAt.month == now.month,

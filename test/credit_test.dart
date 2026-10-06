@@ -4,7 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:finavig/models/credit.dart';
+import 'package:finavig/models/finance.dart';
 import 'package:finavig/services/credit_service.dart';
+import 'package:finavig/services/finance_service.dart';
 
 CreditEntry _entry({
   String id = 'c1',
@@ -13,20 +15,28 @@ CreditEntry _entry({
   String currency = 'USD',
   String counterpartyName = 'Ahmed',
   String? counterpartyPhone,
+  String? description,
+  DateTime? startDate,
   DateTime? deadline,
   DateTime? createdAt,
   List<CreditExtension> extensionHistory = const [],
 }) {
+  // Older records defaulted their borrow/lend date to creation time;
+  // mirror that here unless a test sets startDate explicitly.
+  final created = createdAt ?? DateTime(2026, 9, 1);
   return CreditEntry(
     id: id,
     collectionId: 'personal',
     direction: direction,
     counterpartyName: counterpartyName,
     counterpartyPhone: counterpartyPhone,
+    description: description,
     amount: amount,
-    currency: currency,      deadline: deadline ?? DateTime(2026, 9, 20),
-      extensionHistory: extensionHistory,
-    createdAt: createdAt ?? DateTime(2026, 9, 1),
+    currency: currency,
+    startDate: startDate ?? created,
+    deadline: deadline ?? DateTime(2026, 9, 20),
+    extensionHistory: extensionHistory,
+    createdAt: created,
   );
 }
 
@@ -200,6 +210,7 @@ void main() {
         currency: 'EUR',
         counterpartyName: 'Sara',
         deadline: DateTime(2026, 9, 20),
+        startDate: DateTime(2026, 8, 20),
         createdAt: DateTime(2026, 8, 20),
       );
       final msg = CreditMath.followUpMessage(e, friendly: false);
@@ -207,6 +218,21 @@ void main() {
       expect(msg, contains('EUR 300.00'));
       expect(msg, contains('due on 20/09/2026'));
       expect(msg, contains('borrowed on 20/08/2026'));
+    });
+
+    test('standard template uses startDate, not the record creation date',
+        () {
+      final e = _entry(
+        direction: CreditDirection.lent,
+        amount: 300,
+        counterpartyName: 'Sara',
+        deadline: DateTime(2026, 9, 20),
+        startDate: DateTime(2026, 8, 10),
+        createdAt: DateTime(2026, 9, 1),
+      );
+      final msg = CreditMath.followUpMessage(e, friendly: false);
+      expect(msg, contains('lent on 10/08/2026'));
+      expect(msg, isNot(contains('01/09/2026')));
     });
 
     test('wa.me link encodes the message and strips phone formatting', () {
@@ -270,6 +296,23 @@ void main() {
       expect(restored.createdAt, e.createdAt);
     });
 
+    test('preserves start date and description', () {
+      final e = _entry(
+        id: 'c-note',
+        description: 'Borrowed for car repair',
+        startDate: DateTime(2026, 8, 15),
+        deadline: DateTime(2026, 9, 20),
+        createdAt: DateTime(2026, 9, 1),
+      );
+
+      final restored = CreditEntry.fromJson(
+        jsonDecode(jsonEncode(e.toJson())) as Map<String, dynamic>,
+      );
+
+      expect(restored.startDate, DateTime(2026, 8, 15));
+      expect(restored.description, 'Borrowed for car repair');
+    });
+
     test('missing optional fields fall back safely', () {
       final restored = CreditEntry.fromJson({
         'id': 'c-min',
@@ -280,6 +323,9 @@ void main() {
       expect(restored.direction, CreditDirection.borrowed);
       expect(restored.counterpartyName, 'Contact');
       expect(restored.counterpartyPhone, isNull);
+      expect(restored.description, isNull);
+      // No startDate on older records — fall back to createdAt.
+      expect(restored.startDate, DateTime(2026, 9, 1));
       expect(restored.amount, 0);
       expect(restored.currency, 'AED');
       expect(restored.extensionCount, 0);
@@ -360,6 +406,8 @@ void main() {
           direction: CreditDirection.lent,
           amount: 1200,
           counterpartyPhone: '+971501234567',
+          description: 'Lent for a deposit',
+          startDate: DateTime(2026, 9, 1),
           deadline: DateTime(2026, 9, 30),
         ),
       );
@@ -375,6 +423,353 @@ void main() {
       expect(reloaded.single.counterpartyPhone, '+971501234567');
       expect(reloaded.single.amount, 1200);
       expect(reloaded.single.deadline, DateTime(2026, 9, 30));
+      expect(reloaded.single.startDate, DateTime(2026, 9, 1));
+      expect(reloaded.single.description, 'Lent for a deposit');
+    });
+  });
+
+  group('CreditEntry settlement', () {
+    test('markSettled stamps the date and links the Money transaction', () {
+      final e = _entry().markSettled(
+        at: DateTime(2026, 9, 12),
+        transactionId: 'tx-1',
+      );
+      expect(e.isSettled, isTrue);
+      expect(e.settledAt, DateTime(2026, 9, 12));
+      expect(e.settlementTransactionId, 'tx-1');
+      // The source entry is untouched (markSettled returns a copy).
+      expect(_entry().isSettled, isFalse);
+    });
+
+    test('settled entries leave the outstanding totals', () {
+      final credits = [
+        _entry(id: 'open', amount: 100, direction: CreditDirection.borrowed),
+        _entry(id: 'closed', amount: 900, direction: CreditDirection.borrowed)
+            .markSettled(at: DateTime(2026, 9, 12)),
+      ];
+      final totals = CreditMath.totals(credits);
+      expect(totals.borrowed, 100);
+      expect(totals.net, -100);
+    });
+
+    test('isOverdue is false once settled, even past the deadline', () {
+      final overdue = _entry(deadline: DateTime(2026, 9, 1));
+      expect(CreditMath.isOverdue(overdue, now: now), isTrue);
+      expect(
+        CreditMath.isOverdue(
+          overdue.markSettled(at: DateTime(2026, 9, 2)),
+          now: now,
+        ),
+        isFalse,
+      );
+    });
+
+    test('sortedForDisplay sinks settled entries to the bottom', () {
+      final credits = [
+        _entry(id: 'settled', deadline: DateTime(2026, 9, 1))
+            .markSettled(at: DateTime(2026, 9, 2)),
+        _entry(id: 'open-late', deadline: DateTime(2026, 9, 20)),
+        _entry(id: 'open-soon', deadline: DateTime(2026, 9, 12)),
+      ];
+      expect(
+        CreditMath.sortedForDisplay(credits, now: now)
+            .map((c) => c.id)
+            .toList(),
+        ['open-soon', 'open-late', 'settled'],
+      );
+    });
+
+    test('openOnly drops settled entries', () {
+      final credits = [
+        _entry(id: 'a'),
+        _entry(id: 'b').markSettled(at: DateTime(2026, 9, 12)),
+      ];
+      expect(CreditMath.openOnly(credits).map((c) => c.id), ['a']);
+    });
+
+    test('extendDeadline keeps the settlement state', () {
+      final settled = _entry(deadline: DateTime(2026, 9, 20))
+          .markSettled(at: DateTime(2026, 9, 12), transactionId: 'tx-1');
+      final extended = settled.extendDeadline(DateTime(2026, 10, 20));
+      expect(extended.isSettled, isTrue);
+      expect(extended.settledAt, DateTime(2026, 9, 12));
+      expect(extended.settlementTransactionId, 'tx-1');
+    });
+  });
+
+  group('CreditEntry settlement JSON round-trip', () {
+    test('preserves settledAt and both Money links', () {
+      final e = _entry(id: 'c-settled').copyWith(
+        settledAt: DateTime(2026, 9, 12),
+        disbursementTransactionId: 'tx-out',
+        settlementTransactionId: 'tx-in',
+      );
+      final restored = CreditEntry.fromJson(
+        jsonDecode(jsonEncode(e.toJson())) as Map<String, dynamic>,
+      );
+      expect(restored.isSettled, isTrue);
+      expect(restored.settledAt, DateTime(2026, 9, 12));
+      expect(restored.disbursementTransactionId, 'tx-out');
+      expect(restored.settlementTransactionId, 'tx-in');
+    });
+
+    test('legacy rows load as unsettled with no links', () {
+      final restored = CreditEntry.fromJson({'id': 'c-legacy'});
+      expect(restored.isSettled, isFalse);
+      expect(restored.settledAt, isNull);
+      expect(restored.disbursementTransactionId, isNull);
+      expect(restored.settlementTransactionId, isNull);
+    });
+
+    test('copyWith can clear a settlement', () {
+      final settled = _entry().markSettled(at: DateTime(2026, 9, 12));
+      expect(settled.copyWith(settledAt: null).isSettled, isFalse);
+    });
+  });
+
+  group('CreditService settlement flow (local only)', () {
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+      CreditService.instance.clearCache();
+      FinanceService.instance.clearCache();
+    });
+
+    test('settleCredit without a transaction only closes the credit',
+        () async {
+      final service = CreditService.instance;
+      await service.init();
+      await service.addCredit(_entry(id: 's1'));
+
+      await service.settleCredit('s1', settledAt: DateTime(2026, 9, 12));
+
+      final e = service.activeCredits.single;
+      expect(e.isSettled, isTrue);
+      expect(e.settlementTransactionId, isNull);
+      expect(FinanceService.instance.activeTransactions, isEmpty);
+    });
+
+    test('settleCredit writes and links the repayment leg', () async {
+      final service = CreditService.instance;
+      await service.init();
+      await service.addCredit(
+        _entry(id: 's2', direction: CreditDirection.lent, amount: 400),
+      );
+      final repayment = FinanceTransaction(
+        id: 'tx-repay',
+        collectionId: 'personal',
+        kind: FinanceKind.income,
+        category: FinanceCategory.other,
+        title: 'Ahmed repaid me',
+        amount: 400,
+        occurredAt: DateTime(2026, 9, 12),
+        creditId: 's2',
+        creditLeg: CreditLeg.settlement,
+      );
+
+      await service.settleCredit(
+        's2',
+        settledAt: DateTime(2026, 9, 12),
+        transaction: repayment,
+      );
+
+      final e = service.activeCredits.single;
+      expect(e.isSettled, isTrue);
+      expect(e.settlementTransactionId, 'tx-repay');
+      final tx = FinanceService.instance.activeTransactions.single;
+      expect(tx.id, 'tx-repay');
+      expect(tx.kind, FinanceKind.income);
+      expect(tx.creditId, 's2');
+      expect(tx.creditLeg, CreditLeg.settlement);
+    });
+
+    test('settleCredit attaches an already-logged transaction by id',
+        () async {
+      final service = CreditService.instance;
+      await service.init();
+      await service.addCredit(_entry(id: 's3'));
+      final existing = FinanceTransaction(
+        id: 'tx-existing',
+        collectionId: 'personal',
+        kind: FinanceKind.expense,
+        category: FinanceCategory.other,
+        title: 'Paid Ahmed',
+        amount: 500,
+        occurredAt: DateTime(2026, 9, 12),
+      );
+      await FinanceService.instance.addTransaction(existing);
+
+      await service.settleCredit(
+        's3',
+        settledAt: DateTime(2026, 9, 12),
+        transactionId: 'tx-existing',
+      );
+
+      expect(
+        service.activeCredits.single.settlementTransactionId,
+        'tx-existing',
+      );
+      // Nothing new was logged — the existing record was reused.
+      expect(FinanceService.instance.activeTransactions, hasLength(1));
+    });
+
+    test('settleCredit tags an attached repayment as a credit leg',
+        () async {
+      final service = CreditService.instance;
+      await service.init();
+      await service.addCredit(_entry(id: 's6'));
+      await FinanceService.instance.addTransaction(
+        FinanceTransaction(
+          id: 'tx-attach',
+          collectionId: 'personal',
+          kind: FinanceKind.expense,
+          category: FinanceCategory.other,
+          title: 'Paid Ahmed',
+          amount: 500,
+          occurredAt: DateTime(2026, 9, 12),
+        ),
+      );
+
+      await service.settleCredit(
+        's6',
+        settledAt: DateTime(2026, 9, 12),
+        transactionId: 'tx-attach',
+      );
+
+      // The reused row is tagged, not merely pointed at — otherwise it keeps
+      // counting as real spending and can be attached to a second credit.
+      final tx = FinanceService.instance.activeTransactions.single;
+      expect(tx.isCreditLinked, isTrue);
+      expect(tx.creditId, 's6');
+      expect(tx.creditLeg, CreditLeg.settlement);
+    });
+
+    test('settleCredit links a hand-logged principal leg', () async {
+      final service = CreditService.instance;
+      await service.init();
+      await service.addCredit(_entry(id: 's7', amount: 900));
+      await FinanceService.instance.addTransaction(
+        FinanceTransaction(
+          id: 'tx-hand',
+          collectionId: 'personal',
+          kind: FinanceKind.income,
+          category: FinanceCategory.other,
+          title: 'Borrowed from Ahmed',
+          amount: 900,
+          occurredAt: DateTime(2026, 9, 1),
+        ),
+      );
+
+      await service.settleCredit(
+        's7',
+        settledAt: DateTime(2026, 9, 12),
+        disbursementTransactionId: 'tx-hand',
+      );
+
+      expect(
+        service.activeCredits.single.disbursementTransactionId,
+        'tx-hand',
+      );
+      final tx = FinanceService.instance.activeTransactions.single;
+      expect(tx.creditId, 's7');
+      expect(tx.creditLeg, CreditLeg.disbursement);
+      // The hand-logged principal no longer inflates income.
+      final summary = FinanceMath.summaryForMonth(
+        FinanceService.instance.activeTransactions,
+        DateTime(2026, 9, 12),
+      );
+      expect(summary.income, 0);
+    });
+
+    test('settleCredit never re-tags a leg owned by another credit',
+        () async {
+      final service = CreditService.instance;
+      await service.init();
+      await service.addCredit(_entry(id: 's8'));
+      await FinanceService.instance.addTransaction(
+        FinanceTransaction(
+          id: 'tx-other',
+          collectionId: 'personal',
+          kind: FinanceKind.expense,
+          category: FinanceCategory.other,
+          title: 'Someone else\'s repayment',
+          amount: 500,
+          occurredAt: DateTime(2026, 9, 12),
+          creditId: 'other-credit',
+          creditLeg: CreditLeg.settlement,
+        ),
+      );
+
+      await service.settleCredit(
+        's8',
+        settledAt: DateTime(2026, 9, 12),
+        transactionId: 'tx-other',
+      );
+
+      expect(
+        FinanceService.instance.activeTransactions.single.creditId,
+        'other-credit',
+      );
+    });
+
+    test('settleCredit is idempotent', () async {
+      final service = CreditService.instance;
+      await service.init();
+      await service.addCredit(_entry(id: 's4'));
+
+      await service.settleCredit('s4', settledAt: DateTime(2026, 9, 12));
+      await service.settleCredit('s4', settledAt: DateTime(2026, 9, 20));
+
+      final e = service.activeCredits.single;
+      expect(e.settledAt, DateTime(2026, 9, 12)); // first settle wins
+    });
+
+    test('addCreditWithDisbursement writes and links the principal',
+        () async {
+      final service = CreditService.instance;
+      await service.init();
+      final disbursement = FinanceTransaction(
+        id: 'tx-principal',
+        collectionId: 'personal',
+        kind: FinanceKind.income,
+        category: FinanceCategory.other,
+        title: 'Borrowed from Ahmed',
+        amount: 500,
+        occurredAt: DateTime(2026, 9, 1),
+        creditId: 'd1',
+        creditLeg: CreditLeg.disbursement,
+      );
+
+      await service.addCreditWithDisbursement(
+        _entry(id: 'd1'),
+        disbursement: disbursement,
+      );
+
+      expect(
+        service.activeCredits.single.disbursementTransactionId,
+        'tx-principal',
+      );
+      final tx = FinanceService.instance.activeTransactions.single;
+      expect(tx.id, 'tx-principal');
+      expect(tx.creditLeg, CreditLeg.disbursement);
+    });
+
+    test('settlement survives a cold start', () async {
+      final service = CreditService.instance;
+      await service.init();
+      await service.addCredit(_entry(id: 's5'));
+      await service.settleCredit(
+        's5',
+        settledAt: DateTime(2026, 9, 12),
+        transactionId: 'tx-5',
+      );
+
+      service.clearCache();
+      await service.init();
+
+      final e = service.activeCredits.single;
+      expect(e.isSettled, isTrue);
+      expect(e.settledAt, DateTime(2026, 9, 12));
+      expect(e.settlementTransactionId, 'tx-5');
     });
   });
 }

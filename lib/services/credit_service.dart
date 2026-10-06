@@ -5,8 +5,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show SupabaseClient;
 
 import '../models/credit.dart';
+import '../models/finance.dart';
 import 'auth_service.dart';
 import 'collection_service.dart';
+import 'finance_service.dart';
 import 'supabase_service.dart';
 
 /// Store for the signed-in user's credit obligations (money borrowed
@@ -156,6 +158,97 @@ class CreditService extends ChangeNotifier {
     await updateCredit(_credits[index].extendDeadline(newDeadline));
   }
 
+  /// Add [credit] and, when the user opted in, the Money transaction that
+  /// mirrors its principal ([disbursement]) — linked back via
+  /// [CreditEntry.disbursementTransactionId]. The transaction is written
+  /// first so a failure can't leave the credit pointing at nothing.
+  Future<void> addCreditWithDisbursement(
+    CreditEntry credit, {
+    FinanceTransaction? disbursement,
+  }) async {
+    if (disbursement == null) {
+      await addCredit(credit);
+      return;
+    }
+    await FinanceService.instance.addTransaction(disbursement);
+    await addCredit(
+      credit.copyWith(disbursementTransactionId: disbursement.id),
+    );
+  }
+
+  /// Close the obligation [id]: stamp [settledAt] and, when supplied, link
+  /// the Money transaction that mirrors the repayment — either a freshly
+  /// created [transaction] or the id of one the user already logged
+  /// ([transactionId]). Idempotent: an already-settled entry is left alone.
+  ///
+  /// An already-logged repayment ([transactionId]) is *tagged* as the
+  /// settlement leg, not merely pointed at — that tag is what keeps it out
+  /// of the income/expense totals, shows the "Credit" badge, and stops the
+  /// same row being attached to a second credit.
+  ///
+  /// [disbursementTransactionId] optionally reconciles the *principal* the
+  /// user logged by hand when the loan was made, tagging it as the
+  /// disbursement leg so a hand-entered loan stops reading as real
+  /// income/spending.
+  Future<void> settleCredit(
+    String id, {
+    required DateTime settledAt,
+    FinanceTransaction? transaction,
+    String? transactionId,
+    String? disbursementTransactionId,
+  }) async {
+    final index = _credits.indexWhere((c) => c.id == id);
+    if (index == -1) return;
+    final entry = _credits[index];
+    if (entry.isSettled) return;
+
+    if (transaction != null) {
+      await FinanceService.instance.addTransaction(transaction);
+    }
+
+    final repaymentId = transaction?.id ?? transactionId;
+    if (transaction == null && transactionId != null) {
+      await _tagLeg(transactionId, entry.id, CreditLeg.settlement);
+    }
+    if (disbursementTransactionId != null) {
+      await _tagLeg(
+        disbursementTransactionId,
+        entry.id,
+        CreditLeg.disbursement,
+      );
+    }
+
+    var updated = entry.markSettled(at: settledAt, transactionId: repaymentId);
+    if (disbursementTransactionId != null) {
+      updated = updated.copyWith(
+        disbursementTransactionId: disbursementTransactionId,
+      );
+    }
+    await updateCredit(updated);
+  }
+
+  /// Tag an existing Money transaction as a leg of credit [creditId] so the
+  /// reporting layers can tell it apart from real income/spending. No-op when
+  /// the row is missing or already linked — settling must never re-tag a leg
+  /// that belongs to someone else.
+  Future<void> _tagLeg(
+    String transactionId,
+    String creditId,
+    CreditLeg leg,
+  ) async {
+    FinanceTransaction? target;
+    for (final t in FinanceService.instance.transactions) {
+      if (t.id == transactionId) {
+        target = t;
+        break;
+      }
+    }
+    if (target == null || target.isCreditLinked) return;
+    await FinanceService.instance.updateTransaction(
+      target.copyWith(creditId: creditId, creditLeg: leg),
+    );
+  }
+
   Future<void> deleteCredit(String id) async {
     final client = _client;
     if (client != null) {
@@ -220,10 +313,21 @@ class CreditService extends ChangeNotifier {
       currency: row['currency'] as String? ?? 'AED',
       deadline:
           DateTime.tryParse(row['deadline'] as String? ?? '') ?? DateTime.now(),
+      // Rows written before start_date existed fall back to the
+      // record's creation time.
+      startDate:
+          DateTime.tryParse(row['start_date'] as String? ?? '') ??
+          DateTime.tryParse(row['created_at'] as String? ?? '') ??
+          DateTime.now(),
+      description: row['description'] as String?,
       extensionHistory: _extensionsFromRow(row['extension_history']),
       createdAt:
           DateTime.tryParse(row['created_at'] as String? ?? '') ??
           DateTime.now(),
+      settledAt: DateTime.tryParse(row['settled_at'] as String? ?? ''),
+      disbursementTransactionId:
+          row['disbursement_transaction_id'] as String?,
+      settlementTransactionId: row['settlement_transaction_id'] as String?,
     );
   }
 
@@ -256,9 +360,14 @@ class CreditService extends ChangeNotifier {
       'amount': c.amount,
       'currency': c.currency,
       'deadline': c.deadline.toIso8601String().split('T').first,
+      'start_date': c.startDate.toIso8601String().split('T').first,
+      'description': c.description,
       'extension_history': jsonEncode(
         c.extensionHistory.map((e) => e.toJson()).toList(),
       ),
+      'settled_at': c.settledAt?.toIso8601String().split('T').first,
+      'disbursement_transaction_id': c.disbursementTransactionId,
+      'settlement_transaction_id': c.settlementTransactionId,
     };
     if (ownerId != null) row['owner_id'] = ownerId;
     return row;

@@ -1,9 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:finavig/models/credit.dart';
 import 'package:finavig/models/finance.dart';
 import 'package:finavig/models/subscription_tier.dart';
 import 'package:finavig/services/ai_budget_plan_service.dart';
+import 'package:finavig/services/credit_service.dart';
 import 'package:finavig/services/entitlement_service.dart';
 
 FinanceTransaction _tx(
@@ -27,6 +29,7 @@ void main() {
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
+    CreditService.instance.clearCache();
     await EntitlementService.instance.refresh();
     await AiBudgetPlanService.instance.resetUsageCounter();
   });
@@ -161,6 +164,68 @@ void main() {
       );
       expect(cached.plan.title, 'Cached Plan');
       expect(await service.getUsedQuotaThisMonth(now), 1);
+    });
+  });
+
+  group('Credit obligations in the budget plan', () {
+    CreditEntry credit({
+      double amount = 3000,
+      CreditDirection direction = CreditDirection.borrowed,
+    }) =>
+        CreditEntry(
+          id: 'credit-plan-${amount.toInt()}',
+          collectionId: 'personal',
+          direction: direction,
+          counterpartyName: 'Ahmed',
+          amount: amount,
+          currency: 'AED',
+          startDate: DateTime(2026, 9, 1),
+          deadline: DateTime(2026, 9, 15),
+          createdAt: DateTime(2026, 9, 1),
+        );
+
+    test('feeds credit obligations into the Groq plan prompt', () async {
+      await CreditService.instance.init();
+      await CreditService.instance.addCredit(credit());
+
+      final service = AiBudgetPlanService.instance;
+      String? capturedUser;
+      service.groqCallOverride = (system, user) async {
+        capturedUser = user;
+        return '{"title": "T", "summary": "S", "feasible": true, '
+            '"monthlySavingTarget": 100, "actions": []}';
+      };
+
+      await service.generatePlan(
+        goalDescription: 'Buy a car',
+        targetAmount: 20000,
+        forceRegenerate: true,
+        now: DateTime(2026, 9, 21),
+      );
+
+      expect(capturedUser, isNotNull);
+      expect(capturedUser, contains('Credit obligations'));
+      expect(capturedUser, contains('You owe (borrowed): AED 3,000'));
+    });
+
+    test('offline fallback plan prioritises clearing what the user owes',
+        () async {
+      await CreditService.instance.init();
+      await CreditService.instance.addCredit(credit(amount: 5000));
+
+      final service = AiBudgetPlanService.instance;
+      service.groqCallOverride = (system, user) async => 'not json at all';
+
+      final result = await service.generatePlan(
+        goalDescription: 'Buy a MacBook',
+        targetAmount: 1000,
+        forceRegenerate: true,
+        now: DateTime(2026, 9, 21),
+      );
+
+      expect(result.usedGroq, isFalse);
+      final titles = result.plan.actions.map((a) => a.title).join(' ');
+      expect(titles, contains('you owe first'));
     });
   });
 

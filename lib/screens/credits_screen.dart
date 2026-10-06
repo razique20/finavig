@@ -6,6 +6,7 @@ import '../theme/app_theme.dart';
 import 'money/credit_section.dart';
 import 'money/forms/credit_extend_sheet.dart';
 import 'money/forms/credit_form_sheet.dart';
+import 'money/forms/credit_settle_sheet.dart';
 
 /// Credit obligations page opened from the Money tab: money
 /// borrowed from — or lent to — someone, with deadline
@@ -45,7 +46,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
   }
 
   Future<void> _showCreditSheet({CreditEntry? existing}) async {
-    final result = await showModalBottomSheet<CreditEntry>(
+    final result = await showModalBottomSheet<CreditFormResult>(
       context: context,
       // Scrollable + keyboard-aware sheet (matches the Money tab's
       // call site), so the form lifts above the keyboard.
@@ -58,10 +59,33 @@ class _CreditsScreenState extends State<CreditsScreen> {
     );
     if (result == null) return;
     if (existing == null) {
-      await CreditService.instance.addCredit(result);
+      await CreditService.instance.addCreditWithDisbursement(
+        result.entry,
+        disbursement: result.disbursement,
+      );
     } else {
-      await CreditService.instance.updateCredit(result);
+      await CreditService.instance.updateCredit(result.entry);
     }
+  }
+
+  Future<void> _showSettleSheet(CreditEntry entry) async {
+    final result = await showModalBottomSheet<CreditSettlement>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => CreditSettleSheet(entry: entry),
+    );
+    if (result == null) return;
+    await CreditService.instance.settleCredit(
+      entry.id,
+      settledAt: result.settledAt,
+      transaction: result.newTransaction,
+      transactionId: result.linkedTransactionId,
+      disbursementTransactionId: result.linkedDisbursementId,
+    );
   }
 
   Future<void> _showExtendSheet(CreditEntry entry) async {
@@ -111,6 +135,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
                         onDelete: (c) =>
                             CreditService.instance.deleteCredit(c.id),
                         onExtend: _showExtendSheet,
+                        onSettle: _showSettleSheet,
                       ),
                     ),
                   ),

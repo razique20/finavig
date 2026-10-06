@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/credit.dart';
 import '../models/document_type.dart';
 import '../models/expiry_item.dart';
 import '../models/finance.dart';
@@ -10,6 +11,7 @@ import '../models/subscription_tier.dart';
 
 import 'collection_service.dart';
 import 'auth_service.dart';
+import 'credit_service.dart';
 import 'document_scanner_service.dart';
 import 'entitlement_service.dart';
 import 'finance_service.dart';
@@ -245,8 +247,12 @@ class AiExecutiveSummaryService {
     final ref = now ?? DateTime.now();
     final docItems = await DocumentScannerService.instance.getAllItems();
     final finData = MonthlySummaryService.instance.generate(now: ref);
+    // Credit obligations (money borrowed from / lent to people) are part
+    // of the user's financial picture — include them in the summary.
+    await CreditService.instance.init();
+    final creditItems = CreditService.instance.activeCredits;
 
-    final insights = _buildCombinedInsights(docItems, finData);
+    final insights = _buildCombinedInsights(docItems, finData, creditItems, ref);
 
     // If cached narrative exists and forceRegenerate is false, return cached.
     if (!forceRegenerate) {
@@ -290,7 +296,8 @@ class AiExecutiveSummaryService {
     // Check plan limits before making a new Groq AI call.
     final remaining = await getRemainingQuotaThisMonth(ref);
     if (remaining <= 0) {
-      final templateText = _buildFallbackNarrative(docItems, finData);
+      final templateText =
+          _buildFallbackNarrative(docItems, finData, creditItems);
       _lastNarrative = templateText;
       _lastInsights = insights;
       _lastUsedGroq = false;
@@ -306,10 +313,11 @@ class AiExecutiveSummaryService {
     // Prepare Groq API system & user prompts.
     final systemPrompt =
         'You are Finavig\'s AI Financial & Document Executive Advisor for GCC businesses. '
-        'Provide a concise 2-3 sentence executive summary combining document compliance/expiries and financial payments. '
+        'Provide a concise 2-3 sentence executive summary combining document compliance/expiries, financial payments, and credit obligations (money borrowed from or lent to people). '
         'Use only the factual metrics provided. Keep tone professional, encouraging, and clear. Money values in local GCC currency.';
 
-    final userPrompt = _buildPromptContext(docItems, finData, ref);
+    final userPrompt =
+        _buildPromptContext(docItems, finData, creditItems, ref);
 
     try {
       final text = groqCallOverride != null
@@ -346,7 +354,8 @@ class AiExecutiveSummaryService {
     }
 
     // Fallback template narrative if Groq API fails or returned empty text.
-    final fallbackText = _buildFallbackNarrative(docItems, finData);
+    final fallbackText =
+        _buildFallbackNarrative(docItems, finData, creditItems);
     _lastNarrative = fallbackText;
     _lastInsights = insights;
     _lastUsedGroq = false;
@@ -364,6 +373,7 @@ class AiExecutiveSummaryService {
   String _buildPromptContext(
     List<ExpiryItem> docs,
     MonthlySummaryData fin,
+    List<CreditEntry> credits,
     DateTime ref,
   ) {
     final expiredCount = docs.where((d) => d.isExpired).length;
@@ -406,6 +416,46 @@ class AiExecutiveSummaryService {
       sb.writeln('- Budget overrun: ${o.budget.category.displayName} spent ${_cur()} ${_fmt(o.spent)} of ${_fmt(o.budget.monthlyLimit)}');
     }
 
+    sb.writeln();
+    sb.writeln('CREDIT OBLIGATIONS (money borrowed from / lent to people):');
+    // Only open obligations count — settled ones are history.
+    final openCredits = CreditMath.openOnly(credits);
+    if (openCredits.isEmpty) {
+      sb.writeln('- None recorded.');
+    } else {
+      final totals = CreditMath.totals(openCredits);
+      final overdue =
+          openCredits.where((c) => CreditMath.isOverdue(c, now: ref)).toList();
+      sb.writeln('- Total owed by the user (borrowed): ${_cur()} ${_fmt(totals.borrowed)}');
+      sb.writeln('- Total owed to the user (lent): ${_cur()} ${_fmt(totals.lent)}');
+      sb.writeln('- Net credit position (lent - borrowed): ${_cur()} ${_fmt(totals.net)}');
+      if (overdue.isNotEmpty) {
+        sb.writeln('- Overdue obligations: ${overdue.length}');
+        for (final c in overdue.take(3)) {
+          sb.writeln('  * ${c.counterpartyName}: ${_cur()} ${_fmt(c.amount)} '
+              '(${CreditMath.deadlineLabel(c, now: ref)})');
+        }
+      }
+      final soon = openCredits
+          .where((c) =>
+              CreditMath.daysUntil(c, now: ref) >= 0 &&
+              CreditMath.daysUntil(c, now: ref) <= 30)
+          .toList()
+        ..sort((a, b) => CreditMath.daysUntil(a, now: ref)
+            .compareTo(CreditMath.daysUntil(b, now: ref)));
+      for (final c in soon.take(3)) {
+        final note = (c.description ?? '').trim();
+        sb.writeln('- Due soon: ${c.counterpartyName} '
+            '${c.direction == CreditDirection.borrowed ? 'owe' : 'owed'} '
+            '${_cur()} ${_fmt(c.amount)} '
+            '(${CreditMath.deadlineLabel(c, now: ref)})'
+            '${note.isEmpty ? '' : ' — $note'}');
+      }
+      sb.writeln('- Note: transactions that mirror a credit obligation are '
+          'excluded from the income/expense figures above — do not add them '
+          'back in.');
+    }
+
     return sb.toString();
   }
 
@@ -413,6 +463,8 @@ class AiExecutiveSummaryService {
   List<AiSummaryCombinedInsight> _buildCombinedInsights(
     List<ExpiryItem> docs,
     MonthlySummaryData fin,
+    List<CreditEntry> credits,
+    DateTime ref,
   ) {
     final list = <AiSummaryCombinedInsight>[];
 
@@ -458,6 +510,39 @@ class AiExecutiveSummaryService {
       ));
     }
 
+    // Credit obligations (money borrowed from / lent to people).
+    if (credits.isNotEmpty) {
+      final totals = CreditMath.totals(credits);
+      final overdue =
+          credits.where((c) => CreditMath.isOverdue(c, now: ref)).toList();
+
+      if (overdue.isNotEmpty) {
+        list.add(AiSummaryCombinedInsight(
+          kind: MonthlyInsightKind.budgetAlert,
+          categoryLabel: 'Credit Due',
+          sentence:
+              '${overdue.length} credit obligation${overdue.length == 1 ? '' : 's'} '
+              'past the agreed deadline (${overdue.first.counterpartyName}).',
+          metricLabel: '${overdue.length} Overdue',
+        ));
+      }
+
+      list.add(AiSummaryCombinedInsight(
+        kind: totals.net >= 0
+            ? MonthlyInsightKind.positive
+            : MonthlyInsightKind.spendingMove,
+        categoryLabel: 'Credit Position',
+        sentence: totals.net >= 0
+            ? 'You are owed ${_cur()} ${_fmt(totals.lent)} against '
+                '${_cur()} ${_fmt(totals.borrowed)} you owe — a net '
+                '${_cur()} ${_fmt(totals.net)} in your favour.'
+            : 'You owe ${_cur()} ${_fmt(totals.borrowed)} against '
+                '${_cur()} ${_fmt(totals.lent)} owed to you — a net '
+                '${_cur()} ${_fmt(totals.net.abs())} outstanding.',
+        metricLabel: '${_cur()} ${_fmt(totals.net)}',
+      ));
+    }
+
     list.add(AiSummaryCombinedInsight(
       kind: fin.net >= 0 ? MonthlyInsightKind.positive : MonthlyInsightKind.budgetAlert,
       categoryLabel: 'Net Position',
@@ -471,7 +556,11 @@ class AiExecutiveSummaryService {
   }
 
   /// Rule-based template fallback narrative.
-  String _buildFallbackNarrative(List<ExpiryItem> docs, MonthlySummaryData fin) {
+  String _buildFallbackNarrative(
+    List<ExpiryItem> docs,
+    MonthlySummaryData fin,
+    List<CreditEntry> credits,
+  ) {
     final urgentCount = docs.where((d) => d.daysRemaining <= 30).length;
     final docSentence = urgentCount > 0
         ? '$urgentCount document${urgentCount == 1 ? '' : 's'} require renewal attention within 30 days.'
@@ -481,7 +570,21 @@ class AiExecutiveSummaryService {
         ? 'No financial records entered for ${fin.monthName} yet.'
         : 'Total monthly spend is ${_cur()} ${_fmt(fin.expense)} against ${_cur()} ${_fmt(fin.income)} income, resulting in a net of ${_cur()} ${_fmt(fin.net)}.';
 
-    return '$docSentence $finSentence';
+    final creditSentence = _creditFallbackSentence(credits);
+    return '$docSentence $finSentence$creditSentence';
+  }
+
+  /// One plain-language credit line for the offline template, or an
+  /// empty string when the user has no credit obligations.
+  static String _creditFallbackSentence(List<CreditEntry> credits) {
+    if (credits.isEmpty) return '';
+    final totals = CreditMath.totals(credits);
+    final overdue = credits.where((c) => CreditMath.isOverdue(c)).length;
+    final overdueNote = overdue > 0
+        ? ' $overdue obligation${overdue == 1 ? ' is' : 's are'} overdue and worth settling first.'
+        : '';
+    return ' On credit, you owe ${_cur()} ${_fmt(totals.borrowed)} and are owed '
+        '${_cur()} ${_fmt(totals.lent)}.$overdueNote';
   }
 
   static String _cur() => DocumentCollectionService.instance.activeCurrency;

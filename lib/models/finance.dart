@@ -15,6 +15,24 @@ extension FinanceKindX on FinanceKind {
   Color get color => this == FinanceKind.expense ? Colors.red : Colors.green;
 }
 
+/// Which edge of a credit obligation's lifecycle a linked transaction mirrors.
+/// [disbursement] is the money changing hands when the loan is made (the
+/// principal), [settlement] is the repayment that closes it.
+enum CreditLeg { disbursement, settlement }
+
+extension CreditLegX on CreditLeg {
+  String get label => this == CreditLeg.disbursement
+      ? 'Loan paid out'
+      : 'Loan repayment';
+
+  static CreditLeg? fromName(String? name) {
+    for (final leg in CreditLeg.values) {
+      if (leg.name == name) return leg;
+    }
+    return null;
+  }
+}
+
 /// Spending categories. `renewals` is the category Finavig auto-uses when a
 /// renewal payment is logged from the outlook section.
 enum FinanceCategory {
@@ -124,6 +142,13 @@ class FinanceTransaction {
   /// (e.g. "Trade licence renewal paid").
   final String? documentId;
 
+  /// Set when this transaction mirrors a credit obligation's cash movement —
+  /// the [`CreditEntry.id`] it belongs to. Null for ordinary records.
+  final String? creditId;
+
+  /// Which edge of the credit lifecycle [creditId] links back to.
+  final CreditLeg? creditLeg;
+
   const FinanceTransaction({
     required this.id,
     required this.collectionId,
@@ -135,7 +160,14 @@ class FinanceTransaction {
     required this.occurredAt,
     this.note,
     this.documentId,
+    this.creditId,
+    this.creditLeg,
   });
+
+  /// True when this row mirrors a credit obligation rather than ordinary
+  /// income/spending. Loan legs are excluded from income/expense totals and
+  /// budget math so a loan doesn't read as earnings or consumption.
+  bool get isCreditLinked => creditId != null;
 
   FinanceTransaction copyWith({
     String? id,
@@ -149,6 +181,9 @@ class FinanceTransaction {
     String? note,
     String? documentId,
     bool clearDocumentId = false,
+    String? creditId,
+    CreditLeg? creditLeg,
+    bool clearCreditId = false,
   }) {
     return FinanceTransaction(
       id: id ?? this.id,
@@ -161,6 +196,8 @@ class FinanceTransaction {
       occurredAt: occurredAt ?? this.occurredAt,
       note: note ?? this.note,
       documentId: clearDocumentId ? null : (documentId ?? this.documentId),
+      creditId: clearCreditId ? null : (creditId ?? this.creditId),
+      creditLeg: clearCreditId ? null : (creditLeg ?? this.creditLeg),
     );
   }
 
@@ -177,6 +214,8 @@ class FinanceTransaction {
           DateTime.now(),
       note: json['note'] as String?,
       documentId: json['documentId'] as String?,
+      creditId: json['creditId'] as String?,
+      creditLeg: CreditLegX.fromName(json['creditLeg'] as String?),
     );
   }
 
@@ -191,6 +230,8 @@ class FinanceTransaction {
         'occurredAt': occurredAt.toIso8601String(),
         'note': note,
         'documentId': documentId,
+        'creditId': creditId,
+        'creditLeg': creditLeg?.name,
       };
 }
 
@@ -634,6 +675,10 @@ class FinanceMath {
 
   /// Income/expense/net totals for [month]. Scoped to [collectionId] when
   /// given, across all collections when null.
+  ///
+  /// Transactions that mirror a credit obligation ([FinanceTransaction
+  /// .isCreditLinked]) are skipped: a loan principal is neither earnings nor
+  /// spending, and counting it would inflate both sides.
   static ({double income, double expense, double net}) summaryForMonth(
     List<FinanceTransaction> transactions,
     DateTime month, {
@@ -642,6 +687,7 @@ class FinanceMath {
     var income = 0.0;
     var expense = 0.0;
     for (final t in transactions) {
+      if (t.isCreditLinked) continue;
       if (collectionId != null && t.collectionId != collectionId) continue;
       if (!_inMonth(t.occurredAt, month)) continue;
       if (t.kind == FinanceKind.income) {
@@ -653,7 +699,8 @@ class FinanceMath {
     return (income: income, expense: expense, net: income - expense);
   }
 
-  /// Expenses per category for [month].
+  /// Expenses per category for [month]. Loan legs are skipped (see
+  /// [summaryForMonth]) so repayments don't consume a category budget.
   static Map<FinanceCategory, double> spendByCategory(
     List<FinanceTransaction> transactions,
     DateTime month, {
@@ -661,6 +708,7 @@ class FinanceMath {
   }) {
     final result = <FinanceCategory, double>{};
     for (final t in transactions) {
+      if (t.isCreditLinked) continue;
       if (t.kind != FinanceKind.expense) continue;
       if (collectionId != null && t.collectionId != collectionId) continue;
       if (!_inMonth(t.occurredAt, month)) continue;
