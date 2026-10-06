@@ -28,7 +28,9 @@ import 'app_lock_flows.dart';
 /// every other screen.
 ///
 /// Flow is a quiz: one question per step, per-step validation, keyboard
-/// submit advances. Sign-in = 2 steps; sign-up adds country + phone.
+/// submit advances. Step 0 always asks what kind of user you are —
+/// the answer routes you into the sign-in quiz (3 steps) or the
+/// sign-up quiz, which adds date of birth, country and phone.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -52,6 +54,18 @@ class _LoginScreenState extends State<LoginScreen> {
   DateTime? _selectedDob;
 
   bool _isSignUp = false;
+
+  /// Whether the step-0 "what type of user are you?" question has
+  /// been answered yet. Gates Continue so the mode can't be skipped.
+  bool _modePicked = false;
+
+  /// Timestamp of the last answer-card tap, for double-click
+  /// detection (double-click = select + advance to the next slide).
+  DateTime? _lastOptionTap;
+
+  /// Press state for the brand wordmark — drives its subtle
+  /// fade so it reads as tappable.
+  bool _wordmarkPressed = false;
   bool _busy = false;
   bool _obscurePassword = true;
   String? _error;
@@ -60,7 +74,9 @@ class _LoginScreenState extends State<LoginScreen> {
   int _step = 0;
   int _dir = 1; // +1 forward, -1 backward (slide direction)
 
-  int get _totalSteps => _isSignUp ? 5 : 2;
+  // Step 0 is the user-type question for everyone; the email and
+  // password steps follow, and sign-up adds DOB, country and phone.
+  int get _totalSteps => _isSignUp ? 6 : 3;
 
   @override
   void dispose() {
@@ -75,17 +91,32 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // ── Navigation between steps ──────────────────────────────────────────────
 
-  void _onModeChanged(bool signUp) {
-    if (signUp == _isSignUp || _busy) return;
+  /// Answer to the step-0 quiz question: tapping an option only
+  /// records the choice (highlighting it). Continue routes into
+  /// the matching sign-in / sign-up flow.
+  void _chooseMode(bool signUp) {
+    if (_busy) return;
     FocusScope.of(context).unfocus();
     setState(() {
       _isSignUp = signUp;
-      _step = 0;
-      _dir = 1;
-      _error = null;
+      _modePicked = true;
       _stepError = null;
+      _error = null;
     });
-    _focusCurrent();
+  }
+
+  /// Single tap on an answer selects it; a second tap within
+  /// 300 ms (double-click) selects it AND advances to the
+  /// next slide of that flow — a shortcut for Continue.
+  void _onOptionTap(bool signUp) {
+    if (_busy) return;
+    final now = DateTime.now();
+    final doubleTap =
+        _lastOptionTap != null &&
+        now.difference(_lastOptionTap!) < const Duration(milliseconds: 300);
+    _lastOptionTap = doubleTap ? null : now;
+    _chooseMode(signUp);
+    if (doubleTap) _gotoStep(1);
   }
 
   void _gotoStep(int step) {
@@ -120,14 +151,18 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     if (step == 0) {
+      if (!_modePicked) {
+        return _failStep('Choose an option to continue');
+      }
+    } else if (step == 1) {
       if (email.isEmpty) return _failStep('Enter your email');
       if (!email.contains('@') || !email.contains('.')) {
         return _failStep('Enter a valid email');
       }
-    } else if (step == 1) {
+    } else if (step == 2) {
       if (password.isEmpty) return _failStep('Enter your password');
       if (password.length < 6) return _failStep('At least 6 characters');
-    } else if (_isSignUp && step == 2) {
+    } else if (_isSignUp && step == 3) {
       // DOB is optional (self-reported), but if given it must be a real
       // date of the past and the user must be 16+ (see the T&C).
       if (_selectedDob != null) {
@@ -140,8 +175,7 @@ class _LoginScreenState extends State<LoginScreen> {
         }
         var age = now.year - _selectedDob!.year;
         if (now.month < _selectedDob!.month ||
-            (now.month == _selectedDob!.month &&
-                now.day < _selectedDob!.day)) {
+            (now.month == _selectedDob!.month && now.day < _selectedDob!.day)) {
           age--;
         }
         if (age < 16) {
@@ -161,11 +195,11 @@ class _LoginScreenState extends State<LoginScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final FocusNode? node;
-      if (_step == 0) {
+      if (_step == 1) {
         node = _emailFocus;
-      } else if (_step == 1) {
+      } else if (_step == 2) {
         node = _passwordFocus;
-      } else if (_isSignUp && _step == 4) {
+      } else if (_isSignUp && _step == 5) {
         node = _phoneFocus;
       } else {
         node = null; // DOB picker / country picker — keep keyboard closed
@@ -189,7 +223,9 @@ class _LoginScreenState extends State<LoginScreen> {
         await prefs.setString('userCountry', _selectedCountry.code);
         if (_selectedDob != null) {
           await prefs.setString(
-              'userDateOfBirth', _selectedDob!.toIso8601String().substring(0, 10));
+            'userDateOfBirth',
+            _selectedDob!.toIso8601String().substring(0, 10),
+          );
         }
         final phone = _phoneController.text.trim();
         if (phone.isNotEmpty) {
@@ -211,7 +247,8 @@ class _LoginScreenState extends State<LoginScreen> {
             );
             setState(() {
               _isSignUp = false;
-              _step = 0;
+              _modePicked = true;
+              _step = 1; // land on the sign-in email step
               _busy = false;
             });
             _focusCurrent();
@@ -239,8 +276,9 @@ class _LoginScreenState extends State<LoginScreen> {
         // On signup the DB trigger creates the personal collection with
         // default country 'AE'. Patch it to the selected country.
         if (_isSignUp) {
-          await DocumentCollectionService.instance
-              .updatePersonalCountry(_selectedCountry.code);
+          await DocumentCollectionService.instance.updatePersonalCountry(
+            _selectedCountry.code,
+          );
         }
         await CustomDocumentTypeService.instance.reset();
         await DocumentScannerService.instance.refresh();
@@ -383,10 +421,7 @@ class _LoginScreenState extends State<LoginScreen> {
       backgroundColor: isDark ? FinavigColors.obsidian : FinavigColors.ink,
       // The sheet IS the screen — a quiet brand backdrop under a
       // centred header, with the quiz flow in a soft M3 card.
-      body: SafeArea(
-        bottom: false,
-        child: _glassSheet(theme, isDark),
-      ),
+      body: SafeArea(bottom: false, child: _glassSheet(theme, isDark)),
     );
   }
 
@@ -434,19 +469,37 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               // Inter — the app's system typeface (matches the
               // welcome screen's wordmark), not a serif display font.
-              Text(
-                'Finavig',
-                style: GoogleFonts.inter(
-                  fontSize: 25,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.5,
-                  color: isDark ? Colors.white : FinavigColors.ink,
+              // Tappable: the wordmark is a small, deliberate link
+              // back to the welcome pitch (its CTA returns here).
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTapDown: (_) => setState(() => _wordmarkPressed = true),
+                onTapUp: (_) => setState(() => _wordmarkPressed = false),
+                onTapCancel: () => setState(() => _wordmarkPressed = false),
+                onTap: () {
+                  if (_busy) return;
+                  context.go('/welcome');
+                },
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 120),
+                  opacity: _wordmarkPressed ? 0.55 : 1.0,
+                  child: Text(
+                    'Finavig',
+                    style: GoogleFonts.inter(
+                      fontSize: 25,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.5,
+                      color: isDark ? Colors.white : FinavigColors.ink,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: FinavigColors.violet.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(99),
@@ -517,23 +570,12 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // ── Chrome: mode toggle + progress (on the surface sheet) ────────────────
+  // ── Chrome: quiz progress (on the surface sheet) ──────────
 
   Widget _chrome(ThemeData theme, bool isDark) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-      child: Column(
-        children: [
-          _ModeToggle(
-            isSignUp: _isSignUp,
-            enabled: !_busy,
-            isDark: isDark,
-            onChanged: _onModeChanged,
-          ),
-          const SizedBox(height: 16),
-          _StepProgress(step: _step, total: _totalSteps, isDark: isDark),
-        ],
-      ),
+      child: _StepProgress(step: _step, total: _totalSteps, isDark: isDark),
     );
   }
 
@@ -549,8 +591,7 @@ class _LoginScreenState extends State<LoginScreen> {
           // around the form reads as designed, not empty.
           return Container(
             width: double.infinity,
-            constraints:
-                BoxConstraints(minHeight: viewport.maxHeight),
+            constraints: BoxConstraints(minHeight: viewport.maxHeight),
             decoration: BoxDecoration(
               color: isDark ? FinavigColors.charcoal : Colors.white,
               borderRadius: BorderRadius.circular(FinavigRadius.card),
@@ -563,14 +604,11 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
               child: ConstrainedBox(
                 // Mirror the card's vertical padding so the step
                 // content stays centred in the full card height.
-                constraints: BoxConstraints(
-                  minHeight: viewport.maxHeight - 52,
-                ),
+                constraints: BoxConstraints(minHeight: viewport.maxHeight - 52),
                 child: IntrinsicHeight(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -588,7 +626,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           return FadeTransition(
                             opacity: animation,
                             child: SlideTransition(
-                                position: slide, child: child),
+                              position: slide,
+                              child: child,
+                            ),
                           );
                         },
                         layoutBuilder: (currentChild, previousChildren) {
@@ -601,7 +641,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           );
                         },
                         child: KeyedSubtree(
-                          key: ValueKey('step-$_isSignUp-$_step'),
+                          // Keyed by step only — NOT the mode — so
+                          // re-tapping an answer at step 0 (which flips
+                          // _isSignUp) doesn't re-animate the slide.
+                          key: ValueKey('step-$_step'),
                           child: _buildStep(isDark),
                         ),
                       ),
@@ -700,8 +743,9 @@ class _LoginScreenState extends State<LoginScreen> {
     final subColor = isDark
         ? FinavigColors.textSecondary
         : FinavigColors.textSecondaryLight;
-    final accentText =
-        isDark ? FinavigColors.textPrimary : FinavigColors.textPrimaryLight;
+    final accentText = isDark
+        ? FinavigColors.textPrimary
+        : FinavigColors.textPrimaryLight;
 
     return SafeArea(
       top: false,
@@ -740,24 +784,28 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _TextLink(
-                    label: 'About',
-                    color: subColor,
-                    onTap: () => showAboutSheet(context)),
+                  label: 'About',
+                  color: subColor,
+                  onTap: () => showAboutSheet(context),
+                ),
                 _DotSeparator(color: subColor),
                 _TextLink(
-                    label: 'Terms',
-                    color: subColor,
-                    onTap: () => showTermsDialog(context)),
+                  label: 'Terms',
+                  color: subColor,
+                  onTap: () => showTermsDialog(context),
+                ),
                 _DotSeparator(color: subColor),
                 _TextLink(
-                    label: 'Privacy',
-                    color: subColor,
-                    onTap: () => showPrivacyDialog(context)),
+                  label: 'Privacy',
+                  color: subColor,
+                  onTap: () => showPrivacyDialog(context),
+                ),
                 _DotSeparator(color: subColor),
                 _TextLink(
-                    label: 'Support',
-                    color: subColor,
-                    onTap: () => showSupportSheet(context)),
+                  label: 'Support',
+                  color: subColor,
+                  onTap: () => showSupportSheet(context),
+                ),
               ],
             ),
             const SizedBox(height: 8),
@@ -780,22 +828,23 @@ class _LoginScreenState extends State<LoginScreen> {
   // ── Step content ─────────────────────────────────────────────────────────
 
   Widget _buildStep(bool isDark) {
+    if (_step == 0) return _userTypeStep(isDark);
     if (!_isSignUp) {
       switch (_step) {
-        case 0:
+        case 1:
           return _emailStep(isDark, isSignUp: false);
         default:
           return _passwordStep(isDark, isSignUp: false);
       }
     }
     switch (_step) {
-      case 0:
-        return _emailStep(isDark, isSignUp: true);
       case 1:
-        return _passwordStep(isDark, isSignUp: true);
+        return _emailStep(isDark, isSignUp: true);
       case 2:
-        return _dobStep(isDark);
+        return _passwordStep(isDark, isSignUp: true);
       case 3:
+        return _dobStep(isDark);
+      case 4:
         return _countryStep(isDark);
       default:
         return _phoneStep(isDark);
@@ -823,7 +872,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           const SizedBox(width: 8),
           GestureDetector(
-            onTap: () => _gotoStep(0),
+            onTap: () => _gotoStep(1),
             behavior: HitTestBehavior.opaque,
             child: const Text(
               'Change',
@@ -839,6 +888,50 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  /// Step 0 — the quiz opener: "What type of user are you?"
+  /// One tap on an answer routes into the sign-up or sign-in
+  /// quiz, replacing the old sign-in/sign-up toggle.
+  Widget _userTypeStep(bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _QuizQuestion(
+          isDark: isDark,
+          title: 'What type of user are you?',
+          subtitle: 'Tap once to choose — double-tap to continue.',
+        ),
+        _ModeOption(
+          isDark: isDark,
+          icon: Icons.person_add_alt_rounded,
+          title: 'New to Finavig',
+          subtitle: 'Create a free account',
+          selected: _modePicked && _isSignUp,
+          onTap: () => _onOptionTap(true),
+        ),
+        const SizedBox(height: 10),
+        _ModeOption(
+          isDark: isDark,
+          icon: Icons.login_rounded,
+          title: 'Already a member?',
+          subtitle: 'Sign in to your account',
+          selected: _modePicked && !_isSignUp,
+          onTap: () => _onOptionTap(false),
+        ),
+        if (_stepError != null) ...[
+          const SizedBox(height: 12),
+          Text(
+            _stepError!,
+            style: const TextStyle(
+              fontSize: 13,
+              color: FinavigColors.danger,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
   Widget _emailStep(bool isDark, {required bool isSignUp}) {
     return AutofillGroup(
       child: Column(
@@ -846,8 +939,7 @@ class _LoginScreenState extends State<LoginScreen> {
         children: [
           _QuizQuestion(
             isDark: isDark,
-            title:
-                isSignUp ? "First — what's your email?" : "What's your email?",
+            title: "What's your email?",
             subtitle: isSignUp
                 ? "We'll create your Finavig account with it."
                 : "Welcome back! Let's get you signed in.",
@@ -890,8 +982,9 @@ class _LoginScreenState extends State<LoginScreen> {
             focusNode: _passwordFocus,
             obscureText: _obscurePassword,
             autofillHints: const [AutofillHints.password],
-            textInputAction:
-                isSignUp ? TextInputAction.next : TextInputAction.done,
+            textInputAction: isSignUp
+                ? TextInputAction.next
+                : TextInputAction.done,
             onFieldSubmitted: (_) => _continue(),
             style: TextStyle(color: _fieldTextColor(isDark), fontSize: 15),
             decoration: _fieldDecoration(
@@ -969,22 +1062,24 @@ class _LoginScreenState extends State<LoginScreen> {
                   : Colors.black.withOpacity(0.03),
               borderRadius: BorderRadius.circular(6),
               border: Border.all(
-                color:
-                    (isDark ? Colors.white : Colors.black).withOpacity(0.14),
+                color: (isDark ? Colors.white : Colors.black).withOpacity(0.14),
               ),
             ),
             child: Row(
               children: [
-                const Icon(Icons.cake_rounded,
-                    size: 19, color: FinavigColors.violet),
+                const Icon(
+                  Icons.cake_rounded,
+                  size: 19,
+                  color: FinavigColors.violet,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     _selectedDob == null
                         ? 'Select your date of birth'
                         : '${_selectedDob!.day.toString().padLeft(2, '0')} '
-                            '${_monthName(_selectedDob!.month)} '
-                            '${_selectedDob!.year}',
+                              '${_monthName(_selectedDob!.month)} '
+                              '${_selectedDob!.year}',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
@@ -997,8 +1092,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 if (_selectedDob != null)
                   GestureDetector(
                     onTap: () => setState(() => _selectedDob = null),
-                    child: const Icon(Icons.close_rounded,
-                        size: 18, color: FinavigColors.textSecondary),
+                    child: const Icon(
+                      Icons.close_rounded,
+                      size: 18,
+                      color: FinavigColors.textSecondary,
+                    ),
                   ),
               ],
             ),
@@ -1017,8 +1115,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final now = DateTime.now();
     final picked = await showDatePicker(
       context: context,
-      initialDate:
-          _selectedDob ?? DateTime(now.year - 30, now.month, now.day),
+      initialDate: _selectedDob ?? DateTime(now.year - 30, now.month, now.day),
       firstDate: DateTime(1900),
       lastDate: now,
       helpText: 'Select your date of birth',
@@ -1035,8 +1132,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
   static String _monthName(int month) {
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December',
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     return months[month - 1];
   }
@@ -1064,8 +1171,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   : Colors.black.withOpacity(0.03),
               borderRadius: BorderRadius.circular(6),
               border: Border.all(
-                color:
-                    (isDark ? Colors.white : Colors.black).withOpacity(0.14),
+                color: (isDark ? Colors.white : Colors.black).withOpacity(0.14),
               ),
             ),
             child: Row(
@@ -1196,21 +1302,24 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 150),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 10),
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
                         decoration: BoxDecoration(
                           color: selected
                               ? FinavigColors.violet.withOpacity(0.10)
                               : (sheetDark
-                                  ? Colors.white.withOpacity(0.05)
-                                  : FinavigColors.cloud),
-                          borderRadius:
-                              BorderRadius.circular(FinavigRadius.tile),
+                                    ? Colors.white.withOpacity(0.05)
+                                    : FinavigColors.cloud),
+                          borderRadius: BorderRadius.circular(
+                            FinavigRadius.tile,
+                          ),
                           border: Border.all(
                             color: selected
                                 ? FinavigColors.violet
                                 : (sheetDark
-                                    ? Colors.white.withOpacity(0.08)
-                                    : Colors.black.withOpacity(0.05)),
+                                      ? Colors.white.withOpacity(0.08)
+                                      : Colors.black.withOpacity(0.05)),
                             width: selected ? 1.5 : 1,
                           ),
                         ),
@@ -1364,8 +1473,7 @@ class _LoginScreenState extends State<LoginScreen> {
       fillColor: isDark
           ? Colors.white.withOpacity(0.06)
           : Colors.black.withOpacity(0.03),
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       border: OutlineInputBorder(
         borderRadius: radius,
         borderSide: BorderSide(color: hairline),
@@ -1382,13 +1490,11 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: radius,
-        borderSide:
-            const BorderSide(color: FinavigColors.danger, width: 1.2),
+        borderSide: const BorderSide(color: FinavigColors.danger, width: 1.2),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: radius,
-        borderSide:
-            const BorderSide(color: FinavigColors.danger, width: 1.2),
+        borderSide: const BorderSide(color: FinavigColors.danger, width: 1.2),
       ),
     );
   }
@@ -1476,8 +1582,8 @@ class _StepProgress extends StatelessWidget {
                     color: done
                         ? FinavigColors.violet
                         : (isDark
-                            ? Colors.white.withOpacity(0.12)
-                            : Colors.black.withOpacity(0.08)),
+                              ? Colors.white.withOpacity(0.12)
+                              : Colors.black.withOpacity(0.08)),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -1598,90 +1704,98 @@ class _BackButton extends StatelessWidget {
   }
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
-// Sign in / Sign up segmented pill toggle
-// ──────────────────────────────────────────────────────────────────────────────
-
-class _ModeToggle extends StatelessWidget {
-  final bool isSignUp;
-  final bool enabled;
+/// Step-0 quiz question: two big tappable answers. Tapping one
+/// records the mode and routes into that flow — no separate toggle.
+class _ModeOption extends StatelessWidget {
   final bool isDark;
-  final ValueChanged<bool> onChanged;
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool selected;
+  final VoidCallback onTap;
 
-  const _ModeToggle({
-    required this.isSignUp,
-    required this.enabled,
+  const _ModeOption({
     required this.isDark,
-    required this.onChanged,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.selected,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Glass & Glow: quiet glass track; the selected segment is a raised
-    // glass pill (white with violet text in light, white-at-16% in dark).
-    final inactiveColor =
-        isDark ? FinavigColors.textSecondary : FinavigColors.textSecondaryLight;
-
-    Widget segment(String label, bool value, IconData icon) {
-      final selected = isSignUp == value;
-      return Expanded(
-        child: GestureDetector(
-          onTap: enabled ? () => onChanged(value) : null,
-          behavior: HitTestBehavior.opaque,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeOut,
-            height: 44,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              // Solid white pill in both themes with ink (button-color)
-              // text — matches the flat dark CTA.
-              color: selected ? Colors.white : Colors.transparent,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: selected ? FinavigShadows.soft : null,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  icon,
-                  size: 16,
-                  color: selected ? FinavigColors.ink : inactiveColor,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                    color: selected ? FinavigColors.ink : inactiveColor,
-                  ),
-                ),
-              ],
-            ),
+    final subColor = isDark
+        ? FinavigColors.textSecondary
+        : FinavigColors.textSecondaryLight;
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        curve: Curves.easeOut,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: selected
+              ? FinavigColors.violet.withOpacity(0.10)
+              : (isDark ? Colors.white.withOpacity(0.05) : FinavigColors.cloud),
+          borderRadius: BorderRadius.circular(FinavigRadius.tile),
+          border: Border.all(
+            color: selected
+                ? FinavigColors.violet
+                : (isDark
+                      ? Colors.white.withOpacity(0.08)
+                      : Colors.black.withOpacity(0.05)),
+            width: selected ? 1.5 : 1,
           ),
         ),
-      );
-    }
-
-    return Container(
-      height: 54,
-      padding: const EdgeInsets.all(5),
-      decoration: BoxDecoration(
-        color: isDark
-            ? Colors.white.withOpacity(0.06)
-            : Colors.black.withOpacity(0.04),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: (isDark ? Colors.white : Colors.black).withOpacity(0.10),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: FinavigColors.violet.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, size: 20, color: FinavigColors.violet),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: isDark
+                          ? FinavigColors.textPrimary
+                          : FinavigColors.textPrimaryLight,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 12.5, color: subColor),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              selected
+                  ? Icons.check_circle_rounded
+                  : Icons.arrow_forward_ios_rounded,
+              size: selected ? 20 : 16,
+              color: selected ? FinavigColors.violet : subColor,
+            ),
+          ],
         ),
-      ),
-      child: Row(
-        children: [
-          segment('Sign in', false, Icons.login_rounded),
-          const SizedBox(width: 4),
-          segment('Sign up', true, Icons.person_add_alt_rounded),
-        ],
       ),
     );
   }
@@ -1732,7 +1846,10 @@ class _DotSeparator extends StatelessWidget {
     return Text(
       '·',
       style: TextStyle(
-          fontSize: 12.5, fontWeight: FontWeight.w800, color: color),
+        fontSize: 12.5,
+        fontWeight: FontWeight.w800,
+        color: color,
+      ),
     );
   }
 }
@@ -1787,12 +1904,10 @@ class _FeatureChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: FinavigColors.violet
-            .withValues(alpha: isDark ? 0.14 : 0.09),
+        color: FinavigColors.violet.withValues(alpha: isDark ? 0.14 : 0.09),
         borderRadius: BorderRadius.circular(99),
         border: Border.all(
-          color: FinavigColors.violet
-              .withValues(alpha: isDark ? 0.30 : 0.22),
+          color: FinavigColors.violet.withValues(alpha: isDark ? 0.30 : 0.22),
         ),
       ),
       child: Row(
@@ -1856,9 +1971,7 @@ class _BackdropArt extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _BackdropPainter(isDark: isDark),
-    );
+    return CustomPaint(painter: _BackdropPainter(isDark: isDark));
   }
 }
 
@@ -1871,25 +1984,21 @@ class _BackdropPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
-    final accent = isDark
-        ? FinavigColors.accentBright
-        : FinavigColors.accent;
+    final accent = isDark ? FinavigColors.accentBright : FinavigColors.accent;
 
     // 1. Soft radial glow behind the brand header.
     canvas.drawRect(
       Offset.zero & size,
       Paint()
-        ..shader = RadialGradient(
-          colors: [
-            accent.withValues(alpha: isDark ? 0.16 : 0.10),
-            accent.withValues(alpha: 0.0),
-          ],
-        ).createShader(
-          Rect.fromCircle(
-            center: Offset(w / 2, h * 0.16),
-            radius: w * 0.9,
-          ),
-        ),
+        ..shader =
+            RadialGradient(
+              colors: [
+                accent.withValues(alpha: isDark ? 0.16 : 0.10),
+                accent.withValues(alpha: 0.0),
+              ],
+            ).createShader(
+              Rect.fromCircle(center: Offset(w / 2, h * 0.16), radius: w * 0.9),
+            ),
     );
 
     // 2. Faint market-chart lines — the splash / welcome
@@ -1900,8 +2009,7 @@ class _BackdropPainter extends CustomPainter {
       ..strokeWidth = 2
       ..strokeCap = StrokeCap.round;
     final goldLine = Paint()
-      ..color = FinavigColors.tierGold
-          .withValues(alpha: isDark ? 0.18 : 0.12)
+      ..color = FinavigColors.tierGold.withValues(alpha: isDark ? 0.18 : 0.12)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5
       ..strokeCap = StrokeCap.round;
@@ -1930,10 +2038,7 @@ class _BackdropPainter extends CustomPainter {
       ..strokeWidth = 1.5;
     const radius = Radius.circular(18);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(-18, 10, w * 0.24, 60),
-        radius,
-      ),
+      RRect.fromRectAndRadius(Rect.fromLTWH(-18, 10, w * 0.24, 60), radius),
       tile,
     );
     canvas.drawRRect(
