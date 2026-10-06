@@ -428,9 +428,9 @@ class _LoginScreenState extends State<LoginScreen> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // Inter — the app's system typeface (matches the
               // welcome screen's wordmark), not a serif display font.
