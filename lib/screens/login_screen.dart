@@ -414,9 +414,9 @@ class _LoginScreenState extends State<LoginScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      // Same surface recipe as the rest of the app: ink in light
-      // mode, obsidian in dark.
-      backgroundColor: isDark ? FinavigColors.obsidian : FinavigColors.ink,
+      // Plain light surface in light mode (the header wordmark
+      // and footer text are dark there); obsidian in dark.
+      backgroundColor: isDark ? FinavigColors.obsidian : Colors.white,
       // The sheet IS the screen — a flat surface under a
       // centred header, with the quiz flow in a soft M3 card.
       body: SafeArea(bottom: false, child: _glassSheet(theme, isDark)),
