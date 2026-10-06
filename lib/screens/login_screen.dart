@@ -20,10 +20,9 @@ import 'app_lock_flows.dart';
 /// brand header (wordmark + GCC Edition pill) above the quiz
 /// flow, which sits in a soft card on a flat surface.
 ///
-/// Violet is the single accent: toggle, progress, CTAs and links all
-/// use [FinavigColors.violet], exactly like the app's bento tiles and
-/// FilledButtons. The screen follows the app's light/dark theme like
-/// every other screen.
+/// Always renders the app's dark brand theme — the same
+/// blue/dark-blue look as the welcome page — so the
+/// welcome → login navigation feels like one branded flow.
 ///
 /// Flow is a quiz: one question per step, per-step validation, keyboard
 /// submit advances. Step 0 always asks what kind of user you are —
@@ -410,16 +409,26 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    // Force the dark brand theme (welcome's blue/dark-blue
+    // look) regardless of the system brightness, so the
+    // welcome → login handoff is seamless. The Builder lets
+    // everything below resolve Theme.of against it.
+    return Theme(
+      data: FinavigTheme.dark(),
+      child: Builder(
+        builder: (context) {
+          final theme = Theme.of(context);
+          final isDark = theme.brightness == Brightness.dark;
 
-    return Scaffold(
-      // Plain light surface in light mode (the header wordmark
-      // and footer text are dark there); obsidian in dark.
-      backgroundColor: isDark ? FinavigColors.obsidian : Colors.white,
-      // The sheet IS the screen — a flat surface under a
-      // centred header, with the quiz flow in a soft M3 card.
-      body: SafeArea(bottom: false, child: _glassSheet(theme, isDark)),
+          return Scaffold(
+            // Same navy as the welcome page behind the CTA.
+            backgroundColor: FinavigColors.ink,
+            // The sheet IS the screen — a flat surface under a
+            // centred header, with the quiz flow in a soft M3 card.
+            body: SafeArea(bottom: false, child: _glassSheet(theme, isDark)),
+          );
+        },
+      ),
     );
   }
 
