@@ -276,38 +276,7 @@ class _MoneyScreenState extends State<MoneyScreen> {
                               ),
                             ),
                             const SizedBox(height: 24),
-                            // 3. Spending analysis.
-                            _sheetPadding(
-                              WeeklySpendChart(
-                                transactions: _transactions,
-                                collapsed: _collapsedSections.contains(
-                                  'weekly',
-                                ),
-                                onToggleSection: () => _toggleSection('weekly'),
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            _sheetPadding(
-                              CategoryBreakdownCard(
-                                spendByCategory: spendByCategory,
-                                totalExpense: summary.expense,
-                                collapsed: _collapsedSections.contains(
-                                  'categories',
-                                ),
-                                onToggleSection: () =>
-                                    _toggleSection('categories'),
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            _sheetPadding(
-                              TopExpensesCard(
-                                transactions: _transactions,
-                                collapsed: _collapsedSections.contains('top'),
-                                onToggleSection: () => _toggleSection('top'),
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            // 4. Planning & history.
+                            // 3. Planning & history.
                             _sheetPadding(
                               RecurringSection(
                                 recurring: _recurring,
@@ -347,7 +316,7 @@ class _MoneyScreenState extends State<MoneyScreen> {
                               ),
                             ),
                             const SizedBox(height: 24),
-                            // 5. Credit obligations.
+                            // 4. Credit obligations.
                             _sheetPadding(
                               CreditSection(
                                 credits: _credits,
@@ -364,6 +333,9 @@ class _MoneyScreenState extends State<MoneyScreen> {
                               ),
                             ),
                             const SizedBox(height: 24),
+                            // 5. Transactions — the list most visits come
+                            //    for — then the spending analysis that is
+                            //    read from it.
                             _sheetPadding(
                               TransactionsSection(
                                 transactions: _transactions,
@@ -372,6 +344,36 @@ class _MoneyScreenState extends State<MoneyScreen> {
                                 ),
                                 onToggleSection: () =>
                                     _toggleSection('transactions'),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            _sheetPadding(
+                              WeeklySpendChart(
+                                transactions: _transactions,
+                                collapsed: _collapsedSections.contains(
+                                  'weekly',
+                                ),
+                                onToggleSection: () => _toggleSection('weekly'),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            _sheetPadding(
+                              CategoryBreakdownCard(
+                                spendByCategory: spendByCategory,
+                                totalExpense: summary.expense,
+                                collapsed: _collapsedSections.contains(
+                                  'categories',
+                                ),
+                                onToggleSection: () =>
+                                    _toggleSection('categories'),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            _sheetPadding(
+                              TopExpensesCard(
+                                transactions: _transactions,
+                                collapsed: _collapsedSections.contains('top'),
+                                onToggleSection: () => _toggleSection('top'),
                               ),
                             ),
                             // Keep the last card scrollable clear of the

@@ -65,7 +65,8 @@ void main() {
   testWidgets('sections read top to bottom in a logical order', (tester) async {
     await pumpMoney(tester);
 
-    // At a glance → budgets → spending analysis → planning & history.
+    // At a glance → budgets → planning & history → credit → the
+    // transaction list, with the spending analysis it feeds last.
     // The two "Credit" entries are told apart by their unique text:
     // the shortcut card by its subtitle, the section by its header.
     final order = <String, Finder>{
@@ -74,13 +75,13 @@ void main() {
       'Credit shortcut': find.text('Borrowed, lent & deadlines'),
       'Spending pace': find.textContaining('Spending pace'),
       'Monthly budgets': find.text('Monthly budgets'),
-      'Last 6 weeks': find.text('Last 6 weeks'),
-      'Where money goes': find.text('Where money goes'),
-      'Biggest expenses': find.text('Biggest expenses'),
       'Recurring': find.text('Recurring'),
       'Savings envelopes': find.text('Savings envelopes'),
       'Credit': find.widgetWithText(SectionHeader, 'Credit'),
       'Transactions': find.widgetWithText(SectionHeader, 'Transactions'),
+      'Last 6 weeks': find.text('Last 6 weeks'),
+      'Where money goes': find.text('Where money goes'),
+      'Biggest expenses': find.text('Biggest expenses'),
     };
 
     var previous = double.negativeInfinity;
