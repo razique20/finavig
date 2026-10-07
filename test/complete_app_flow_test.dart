@@ -223,6 +223,36 @@ void main() {
       expect(find.textContaining('document'), findsWidgets);
       expect(tester.takeException(), isNull);
     });
+
+    testWidgets('quick action orb (+) is flat — no shadow around it',
+        (tester) async {
+      await pumpAt(tester, '/home');
+
+      // The orb is the only tooltip-badged widget in the nav pill, so locate it
+      // by its tooltip rather than by icon position in the tree.
+      final orbTooltip = find.byWidgetPredicate(
+        (w) => w is Tooltip && (w.message ?? '').startsWith('Quick actions'),
+      );
+      expect(orbTooltip, findsOneWidget);
+
+      final orbContainers = find.descendant(
+        of: orbTooltip,
+        matching: find.byType(Container),
+      );
+      expect(orbContainers, findsWidgets);
+
+      var gradientCircles = 0;
+      for (final element in orbContainers.evaluate()) {
+        final decoration = (element.widget as Container).decoration;
+        if (decoration is! BoxDecoration) continue;
+        expect(decoration.boxShadow, isNull,
+            reason: 'the + orb must not draw a shadow');
+        if (decoration.gradient != null) gradientCircles++;
+      }
+      // The violet gradient circle stays; only its shadow was removed.
+      expect(gradientCircles, 1);
+      expect(tester.takeException(), isNull);
+    });
   });
 
   // ────────────────────────────────────────────────────────────────────────

@@ -388,7 +388,7 @@ class _AppShellState extends State<_AppShell> {
   }
 }
 
-/// Center "universal quick action" (+) button inside the nav pill: a raised
+/// Center "universal quick action" (+) button inside the nav pill: a flat
 /// violet orb that opens the quick action menu from any tab.
 class _QuickActionButton extends StatelessWidget {
   final bool isDark;
@@ -424,13 +424,6 @@ class _QuickActionButton extends StatelessWidget {
                     end: Alignment.bottomRight,
                     colors: [FinavigColors.violet, FinavigColors.violetDark],
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: FinavigColors.violet.withOpacity(0.45),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
                 ),
                 child: const Icon(
                   Icons.add_rounded,
