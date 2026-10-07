@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../models/credit.dart';
+import '../../../theme/app_theme.dart';
 
 // Sheet for extending a credit entry's deadline. The original
 // deadline and every extension are kept on record — the
@@ -101,7 +102,7 @@ class _CreditExtendSheetState extends State<CreditExtendSheet> {
                     Icon(
                       Icons.calendar_today_rounded,
                       size: 16,
-                      color: theme.colorScheme.outline,
+                      color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -132,7 +133,7 @@ class _CreditExtendSheetState extends State<CreditExtendSheet> {
                   Icon(
                     Icons.history_rounded,
                     size: 16,
-                    color: theme.colorScheme.outline,
+                    color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -174,7 +175,7 @@ class _CreditExtendSheetState extends State<CreditExtendSheet> {
       ),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: theme.colorScheme.outline),
+          Icon(icon, size: 16, color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline)),
           const SizedBox(width: 8),
           Expanded(
             child: Column(

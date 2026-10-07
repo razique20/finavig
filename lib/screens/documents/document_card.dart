@@ -203,7 +203,7 @@ class DocumentCard extends StatelessWidget {
                                     Icons.calendar_today_rounded,
                                     size: 12,
                                     color: isDark
-                                        ? FinavigColors.textMuted
+                                        ? Colors.white
                                         : FinavigColors.textSecondaryLight,
                                   ),
                                   const SizedBox(width: 4),
@@ -319,9 +319,7 @@ class DocumentCard extends StatelessWidget {
         Icon(
           icon,
           size: 13,
-          color: isDark
-              ? FinavigColors.textMuted
-              : FinavigColors.textSecondaryLight,
+          color: isDark ? Colors.white : FinavigColors.textSecondaryLight,
         ),
         const SizedBox(width: 4),
         Text(

@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 import '../../../models/credit.dart';
 import '../../../models/finance.dart';
 import '../../../services/collection_service.dart';
+import '../../../theme/app_theme.dart';
 
 /// What the credit form hands back: the built [CreditEntry] plus, when the
 /// user opted in, the Money transaction mirroring the principal. The sheet
@@ -265,7 +266,7 @@ class _CreditFormSheetState extends State<CreditFormSheet> {
                       Icon(
                         Icons.calendar_today_rounded,
                         size: 16,
-                        color: theme.colorScheme.outline,
+                        color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -292,7 +293,7 @@ class _CreditFormSheetState extends State<CreditFormSheet> {
                       Icon(
                         Icons.calendar_today_rounded,
                         size: 16,
-                        color: theme.colorScheme.outline,
+                        color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline),
                       ),
                       const SizedBox(width: 8),
                       Expanded(

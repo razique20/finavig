@@ -280,7 +280,7 @@ class _QuickActionTile extends StatelessWidget {
               Icon(
                 Icons.chevron_right_rounded,
                 size: 20,
-                color: theme.colorScheme.outline,
+                color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline),
               ),
             ],
           ),

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../models/document_collection.dart';
 import 'profile_sections.dart';
+import '../../theme/app_theme.dart';
 
 /// Account card of the Profile (Settings) screen — the editable identity
 /// details (role, phone) plus the active-collection shortcut. Identity
@@ -46,10 +47,10 @@ class ProfileAccountCard extends StatelessWidget {
               icon: Icons.badge_outlined,
               title: userRole,
               subtitle: 'Role / designation',
-              trailing: const Icon(
+              trailing: Icon(
                 Icons.chevron_right_rounded,
                 size: 20,
-                color: Colors.grey,
+                color: FinavigColors.adaptiveIcon(context, Colors.grey),
               ),
               onTap: onEditProfile,
             ),
@@ -58,10 +59,10 @@ class ProfileAccountCard extends StatelessWidget {
                 icon: Icons.phone_iphone_rounded,
                 title: userPhone,
                 subtitle: 'Phone number',
-                trailing: const Icon(
+                trailing: Icon(
                   Icons.chevron_right_rounded,
                   size: 20,
-                  color: Colors.grey,
+                  color: FinavigColors.adaptiveIcon(context, Colors.grey),
                 ),
                 onTap: onEditProfile,
               ),
@@ -69,10 +70,10 @@ class ProfileAccountCard extends StatelessWidget {
               icon: Icons.folder_special_rounded,
               title: '$_activeCollectionName is active',
               subtitle: 'Current collection',
-              trailing: const Icon(
+              trailing: Icon(
                 Icons.chevron_right_rounded,
                 size: 20,
-                color: Colors.grey,
+                color: FinavigColors.adaptiveIcon(context, Colors.grey),
               ),
               onTap: () => context.go('/documents'),
             ),
@@ -107,10 +108,10 @@ class ProfileAiSection extends StatelessWidget {
           subtitle: geminiKey.isEmpty
               ? 'Uses built-in templates — add a Gemini key for AI polish'
               : 'Gemini key configured — summaries are AI-polished',
-          trailing: const Icon(
+          trailing: Icon(
             Icons.edit_rounded,
             size: 20,
-            color: Colors.grey,
+            color: FinavigColors.adaptiveIcon(context, Colors.grey),
           ),
           onTap: onEditGeminiKey,
         ),

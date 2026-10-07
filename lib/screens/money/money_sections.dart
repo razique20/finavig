@@ -40,7 +40,7 @@ class SectionHeader extends StatelessWidget {
     final theme = Theme.of(context);
     final row = Row(
       children: [
-        Icon(icon, size: 20, color: theme.colorScheme.outline),
+        Icon(icon, size: 20, color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline)),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
@@ -87,7 +87,7 @@ class SectionCollapseChevron extends StatelessWidget {
         child: Icon(
           Icons.expand_more_rounded,
           size: 22,
-          color: Theme.of(context).colorScheme.outline,
+          color: FinavigColors.adaptiveIcon(context, Theme.of(context).colorScheme.outline),
         ),
       ),
     );

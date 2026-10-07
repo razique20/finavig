@@ -462,9 +462,9 @@ Future<void> showProfileRequestHistorySheet(BuildContext context) async {
                         color: Colors.blueGrey.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.history_rounded,
-                        color: Colors.blueGrey,
+                        color: FinavigColors.adaptiveIcon(context, Colors.blueGrey),
                         size: 22,
                       ),
                     ),
@@ -506,7 +506,7 @@ Future<void> showProfileRequestHistorySheet(BuildContext context) async {
                                 Icons.inbox_rounded,
                                 size: 56,
                                 color:
-                                    theme.colorScheme.outline.withOpacity(0.4),
+                                    FinavigColors.adaptiveIcon(context, theme.colorScheme.outline.withOpacity(0.4)),
                               ),
                               const SizedBox(height: 12),
                               Text(

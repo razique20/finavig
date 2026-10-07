@@ -1176,7 +1176,7 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
                         size: 16,
                         color: _activeTemplateId == t.id
                             ? FinavigColors.navyPrimary
-                            : theme.colorScheme.onSurfaceVariant,
+                            : FinavigColors.adaptiveIcon(context, theme.colorScheme.onSurfaceVariant),
                       ),
                       label: Text(t.label),
                       selected: _activeTemplateId == t.id,

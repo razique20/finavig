@@ -527,7 +527,7 @@ class _ExtensionBadge extends StatelessWidget {
           Icon(
             Icons.event_repeat_rounded,
             size: 12,
-            color: theme.colorScheme.outline,
+            color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline),
           ),
           const SizedBox(width: 4),
           Text(
@@ -622,7 +622,7 @@ class _TemplateTile extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, size: 18, color: theme.colorScheme.outline),
+              Icon(icon, size: 18, color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline)),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -643,7 +643,7 @@ class _TemplateTile extends StatelessWidget {
               Icon(
                 Icons.open_in_new_rounded,
                 size: 16,
-                color: theme.colorScheme.outline,
+                color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline),
               ),
             ],
           ),

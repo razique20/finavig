@@ -301,9 +301,7 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
               size: 13,
               color: active
                   ? Colors.white
-                  : (isDark
-                      ? FinavigColors.textSecondary
-                      : FinavigColors.textMuted),
+                  : (isDark ? Colors.white : FinavigColors.textMuted),
             ),
             const SizedBox(width: 5),
             Text(

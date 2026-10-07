@@ -8,6 +8,7 @@ import '../../services/companion_document_factory.dart';
 import '../../services/companion_suggestion_service.dart';
 import '../../services/document_scanner_service.dart';
 import '../../services/entitlement_service.dart';
+import '../../theme/app_theme.dart';
 import 'upgrade_dialog.dart';
 
 /// Bottom sheet shown after a document is added, suggesting related document
@@ -337,7 +338,10 @@ class _SuggestionTile extends StatelessWidget {
                 selected
                     ? Icons.check_circle_rounded
                     : Icons.radio_button_unchecked_rounded,
-                color: selected ? meta.primaryColor : theme.colorScheme.outline,
+                color: selected
+                    ? meta.primaryColor
+                    : FinavigColors.adaptiveIcon(
+                        context, theme.colorScheme.outline),
               ),
             ],
           ),

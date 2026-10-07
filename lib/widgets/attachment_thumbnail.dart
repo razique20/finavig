@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import '../theme/app_theme.dart';
 
 /// Shared attachment image pipeline for document scans — extracted from the
 /// raw `Image.file` / `Image.network` usage in `document_detail_screen.dart`.
@@ -162,7 +163,7 @@ class _AttachmentError extends StatelessWidget {
           Icon(
             Icons.image_not_supported_outlined,
             size: 32,
-            color: Theme.of(context).colorScheme.outline,
+            color: FinavigColors.adaptiveIcon(context, Theme.of(context).colorScheme.outline),
           ),
           const SizedBox(height: 8),
           Text(

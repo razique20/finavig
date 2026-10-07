@@ -76,9 +76,7 @@ class DocumentsSearchField extends StatelessWidget {
           prefixIcon: Icon(
             Icons.search_rounded,
             size: 20,
-            color: isDark
-                ? FinavigColors.textSecondary
-                : FinavigColors.textSecondaryLight,
+            color: isDark ? Colors.white : FinavigColors.textSecondaryLight,
           ),
           suffixIcon: query.isEmpty
               ? null
@@ -86,9 +84,7 @@ class DocumentsSearchField extends StatelessWidget {
                   icon: Icon(
                     Icons.close_rounded,
                     size: 18,
-                    color: isDark
-                        ? FinavigColors.textSecondary
-                        : FinavigColors.textSecondaryLight,
+                    color: isDark ? Colors.white : FinavigColors.textSecondaryLight,
                   ),
                   onPressed: () => onChanged(''),
                 ),
@@ -368,7 +364,7 @@ Future<DocSort?> showDocumentsSortSheet(BuildContext context, DocSort current) {
                 s.icon,
                 color: current == s
                     ? theme.colorScheme.primary
-                    : theme.colorScheme.outline,
+                    : FinavigColors.adaptiveIcon(context, theme.colorScheme.outline),
               ),
               title: Text(s.label),
               trailing: current == s

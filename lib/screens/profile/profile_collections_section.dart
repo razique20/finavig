@@ -94,10 +94,10 @@ class ProfileCollectionsSection extends StatelessWidget {
                             visualDensity: VisualDensity.compact,
                             onPressed: () => onDelete(collection),
                           ),
-                          const Icon(
+                          Icon(
                             Icons.chevron_right_rounded,
                             size: 20,
-                            color: Colors.grey,
+                            color: FinavigColors.adaptiveIcon(context, Colors.grey),
                           ),
                         ],
                       )
@@ -133,10 +133,10 @@ class ProfileCollectionsSection extends StatelessWidget {
                                   onPressed: () => onDelete(collection),
                                 ),
                               ],
-                              const Icon(
+                              Icon(
                                 Icons.chevron_right_rounded,
                                 size: 20,
-                                color: Colors.grey,
+                                color: FinavigColors.adaptiveIcon(context, Colors.grey),
                               ),
                             ],
                           )),

@@ -23,6 +23,7 @@ import '../widgets/attachment_thumbnail.dart';
 import '../widgets/dialogs/renew_document_dialog.dart';
 import '../widgets/viewers/full_screen_image_viewer.dart';
 import '../widgets/widgets.dart';
+import '../theme/app_theme.dart';
 
 class DocumentDetailScreen extends StatefulWidget {
   final String documentId;
@@ -89,7 +90,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, size: 64, color: Colors.grey),
+              Icon(Icons.error_outline, size: 64, color: FinavigColors.adaptiveIcon(context, Colors.grey)),
               const SizedBox(height: 16),
               Text('Document not found', style: theme.textTheme.titleLarge),
               const SizedBox(height: 8),
@@ -1315,7 +1316,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
               children: [
                 Icon(
                   Icons.history_rounded,
-                  color: theme.colorScheme.outline,
+                  color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline),
                   size: 22,
                 ),
                 const SizedBox(width: 12),
@@ -1752,7 +1753,7 @@ class _InfoTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: theme.colorScheme.outline),
+          Icon(icon, size: 16, color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline)),
           const SizedBox(width: 8),
           Expanded(
             child: Column(

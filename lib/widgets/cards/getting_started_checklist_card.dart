@@ -314,7 +314,10 @@ class _GettingStartedChecklistCardState
               child: Icon(
                 done ? Icons.check_rounded : Icons.circle_outlined,
                 size: 14,
-                color: done ? Colors.white : theme.colorScheme.outline,
+                color: done
+                    ? Colors.white
+                    : FinavigColors.adaptiveIcon(
+                        context, theme.colorScheme.outline),
               ),
             ),
             const SizedBox(width: 12),

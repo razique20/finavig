@@ -469,7 +469,7 @@ class HomeNotificationBell extends StatelessWidget {
                       Icon(
                         Icons.notifications_off_rounded,
                         size: 40,
-                        color: theme.colorScheme.outline,
+                        color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline),
                       ),
                       const SizedBox(height: 12),
                       Text(

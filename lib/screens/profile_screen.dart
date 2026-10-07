@@ -370,10 +370,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   title: 'Frequently Asked Questions (FAQ)',
                                   subtitle:
                                       'Instant answers for documents, money, AI & account',
-                                  trailing: const Icon(
+                                  trailing: Icon(
                                     Icons.chevron_right_rounded,
                                     size: 20,
-                                    color: Colors.grey,
+                                    color: FinavigColors.adaptiveIcon(context, Colors.grey),
                                   ),
                                   onTap: () => showFaqSheet(
                                     context,
@@ -387,10 +387,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   title: 'App Guide',
                                   subtitle:
                                       'Interactive walkthrough of all Finavig features',
-                                  trailing: const Icon(
+                                  trailing: Icon(
                                     Icons.chevron_right_rounded,
                                     size: 20,
-                                    color: Colors.grey,
+                                    color: FinavigColors.adaptiveIcon(context, Colors.grey),
                                   ),
                                   onTap: () => showAppGuideDialog(context),
                                 ),
@@ -400,10 +400,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   title: 'Submit a Request',
                                   subtitle:
                                       'Request a tracking option, report a bug, or get help',
-                                  trailing: const Icon(
+                                  trailing: Icon(
                                     Icons.chevron_right_rounded,
                                     size: 20,
-                                    color: Colors.grey,
+                                    color: FinavigColors.adaptiveIcon(context, Colors.grey),
                                   ),
                                   onTap: () => showProfileSupportSheet(context),
                                 ),
@@ -413,10 +413,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   title: 'My Requests',
                                   subtitle:
                                       'View status of your previous submissions',
-                                  trailing: const Icon(
+                                  trailing: Icon(
                                     Icons.chevron_right_rounded,
                                     size: 20,
-                                    color: Colors.grey,
+                                    color: FinavigColors.adaptiveIcon(context, Colors.grey),
                                   ),
                                   onTap: () =>
                                       showProfileRequestHistorySheet(context),
@@ -427,10 +427,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   title: 'Delete Account',
                                   subtitle:
                                       'Permanently erase your account and all data',
-                                  trailing: const Icon(
+                                  trailing: Icon(
                                     Icons.chevron_right_rounded,
                                     size: 20,
-                                    color: Colors.grey,
+                                    color: FinavigColors.adaptiveIcon(context, Colors.grey),
                                   ),
                                   onTap: () async {
                                     final signedIn =

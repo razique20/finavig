@@ -233,7 +233,7 @@ class _FaqSheetContentState extends State<_FaqSheetContent> {
                             Icon(
                               Icons.search_off_rounded,
                               size: 48,
-                              color: theme.colorScheme.outline.withOpacity(0.4),
+                              color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline.withOpacity(0.4)),
                             ),
                             const SizedBox(height: 12),
                             Text(
@@ -428,7 +428,7 @@ class _FaqAccordionCardState extends State<_FaqAccordionCard> {
                       _expanded
                           ? Icons.keyboard_arrow_up_rounded
                           : Icons.keyboard_arrow_down_rounded,
-                      color: theme.colorScheme.outline,
+                      color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline),
                     ),
                   ],
                 ),

@@ -603,7 +603,7 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
                 ),
               ),
               Icon(Icons.keyboard_rounded,
-                  size: 20, color: theme.colorScheme.outline),
+                  size: 20, color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline)),
             ],
           ),
         ),
@@ -862,7 +862,7 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
           Row(
             children: [
               Icon(Icons.calendar_today_rounded,
-                  size: 14, color: theme.colorScheme.outline),
+                  size: 14, color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline)),
               const SizedBox(width: 6),
               Text(
                 DateFormat('dd MMMM yyyy').format(p.occurredAt),
@@ -1070,7 +1070,7 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
           Row(
             children: [
               Icon(Icons.help_outline_rounded,
-                  size: 18, color: theme.colorScheme.outline),
+                  size: 18, color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline)),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(

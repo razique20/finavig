@@ -358,7 +358,7 @@ class RecurringCard extends StatelessWidget {
                   size: 18,
                   color: template.isActive
                       ? amountColor
-                      : theme.colorScheme.outline,
+                      : FinavigColors.adaptiveIcon(context, theme.colorScheme.outline),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -399,7 +399,7 @@ class RecurringCard extends StatelessWidget {
                       ? Icons.play_circle_outline_rounded
                       : Icons.pause_circle_outline_rounded,
                   size: 14,
-                  color: theme.colorScheme.outline,
+                  color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline),
                 ),
                 const SizedBox(width: 4),
                 Expanded(

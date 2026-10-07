@@ -509,7 +509,7 @@ class _AboutLink extends StatelessWidget {
                       ? Icons.chevron_right_rounded
                       : Icons.open_in_new_rounded,
                   size: 16,
-                  color: theme.colorScheme.onSurfaceVariant,
+                  color: FinavigColors.adaptiveIcon(context, theme.colorScheme.onSurfaceVariant),
                 ),
               ],
             ),

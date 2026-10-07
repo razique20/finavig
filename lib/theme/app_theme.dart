@@ -113,6 +113,16 @@ class FinavigColors {
   static const Color glassBlack = Color(0x14000000);
   static const Color glassBorderBlack = Color(0x1F000000);
 
+  // ── Helpers: icon colour ────────────────────────────────────────────────
+
+  /// Neutral icon colour. Keeps the caller's light-mode token untouched and
+  /// returns pure white on the dark canvas, where the grey tokens
+  /// (outline, textSecondary, Colors.grey) read as muddy and low-contrast.
+  /// Semantic colours (urgency, tier gold, income/expense) never route
+  /// through here — they keep carrying meaning in both themes.
+  static Color adaptiveIcon(BuildContext context, Color light) =>
+      Theme.of(context).brightness == Brightness.dark ? Colors.white : light;
+
   // ── Helpers: urgency from days ──────────────────────────────────────────
 
   static Color urgencyColor(int days, {bool isActive = true}) {
@@ -135,6 +145,69 @@ class FinavigColors {
     if (days <= 60) return cautionBgLight;
     return safeBgLight;
   }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// FinavigTransition — a single lerpable factor that lets any hardcoded
+// light/dark colour pair cross-fade with the theme animation.
+//
+// Branching on `isDark` inside a build method cannot animate: MaterialApp
+// lerps the whole ThemeData over [kThemeAnimationDuration], and the lerped
+// `brightness` only flips at the halfway point. A hardcoded
+// `isDark ? dark : light` colour therefore jumps in a single frame while every
+// theme-derived colour around it is still interpolating — the "blink" the
+// bento tiles, the floating nav pill and the Home banners showed when the
+// theme was switched.
+//
+// `t` is a [ThemeExtension] field, so ThemeData.lerp interpolates it with the
+// same curve and timeline as the rest of the theme: 0 while the light theme is
+// settled, 1 while the dark theme is settled, and everything in between during
+// the switch. Call sites replace
+//
+//   isDark ? darkColour : lightColour
+//
+// with
+//
+//   fade.color(lightColour, darkColour)
+//
+// which is byte-identical at both endpoints and interpolates in between.
+// ──────────────────────────────────────────────────────────────────────────────
+
+@immutable
+class FinavigTransition extends ThemeExtension<FinavigTransition> {
+  /// 0 = fully light theme, 1 = fully dark theme.
+  final double t;
+
+  const FinavigTransition(this.t);
+
+  static const FinavigTransition light = FinavigTransition(0);
+  static const FinavigTransition dark = FinavigTransition(1);
+
+  /// Fallback for a context whose theme was not built by [FinavigTheme] —
+  /// tests that mount a screen under the default Material theme, for example.
+  static FinavigTransition of(BuildContext context) {
+    final theme = Theme.of(context);
+    return theme.extension<FinavigTransition>() ??
+        (theme.brightness == Brightness.dark ? dark : light);
+  }
+
+  /// [light] in light mode, [dark] in dark mode, interpolated between.
+  Color color(Color light, Color dark) => Color.lerp(light, dark, t)!;
+
+  /// Same, for scalars such as an opacity, a blur radius or an offset.
+  double value(double light, double dark) => light + (dark - light) * t;
+
+  @override
+  FinavigTransition copyWith({double? t}) => FinavigTransition(t ?? this.t);
+
+  @override
+  FinavigTransition lerp(
+    covariant ThemeExtension<FinavigTransition>? other,
+    double t,
+  ) =>
+      other is FinavigTransition
+          ? FinavigTransition(this.t + (other.t - this.t) * t)
+          : this;
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -412,6 +485,10 @@ class FinavigTheme {
       brightness: Brightness.dark,
       colorScheme: scheme,
       textTheme: _textTheme(Brightness.dark),
+      // Every icon that does not set its own colour renders pure white on the
+      // dark canvas.
+      iconTheme: const IconThemeData(color: Colors.white),
+      extensions: const [FinavigTransition.dark],
       scaffoldBackgroundColor: FinavigColors.obsidian,
       canvasColor: FinavigColors.charcoal,
       cardColor: FinavigColors.charcoal,
@@ -420,7 +497,7 @@ class FinavigTheme {
       highlightColor: Colors.white.withOpacity(0.04),
       appBarTheme: AppBarTheme(
         backgroundColor: FinavigColors.obsidian,
-        foregroundColor: FinavigColors.textPrimary,
+        foregroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
@@ -442,9 +519,13 @@ class FinavigTheme {
         ),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: FinavigColors.accentBright, size: 22);
+            return const IconThemeData(color: Colors.white, size: 22);
           }
-          return const IconThemeData(color: FinavigColors.textMuted, size: 22);
+          // White, dimmed just enough to keep the active tab legible.
+          return IconThemeData(
+            color: Colors.white.withValues(alpha: 0.65),
+            size: 22,
+          );
         }),
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         elevation: 0,
@@ -458,7 +539,7 @@ class FinavigTheme {
         ),
       ),
       listTileTheme: ListTileThemeData(
-        iconColor: FinavigColors.textSecondary,
+        iconColor: Colors.white,
         titleTextStyle: _withEmojiFallback(GoogleFonts.inter(
           fontSize: 14,
           fontWeight: FontWeight.w600,
@@ -647,6 +728,7 @@ class FinavigTheme {
       brightness: Brightness.light,
       colorScheme: scheme,
       textTheme: _textTheme(Brightness.light),
+      extensions: const [FinavigTransition.light],
       scaffoldBackgroundColor: FinavigColors.snowWhite,
       canvasColor: Colors.white,
       cardColor: Colors.white,

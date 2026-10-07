@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 import '../../../models/credit.dart';
 import '../../../models/finance.dart';
 import '../../../services/finance_service.dart';
+import '../../../theme/app_theme.dart';
 
 /// What the settle sheet hands back to its caller.
 ///
@@ -233,7 +234,7 @@ class _CreditSettleSheetState extends State<CreditSettleSheet> {
                       Icon(
                         Icons.calendar_today_rounded,
                         size: 16,
-                        color: theme.colorScheme.outline,
+                        color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -434,7 +435,7 @@ class _OptionTile extends StatelessWidget {
               size: 20,
               color: selected
                   ? theme.colorScheme.primary
-                  : theme.colorScheme.outline,
+                  : FinavigColors.adaptiveIcon(context, theme.colorScheme.outline),
             ),
             const SizedBox(width: 10),
             Expanded(

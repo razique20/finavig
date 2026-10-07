@@ -382,7 +382,8 @@ class _PlanTile extends StatelessWidget {
                   : Icons.radio_button_unchecked_rounded,
               color: selected
                   ? FinavigColors.accent
-                  : theme.colorScheme.outlineVariant,
+                  : FinavigColors.adaptiveIcon(
+                      context, theme.colorScheme.outlineVariant),
               size: 20,
             ),
           ],
