@@ -248,6 +248,7 @@ Five-panel interactive onboarding follows (the `hasOnboarded` flag skips it late
 
 ![Welcome](screenshots/02-welcome.png)
 ![Login](screenshots/04-login.png)
+![Sign-up](screenshots/05-signup-form.png)
 ![Onboarding](screenshots/23-onboarding.png)
 
 ### 5.3 Home dashboard
@@ -304,6 +305,7 @@ Finance module home: month overview (net cash flow), bill-spike alert, overall +
 The hero opens a **light sheet that doubles as a collapsible index**: every section starts minimized to its header and expands on tap, so the long finance page reads as a scannable table of contents. The Credit section now lives inside that sheet rather than in the hero.
 
 ![Money](screenshots/07-money.png)
+![Money with Credit expanded](screenshots/34-money-credit.png)
 
 ### 5.11 Budgets & envelopes
 
@@ -342,9 +344,14 @@ Modular settings: account card, subscription (tier badge, plan-expiry countdown,
 
 A per-collection list of obligations kept outside the ledger: cards show the counterparty (with a phone action), the amount and currency, why it was borrowed (`description`), the borrowed-on date, the due date and any extensions, an overdue/deadline chip, and the settled state. Creating, editing, extending (each extension appends to `extension_history`) and deleting an entry are available from the card; a WhatsApp follow-up sheet drafts the reminder message. Settling offers a **settle sheet** that asks whether to log the cash movement, attach an existing record, or only settle the obligation — and, for a loan whose principal was hand-logged, can tag that existing row as the `disbursement` leg so it stops counting as income. See §5.1 of [`ARCHITECTURE.md`](../ARCHITECTURE.md) and [`credit-money-sync.md`](credit-money-sync.md).
 
+![Credit book](screenshots/32-credits.png)
+![Credit settle sheet](screenshots/35-credit-settle.png)
+
 ### 5.17 App Lock
 
 Profile → Security enables an optional 6-digit passcode with biometric unlock. `AppLockGate` covers the live UI on a cold start, unlock accepts either the passcode or biometrics, wrong entries escalate into a persisted lockout, and "Forgot passcode" signs the user out. Only a salted, iterated hash is stored, in platform secure storage. Verified by `test/app_lock_test.dart` (see [`app-lock-test-report.md`](app-lock-test-report.md)).
+
+![App Lock passcode setup](screenshots/33-app-lock.png)
 
 ---
 
