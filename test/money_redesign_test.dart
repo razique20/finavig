@@ -3,6 +3,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:finavig/models/document_type.dart';
+import 'package:finavig/models/expiry_item.dart';
+import 'package:finavig/screens/money/money_summary_cards.dart';
 import 'package:finavig/screens/money_screen.dart';
 import 'package:finavig/theme/app_theme.dart';
 
@@ -98,5 +101,90 @@ void main() {
       isEmpty,
       reason: 'Hero or sheet rows must not overflow at 393px viewport width.',
     );
+  });
+
+  // The "at a glance" group stacks flush, so the Upcoming renewals section
+  // owns its own 16px breathing room above and below — and drops it entirely
+  // when it has no rows to show.
+  group('Upcoming renewals spacing', () {
+    ExpiryItem renewalDoc() {
+      final due = DateTime.now().add(const Duration(days: 30));
+      return ExpiryItem(
+        collectionId: 'personal',
+        id: 'doc1',
+        displayName: 'Main Trade Licence',
+        docType: DocumentTypeRegistry.instance.byKey('trade_licence'),
+        expiryDate: due.toIso8601String().split('T').first,
+        daysRemaining: 30,
+        urgency: UrgencyLevel.medium,
+        expiresAt: due,
+        renewalFee: 12500,
+      );
+    }
+
+    Future<void> pumpSection(
+      WidgetTester tester, {
+      required List<ExpiryItem> items,
+    }) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: FinavigTheme.light(),
+          home: Scaffold(
+            body: RenewalBreakdownCard(
+              items: items,
+              collapsed: false,
+              onToggleSection: () {},
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('section owns a 16px gap above and below its rows',
+        (tester) async {
+      await pumpSection(tester, items: [renewalDoc()]);
+
+      expect(find.text('Upcoming renewals'), findsOneWidget);
+      expect(find.textContaining('12,500'), findsOneWidget);
+
+      // Exactly one gap, and it wraps the whole section — header included,
+      // not just the list card.
+      final gap = find.ancestor(
+        of: find.text('Upcoming renewals'),
+        matching: find.byType(Padding),
+      );
+      final vertical16 = tester
+          .widgetList<Padding>(gap)
+          .where((p) => p.padding == const EdgeInsets.symmetric(vertical: 16))
+          .toList();
+      expect(vertical16, hasLength(1));
+
+      final gapFinder = find.byWidget(vertical16.single);
+      expect(
+        find.descendant(
+          of: gapFinder,
+          matching: find.text('Upcoming renewals'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: gapFinder, matching: find.textContaining('12,500')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('no rows means no section and no leftover gap',
+        (tester) async {
+      await pumpSection(tester, items: const []);
+
+      expect(find.text('Upcoming renewals'), findsNothing);
+      expect(
+        tester
+            .widgetList<Padding>(find.byType(Padding))
+            .where((p) => p.padding == const EdgeInsets.symmetric(vertical: 16)),
+        isEmpty,
+      );
+    });
   });
 }

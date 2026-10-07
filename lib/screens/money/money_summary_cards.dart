@@ -868,75 +868,86 @@ class _RenewalBreakdownCardState extends State<RenewalBreakdownCard> {
     final upcoming = _upcoming();
     if (upcoming.isEmpty) return const SizedBox.shrink();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SectionHeader(
-          icon: Icons.event_repeat_rounded,
-          title: 'Upcoming renewals',
-          collapsed: widget.collapsed,
-          onToggle: widget.onToggleSection,
-        ),
-        CollapsibleSectionBody(
-          collapsed: widget.collapsed,
-          children: [
-            const SizedBox(height: 12),
-            Container(
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest.withOpacity(
-                  0.4,
+    return Padding(
+      // The "at a glance" group stacks flush, so this section owns the
+      // breathing room that sets the renewals list apart. Empty state
+      // returns above, so the gap never leaves dead space behind.
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionHeader(
+            icon: Icons.event_repeat_rounded,
+            title: 'Upcoming renewals',
+            collapsed: widget.collapsed,
+            onToggle: widget.onToggleSection,
+          ),
+          CollapsibleSectionBody(
+            collapsed: widget.collapsed,
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest.withOpacity(
+                    0.4,
+                  ),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Column(
-                children: [
-                  for (var idx = 0; idx < upcoming.length; idx++) ...[
-                    if (idx > 0) InsetDivider(indent: 56),
-                    ListTile(
-                      dense: true,
-                      leading: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: upcoming[idx].docType.primaryColor.withOpacity(
-                            0.12,
+                child: Column(
+                  children: [
+                    for (var idx = 0; idx < upcoming.length; idx++) ...[
+                      if (idx > 0) InsetDivider(indent: 56),
+                      ListTile(
+                        dense: true,
+                        leading: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: upcoming[idx].docType.primaryColor.withOpacity(
+                              0.12,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                          borderRadius: BorderRadius.circular(8),
+                          child: Icon(
+                            upcoming[idx].docType.icon,
+                            size: 18,
+                            // White on the dark canvas; the chip tint keeps the
+                            // document type's colour coding.
+                            color: FinavigColors.adaptiveIcon(
+                              context,
+                              upcoming[idx].docType.primaryColor,
+                            ),
+                          ),
                         ),
-                        child: Icon(
-                          upcoming[idx].docType.icon,
-                          size: 18,
-                          color: upcoming[idx].docType.primaryColor,
+                        title: Text(
+                          upcoming[idx].displayName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        subtitle: Text(
+                          'Due ${ExpiryItem.formatDate(upcoming[idx].expiresAt)}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.outline,
+                          ),
+                        ),
+                        trailing: Text(
+                          MoneyFormat.aed(upcoming[idx].renewalFee!),
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                      title: Text(
-                        upcoming[idx].displayName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      subtitle: Text(
-                        'Due ${ExpiryItem.formatDate(upcoming[idx].expiresAt)}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.outline,
-                        ),
-                      ),
-                      trailing: Text(
-                        MoneyFormat.aed(upcoming[idx].renewalFee!),
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-          ],
-        ),
-      ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
