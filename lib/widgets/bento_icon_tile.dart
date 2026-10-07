@@ -33,8 +33,11 @@ class BentoIconTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = tint ?? tintFor(color, isDark);
+    // Resolve the chip colours through the theme transition factor so they
+    // cross-fade with the light↔dark animation instead of snapping at its
+    // halfway point.
+    final fade = FinavigTransition.of(context);
+    final bg = tint ?? color.withValues(alpha: fade.value(0.11, 0.16));
 
     return Container(
       width: size,
@@ -47,7 +50,9 @@ class BentoIconTile extends StatelessWidget {
         child: Icon(
           icon,
           size: iconSize * (size / 44),
-          color: isDark ? color.withOpacity(0.95) : color,
+          // On its own tinted chip the glyph fades to pure white on the dark
+          // canvas — the tint already carries the tile's colour.
+          color: fade.color(color, Colors.white),
         ),
       ),
     );

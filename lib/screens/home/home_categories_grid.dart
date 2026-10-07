@@ -24,10 +24,19 @@ class HomeCategoriesGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final pending = pendingActionsCount;
-    final isDark = theme.brightness == Brightness.dark;
-    final tileBg = isDark ? FinavigColors.slate.withOpacity(0.5) : Colors.white;
-    final labelColor =
-        isDark ? FinavigColors.textSecondary : FinavigColors.textPrimaryLight;
+    // Tile colours resolve through the theme transition factor so they
+    // cross-fade with the light↔dark animation. Branching on `isDark` here
+    // snapped every tile in one frame halfway through the transition — a
+    // visible blink.
+    final fade = FinavigTransition.of(context);
+    final tileBg = fade.color(
+      Colors.white,
+      FinavigColors.slate.withValues(alpha: 0.5),
+    );
+    final labelColor = fade.color(
+      FinavigColors.textPrimaryLight,
+      FinavigColors.textSecondary,
+    );
 
     Widget tile(BentoIconTile iconTile, String label, VoidCallback onTap) =>
         Material(

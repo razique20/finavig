@@ -13,7 +13,6 @@ class HomePlanRestrictionBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final entitlements = EntitlementService.instance;
     final isExpired = entitlements.isPlanExpired;
     final lockedCount = entitlements.lockedCollectionsCount;
@@ -22,13 +21,14 @@ class HomePlanRestrictionBanner extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final isDark = theme.brightness == Brightness.dark;
-    final bannerBg = isDark ? const Color(0xFF2A2110) : FinavigColors.amberTint;
+    // Resolved through the theme transition factor so the banner cross-fades
+    // with the light↔dark animation instead of snapping halfway through it.
+    final fade = FinavigTransition.of(context);
+    final bannerBg = fade.color(FinavigColors.amberTint, const Color(0xFF2A2110));
     const iconColor = FinavigColors.amber;
-    final textColor = isDark ? Colors.white : const Color(0xFF92400E);
-    final subtitleColor = isDark
-        ? const Color(0xFFFDE68A)
-        : const Color(0xFFB45309);
+    final textColor = fade.color(const Color(0xFF92400E), Colors.white);
+    final subtitleColor =
+        fade.color(const Color(0xFFB45309), const Color(0xFFFDE68A));
 
     final title = isExpired
         ? 'Subscription plan expired'
@@ -55,7 +55,7 @@ class HomePlanRestrictionBanner extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: iconColor.withOpacity(isDark ? 0.18 : 0.15),
+                  color: iconColor.withValues(alpha: fade.value(0.15, 0.18)),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Icon(
@@ -90,8 +90,8 @@ class HomePlanRestrictionBanner extends StatelessWidget {
               const SizedBox(width: 8),
               FilledButton(
                 style: FilledButton.styleFrom(
-                  backgroundColor: isDark ? Colors.white : FinavigColors.ink,
-                  foregroundColor: isDark ? FinavigColors.ink : Colors.white,
+                  backgroundColor: fade.color(FinavigColors.ink, Colors.white),
+                  foregroundColor: fade.color(Colors.white, FinavigColors.ink),
                   visualDensity: VisualDensity.compact,
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -132,20 +132,19 @@ class HomeAttentionBanner extends StatelessWidget {
     if (pending.isEmpty || dismissedAttentionCount == pending.length) {
       return const SizedBox.shrink();
     }
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    // Resolved through the theme transition factor so the banner cross-fades
+    // with the light↔dark animation instead of snapping halfway through it.
+    final fade = FinavigTransition.of(context);
 
-    final bannerBg = isDark ? const Color(0xFF451A1A) : const Color(0xFFFEF2F2);
-    final bannerBorder = isDark
-        ? const Color(0xFFEF4444).withOpacity(0.4)
-        : const Color(0xFFFCA5A5);
-    final iconColor = isDark
-        ? const Color(0xFFF87171)
-        : const Color(0xFFDC2626);
-    final textColor = isDark ? Colors.white : const Color(0xFF991B1B);
-    final subtitleColor = isDark
-        ? const Color(0xFFFCA5A5)
-        : const Color(0xFFB91C1C);
+    final bannerBg = fade.color(const Color(0xFFFEF2F2), const Color(0xFF451A1A));
+    final bannerBorder = fade.color(
+      const Color(0xFFFCA5A5),
+      const Color(0xFFEF4444).withValues(alpha: 0.4),
+    );
+    final iconColor = fade.color(const Color(0xFFDC2626), const Color(0xFFF87171));
+    final textColor = fade.color(const Color(0xFF991B1B), Colors.white);
+    final subtitleColor =
+        fade.color(const Color(0xFFB91C1C), const Color(0xFFFCA5A5));
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
@@ -165,7 +164,7 @@ class HomeAttentionBanner extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.15),
+                  color: iconColor.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -239,14 +238,16 @@ class HomeExpiredAlert extends StatelessWidget {
   Widget build(BuildContext context) {
     if (expiredItems.isEmpty) return const SizedBox.shrink();
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final expired = expiredItems;
     final worst = expired.first;
 
     // Dark mode uses the deep-red surface + lighter accent (same treatment as
-    // [HomeAttentionBanner]); light mode keeps the soft red tint.
-    final cardBg = isDark ? FinavigColors.dangerBg : FinavigColors.redTint;
-    final accentColor = isDark ? const Color(0xFFFCA5A5) : FinavigColors.red;
+    // [HomeAttentionBanner]); light mode keeps the soft red tint. Resolved
+    // through the theme transition factor so the swap cross-fades.
+    final fade = FinavigTransition.of(context);
+    final cardBg = fade.color(FinavigColors.redTint, FinavigColors.dangerBg);
+    final accentColor =
+        fade.color(FinavigColors.red, const Color(0xFFFCA5A5));
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -266,7 +267,7 @@ class HomeExpiredAlert extends StatelessWidget {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: accentColor.withOpacity(0.12),
+                  color: accentColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(13),
                 ),
                 child: Icon(
@@ -293,9 +294,10 @@ class HomeExpiredAlert extends StatelessWidget {
                           ? '${worst.displayName} — expired ${-worst.daysRemaining} day${-worst.daysRemaining == 1 ? '' : 's'} ago'
                           : 'Most urgent: ${worst.displayName}',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: isDark
-                            ? const Color(0xFFFECACA)
-                            : theme.colorScheme.outline,
+                        color: fade.color(
+                          theme.colorScheme.outline,
+                          const Color(0xFFFECACA),
+                        ),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
