@@ -162,7 +162,7 @@ class PasscodeKeypad extends StatelessWidget {
                     : Text(
                         label ?? '',
                         style: TextStyle(
-                          fontSize: 24,
+                          fontSize: 20,
                           fontWeight: FontWeight.w500,
                           color: fg,
                         ),
@@ -328,7 +328,7 @@ class _PasscodeLockPanelState extends State<PasscodeLockPanel>
                     key: ValueKey(_error),
                     textAlign: TextAlign.center,
                     style: const TextStyle(
-                      fontSize: 12.5,
+                      fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: FinavigColors.danger,
                     ),

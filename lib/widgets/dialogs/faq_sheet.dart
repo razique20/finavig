@@ -116,7 +116,7 @@ class _FaqSheetContentState extends State<_FaqSheetContent> {
                           'Frequently Asked Questions',
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
-                            fontSize: 18,
+                            fontSize: 16,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -445,7 +445,7 @@ class _FaqAccordionCardState extends State<_FaqAccordionCard> {
                         style: theme.textTheme.bodyMedium?.copyWith(
                           height: 1.45,
                           color: theme.colorScheme.onSurface.withOpacity(0.85),
-                          fontSize: 13.5,
+                          fontSize: 13,
                         ),
                       ),
                       if (item.actionLabel != null &&

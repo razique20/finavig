@@ -344,7 +344,7 @@ class _LoginScreenState extends State<LoginScreen> {
             const Text(
               'Enter your email address and we\'ll send you a link to reset '
               'your password.',
-              style: TextStyle(fontSize: 13.5),
+              style: TextStyle(fontSize: 13),
             ),
             const SizedBox(height: 16),
             TextField(
@@ -481,7 +481,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Text(
                     'Finavig',
                     style: GoogleFonts.inter(
-                      fontSize: 25,
+                      fontSize: 22,
                       fontWeight: FontWeight.w800,
                       letterSpacing: -0.5,
                       color: isDark ? Colors.white : FinavigColors.ink,
@@ -505,7 +505,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: const Text(
                   'GCC Edition',
                   style: TextStyle(
-                    fontSize: 10.5,
+                    fontSize: 10,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.3,
                     color: FinavigColors.violet,
@@ -809,7 +809,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Text(
               email.isEmpty ? '—' : email,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 12.5, color: subColor),
+              style: TextStyle(fontSize: 12, color: subColor),
             ),
           ),
           const SizedBox(width: 8),
@@ -819,7 +819,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: const Text(
               'Change',
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: 12,
                 fontWeight: FontWeight.w700,
                 color: FinavigColors.violet,
               ),
@@ -1161,7 +1161,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 11.5,
+                          fontSize: 11,
                           color: isDark
                               ? FinavigColors.textSecondary
                               : FinavigColors.textSecondaryLight,
@@ -1222,7 +1222,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text(
                   'Select your country',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.w800,
                     color: sheetDark
                         ? FinavigColors.textPrimary
@@ -1305,7 +1305,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   Text(
                                     '${option.currency} · ${option.phoneCode}',
                                     style: TextStyle(
-                                      fontSize: 11.5,
+                                      fontSize: 11,
                                       color: sheetDark
                                           ? FinavigColors.textSecondary
                                           : FinavigColors.textSecondaryLight,
@@ -1462,7 +1462,7 @@ class _QuizQuestion extends StatelessWidget {
         Text(
           title,
           style: TextStyle(
-            fontSize: 24,
+            fontSize: 20,
             height: 1.15,
             fontWeight: FontWeight.w800,
             letterSpacing: -0.6,
@@ -1588,7 +1588,7 @@ class _PrimaryButton extends StatelessWidget {
             : Text(
                 label,
                 style: const TextStyle(
-                  fontSize: 15.5,
+                  fontSize: 15,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.2,
                 ),
@@ -1713,7 +1713,7 @@ class _ModeOption extends StatelessWidget {
                     subtitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 12.5, color: subColor),
+                    style: TextStyle(fontSize: 12, color: subColor),
                   ),
                 ],
               ),
@@ -1757,7 +1757,7 @@ class _TextLink extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 12.5,
+            fontSize: 12,
             fontWeight: FontWeight.w600,
             color: color,
           ),
@@ -1777,7 +1777,7 @@ class _DotSeparator extends StatelessWidget {
     return Text(
       '·',
       style: TextStyle(
-        fontSize: 12.5,
+        fontSize: 12,
         fontWeight: FontWeight.w800,
         color: color,
       ),
@@ -1836,7 +1836,7 @@ class _TrustRow extends StatelessWidget {
         Text(
           'Secure sign-in — your data stays private',
           style: TextStyle(
-            fontSize: 11.5,
+            fontSize: 11,
             fontWeight: FontWeight.w500,
             color: color,
           ),

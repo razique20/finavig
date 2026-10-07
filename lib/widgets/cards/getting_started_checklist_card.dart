@@ -328,7 +328,7 @@ class _GettingStartedChecklistCardState
                   Text(
                     title,
                     style: TextStyle(
-                      fontSize: 12.5,
+                      fontSize: 12,
                       fontWeight: FontWeight.w600,
                       decoration: done ? TextDecoration.lineThrough : null,
                       color: done

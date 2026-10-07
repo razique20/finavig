@@ -269,7 +269,7 @@ class _QuickActionTile extends StatelessWidget {
                       action.subtitle,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.outline,
-                        fontSize: 11.5,
+                        fontSize: 11,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

@@ -517,7 +517,7 @@ class _WeeklySpendChartState extends State<WeeklySpendChart> {
                             '${b.start.day}/${b.start.month}',
                             textAlign: TextAlign.center,
                             style: theme.textTheme.bodySmall?.copyWith(
-                              fontSize: 9,
+                              fontSize: 10,
                               color: theme.colorScheme.outline,
                             ),
                           ),
@@ -555,7 +555,7 @@ class _WeekBar extends StatelessWidget {
             child: Text(
               shortMoney(bucket.spend),
               style: theme.textTheme.bodySmall?.copyWith(
-                fontSize: 9,
+                fontSize: 10,
                 color: theme.colorScheme.outline,
               ),
             ),

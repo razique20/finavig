@@ -110,7 +110,7 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
           ),
           content: Text(
             'You have used all $_usedQuota / $_quotaLimit monthly AI Budget Plans for your plan.\n\nUpgrade your plan to unlock higher monthly AI quota limit.',
-            style: const TextStyle(fontSize: 13.5, height: 1.4),
+            style: const TextStyle(fontSize: 13, height: 1.4),
           ),
           actions: [
             TextButton(
@@ -185,7 +185,7 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
         ),
         content: Text(
           'Building a new AI plan${goalName.isNotEmpty ? ' for "$goalName"' : ''} will use 1 credit from your monthly quota ($remaining credit${remaining == 1 ? '' : 's'} remaining this month).\n\nDo you want to proceed?',
-          style: const TextStyle(fontSize: 13.5, height: 1.4),
+          style: const TextStyle(fontSize: 13, height: 1.4),
         ),
         actions: [
           TextButton(
@@ -805,7 +805,7 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
                       timeStr != null ? 'Previous Plan • $timeStr' : 'Previous Response',
                       style: const TextStyle(
                         color: Colors.white70,
-                        fontSize: 10.5,
+                        fontSize: 10,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -861,7 +861,7 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
             style: const TextStyle(
               color: Colors.white,
               height: 1.45,
-              fontSize: 13.5,
+              fontSize: 13,
             ),
           ),
           const SizedBox(height: 12),
@@ -920,7 +920,7 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 11.5,
+          fontSize: 11,
           fontWeight: FontWeight.w600,
           color: color,
         ),

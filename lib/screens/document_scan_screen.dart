@@ -399,7 +399,7 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
           children: [
             const Text(
               'New document type',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 4),
             Text(

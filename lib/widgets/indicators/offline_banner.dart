@@ -89,7 +89,7 @@ class _OfflineBannerState extends State<OfflineBanner>
               Text(
                 'Offline — changes are saved on device and will sync',
                 style: TextStyle(
-                  fontSize: 11.5,
+                  fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: isDark
                       ? FinavigColors.warning

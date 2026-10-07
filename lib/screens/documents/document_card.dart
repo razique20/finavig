@@ -169,7 +169,7 @@ class DocumentCard extends StatelessWidget {
                               _daysLabel,
                               style: TextStyle(
                                 fontWeight: FontWeight.w800,
-                                fontSize: 18,
+                                fontSize: 16,
                                 color: accent,
                               ),
                             ),

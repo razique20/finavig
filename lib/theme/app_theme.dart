@@ -368,8 +368,14 @@ class FinavigTheme {
   // ── Typography ──────────────────────────────────────────────────────────
   //
   // Inter: a neutral, professional UI sans — crisp and compact, the default
-  // choice of modern fintech apps. Sizes match the original scale so nothing
-  // feels oversized.
+  // choice of modern fintech apps.
+  //
+  // One integer scale, no fractional steps: 26 / 22 / 19 / 16 / 15 / 14 / 13 /
+  // 12 / 11 / 10. Every step is a real role (hero figure, screen heading, card
+  // title, body, caption) so text cannot drift half a point off the scale
+  // depending on which file draws it. Body text sits at 12–13 and captions at
+  // 10–11, which keeps dense rows (money, document lists) readable without
+  // forcing the layout apart.
 
   static TextTheme _textTheme(Brightness brightness) {
     final base = brightness == Brightness.dark
@@ -378,37 +384,37 @@ class FinavigTheme {
 
     return GoogleFonts.interTextTheme(base).copyWith(
       displayLarge: GoogleFonts.inter(
-        fontSize: 28,
+        fontSize: 26,
         fontWeight: FontWeight.w700,
         letterSpacing: -1.0,
       ),
       displayMedium: GoogleFonts.inter(
-        fontSize: 24,
+        fontSize: 22,
         fontWeight: FontWeight.w700,
         letterSpacing: -0.6,
       ),
       displaySmall: GoogleFonts.inter(
-        fontSize: 20,
+        fontSize: 19,
         fontWeight: FontWeight.w700,
         letterSpacing: -0.4,
       ),
       headlineLarge: GoogleFonts.inter(
-        fontSize: 20,
+        fontSize: 19,
         fontWeight: FontWeight.w700,
         letterSpacing: -0.4,
       ),
       headlineMedium: GoogleFonts.inter(
-        fontSize: 17.5,
+        fontSize: 16,
         fontWeight: FontWeight.w700,
         letterSpacing: -0.3,
       ),
       headlineSmall: GoogleFonts.inter(
-        fontSize: 15.5,
+        fontSize: 15,
         fontWeight: FontWeight.w600,
         letterSpacing: -0.2,
       ),
       titleLarge: GoogleFonts.inter(
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: FontWeight.w700,
         letterSpacing: -0.2,
       ),
@@ -418,15 +424,15 @@ class FinavigTheme {
         letterSpacing: -0.1,
       ),
       titleSmall: GoogleFonts.inter(
-        fontSize: 12.5,
+        fontSize: 12,
         fontWeight: FontWeight.w600,
       ),
       bodyLarge: GoogleFonts.inter(
-        fontSize: 13.5,
+        fontSize: 13,
         fontWeight: FontWeight.w400,
       ),
       bodyMedium: GoogleFonts.inter(
-        fontSize: 12.5,
+        fontSize: 12,
         fontWeight: FontWeight.w400,
       ),
       bodySmall: GoogleFonts.inter(
@@ -434,7 +440,7 @@ class FinavigTheme {
         fontWeight: FontWeight.w400,
       ),
       labelLarge: GoogleFonts.inter(
-        fontSize: 12.5,
+        fontSize: 12,
         fontWeight: FontWeight.w600,
       ),
       labelMedium: GoogleFonts.inter(
@@ -502,7 +508,7 @@ class FinavigTheme {
         scrolledUnderElevation: 0,
         centerTitle: false,
         titleTextStyle: _withEmojiFallback(GoogleFonts.inter(
-          fontSize: 18,
+          fontSize: 16,
           fontWeight: FontWeight.w700,
           color: FinavigColors.textPrimary,
           letterSpacing: -0.4,
@@ -614,7 +620,7 @@ class FinavigTheme {
           foregroundColor: scheme.secondary,
           textStyle: _withEmojiFallback(GoogleFonts.inter(
             fontWeight: FontWeight.w600,
-            fontSize: 13.5,
+            fontSize: 13,
           )),
         ),
       ),
@@ -643,12 +649,12 @@ class FinavigTheme {
         ),
         elevation: 0,
         titleTextStyle: _withEmojiFallback(GoogleFonts.inter(
-          fontSize: 17,
+          fontSize: 16,
           fontWeight: FontWeight.w700,
           color: FinavigColors.textPrimary,
         )),
         contentTextStyle: _withEmojiFallback(GoogleFonts.inter(
-          fontSize: 13.5,
+          fontSize: 13,
           height: 1.5,
           color: FinavigColors.textSecondary,
         )),
@@ -742,7 +748,7 @@ class FinavigTheme {
         scrolledUnderElevation: 0,
         centerTitle: false,
         titleTextStyle: _withEmojiFallback(GoogleFonts.inter(
-          fontSize: 18,
+          fontSize: 16,
           fontWeight: FontWeight.w700,
           color: FinavigColors.textPrimaryLight,
           letterSpacing: -0.4,
@@ -850,7 +856,7 @@ class FinavigTheme {
           foregroundColor: scheme.primary,
           textStyle: _withEmojiFallback(GoogleFonts.inter(
             fontWeight: FontWeight.w600,
-            fontSize: 13.5,
+            fontSize: 13,
           )),
         ),
       ),
@@ -879,12 +885,12 @@ class FinavigTheme {
         ),
         elevation: 0,
         titleTextStyle: _withEmojiFallback(GoogleFonts.inter(
-          fontSize: 17,
+          fontSize: 16,
           fontWeight: FontWeight.w700,
           color: FinavigColors.textPrimaryLight,
         )),
         contentTextStyle: _withEmojiFallback(GoogleFonts.inter(
-          fontSize: 13.5,
+          fontSize: 13,
           height: 1.5,
           color: FinavigColors.textSecondaryLight,
         )),

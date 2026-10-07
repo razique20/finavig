@@ -97,7 +97,7 @@ class HomePlanRestrictionBanner extends StatelessWidget {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 onPressed: () => showTierRequestSheet(context),
-                child: const Text('Renew', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
+                child: const Text('Renew', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
               ),
             ],
           ),

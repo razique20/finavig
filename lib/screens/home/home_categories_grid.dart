@@ -57,7 +57,7 @@ class HomeCategoriesGrid extends StatelessWidget {
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: labelColor,
                       fontWeight: FontWeight.w600,
-                      fontSize: 10.5,
+                      fontSize: 10,
                       height: 1.1,
                     ),
                     maxLines: 1,

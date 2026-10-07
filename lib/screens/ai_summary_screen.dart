@@ -55,7 +55,7 @@ class _AiSummaryScreenState extends State<AiSummaryScreen> {
             ),
             content: Text(
               'You have used all $_usedQuota / $_quotaLimit monthly AI Executive Summaries for your plan.\n\nUpgrade your plan to unlock higher monthly AI quota limit.',
-              style: const TextStyle(fontSize: 13.5, height: 1.4),
+              style: const TextStyle(fontSize: 13, height: 1.4),
             ),
             actions: [
               TextButton(
@@ -124,7 +124,7 @@ class _AiSummaryScreenState extends State<AiSummaryScreen> {
         ),
         content: Text(
           'Generating a fresh AI summary will use 1 credit from your monthly quota ($remaining credit${remaining == 1 ? '' : 's'} remaining this month).\n\nDo you want to proceed?',
-          style: const TextStyle(fontSize: 13.5, height: 1.4),
+          style: const TextStyle(fontSize: 13, height: 1.4),
         ),
         actions: [
           TextButton(
@@ -518,7 +518,7 @@ class _AiSummaryScreenState extends State<AiSummaryScreen> {
                         'Last generated: $timeStr',
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
-                          fontSize: 10.5,
+                          fontSize: 10,
                         ),
                       ),
                   ],

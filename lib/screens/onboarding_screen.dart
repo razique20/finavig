@@ -142,7 +142,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                     page.title,
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
-                                      fontSize: 22,
+                                      fontSize: 20,
                                       fontWeight: FontWeight.w800,
                                       color: isDark ? FinavigColors.textPrimaryDark : FinavigColors.textPrimaryLight,
                                       letterSpacing: -0.4,

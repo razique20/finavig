@@ -38,7 +38,7 @@ Future<void> showAiBudgetPlanSheet(BuildContext context) {
                 const Expanded(
                   child: Text(
                     'AI Budget Planner',
-                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],

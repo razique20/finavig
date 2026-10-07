@@ -228,7 +228,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
                   'Reset App Lock?',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 17,
+                    fontSize: 15,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -351,7 +351,7 @@ class _PasscodeSetupScreenState extends State<PasscodeSetupScreen> {
         elevation: 0,
         title: Text(
           _confirming ? 'Confirm passcode' : widget.title,
-          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 17),
+          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
         ),
       ),
       body: SafeArea(
@@ -445,7 +445,7 @@ class _VerifyPasscodeScreenState extends State<_VerifyPasscodeScreen> {
         elevation: 0,
         title: Text(
           widget.title,
-          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 17),
+          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
         ),
       ),
       body: SafeArea(

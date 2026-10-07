@@ -361,8 +361,8 @@ class _ReplyBubble extends StatelessWidget {
                   child: Text(
                     timestamp,
                     style: TextStyle(
-                      fontSize: 9,
-                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 10,
+                      color: Colors.white.withValues(alpha: 0.7),
                     ),
                   ),
                 ),

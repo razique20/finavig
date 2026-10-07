@@ -88,7 +88,7 @@ class ProfileHeroHeader extends StatelessWidget {
                     initials.isEmpty ? 'U' : initials,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 18,
+                      fontSize: 16,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.5,
                     ),

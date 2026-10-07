@@ -506,7 +506,7 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
                   b.title,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -696,7 +696,7 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
           Text(
             b.quote,
             style: TextStyle(
-              fontSize: 11.5,
+              fontSize: 11,
               height: 1.4,
               fontStyle: FontStyle.italic,
               color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E),
@@ -735,7 +735,7 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
                 Text(
                   b.description,
                   style: TextStyle(
-                    fontSize: 11.5,
+                    fontSize: 11,
                     height: 1.35,
                     color: isDark
                         ? FinavigColors.textSecondary
@@ -812,7 +812,7 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
             children: [
               Text(item.title,
                   style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 12.5)),
+                      fontWeight: FontWeight.bold, fontSize: 12)),
               Text(item.subtitle,
                   style: const TextStyle(fontSize: 11, color: Colors.grey)),
             ],

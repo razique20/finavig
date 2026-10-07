@@ -426,7 +426,7 @@ class _PriceSummaryCard extends StatelessWidget {
                 TierInfo.priceMain(info.tier, duration),
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
-                  fontSize: 18,
+                  fontSize: 16,
                   color: accent,
                 ),
               ),
@@ -564,7 +564,7 @@ class UpgradeDialog extends StatelessWidget {
                         info.name,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 18,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -617,7 +617,7 @@ class UpgradeDialog extends StatelessWidget {
                               b,
                               style: TextStyle(
                                 color: Colors.white.withAlpha(230),
-                                fontSize: 12.5,
+                                fontSize: 12,
                               ),
                             ),
                           ),
