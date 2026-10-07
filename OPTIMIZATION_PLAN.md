@@ -69,10 +69,11 @@ the file(s) involved, what to do, and how to verify it. Items move to
 
 ## 4. Storage & sync
 
-- ☐ **Index Supabase queries.** Confirm composite indexes exist for
-  `documents(user_id, collection_id, expires_at)` and
-  `finance_transactions(user_id, collection_id, occurred_at)`; add a
-  migration when the first slow query shows up.
+- ✅ **Index Supabase queries.** Confirmed in the schemas: `idx_documents_collection_expiry`
+  (`schema.sql`) and `idx_finance_tx_collection_date` + `idx_finance_tx_owner`
+  (`finance_schema.sql`), plus `idx_credit_owner` / `idx_credit_collection` /
+  `idx_credit_deadline` (`credit_schema.sql`), each paired with an `owner_id`
+  index for the RLS predicate.
 - ☐ **Batch sync outbox.** `doc_sync.dart` — push/pull in batches of 50+
   with a single `notifyListeners` at the end instead of per-row.
 - ☐ **Local pagination.** `DocumentScannerService.getAllItems` loads
@@ -85,10 +86,14 @@ the file(s) involved, what to do, and how to verify it. Items move to
 
 - ☐ **HTTP client reuse.** Verify Groq/Gemini/Supabase REST calls share
   one client (no `http.Client()` per call); Supabase SDK already does.
-- ☐ **Timeouts + retry with backoff on AI calls** (currently a hang shows
-  as a stuck sheet). 15 s timeout, 1 retry.
-- ☐ **Cache AI summaries** per month/plan hash so re-opening the summary
-  screen doesn't re-bill tokens (store keyed by month + data hash).
+- ✅ **Timeout on AI calls.** `GroqApiService` caps the request at 25 s so a
+  hang surfaces as a friendly error instead of a stuck sheet. Still ☐:
+  automatic retry with backoff.
+- ✅ **Cache AI summaries.** Both AI services persist their last result
+  (`groqAiSummary.lastNarrative.<userId>` / the plan key + timestamp) and only
+  spend quota on an explicit regenerate, so re-opening a screen never re-bills.
+  Keyed per user rather than per month/data hash — a hash-keyed cache is still
+  the nicer follow-up.
 
 ## 6. Build & CI
 
@@ -116,6 +121,8 @@ the file(s) involved, what to do, and how to verify it. Items move to
 | 2026-09-30 | Bundled Inter + Playfair (cold-start tofu fix) | `a492cf7` |
 | 2026-09-30 | Permission prompt post-onboarding | `a492cf7` |
 | 2026-09-28 | File-size budgets in CI | `8231e62` |
+| 2026-10-06 | Groq calls moved behind the `groq-proxy` Edge Function (server-held key + tier quota, 25 s timeout) | `0d9cf11` |
+| 2026-10-06 | Composite query indexes confirmed for documents, finance and credits | `619d7bf`, `a99cb65` |
 
 ---
 

@@ -106,6 +106,9 @@ listed out-of-scope for the pilot, but prep work now saves a rewrite later.
 `NotificationService.sendWhatsAppAlert` / `sendEmailAlert` are stubs awaiting the
 Supabase Edge Function + Meta Cloud API. This is the durable fix for
 OEM notification unreliability (the `reminders` table is the ready data source).
+**Partly enabled:** the Edge Function pattern is now proven in production code by
+`supabase/functions/groq-proxy` (JWT check, server-held secret, service-role
+quota RPC) — the WhatsApp sender can reuse that skeleton.
 
 ### 14. Supabase Storage attachment sync
 Schema-ready, ~1–2 days per the feasibility study. After this ships, remove the
@@ -127,11 +130,19 @@ toggled per cohort without a store release.
 - Update/force-update dialog (splash → `AppVersionService`)
 - Delete account + privacy policy links (profile sheets, `AppLinks`)
 - Terms acceptance copy on login
+- Welcome screen + quiz-style login/sign-up (per-step validation, DOB/country/phone on signup)
+- Local App Lock (6-digit passcode + biometric unlock; salted hash in platform secure storage, persisted lockout)
+- Credit book (borrowed/lent obligations, deadlines, extensions, WhatsApp follow-up) with the optional, tagged credit ↔ Money link
 - Empty states + pull-to-refresh across all main screens
 - App icon + adaptive icon + store assets (`assets/store/`)
 - Budget 80/100% alert engine + OS channels
 - Local-only (offline) mode as first-class citizen
-- CI: analyze + file-size ratchet + full 305-test suite
+- CI: analyze + file-size ratchet + full 484-test suite
+
+**Backend steps required before release (not app code):**
+
+- [ ] Run every `supabase/*.sql` file against the production project (`schema.sql`, `finance_schema.sql`, `credit_schema.sql`, `user_tiers_schema.sql`, `ai_quota_schema.sql`, `ai_quota_proxy_schema.sql`, `support_requests_schema.sql`, and the migrations)
+- [ ] Deploy the AI proxy — `supabase secrets set GROQ_API_KEY=…` then `supabase functions deploy groq-proxy` (see `supabase/functions/groq-proxy/README.md`). Shared-key AI calls fail without it; user-supplied keys still work
 
 ---
 

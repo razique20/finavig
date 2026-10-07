@@ -30,6 +30,9 @@ The core business model: free tracking drives volume and habit formation; power 
 | PDF/CSV export (`expiry_report.dart`, printing) | Plus |
 | Custom reminder offsets / custom alert days | Plus |
 | AI monthly executive summary with LLM polish (`MonthlySummaryService` + Gemini) | Plus |
+| AI summaries & budget plans — metered per tier (3 / 15 / 40 and 2 / 10 / 25 per month), enforced **server-side** by the `groq-proxy` Edge Function | Free (low quota) → Plus → Business |
+| Credit book — borrowed/lent obligations, deadlines, extensions, WhatsApp follow-up (`credit_entries`) | Free (tracking only, all tiers) |
+| Local App Lock (6-digit passcode + biometric) | Free (all tiers) — trust feature, not a paywall |
 | Multiple company workspaces (multi-collection per client) | Business |
 | Renewal audit history, assignment, team exports | Business |
 | Voice quick-add, OCR scan-to-fill beyond free quota | Plus (metered) |
@@ -72,7 +75,7 @@ The strategic evolution: Finavig already owns the deadline; monetize the money t
 
 ### Phase 3 — Credit & insurance (data monetization)
 
-- **SME credit line / invoice financing** — renewal-payment history underwrites working-capital offers *with* a licensed lender (revenue share) first.
+- **SME credit line / invoice financing** — renewal-payment history underwrites working-capital offers *with* a licensed lender (revenue share) first. The shipped credit book (`credit_entries`) already captures a borrower's own repayment behaviour — the `extension_history` trail of granted/needed extensions is exactly the on-time vs past-due signal this underwriting needs.
 - **SME credit score product** (consent-based, bureau-aligned).
 - **Embedded insurance distribution** (liability, property, cyber) at renewal moments via a licensed broker — commission revenue.
 

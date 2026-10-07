@@ -21,9 +21,9 @@
 
 ### 2.1 What already works (evidence)
 
-- **Full feature set implemented and tested:** document CRUD with OCR pre-fill, the shared 90·60·30·7 urgency ladder, custom alert offsets, finance ledger with budgets/envelopes/recurring, 90-day cash-flow simulation, bill-spike detection, CSV/PDF exports, and the unified **Ask Finavig AI** voice/text quick-add (local-first routing with Groq escalation, persisted memo + daily budget). **23 test suites / 305+ tests** cover the pure-logic core (sync contract, finance math, recurrence, anomaly thresholds, AI intent routing incl. persistence) plus UI redesign contract tests and goldens for the three skeleton views.
+- **Full feature set implemented and tested:** document CRUD with OCR pre-fill, the shared 90·60·30·7 urgency ladder, custom alert offsets, finance ledger with budgets/envelopes/recurring, the **credit book** (borrowed/lent obligations with deadlines, extensions and an optional, properly-tagged link into the ledger), 90-day cash-flow simulation, bill-spike detection, CSV/PDF exports, App Lock (passcode + biometric), the welcome/quiz-login onboarding flow, and the unified **Ask Finavig AI** voice/text quick-add (local-first routing with Groq escalation, persisted memo + daily budget, shared-key calls metered server-side by the `groq-proxy` Edge Function). **49 test suites / 484 tests** cover the pure-logic core (sync contract, finance math, credit ↔ Money sync, recurrence, anomaly thresholds, AI intent routing incl. persistence) plus UI redesign contract tests, the App Lock flow, and goldens for the three skeleton views.
 - **Offline-first architecture proven:** local-only mode is a first-class citizen (it is how unit tests run). Backend outages degrade to "sync later", never to data loss.
-- **Performance wave shipped and guarded:** all four tab screens modularized into section modules, lazy `SliverList.builder` scrolling everywhere, cached/downsampled attachment pipeline, and CI gates (analyze + file-size ratchet + full suite incl. goldens) that keep the wins from regressing — see `APP_OPTIMIZATION_ROADMAP.md`.
+- **Performance wave shipped and guarded:** all four tab screens modularized into section modules, lazy `SliverList.builder` scrolling everywhere, cached/downsampled attachment pipeline, and CI gates (analyze + file-size ratchet + full suite incl. goldens) that keep the wins from regressing — see `OPTIMIZATION_PLAN.md`.
 - **Backend is boring-on-purpose:** Supabase Postgres + RLS. The riskiest historical bug class (schema drift silently killing sync) is fixed at the root with client-side row sanitization against a column whitelist (technical documentation §4.2).
 
 ### 2.2 Remaining technical risk
@@ -32,7 +32,7 @@
 |---|---|---|---|
 | Attachment files are device-local; uninstall = loss | Certain today | Medium — metadata survives, bytes don't | Supabase Storage bucket (schema-ready; ~1 day of work). Before that, document the limitation prominently |
 | ML Kit OCR accuracy on real-world scans | Medium | Low–medium | The flow already treats OCR as *pre-fill for human review*, never auto-save. Worst case is manual entry |
-| Groq API availability / pricing changes for AI routing | Low | Low — graceful by design | The local lexicon resolves the overwhelming majority of utterances; the router degrades to manual flow choice on any failure, with a persisted 12/day budget bounding worst-case spend |
+| Groq API availability / pricing changes | Low | Low — graceful by design | The local lexicon resolves the overwhelming majority of utterances and the router degrades to manual choice on failure; the shared key now lives server-side in the `groq-proxy` Edge Function with per-tier monthly quotas, and the router keeps a persisted 12/day escalation budget on top |
 | Local-notification reliability across OEM battery savers (esp. Android) | Medium | **High** — missed alert is the core promise broken | Test on Xiaomi/Huawei/Samsung early; the server-side `reminders` table + FCM path (§6) is the durable fix |
 | Single-postgres-vendor lock-in | Low | Low | Schema is plain SQL; portable |
 | Flutter web as a demo surface | Known | Low | Web is docs/demo only; ML Kit and notifications degrade there by design |
@@ -51,7 +51,7 @@
 
 ## 3. Operational feasibility
 
-- **Team:** the codebase was built and is maintained by one developer. Services are singletons with pure-logic cores — the architecture explicitly optimizes for this: features are testable without a backend, and CI (`.github/workflows/ci.yml`) now enforces analyze + file-size budgets + the full 305-test suite on every PR, so the single maintainer gets machine-checked regression protection for free.
+- **Team:** the codebase was built and is maintained by one developer. Services are singletons with pure-logic cores — the architecture explicitly optimizes for this: features are testable without a backend, and CI (`.github/workflows/ci.yml`) now enforces analyze + file-size budgets + the full 484-test suite on every PR, so the single maintainer gets machine-checked regression protection for free.
 - **Support surface:** no servers to operate (Supabase free/pro tier is managed). User issues will concentrate on (a) notifications not firing on aggressive OEMs and (b) OCR misses — both have in-app mitigations already (manual re-scan, manual entry).
 - **Release cadence:** the `app_versions` splash check already supports force-update gating, so shipping hotfixes to the whole base without app-store latency is possible.
 
@@ -104,7 +104,8 @@ The economics are dominated by the fact that the core alert engine is on-device.
 - [ ] Supabase fields migration applied to the production project (`migrate_documents_local_only_fields.sql`) and smoke-tested
 - [ ] Attachment limitation either fixed (Storage bucket) or explicitly messaged in-app
 - [ ] Notification QA passed on Samsung + Xiaomi + iOS (the OEM battery-saver pass)
-- [ ] Sentry wired; ~~CI running analyze+test on PR~~ (CI done — analyze + budget + 305 tests)
+- [ ] Sentry wired; ~~CI running analyze+test on PR~~ (CI done — analyze + budget + 484 tests)
+- [ ] `groq-proxy` Edge Function deployed to the production project with the `GROQ_API_KEY` secret set (shared-key AI calls fail without it)
 - [ ] Frame-time pass on a mid-tier device using `PerfTracingService` (monitor + DevTools sections are wired; record a baseline jank ratio)
 - [ ] Privacy policy live; store data-safety forms completed
 - [ ] 20–50 pilot users recruited from §6 channels with a feedback channel open

@@ -113,7 +113,12 @@ partner model).
 - [ ] **SME credit line / invoice financing** — you have years of renewal-payment
       history: who pays on time, revenue signals, business stability. With consent,
       this underwrites small working-capital offers. Do it *with* a licensed lender
-      first (revenue share), get your own licence later.
+      first (revenue share), get your own licence later. **Already harvesting the
+      signal:** the shipped credit book (`credit_entries`, see
+      [`docs/credit-money-sync.md`](docs/credit-money-sync.md)) records every
+      obligation, its deadline and its extension history (`extension_history`) —
+      the past-due/on-time behaviour this underwriting needs — and its optional
+      ledger link keeps the cash movement itself out of income/expense reporting.
 - [ ] **Credit score product for SMEs** (consent-based, bureau-aligned).
 - [ ] **Embedded insurance** — distribute business insurance (liability, property,
       cyber) at renewal moments via a licensed broker partnership.

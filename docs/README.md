@@ -11,8 +11,13 @@ Everything you need to understand, run, and evaluate Finavig.
 | **[Technical documentation](technical-documentation.md)** | System architecture, data model & schema, the offline-first sync engine (outbox + LWW merge), the AI layer (Groq routing, voice, OCR), performance instrumentation & CI guards, every feature explained with screenshots, notifications, build & test guide, migrations, known limitations |
 | **[Market study](market-study.md)** | The UAE expiry problem in numbers, target segments, competitive landscape (government apps vs calendars vs PRO agents), positioning, demand estimate, monetization options, market risks |
 | **[Feasibility study](feasibility-study.md)** | Technical / operational / financial / legal verdicts, remaining risks, effort-to-launch estimate, go-to-market channels, validation metrics, and the go/no-go pilot checklist |
+| **[Credit ↔ Money sync](credit-money-sync.md)** | How a borrowed/lent obligation links to the ledger: the four-leg cash lifecycle, the `credit_id` / `credit_leg` tags, settle-time reconciliation of a hand-logged principal, and what reporting excludes |
+| **[Credit ↔ Money sync — verification](credit-money-sync-verification.md)** | End-to-end verification report: every sync case, which surface counts a loan leg and which excludes it, and the bugs found and fixed |
+| **[App test report](app-test-report.md)** · **[App Lock test report](app-lock-test-report.md)** | Full-suite + complete-flow UI pass, and the App Lock (passcode + biometric) flow report |
 
-Other project-level docs (repo root): [`../PRODUCTION_READINESS.md`](../PRODUCTION_READINESS.md) (pre-launch audit), [`../FINTECH_ROADMAP.md`](../FINTECH_ROADMAP.md), [`../APP_OPTIMIZATION_ROADMAP.md`](../APP_OPTIMIZATION_ROADMAP.md) (performance wave — implemented), [`../README.md`](../README.md) (quick start).
+Other project-level docs (repo root): [`../ARCHITECTURE.md`](../ARCHITECTURE.md) (workflows & diagrams), [`../PRE_DEPLOYMENT_CHECKLIST.md`](../PRE_DEPLOYMENT_CHECKLIST.md) (pre-launch audit), [`../OPTIMIZATION_PLAN.md`](../OPTIMIZATION_PLAN.md) (performance & quality backlog), [`../FINTECH_ROADMAP.md`](../FINTECH_ROADMAP.md), [`../MONETIZATION.md`](../MONETIZATION.md), [`../PITCH.md`](../PITCH.md), [`../README.md`](../README.md) (quick start).
+
+The AI proxy ships with its own runbook: [`../supabase/functions/groq-proxy/README.md`](../supabase/functions/groq-proxy/README.md).
 
 ## 🖼️ Screenshot gallery
 
@@ -26,8 +31,10 @@ Captured from a real app build with seeded demo data. Click any image for full s
 | ![Permission dialog](screenshots/00-permission-dialog.png) | ![Splash](screenshots/01-splash.png) |
 | **Welcome** — first-launch landing | **Welcome CTA** — sign in or explore local-only |
 | ![Welcome](screenshots/02-welcome.png) | ![Welcome CTA](screenshots/03-welcome-cta.png) |
-| **Login** — quiz-style onboarding flow matching the app theme | **Sign-up form** |
+| **Login** — one-question-per-step quiz (user type → sign-in 3 steps / sign-up 6 steps), always on the dark brand theme | **Sign-up form** |
 | ![Login](screenshots/04-login.png) | ![Sign-up](screenshots/05-signup-form.png) |
+
+> ⚠️ The first-run screenshots above (`02`–`05`) were captured before the dark-brand login restyle and the welcome rewrite, and the **credit book** (borrowed/lent) and **App Lock** screens have no screenshots yet. Re-run the capture tour (`integration_test/app_pitch_screenshots_test.dart` + `tool/capture_pitch_shots.sh`) before using this gallery as marketing material.
 
 ### Core dashboards
 
@@ -85,12 +92,19 @@ Captured from a real app build with seeded demo data. Click any image for full s
 | File | Purpose |
 |---|---|
 | [`../supabase/schema.sql`](../supabase/schema.sql) | Core schema: collections, documents, reminders, custom types + RLS + pg_cron reminder scan (idempotent) |
-| [`../supabase/finance_schema.sql`](../supabase/finance_schema.sql) | Finance tables: transactions, budgets, envelopes, recurring |
+| [`../supabase/finance_schema.sql`](../supabase/finance_schema.sql) | Finance tables: transactions, budgets, envelopes, recurring + the credit link columns |
+| [`../supabase/credit_schema.sql`](../supabase/credit_schema.sql) | Credit tracker: `credit_entries` (borrowed/lent, deadlines, extensions, settled state) + the `credit_id` / `credit_leg` columns + indexes |
+| [`../supabase/user_tiers_schema.sql`](../supabase/user_tiers_schema.sql) | Subscription tiers (`user_tiers`) read by `EntitlementService` |
+| [`../supabase/ai_quota_schema.sql`](../supabase/ai_quota_schema.sql) | AI quota counters (`ai_quota_usage`) |
+| [`../supabase/ai_quota_proxy_schema.sql`](../supabase/ai_quota_proxy_schema.sql) | `consume_ai_quota()` — the server-side quota check the `groq-proxy` Edge Function calls |
+| [`../supabase/support_requests_schema.sql`](../supabase/support_requests_schema.sql) | In-app support / upgrade request tickets |
+| [`../supabase/user_dob_schema.sql`](../supabase/user_dob_schema.sql) | Date of birth captured during signup |
 | [`../supabase/migrate_documents_local_only_fields.sql`](../supabase/migrate_documents_local_only_fields.sql) | Adds `location`, `renewal_history`, `custom_reminder_days` to existing projects |
 | [`../supabase/migrate_companies_to_collections.sql`](../supabase/migrate_companies_to_collections.sql) | Legacy single-company model → collections |
 | [`../supabase/app_version_schema.sql`](../supabase/app_version_schema.sql) | Splash update-check table |
 
 ## 🔧 Maintenance
 
-- **Tests:** `flutter test` (23 suites, 305+ tests — sync contract, finance math, AI routing, UI redesign contracts, goldens). **Analyzer:** `flutter analyze`. **File-size budget:** `dart run tool/perf_budget_check.dart`. All three run in CI (`.github/workflows/ci.yml`).
+- **Tests:** `flutter test` (49 suites, 484 tests — sync contract, finance math, credit ↔ Money sync, AI routing, App Lock, welcome/login, UI redesign contracts, goldens). **Analyzer:** `flutter analyze`. **File-size budget:** `dart run tool/perf_budget_check.dart`. All three run in CI (`.github/workflows/ci.yml`).
+- **Backend before a release:** run the SQL files above (all idempotent), then deploy the AI proxy — `supabase secrets set GROQ_API_KEY=…` and `supabase functions deploy groq-proxy`.
 - When a feature changes the UI materially, re-capture the relevant screenshot into `docs/screenshots/` and update both the gallery above and the feature section in the technical documentation.

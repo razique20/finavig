@@ -30,19 +30,23 @@ Finavig is an AI-powered financial budgeting & cash-flow intelligence app with i
 │  Flutter app (iOS/Android) │         │  Supabase project               │
 │                            │         │                                 │
 │  UI (screens/widgets)      │  HTTPS  │  ├─ PostgreSQL (RLS per user)   │
-│      │                     │ ──────► │  │    collections               │
-│  Service layer             │  REST   │  │    documents                 │
-│  (ChangeNotifier singletons│         │  │    finance_*                 │
+│      │                     │ ──────► │  │    collections, documents    │
+│  Service layer             │  REST   │  │    finance_*, credit_entries │
+│  (ChangeNotifier singletons│         │  │    user_tiers, ai_quota_usage│
 │   + local cache)           │ ◄────── │  ├─ Auth (email/password)       │
 │      │                     │         │  ├─ Storage (future: attachments)│
-│  SharedPreferences cache   │  push   │  └─ pg_cron → reminders scan    │
-│  + outbox queue            │ (local) │                                 │
+│  SharedPreferences cache   │  push   │  ├─ pg_cron → reminders scan    │
+│  + outbox queue            │ (local) │  └─ Edge Fn: groq-proxy          │
+│  + secure storage (App Lock)│        │      (server-held Groq key,     │
+│                            │         │       per-tier AI quota)        │
 └────────────────────────────┘         └─────────────────────────────────┘
 ```
 
 **Design rule:** the local cache is always the source of truth for the UI. Supabase is synced in the background; failures degrade to "sync later", never to a broken screen.
 
 **Local-only mode:** if no Supabase credentials are configured (`lib/config/app_credentials.dart`), every service silently operates on the local cache. The app is fully usable offline, forever. This is also how unit tests run.
+
+The App Lock passcode hash lives in platform **secure storage**, not in SharedPreferences (§3.3), and the Groq API key lives only in the Edge Function's secrets (§2.5).
 
 ---
 
@@ -67,6 +71,8 @@ Finavig is an AI-powered financial budgeting & cash-flow intelligence app with i
 | `DocumentCollectionService` | Personal + company collections; active-collection selection |
 | `DocumentScannerService` | The document store: CRUD, search, renewal, outbox sync, row mapping |
 | `FinanceService` | Transactions, budgets, envelopes, recurring templates, cash-flow inputs |
+| `CreditService` | Borrowed/lent obligations (`credit_entries`) plus the optional ledger link: `addCreditWithDisbursement`, `settleCredit` (idempotent; `_tagLeg` tags an attached repayment and can reconcile a hand-logged principal as the disbursement leg), extend/delete, WhatsApp follow-up data |
+| `GroqApiService` | The single Groq entry point: the user's own key when supplied, otherwise the `groq-proxy` Edge Function (user JWT + server-side tier quota). Upstream failures are surfaced as friendly errors, never as "please sign in" |
 | `NotificationService` | OS-level reminder ladder (90/60/30/7 days) + budget alerts via `flutter_local_notifications` |
 | `BudgetAlertService` / `AlertPreferencesService` | 80%/100% budget alert engine and per-user toggles |
 | `SmartCategoryEngine` | Levenshtein + UAE vendor dictionary auto-categorization with habit learning |
@@ -76,6 +82,8 @@ Finavig is an AI-powered financial budgeting & cash-flow intelligence app with i
 | `AiIntentRouterService` | Routes one freeform utterance to money vs document flow: local keyword lexicon first (free), Groq `openai/gpt-oss-20b` only for the ambiguous remainder; exact-input memo (LRU 200, disk-persisted) + rolling 12-per-day escalation budget shared by every AI entry point |
 | `VoiceInputService` | Speech-to-text with live partial transcripts; spoken numbers normalized ("four hundred fifty dirhams" → "450 AED") |
 | `GeminiApiService` | Optional LLM polish for the AI executive summary (user-supplied key, on-device) |
+| `AppLockService` / `BiometricService` | Optional 6-digit re-entry passcode with biometric unlock: salted + iterated SHA-256 hash in platform secure storage (never SharedPreferences), persisted escalating lockout, and a "forgot passcode" path that signs the user out |
+| `SupportService` / `UpgradeRequestService` | In-app support and tier-upgrade request tickets persisted to `support_requests` with status tracking |
 | `MonthlySummaryService` | Aggregates month-over-month spend, top movers, budget overruns & envelope projections into the executive summary narrative |
 | `CompanionSuggestionService` | "Businesses tracking X also track Y" pools shown after adding a document |
 | `PerfTracingService` | DevTools Timeline sections for the critical flows + optional frame-time monitor (debug/profile only) |
@@ -88,7 +96,7 @@ The four tab screens are modularized under `lib/screens/` so each section widget
 | Screen shell | Modules |
 |---|---|
 | `home_screen.dart` (259 lines) | `home/` — hero header + notification bell, tier-aware collection switcher, plan/attention/expired banners, categories grid, upcoming-renewals section |
-| `money_screen.dart` (~860 lines) | `money/` — summary cards, planning cards, rows, form sheets, shared section primitives |
+| `money_screen.dart` (~860 lines) | `money/` — summary cards, planning cards, rows, credit section, form sheets (`forms/`: transaction, budget, envelope, recurring, credit create, credit settle, credit extend), shared section primitives. The Money hero opens a **light sheet that doubles as a collapsible index**: every section starts minimized to its header (chevron) and expands on tap, and the Credit section lives inside the sheet rather than the hero |
 | `documents_screen.dart` (394 lines) | `documents/` — hero header, filters (search/chips/type/sort sheets), insight tiles, document card, action sheets |
 | `profile_screen.dart` (424 lines) | `profile/` — hero, account, subscription, collections, appearance, shared section primitives, bottom sheets |
 
@@ -101,9 +109,22 @@ Static copy (FAQ, app guide) lives in `lib/config/` as plain data (`faq_content.
 `lib/router.dart` — `go_router` with an auth redirect gate (active only when Supabase is configured):
 
 - `/` splash → `/onboarding` (first run) or `/home`
-- `/login` when auth is available but no session
+- `/welcome` on a true first launch (dark brand landing + quote thread), then `/login`
+- `/login` when auth is available but no session — a per-step quiz: step 0 asks the user type and routes into a 3-step sign-in (email → password) or a 6-step sign-up (adds date of birth, GCC country, phone). The screen always renders the dark brand theme
+- `AppLockGate` wraps the shell: when a passcode is configured and the app is resumed cold, the live UI is covered until it is unlocked (never while signed out)
 - Full-screen routes above the shell: `/scan`, `/document/:id`, `/document/:id/edit`, `/search`, `/expiry-list`, `/cash-flow-forecast`, plus focused Money sub-pages (`/budgets`, `/envelopes`, `/records`, `/ai-summary`, `/ai-budget-plan`, `/alerts-reminders`)
 - `StatefulShellRoute.indexedStack` with 4 branches: `/home`, `/money`, `/documents`, `/profile` — bottom nav with live badges (documents needing attention; budget 80/100% dot) and a center "＋" quick-action button opening the universal quick menu
+
+### 2.5 AI transport & quotas
+
+`GroqApiService` is the only Groq entry point. When the user has saved their own key in Profile it is used directly from the device (their key, their bill). Otherwise the call goes to the **`groq-proxy` Edge Function** (`supabase/functions/groq-proxy/`):
+
+- it requires a real user JWT — the public anon key is rejected with `401`, so anonymous callers cannot spend the shared key;
+- for the metered features (`summary`, `budget_plan`) it reads the tier from `user_tiers`, enforces the limit with the `consume_ai_quota` SQL function, and **refunds** the credit when the Groq call fails; `intent` (Ask Finavig routing) is unmetered;
+- it returns `{ text, used, limit }`, so the counter the app shows comes from the server, mirrored into `ai_quota_usage` for offline display;
+- the Groq key lives in the function's secrets (`supabase secrets set GROQ_API_KEY=…`) and never ships in the bundle. An upstream Groq failure is returned as `502 groq_error`, never as `401`, so it can't be confused with "please sign in".
+
+Limits mirror `lib/models/subscription_tier.dart` and the table inside `index.ts`: AI summary 3 / 15 / 40 and budget plan 2 / 10 / 25 for Free / Plus / Business.
 
 ---
 
@@ -138,9 +159,13 @@ Static copy (FAQ, app guide) lives in `lib/config/` as plain data (`faq_content.
 
 **`custom_document_types`** — user-defined doc types (`unique(owner_id, name)`), referenced from `documents.doc_type` as `custom-<id>`.
 
-**Finance:** `finance_transactions` (income/expense lines, optional `document_id` link), `category_budgets` (per-category monthly limits), `savings_envelopes` (goals; tracking only — no money movement, per the pre-licence fintech stance), `recurring_transactions` (templates auto-logged by `FinanceService.runDueRecurrences()`).
+**Finance:** `finance_transactions` (income/expense lines, optional `document_id` link, and the optional credit link `credit_id` / `credit_leg in (disbursement, settlement)`), `category_budgets` (per-category monthly limits), `savings_envelopes` (goals; tracking only — no money movement, per the pre-licence fintech stance), `recurring_transactions` (templates auto-logged by `FinanceService.runDueRecurrences()`).
 
-**`app_versions`** — used by the splash update check (`supabase/app_version_schema.sql`).
+**Credit:** `credit_entries` (`supabase/credit_schema.sql`) — one row per borrowed/lent obligation: `direction` (`borrowed`/`lent`), `counterparty_name` / `counterparty_phone`, `amount`, `currency`, `start_date` (when the money changed hands; falls back to `created_at`), `description`, `deadline`, `extension_history` (jsonb trail of `{from, to, at}`), `settled_at`, plus `disbursement_transaction_id` / `settlement_transaction_id` pointing at the tagged ledger rows. `credit_schema.sql` also adds the `credit_id` / `credit_leg` columns to `finance_transactions` (the same statements ship in `finance_schema.sql`).
+
+**Entitlements & quotas:** `user_tiers` (read-only tier + plan duration) and `ai_quota_usage` (`feature_name in (groq_ai_summary, groq_ai_budget_plan)`, month + used counter). `supabase/ai_quota_proxy_schema.sql` adds the server-side `consume_ai_quota` function the Edge Function calls.
+
+**Ops:** `app_versions` — used by the splash update check (`supabase/app_version_schema.sql`); `support_requests` — in-app support/upgrade tickets with status (`supabase/support_requests_schema.sql`).
 
 ### 3.2 RLS model
 
@@ -153,10 +178,15 @@ Every table has row-level security enabled with per-owner policies (`auth.uid() 
 | `local_documents_v1` | JSON array of `ExpiryItem.toJson()` |
 | `local_documents_outbox_v1` | JSON array of `PendingOp` (queued mutations) |
 | `financeRecords.v1` | `{transactions, budgets, envelopes, recurring, overallBudgets}` |
+| `creditEntries.v1` | JSON array of `CreditEntry.toJson()` (counterparties, deadlines, extension history, settled state) |
+| `hasSeenWelcome` | first-launch welcome flag (set by *Continue to Login*) |
+| `groqAiSummary.lastNarrative.<userId>` / `groqAiBudgetPlan.lastPlan.<userId>` (+ the matching `…lastGeneratedAt.<userId>`) | Cached last AI narrative/plan + timestamp, so re-opening a screen never re-bills quota |
 | `ai.router.memo.v1` | AI intent-router exact-input verdict memo (LRU 200, oldest evicted) |
 | `ai.router.budget.v1` | Rolling daily AI escalation counter (`{day, count}`) |
 | `hasOnboarded` | onboarding flag |
 | `activeCollectionId` | collection selection |
+
+App Lock secrets do **not** live here: only a salted, iterated SHA-256 hash of the passcode is persisted, in the platform secure storage (iOS Keychain / Android Keystore) via `AppLockStore`; the lockout counter is persisted so force-quitting cannot reset it.
 
 Derived fields (`daysRemaining`, `urgency`, `isExpired`) are **recomputed on read**, never trusted from storage.
 
@@ -208,12 +238,17 @@ Auto-checks the `app_versions` table; can prompt or force an update before conti
 
 ![Splash](screenshots/01-splash.png)
 
-### 5.2 Onboarding & accounts
+### 5.2 Welcome, login & accounts
 
-Five-panel interactive onboarding (the `hasOnboarded` flag skips it later), a quiz-style themed login flow, and the notification-permission dialog that explains value before the OS prompt.
+A first launch lands on the **welcome screen** (`welcome_screen.dart`): the generated brand artwork behind an ink scrim, the `Finavig` headline, a WhatsApp-style thread of quote bubbles (incoming quote → reply bubble with a quoted-reply block → quote) and a single *Continue to Login* CTA that sets `hasSeenWelcome`.
 
-![Onboarding](screenshots/23-onboarding.png)
+**Login / sign-up** (`login_screen.dart`) is a quiz, one question per step: step 0 always asks what kind of user you are, which routes into the **sign-in** quiz (3 steps: email → password) or the **sign-up** quiz (6 steps, adding date of birth, GCC country and phone). Each step validates inline, the keyboard submit advances, and the whole screen always renders the dark brand theme so welcome → login feels like one branded flow. The legal (terms / privacy) dialogs live here, and a completed sign-up lands in onboarding.
+
+Five-panel interactive onboarding follows (the `hasOnboarded` flag skips it later), including the notification-permission page that explains value before the OS prompt. App Lock is offered once after login — see §5.17.
+
+![Welcome](screenshots/02-welcome.png)
 ![Login](screenshots/04-login.png)
+![Onboarding](screenshots/23-onboarding.png)
 
 ### 5.3 Home dashboard
 
@@ -264,7 +299,9 @@ Fuzzy search across names, notes, authorities, assignees, file names and type na
 
 ### 5.10 Money
 
-Finance module home: month overview (net cash flow), bill-spike alert, overall + per-category budgets with 80/100% alert thresholds, spending pace (avg/day, projected month-end, safe-to-spend), 6-week bar chart, category breakdown, biggest expenses, executive summary, 90-day renewal outlook, upcoming renewals with fees, cash-flow forecast entry, and recurring templates.
+Finance module home: month overview (net cash flow), bill-spike alert, overall + per-category budgets with 80/100% alert thresholds, spending pace (avg/day, projected month-end, safe-to-spend), 6-week bar chart, category breakdown, biggest expenses, executive summary, 90-day renewal outlook, upcoming renewals with fees, cash-flow forecast entry, recurring templates, and the credit section.
+
+The hero opens a **light sheet that doubles as a collapsible index**: every section starts minimized to its header and expands on tap, so the long finance page reads as a scannable table of contents. The Credit section now lives inside that sheet rather than in the hero.
 
 ![Money](screenshots/07-money.png)
 
@@ -277,7 +314,7 @@ Overall monthly cap plus per-category limits with progress meters; savings envel
 
 ### 5.12 Records & smart categorization
 
-Month-grouped transaction history. `SmartCategoryEngine` matches UAE vendors (exact dictionary + fuzzy Levenshtein), learns user corrections, and can retro-apply categories.
+Month-grouped transaction history. `SmartCategoryEngine` matches UAE vendors (exact dictionary + fuzzy Levenshtein), learns user corrections, and can retro-apply categories. Rows written by the credit ↔ Money sync wear a **Credit** chip, so a loan leg listed next to hand-logged spending can't be mistaken for a maths bug — it is deliberately excluded from the income/expense totals above it.
 
 ![Records](screenshots/30-records-with-data.png)
 ![AI category suggestion](screenshots/29-ai-category-suggestion.png)
@@ -291,7 +328,7 @@ Simulates daily balances from history + recurring templates + upcoming renewal f
 
 ### 5.14 AI executive summary & AI budget planner
 
-Monthly natural-language financial report: `MonthlySummaryService` aggregates this-vs-last month spend, top movers, budget overruns and envelope projections; the template narrative works fully offline, with an optional Gemini polish pass when the user supplies a key in Profile. The AI Budget Planner turns a stated goal ("save 15,000 AED for vacation in 6 months") into category caps.
+Monthly natural-language financial report: `MonthlySummaryService` aggregates this-vs-last month spend, top movers, budget overruns, envelope projections and the user's credit position; the template narrative works fully offline, with an optional Gemini polish pass when the user supplies a key in Profile. The AI Budget Planner turns a stated goal ("save 15,000 AED for vacation in 6 months") into category caps. Both skip credit-linked ledger rows, and both are metered per tier — Groq calls made with the shared key go through the `groq-proxy` Edge Function (§2.5), which records the usage in `ai_quota_usage`.
 
 ![AI summary](screenshots/15-ai-summary.png)
 
@@ -300,6 +337,14 @@ Monthly natural-language financial report: `MonthlySummaryService` aggregates th
 Modular settings: account card, subscription (tier badge, plan-expiry countdown, usage meters, upgrade/renew), collections management, appearance (system/light/dark), preferences link to the standalone Alerts & Reminders screen, AI summary key, and help & support (FAQ sheet, interactive app guide, support requests with status tracking).
 
 ![Profile](screenshots/09-profile.png)
+
+### 5.16 Credit book (borrowed / lent)
+
+A per-collection list of obligations kept outside the ledger: cards show the counterparty (with a phone action), the amount and currency, why it was borrowed (`description`), the borrowed-on date, the due date and any extensions, an overdue/deadline chip, and the settled state. Creating, editing, extending (each extension appends to `extension_history`) and deleting an entry are available from the card; a WhatsApp follow-up sheet drafts the reminder message. Settling offers a **settle sheet** that asks whether to log the cash movement, attach an existing record, or only settle the obligation — and, for a loan whose principal was hand-logged, can tag that existing row as the `disbursement` leg so it stops counting as income. See §5.1 of [`ARCHITECTURE.md`](../ARCHITECTURE.md) and [`credit-money-sync.md`](credit-money-sync.md).
+
+### 5.17 App Lock
+
+Profile → Security enables an optional 6-digit passcode with biometric unlock. `AppLockGate` covers the live UI on a cold start, unlock accepts either the passcode or biometrics, wrong entries escalate into a persisted lockout, and "Forgot passcode" signs the user out. Only a salted, iterated hash is stored, in platform secure storage. Verified by `test/app_lock_test.dart` (see [`app-lock-test-report.md`](app-lock-test-report.md)).
 
 ---
 
@@ -335,7 +380,7 @@ WhatsApp/email alerts are intentionally not wired: secrets must never ship in th
 
 ### 7.4 CI
 
-`.github/workflows/ci.yml` runs on every push to `main` and every PR: `flutter analyze --no-pub` (errors fatal — the codebase carries a documented pre-existing warning/info baseline), the file-size ratchet, and the full test suite (305+ tests, 23 suites) including goldens.
+`.github/workflows/ci.yml` runs on every push to `main` and every PR: `flutter analyze --no-pub` (errors fatal — the codebase carries a documented pre-existing warning/info baseline), the file-size ratchet, and the full test suite (484 tests, 49 suites) including goldens.
 
 ---
 
@@ -355,15 +400,22 @@ lib/
     app_guide_content.dart  App-guide chapters as sealed GuideBlock data
   models/                 ExpiryItem, DocumentType(+Registry), DocumentCollection,
                           RenewalRecord, FinanceTransaction/Budget/Envelope/Recurring,
+                          CreditEntry/CreditMath/CreditSettlement, SubscriptionTier/TierLimits,
                           CashFlow*, FinanceMath, RecurrenceMath
   services/               one singleton per concern (see §2.2); doc_sync.dart = sync contract;
-                          perf_tracing_service.dart = Timeline sections + frame monitor
+                          perf_tracing_service.dart = Timeline sections + frame monitor;
+                          credit_service.dart = obligations + ledger tagging;
+                          groq_api_service.dart = user key or the groq-proxy Edge Function;
+                          app_lock_service.dart / biometric_service.dart = local re-entry lock
   screens/                thin shells composing section modules:
     home/                 hero, collection switcher, banners, categories grid, upcoming
     documents/            hero, filters, insights, document card, action sheets
-    money/                summary cards, planning cards, rows, form sheets
-    profile/              hero, account, subscription, collections, appearance, sheets
-    (splash, onboarding, welcome, login, scan, document detail, expiry list,
+    money/                summary cards, planning cards, rows, credit section,
+                          forms/ (transaction, budget, envelope, recurring,
+                                  credit create / settle / extend)
+    profile/              hero, account, subscription, collections, appearance,
+                          app lock section, sheets
+    (splash, onboarding, welcome, login, app lock, scan, document detail, expiry list,
      global search, money, cash flow, ai summary, ai budget plan, alerts & reminders)
   widgets/
     hero_widgets.dart     shared HeroIconButton + HeroActionPill (all four tab heroes)
@@ -375,22 +427,26 @@ lib/
   theme/app_theme.dart    FinavigColors + light/dark themes
 supabase/
   schema.sql              documents/collections/reminders/custom types + RLS + cron
-  finance_schema.sql      finance tables + RLS
+  finance_schema.sql      finance tables + credit link columns + RLS
+  credit_schema.sql       credit_entries (obligations) + credit link columns + indexes
+  user_tiers_schema.sql   user_tiers (subscription tiers)
+  ai_quota_schema.sql     ai_quota_usage counters
+  ai_quota_proxy_schema.sql  consume_ai_quota() — used by the Edge Function
   app_version_schema.sql  app_versions
+  support_requests_schema.sql  in-app support/upgrade tickets
+  user_dob_schema.sql     date of birth captured at signup
+  functions/groq-proxy/   Edge Function: server-held Groq key + tier quota (index.ts + README)
   migrate_companies_to_collections.sql        legacy single-company → collections
   migrate_documents_local_only_fields.sql     adds location, renewal_history,
                                               custom_reminder_days
-test/                     23 suites, 305+ tests — sync contract (DocSync), finance math,
-                          recurrence, anomaly, categories, AI intent routing (incl.
-                          persistence), NL parser, OCR, UI redesign contracts, goldens
+test/                     49 suites, 484 tests — sync contract (DocSync), finance math,
+                          credit↔Money sync, recurrence, anomaly, categories, AI intent
+                          routing (incl. persistence), NL parser, OCR, App Lock,
+                          UI redesign contracts, goldens
 test/goldens/             committed golden PNGs for the three skeleton views
 tool/perf_budget_check.dart  CI file-size ratchet (screens/widgets ≤ 1200 lines)
 .github/workflows/ci.yml analyze + budget gate + full test suite
 ```
-
----
-
-## 9. Build, run, test
 
 ---
 
@@ -408,10 +464,10 @@ flutter pub get
 flutter run                    # device/emulator
 flutter run -d chrome          # web (hash routing)
 flutter build web --release
-flutter build apk --release    # Android (configure signing first — see PRODUCTION_READINESS.md)
+flutter build apk --release    # Android (configure signing first — see PRE_DEPLOYMENT_CHECKLIST.md)
 
 flutter analyze
-flutter test                   # 23 suites, 305+ tests (goldens included)
+flutter test                   # 49 suites, 484 tests (goldens included)
 dart run tool/perf_budget_check.dart   # file-size ratchet
 ```
 
@@ -432,7 +488,12 @@ flutter test --update-goldens test/golden_test.dart
 | `supabase/schema.sql` | fresh projects (idempotent — safe to re-run) |
 | `supabase/migrate_companies_to_collections.sql` | legacy single-company projects |
 | `supabase/migrate_documents_local_only_fields.sql` | all existing projects — adds `location`, `renewal_history`, `custom_reminder_days` |
-| `supabase/finance_schema.sql` | any project without the finance tables |
+| `supabase/finance_schema.sql` | any project without the finance tables (also carries the `credit_id` / `credit_leg` columns) |
+| `supabase/credit_schema.sql` | any project without the credit tracker — run after `schema.sql` (adds `credit_entries` + the credit link columns + indexes) |
+| `supabase/user_tiers_schema.sql` | to read subscription tiers |
+| `supabase/ai_quota_schema.sql` + `supabase/ai_quota_proxy_schema.sql` | AI quota counters + the `consume_ai_quota` function the Edge Function calls |
+| `supabase/support_requests_schema.sql` | to persist in-app support / upgrade requests |
+| `supabase/user_dob_schema.sql` | when date of birth is captured at signup |
 | `supabase/app_version_schema.sql` | to enable the splash update check |
 
 All migrations are additive and idempotent. After running the fields migration, the app uploads previously local-only fields on the next save/sync; stale outbox entries are healed by the row sanitizer (§4.2).
@@ -447,7 +508,11 @@ All migrations are additive and idempotent. After running the fields migration, 
 | OS notification reschedule on pull | not automatic | a remote edit (e.g. custom reminder days) reschedules on next local edit/renewal, not on pull — needs post-merge resync hook |
 | WhatsApp / email alerts | not wired | requires server-side provider (Meta Cloud API / SMTP) behind an Edge Function |
 | Push (FCM/APNs) | not wired | local notifications only; server `reminders` rows are ready as the data source |
-| Release signing | release-signed Android | signing wired with ProGuard rules for ML Kit (see PRODUCTION_READINESS.md) |
+| Release signing | release-signed Android | signing wired with ProGuard rules for ML Kit (see PRE_DEPLOYMENT_CHECKLIST.md) |
 | Web platform | demo/docs only | ML Kit & local notifications degrade on web |
 | Localization | English only | strings inline, RTL-ready layout not audited |
 | Groq escalation budget | 12/day, persisted | resets at local midnight; shared across every AI entry point; memo prevents repeat costs |
+| Shared-key AI calls | now proxied | `groq-proxy` Edge Function must be deployed and `GROQ_API_KEY` set as a function secret, or shared-key AI calls fail (user-supplied keys still work). Tier quota is enforced server-side |
+| Re-settling a settled credit | not offered in the UI | a credit settled before the Money link existed can't be reconciled retroactively (the settle action is hidden once `settled_at` is set); a "Reconcile with Money" action is the planned fix |
+| Credit repayments | single settlement | only one settlement per credit is modelled — no partial/instalment repayments yet |
+| On-device verification | tests + analyzer only | the credit sync, login/welcome restyle, App Lock and the AI proxy are verified by widget/unit tests and static analysis; no on-device pass was run for this doc revision |

@@ -71,7 +71,7 @@ Search across every document by name, number or notes. Built for the "send me th
 
 ### Money — income and expenses, auto-organized
 
-Type or speak one sentence and the transaction is logged, categorized and dated against a UAE merchant dictionary. Recurring rent, salaries and subscriptions auto-log when due. Anomaly alerts on 35%+ jumps in recurring costs.
+Type or speak one sentence and the transaction is logged, categorized and dated against a UAE merchant dictionary. Recurring rent, salaries and subscriptions auto-log when due. Anomaly alerts on 35%+ jumps in recurring costs. Money borrowed from or lent to people lives here too: the credit book tracks who owes what, by when and any extensions, with WhatsApp follow-ups — and because a linked loan is tagged, it never inflates your income or expense totals.
 
 ![Money](build/pitch/shots/03_money.png)
 
@@ -101,7 +101,7 @@ Bank balance, upcoming recurring bills and document renewal fees combined into o
 
 ### AI summary — your executive brief
 
-FV reads your month — spending, budgets, upcoming renewals — and writes the summary a good CFO would: what changed, what is coming, what needs a decision. Works out of the box with a built-in key; bring your own for more depth.
+FV reads your month — spending, budgets, upcoming renewals, money owed — and writes the summary a good CFO would: what changed, what is coming, what needs a decision. Works out of the box (the shared AI key is held server-side and metered per plan — no key to paste); bring your own key for more depth.
 
 ![AI summary](build/pitch/shots/11_ai_summary.png)
 
@@ -113,7 +113,7 @@ FV reads your month — spending, budgets, upcoming renewals — and writes the 
 
 ### Profile — yours, and portable
 
-Workspaces, plan, backup and preferences in one hub. One-tap data export: your data, take it anywhere.
+Workspaces, plan, backup, preferences and an optional app lock (6-digit passcode or biometric) in one hub. One-tap data export: your data, take it anywhere.
 
 ![Profile](build/pitch/shots/13_profile.png)
 
@@ -128,7 +128,7 @@ A dedicated center for every alert: renewals, budget warnings, anomalies. Notifi
 ## Pricing
 
 - **Free — AED 0.** Core document tracking, one workspace, manual money logging, renewal alerts. Everything a single company needs to start.
-- **Plus — monthly.** AI summaries, budget plans, multi-year history, advanced forecasts, priority support.
+- **Plus — monthly.** AI summaries and budget plans (generous monthly quota), multi-year history, advanced forecasts, priority support.
 - **Business — per seat.** Multi-company workspaces, team access, exports and reporting for accountants and PRO teams.
 
 ---

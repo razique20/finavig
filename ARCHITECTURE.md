@@ -19,15 +19,17 @@ flowchart TB
         BIZ["Domain services<br/>lib/services"]
         STORE[("Local store<br/>prefs + files<br/>(local-first)")]
         OUTBOX["Sync outbox<br/>doc_sync.dart"]
+        LOCK["🔐 App Lock<br/>salted passcode hash in<br/>secure storage (local_auth)"]
     end
 
     subgraph Cloud["☁️ Supabase"]
         AUTH["Auth<br/>(email + password)"]
-        DB[("Postgres / RLS<br/>documents, finance,<br/>collections, tiers")]
+        DB[("Postgres / RLS<br/>documents, finance,<br/>credit, collections, tiers")]
+        EDGE["Edge Function<br/>groq-proxy<br/>(holds the Groq key,<br/>meters tier quota)"]
     end
 
     subgraph AI["🤖 AI providers"]
-        GROQ["Groq API<br/>(in-app default key<br/>or user key)"]
+        GROQ["Groq API<br/>(server-held key<br/>via the proxy)"]
         GEM["Gemini API<br/>(optional user key)"]
     end
 
@@ -35,10 +37,12 @@ flowchart TB
 
     UI <--> BIZ
     BIZ <--> STORE
+    BIZ <--> LOCK
     STORE -- "queued changes" --> OUTBOX
     OUTBOX <-- "sync when online" --> DB
     BIZ -- "restore session" --> AUTH
-    BIZ -- "summaries / plans /<br/>intent routing" --> GROQ
+    BIZ -- "summaries / plans / intent<br/>(user JWT)" --> EDGE
+    EDGE -- "server-held key" --> GROQ
     BIZ --> GEM
     BIZ -- "schedule 90/60/30/14/7/1" --> OS
 ```
@@ -46,6 +50,10 @@ flowchart TB
 Key rule: **the app is fully usable offline and signed-out** (local-only
 mode). Supabase is optional at runtime — `SupabaseService.hasCredentials`
 gates every cloud call, and services fall back to local defaults.
+
+The Groq API key never ships in the client: the app talks to the
+`groq-proxy` Edge Function with the user's JWT, and the function holds the key
+as a server secret and enforces the tier's monthly quota (see §7).
 
 ---
 
@@ -90,10 +98,13 @@ Notes:
 ```mermaid
 flowchart TD
     ROOT["/ splash"] -->|"onboarded=true"| HOME
-    ROOT -->|"first launch"| WELCOME["/welcome"]
-    WELCOME --> LOGIN["/login"]
-    LOGIN -->|"quiz flow:<br/>email → password → DOB →<br/>country → phone"| ONB["/onboarding"]
+    ROOT -->|"first launch"| WELCOME["/welcome<br/>headline + quote thread"]
+    WELCOME -->|"Continue to Login"| LOGIN["/login<br/>step 0 = user type"]
+    LOGIN -->|"sign in (3 steps)"| SESS["session"]
+    LOGIN -->|"sign up (6 steps):<br/>email → password → DOB →<br/>country → phone"| SESS
+    SESS --> ONB["/onboarding"]
     ONB -->|"5 pages,<br/>notification ask on p3"| HOME
+    HOME -.->|"optional post-login offer"| LOCK["🔐 App Lock<br/>passcode + biometric<br/>(AppLockGate on cold start)"]
 
     subgraph SHELL["Bottom-nav shell (StatefulShellRoute)"]
         direction LR
@@ -157,7 +168,7 @@ days).
 
 ---
 
-## 5. Money logging & budget workflow
+## 5. Money logging, budgets & credit obligations
 
 ```mermaid
 flowchart TD
@@ -172,6 +183,29 @@ flowchart TD
     D --> J["90-day cash forecast<br/>FinanceMath.calculate90DayCashFlow<br/>(balance + recurring + renewal fees)"]
     J --> K["MonthlySummaryService →<br/>AI executive summary (Plus)"]
 ```
+
+### 5.1 Credit obligations ↔ Money ledger
+
+A credit (`credit_entries`) is an obligation, not a cash movement, but the cash
+usually moves twice. The user can opt in to writing those legs into the ledger,
+and every leg is **tagged** so reporting can exclude it (a loan is never
+counted as income or an expense). Design: `docs/credit-money-sync.md`.
+
+```mermaid
+flowchart LR
+    subgraph BORROW["Borrowed from someone"]
+        B1["Create / receive money<br/>→ income leg<br/>creditLeg=disbursement"] --> B2["Repay<br/>→ expense leg<br/>creditLeg=settlement"]
+    end
+    subgraph LEND["Lent to someone"]
+        L1["Create / pay out<br/>→ expense leg<br/>creditLeg=disbursement"] --> L2["Get repaid<br/>→ income leg<br/>creditLeg=settlement"]
+    end
+    B2 & L2 --> S["Credit marked settled<br/>settled_at + settlement_txn_id<br/>leaves outstanding totals,<br/>stays listed with a Settled badge"]
+    B1 & L1 -.-> LEG["Tagged legs (credit_id / credit_leg) show a<br/>Credit chip in Records and are skipped by<br/>FinanceMath.summaryForMonth, spendByCategory,<br/>budgets, charts, anomalies and the AI summaries"]
+```
+
+Settling a credit can also **reconcile a hand-logged principal**: the settle
+sheet offers to tag an existing matching transaction as the `disbursement` leg
+instead of creating a duplicate (`CreditService._tagLeg`).
 
 ---
 
@@ -196,11 +230,11 @@ sequenceDiagram
 
 ---
 
-## 7. Auth & entitlements
+## 7. Auth, App Lock & entitlements
 
 ```mermaid
 flowchart TD
-    A["Login screen quiz"] -->|"signUp(email, password,<br/>DOB) + save prefs<br/>userCountry / userDob / userPhone"| B["Supabase Auth"]
+    A["Login screen quiz<br/>(always dark brand theme)"] -->|"signUp(email, password,<br/>DOB) + save prefs<br/>userCountry / userDob / userPhone"| B["Supabase Auth"]
     B --> C{"Email confirmation<br/>required?"}
     C -- "yes" --> D["'Check your email' → sign in"]
     C -- "no" --> E["Session active"]
@@ -213,12 +247,21 @@ flowchart TD
     J -->|Free| K["1 collection, ~10 docs,<br/>basic budgets"]
     J -->|Plus| L["Unlimited docs, forecast,<br/>exports, AI summary"]
     J -->|Business| M["Multi-company workspaces,<br/>team exports"]
-    L & M --> N["Paywall/upgrade:<br/>showTierRequestSheet →<br/>email request (support email)"]
+    L & M --> N["Paywall/upgrade:<br/>showTierRequestSheet →<br/>in-app request ticket (support_requests)"]
 ```
 
-The client **only reads** its tier; grants happen server-side. AI calls
-use an in-app default Groq key (pilot) — moving behind a Supabase Edge
-Function is a documented pre-scale requirement (see OPTIMIZATION_PLAN).
+The client **only reads** its tier; grants happen server-side. AI calls go
+through the `groq-proxy` Edge Function, which requires a real user JWT and
+enforces the tier's monthly quota server-side (`consume_ai_quota`), refunding
+the credit when the upstream Groq call fails. The shared Groq key lives only in
+the function's secrets — never in the app bundle.
+
+**App Lock** sits on top of this: an optional 6-digit re-entry passcode
+(`AppLockService`) with biometric unlock (`local_auth` via `BiometricService`)
+that gates an already-signed-in session on cold start (`AppLockGate`). Only a
+salted, iterated SHA-256 hash is persisted, in iOS Keychain / Android Keystore;
+escalating lockout state is persisted too, and "Forgot passcode" signs the user
+out rather than weakening the lock. It is not an authentication credential.
 
 ---
 
@@ -234,9 +277,9 @@ flowchart LR
 
     SUM --> KEY{"LLM key?"}
     BPS --> KEY
-    KEY -->|"user set"| UK["User's Groq/Gemini key"]
-    KEY -->|"default"| DK["In-app Groq key<br/>(quota-metered)"]
-    UK & DK --> RES["Rendered plan/summary →<br/>saved caches keyed by<br/>month + data hash"]
+    KEY -->|"user set"| UK["User's Groq/Gemini key<br/>(straight from the device)"]
+    KEY -->|"default"| PROXY["groq-proxy Edge Function<br/>JWT check → tier quota →<br/>server-held Groq key"]
+    UK & PROXY --> RES["Rendered plan/summary →<br/>saved per-user cache<br/>(last narrative/plan + timestamp)<br/>so re-opening never re-bills"]
 ```
 
 ---
@@ -254,8 +297,11 @@ erDiagram
     FINANCE_CATEGORY ||--o{ BUDGET : limits
     FINANCE_CATEGORY ||--o{ ENVELOPE : saves-for
     RECURRING_TRANSACTION ||--o{ FINANCE_TRANSACTION : generates
+    CREDIT_ENTRY ||--o{ FINANCE_TRANSACTION : "tags (optional)"
     USER ||--|| USER_TIER : entitlement
     USER ||--o{ DOCUMENT_COLLECTION : owns
+    USER ||--o{ CREDIT_ENTRY : owes_or_lends
+    USER ||--o{ AI_QUOTA_USAGE : meters
 
     GCC_COUNTRY {
         string code AE_SA_KW_QA_BH_OM
@@ -275,10 +321,27 @@ erDiagram
         double amount
         string kind income_expense
         date occurredAt
+        string creditId "nullable - linked obligation"
+        string creditLeg "disbursement | settlement"
+    }
+    CREDIT_ENTRY {
+        string id
+        string direction borrowed_lent
+        string counterpartyName
+        double amount
+        date deadline
+        date settledAt
+        string disbursementTransactionId
+        string settlementTransactionId
     }
     USER_TIER {
         string tier free_plus_business
         date planEndsAt
+    }
+    AI_QUOTA_USAGE {
+        string featureName groq_ai_summary_groq_ai_budget_plan
+        int used
+        string month
     }
 ```
 
@@ -291,7 +354,7 @@ flowchart LR
     PUSH["git push"] --> CI["CI gates"]
     subgraph CI
         A["flutter analyze --no-pub<br/>(0 errors required)"]
-        B["flutter test --no-pub<br/>(400 tests)"]
+        B["flutter test --no-pub<br/>(484 tests, 49 suites)"]
         C["dart run tool/perf_budget_check.dart<br/>(file-size ratchet)"]
     end
     CI --> REL["Store build<br/>flutter build appbundle/ipa<br/>--analyze-size"]
@@ -301,4 +364,7 @@ flowchart LR
 
 Docs that pair with this file: `PITCH.md` (product story),
 `MONETIZATION.md` (revenue tracks), `OPTIMIZATION_PLAN.md` (perf backlog),
-`PRE_DEPLOYMENT_CHECKLIST.md` (launch checklist).
+`PRE_DEPLOYMENT_CHECKLIST.md` (launch checklist),
+`docs/technical-documentation.md` (developer deep dive),
+`docs/credit-money-sync.md` (§5.1 in depth),
+`supabase/functions/groq-proxy/README.md` (AI proxy runbook).

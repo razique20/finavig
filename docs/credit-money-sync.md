@@ -1,7 +1,7 @@
-# Credit ↔ Money sync — how it would work
+# Credit ↔ Money sync — design & implementation
 
-> Status: **implemented** (settlement-first). See §10 for what shipped and the
-> one deviation from this proposal.
+> Status: **implemented** (settlement-first). §1–§9 are the design record; §10
+> lists what shipped and the one deviation from the original proposal.
 > Related: [`lib/models/credit.dart`](../lib/models/credit.dart),
 > [`lib/models/finance.dart`](../lib/models/finance.dart),
 > [`lib/services/credit_service.dart`](../lib/services/credit_service.dart),
