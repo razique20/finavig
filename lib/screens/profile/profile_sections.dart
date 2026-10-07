@@ -8,10 +8,14 @@ import '../../widgets/bento_icon_tile.dart';
 /// independently. Same anatomy as `money_sections.dart`.
 
 /// Tile background color: white in light mode, translucent slate in dark.
-Color profileTileBg(ThemeData theme) {
-  final isDark = theme.brightness == Brightness.dark;
-  return isDark ? FinavigColors.slate.withOpacity(0.5) : Colors.white;
-}
+///
+/// Resolved through [FinavigTransition] rather than branching on brightness so
+/// the settings tiles cross-fade with the theme animation instead of snapping
+/// at its halfway point.
+Color profileTileBg(BuildContext context) => FinavigTransition.of(context).color(
+      Colors.white,
+      FinavigColors.slate.withValues(alpha: 0.5),
+    );
 
 /// A grouped settings card: title row (like "My Collections") over a rounded
 /// tile-background column of rows, matching the sheet's tile style.
@@ -30,8 +34,8 @@ class ProfileSectionGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final tileBg = profileTileBg(theme);
+    final fade = FinavigTransition.of(context);
+    final tileBg = profileTileBg(context);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -67,9 +71,10 @@ class ProfileSectionGroup extends StatelessWidget {
                       height: 1,
                       indent: 50,
                       endIndent: 16,
-                      color: isDark
-                          ? Colors.white.withOpacity(0.06)
-                          : Colors.black.withOpacity(0.05),
+                      color: fade.color(
+                        Colors.black.withValues(alpha: 0.05),
+                        Colors.white.withValues(alpha: 0.06),
+                      ),
                     ),
                 ],
               ],
@@ -106,12 +111,13 @@ class ProfileSettingsTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final fade = FinavigTransition.of(context);
     final accent = iconColor ?? FinavigColors.indigo;
 
     return Material(
       color: highlighted
-          ? theme.colorScheme.primary.withOpacity(isDark ? 0.14 : 0.05)
+          ? theme.colorScheme.primary
+              .withValues(alpha: fade.value(0.05, 0.14))
           : Colors.transparent,
       borderRadius: BorderRadius.circular(FinavigRadius.tile),
       child: InkWell(
@@ -184,7 +190,7 @@ class ProfileUsageMeter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final fade = FinavigTransition.of(context);
     final ratio = max == null || max == 0 ? 0.0 : (used / max!).clamp(0.0, 1.0);
     final barColor = max == null
         ? FinavigColors.safe
@@ -222,9 +228,10 @@ class ProfileUsageMeter extends StatelessWidget {
           child: LinearProgressIndicator(
             value: max == null ? 1.0 : ratio,
             minHeight: 5,
-            backgroundColor: isDark
-                ? Colors.white.withOpacity(0.08)
-                : Colors.black.withOpacity(0.06),
+            backgroundColor: fade.color(
+              Colors.black.withValues(alpha: 0.06),
+              Colors.white.withValues(alpha: 0.08),
+            ),
             valueColor: AlwaysStoppedAnimation<Color>(barColor),
           ),
         ),

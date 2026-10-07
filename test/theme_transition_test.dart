@@ -16,6 +16,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:finavig/router.dart';
 import 'package:finavig/screens/home/home_banners.dart';
 import 'package:finavig/screens/home/home_categories_grid.dart';
+import 'package:finavig/services/theme_service.dart';
 import 'package:finavig/theme/app_theme.dart';
 
 void main() {
@@ -270,6 +271,107 @@ void main() {
       final settled = inactiveIconColor(tester);
       expect(settled.r, 1.0);
       expect(settled.a, closeTo(0.65, 0.002));
+    });
+  });
+
+  // The Settings (Profile) page: same snapping surfaces, plus its Appearance
+  // segmented control, which lives in a kept-alive shell page.
+  group('settings page', () {
+    Future<StateSetter> mountSettings(WidgetTester tester) async {
+      SharedPreferences.setMockInitialValues({
+        'hasOnboarded': true,
+        'hasSeenWelcome': true,
+        'hasSeenAppGuide': true,
+      });
+      await ThemeService.instance.setMode(ThemeMode.system);
+      addTearDown(() => ThemeService.instance.setMode(ThemeMode.system));
+
+      late StateSetter setter;
+      var mode = ThemeMode.light;
+      await tester.pumpWidget(
+        StatefulBuilder(
+          builder: (context, set) {
+            setter = set;
+            return MaterialApp.router(
+              theme: FinavigTheme.light(),
+              darkTheme: FinavigTheme.dark(),
+              themeMode: mode,
+              routerConfig: router,
+            );
+          },
+        ),
+      );
+      await tester.pump(const Duration(seconds: 2));
+      router.go('/profile');
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      return (fn) {
+        fn();
+        setter(() => mode = ThemeMode.dark);
+      };
+    }
+
+    /// The grouped card wrapping the section that owns [label] — anchored on a
+    /// child row/control, since the section title sits above the card.
+    Container sectionTile(WidgetTester tester, String label) => tester
+        .widgetList<Container>(
+          find.ancestor(of: find.text(label), matching: find.byType(Container)),
+        )
+        .firstWhere((c) {
+          final d = c.decoration;
+          return d is BoxDecoration &&
+              d.borderRadius == BorderRadius.circular(FinavigRadius.card);
+        });
+
+    testWidgets('section tiles cross-fade instead of snapping',
+        (tester) async {
+      final flip = await mountSettings(tester);
+      expect(
+        (sectionTile(tester, 'System').decoration as BoxDecoration).color,
+        Colors.white,
+      );
+
+      flip(() {});
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.pump(const Duration(milliseconds: 50));
+
+      final mid =
+          (sectionTile(tester, 'System').decoration as BoxDecoration).color!;
+      expect(strictlyBetween(mid.r, 1.0, FinavigColors.slate.r), isTrue,
+          reason: 'settings tile must be mid-transition, was ${mid.r}');
+      expect(strictlyBetween(mid.a, 1.0, 0.5), isTrue,
+          reason: 'settings tile alpha must be mid-transition, was ${mid.a}');
+
+      await tester.pumpAndSettle();
+      final settled =
+          (sectionTile(tester, 'System').decoration as BoxDecoration).color!;
+      expect(settled.r, FinavigColors.slate.r);
+      expect(settled.a, closeTo(0.5, 0.002));
+    });
+
+    testWidgets('appearance selector moves to the tapped mode', (tester) async {
+      await mountSettings(tester);
+
+      Set<ThemeMode> selection() => tester
+          .widget<SegmentedButton<ThemeMode>>(
+            find.byType(SegmentedButton<ThemeMode>),
+          )
+          .selected;
+
+      expect(selection(), {ThemeMode.system});
+
+      await tester.ensureVisible(find.text('Dark'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Dark'));
+      await tester.pumpAndSettle();
+
+      expect(ThemeService.instance.mode, ThemeMode.dark);
+      expect(selection(), {ThemeMode.dark},
+          reason: 'the selected box must follow the tap, not stay on the old mode');
+
+      await tester.tap(find.text('System'));
+      await tester.pumpAndSettle();
+      expect(selection(), {ThemeMode.system});
     });
   });
 

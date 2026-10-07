@@ -38,7 +38,7 @@ class ProfileAccountCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
         decoration: BoxDecoration(
-          color: profileTileBg(Theme.of(context)),
+          color: profileTileBg(context),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(

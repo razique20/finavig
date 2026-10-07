@@ -282,12 +282,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    // Hero backdrop resolves through the theme transition factor so it
+    // cross-fades with the theme animation instead of snapping.
+    final fade = FinavigTransition.of(context);
 
     return Scaffold(
       // Ink backdrop behind the hero; the content sheet covers the rest.
       // Same backdrop as Home/Documents.
-      backgroundColor: isDark ? FinavigColors.obsidian : FinavigColors.ink,
+      backgroundColor: fade.color(FinavigColors.ink, FinavigColors.obsidian),
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(

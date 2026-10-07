@@ -46,14 +46,15 @@ class _ProfileBackupNudgeState extends State<ProfileBackupNudge> {
     if (!_visible) return const SizedBox.shrink();
 
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final fade = FinavigTransition.of(context);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: FinavigColors.warning.withOpacity(isDark ? 0.12 : 0.08),
+          color: FinavigColors.warning
+              .withValues(alpha: fade.value(0.08, 0.12)),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: FinavigColors.warning.withOpacity(0.35)),
         ),
@@ -74,9 +75,7 @@ class _ProfileBackupNudgeState extends State<ProfileBackupNudge> {
                     'Your document scans live on this device only',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: isDark
-                          ? FinavigColors.warning
-                          : FinavigColors.warning,
+                      color: FinavigColors.warning,
                     ),
                   ),
                   const SizedBox(height: 4),

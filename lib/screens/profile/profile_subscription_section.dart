@@ -56,7 +56,7 @@ class _ProfileSubscriptionSectionState
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: profileTileBg(theme),
+              color: profileTileBg(context),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Column(

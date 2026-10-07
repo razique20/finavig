@@ -561,7 +561,7 @@ class ProfileSupportRequestCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final fade = FinavigTransition.of(context);
 
     final (Color statusColor, IconData statusIcon) = switch (item.status) {
       'in_progress' => (Colors.orange, Icons.autorenew_rounded),
@@ -592,14 +592,16 @@ class ProfileSupportRequestCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isDark
-            ? FinavigColors.slate.withOpacity(0.55)
-            : FinavigColors.cloud,
+        color: fade.color(
+          FinavigColors.cloud,
+          FinavigColors.slate.withValues(alpha: 0.55),
+        ),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isDark
-              ? Colors.white.withOpacity(0.06)
-              : Colors.black.withOpacity(0.05),
+          color: fade.color(
+            Colors.black.withValues(alpha: 0.05),
+            Colors.white.withValues(alpha: 0.06),
+          ),
         ),
       ),
       child: Column(
