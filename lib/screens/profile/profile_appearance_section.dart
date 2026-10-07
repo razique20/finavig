@@ -27,32 +27,39 @@ class ProfileAppearanceSection extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
           child: SizedBox(
             width: double.infinity,
-            child: SegmentedButton<ThemeMode>(
-              segments: const [
-                ButtonSegment(
-                  value: ThemeMode.system,
-                  icon: Icon(Icons.brightness_auto, size: 18),
-                  label: Text('System'),
+            // The settings page lives inside the shell's indexed stack, so it is
+            // kept alive and never rebuilt by the root MaterialApp when the
+            // theme changes — without listening to the service here the
+            // selected segment stayed on the old mode after a tap.
+            child: ListenableBuilder(
+              listenable: ThemeService.instance,
+              builder: (context, _) => SegmentedButton<ThemeMode>(
+                segments: const [
+                  ButtonSegment(
+                    value: ThemeMode.system,
+                    icon: Icon(Icons.brightness_auto, size: 18),
+                    label: Text('System'),
+                  ),
+                  ButtonSegment(
+                    value: ThemeMode.light,
+                    icon: Icon(Icons.light_mode, size: 18),
+                    label: Text('Light'),
+                  ),
+                  ButtonSegment(
+                    value: ThemeMode.dark,
+                    icon: Icon(Icons.dark_mode, size: 18),
+                    label: Text('Dark'),
+                  ),
+                ],
+                selected: {ThemeService.instance.mode},
+                onSelectionChanged: (selected) {
+                  ThemeService.instance.setMode(selected.first);
+                },
+                showSelectedIcon: false,
+                style: ButtonStyle(
+                  visualDensity: VisualDensity.compact,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                ButtonSegment(
-                  value: ThemeMode.light,
-                  icon: Icon(Icons.light_mode, size: 18),
-                  label: Text('Light'),
-                ),
-                ButtonSegment(
-                  value: ThemeMode.dark,
-                  icon: Icon(Icons.dark_mode, size: 18),
-                  label: Text('Dark'),
-                ),
-              ],
-              selected: {ThemeService.instance.mode},
-              onSelectionChanged: (selected) {
-                ThemeService.instance.setMode(selected.first);
-              },
-              showSelectedIcon: false,
-              style: ButtonStyle(
-                visualDensity: VisualDensity.compact,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
             ),
           ),
