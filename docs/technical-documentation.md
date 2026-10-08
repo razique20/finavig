@@ -253,7 +253,7 @@ Five-panel interactive onboarding follows (the `hasOnboarded` flag skips it late
 
 ### 5.3 Home dashboard
 
-Cross-tier dashboard: categories grid (Documents, Renewals, Envelopes, Records, Forecast, AI Summary, AI Planner, Scan), plan-restriction / attention / expired banners that collapse to zero when not applicable, next-renewals tiles, a tier-aware collection switcher, notification bell with a unified alert sheet, and a live month-balance hero with Record/Budget action pills.
+Cross-tier dashboard drawn directly on one light canvas (no hero band): a bento categories grid (Documents, Renewals, Envelopes, Records, Forecast, AI Planner, plus the lilac AI Summary tile and the Scan CTA), the month balance as a single **ink card** carrying the net, the in/out/next line and the Record/Budget pills, plan-restriction / attention / expired banners that collapse to zero when not applicable, next-renewal rows, a tier-aware collection switcher, and a notification bell with a unified alert sheet.
 
 ![Home](screenshots/06-home.png)
 ![Home with documents](screenshots/18-home-with-doc.png)
@@ -261,7 +261,7 @@ Cross-tier dashboard: categories grid (Documents, Renewals, Envelopes, Records, 
 
 ### 5.4 Documents
 
-The expiry radar. Every card shows urgency color, renewal-window progress, authority, fee, reminder state, and an expiry-aware warning (`effectiveRenewalWarning` — never blank). Inline search, status filter chips with live counts, document-type filter sheet, and sort (due date / urgency / name / fee). Insight tiles show the next due document and total upcoming fees.
+The expiry radar, drawn as a flat, **card-free ledger**: rows on the light canvas are separated by hairlines — no white rectangles — and each one shows urgency color, a status pill, the countdown, authority, fee, owner/location and a slim renewal-window bar, plus an expiry-aware warning (`effectiveRenewalWarning` — never blank). Above the list sit the inline next-due / total-upcoming-fee stats; the header carries the live status line and Filter / Sort / Add pills, then a search pill, status filter chips with live counts, a document-type filter sheet and sort (due date / urgency / name / fee).
 
 ![Documents](screenshots/08-documents.png)
 
@@ -302,7 +302,7 @@ Fuzzy search across names, notes, authorities, assignees, file names and type na
 
 Finance module home: month overview (net cash flow), bill-spike alert, overall + per-category budgets with 80/100% alert thresholds, spending pace (avg/day, projected month-end, safe-to-spend), 6-week bar chart, category breakdown, biggest expenses, executive summary, 90-day renewal outlook, upcoming renewals with fees, cash-flow forecast entry, recurring templates, and the credit section.
 
-The hero opens a **light sheet that doubles as a collapsible index**: every section starts minimized to its header and expands on tap, so the long finance page reads as a scannable table of contents. The Credit section now lives inside that sheet rather than in the hero.
+The month summary sits in a single **dark ink card** on the light canvas (net, in/out, the Transactions/Budgets/Envelopes pills and the AI-Budget-Plan / Add-Record actions), and the body below opens as a **collapsible index**: every section starts minimized to its header and expands on tap, so the long finance page reads as a scannable table of contents. The Credit section lives inside that index rather than in the summary card.
 
 ![Money](screenshots/07-money.png)
 ![Money with Credit expanded](screenshots/34-money-credit.png)
@@ -336,7 +336,7 @@ Monthly natural-language financial report: `MonthlySummaryService` aggregates th
 
 ### 5.15 Profile
 
-Modular settings: account card, subscription (tier badge, plan-expiry countdown, usage meters, upgrade/renew), collections management, appearance (system/light/dark), preferences link to the standalone Alerts & Reminders screen, AI summary key, and help & support (FAQ sheet, interactive app guide, support requests with status tracking).
+A flat, airy settings list under a centred title and the dark ink avatar: one-tap rows for profile, experience (appearance: system/light/dark), notifications, collections, subscription (tier badge, plan-expiry countdown, usage meters, upgrade/renew), security & app lock, AI summary key, and help & support (FAQ sheet, interactive app guide, support requests with status tracking) — each opening as a bottom sheet rather than an inline card.
 
 ![Profile](screenshots/09-profile.png)
 

@@ -137,7 +137,8 @@ flowchart TD
     AUTHGATE -->|"session"| SHELL
 ```
 
-Shell chrome: floating pill nav with a gradient **+** quick-action orb
+Shell chrome: floating pill nav whose active tab is marked by its filled ink
+glyph (no selection plate) with a dark ink **+** quick-action orb
 (scan / log money / voice / envelope; long-press = Ask Finavig AI). Live
 badges: Documents dot when any doc ≤30 days, Money dot amber at ≥80%
 budget, red at ≥100% (`_AppShell`).

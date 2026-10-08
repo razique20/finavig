@@ -34,17 +34,17 @@ Captured from a real app build with seeded demo data. Click any image for full s
 | **Sign-up** — picking "New to Finavig" adds date of birth, GCC country and phone | **App Lock** — optional 6-digit passcode with biometric unlock, set up from Profile → Security |
 | ![Sign-up](screenshots/05-signup-form.png) | ![App Lock](screenshots/33-app-lock.png) |
 
-> **Capture status:** `02`, `04`, `05`, `07`, `13` and `32`–`35` were re-captured from the current build on 2026‑10‑07 with `tool/capture_docs_shots.sh`. The remaining shots still date from the earlier build and predate the glass/ink restyle — re-run that script (and `tool/capture_pitch_shots.sh` for the deck) before reusing this gallery as marketing material.
+> **Capture status:** `02`, `04`–`09`, `13` and `32`–`35` were re-captured from the current build on 2026‑10‑08 with `tool/capture_docs_shots.sh`, so the four tabs now show the redesigned light-canvas layouts. The remaining shots (`00`, `01`, `10`–`31`) still date from the earlier build — re-run that script (and `tool/capture_pitch_shots.sh` for the deck) before reusing this gallery as marketing material.
 
 ### Core dashboards
 
 | | |
 |---|---|
-| **Home dashboard** — categories grid, plan-restriction/attention/expired banners, next renewals, collection switcher, live month balance with action pills | **Money** — the sheet opens as a **collapsible index**: every section is minimised to its header and expands on tap |
+| **Home dashboard** — one light canvas: bento categories grid, the ink month-balance card with Record/Budget pills, plan-restriction & renewals-need-attention banners, then next renewals | **Money** — light canvas with the month summary as a single **ink card** (net, in/out, Transactions/Budgets/Envelopes pills); the body opens as a **collapsible index** — every section minimised to its header |
 | ![Home](screenshots/06-home.png) | ![Money](screenshots/07-money.png) |
 | **Money — Credit expanded** — the credit book inside the sheet, with the full Credit page one tap away | |
 | ![Money credit](screenshots/34-money-credit.png) | |
-| **Documents radar** — urgency-tinted cards with renewal-window progress, fees, reminder state; inline search, filter chips, type filter & sort sheets | **Profile (Settings)** — modular sections: account, subscription with usage meters, collections, appearance, preferences, AI summary key, help & support |
+| **Documents radar** — a flat, **card-free ledger** of hairline-divided rows: urgency countdown, status pill, fee, authority and a slim renewal bar, above inline next-due/upcoming-fee stats; search pill, status chips, type-filter & sort sheets | **Profile (Settings)** — a flat, airy list under the dark avatar header: one-tap rows (profile, experience, notifications, collections, subscription, security & app lock, AI summary, help, data) that open bottom sheets |
 | ![Documents](screenshots/08-documents.png) | ![Profile](screenshots/09-profile.png) |
 
 ### Money features

@@ -195,6 +195,18 @@ void main() {
     }
     await stop('05-signup-form', "What's your email?");
 
+    // ── The redesigned tabs: one light canvas per tab, ink accents, flat
+    //    card-free ledgers. Anchors are the new sections' own labels, so a
+    //    shot is only taken once the rebuilt layout is on screen.
+    await go('/home');
+    await stop('06-home', 'Categories');
+
+    await go('/documents');
+    await stop('08-documents', 'Tracked');
+
+    await go('/profile');
+    await stop('09-profile', 'Manage subscription');
+
     // ── Money: the collapsible sheet index, then Credit expanded ──────────
     await go('/money');
     await stop('07-money', 'Net this month');
@@ -244,17 +256,20 @@ void main() {
     }
     await stop('35-credit-settle', 'Only settle the credit');
 
-    // ── App Lock: the passcode set-up screen (Profile → Security) ─────────
+    // ── App Lock: the passcode set-up screen (Profile → Security sheet) ───
+    //    The rebuilt Settings lists it as a "Security & App Lock" row that
+    //    opens a sheet, so the tour follows that path rather than the old
+    //    inline section.
     await go('/profile');
     await tester.scrollUntilVisible(
-      find.text('App Lock'),
+      find.text('Security & App Lock'),
       300,
       scrollable: find.byType(Scrollable).first,
     );
     for (var i = 0; i < 10; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
-    await tester.tap(find.text('App Lock'));
+    await tester.tap(find.text('Security & App Lock'));
     for (var i = 0; i < 20; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }

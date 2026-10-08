@@ -33,6 +33,9 @@ ORDER=(
   02-welcome
   04-login
   05-signup-form
+  06-home
+  08-documents
+  09-profile
   07-money
   34-money-credit
   13-records
