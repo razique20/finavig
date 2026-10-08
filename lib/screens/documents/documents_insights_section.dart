@@ -5,8 +5,11 @@ import '../../models/finance.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/bento_icon_tile.dart';
 
-/// Two insight tiles under the filter chips: the nearest upcoming document
-/// and the total upcoming renewal fees — what the list means at a glance.
+/// Two inline stats under the filter chips: the nearest upcoming document and
+/// the total upcoming renewal fees — what the list means at a glance.
+///
+/// No card here on purpose: the pair sits straight on the canvas, split by a
+/// single hairline divider, so the Documents page stays flat and linear.
 class DocumentsInsightsSection extends StatelessWidget {
   final ExpiryItem? nextDue;
   final double totalUpcomingFees;
@@ -19,41 +22,41 @@ class DocumentsInsightsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final tileBg =
-        isDark ? FinavigColors.slate.withOpacity(0.5) : Colors.white;
+    final fade = FinavigTransition.of(context);
+    final due = nextDue;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
-            child: _InsightTile(
-              theme: theme,
-              tileBg: tileBg,
+            child: _InlineStat(
               icon: Icons.hourglass_top_rounded,
+              color: FinavigColors.orange,
               label: 'Next due',
-              value: nextDue == null
+              value: due == null
                   ? '—'
-                  : '${nextDue!.displayName} · ${nextDue!.daysRemaining}d',
-              iconColor: FinavigColors.orange,
-              tint: FinavigColors.orangeTint,
-              onDark: isDark,
+                  : '${due.displayName} · ${due.daysRemaining}d',
             ),
           ),
-          const SizedBox(width: 10),
+          Container(
+            width: 1,
+            height: 34,
+            margin: const EdgeInsets.symmetric(horizontal: 14),
+            color: fade.color(
+              FinavigColors.fog,
+              Colors.white.withValues(alpha: 0.10),
+            ),
+          ),
           Expanded(
-            child: _InsightTile(
-              theme: theme,
-              tileBg: tileBg,
+            child: _InlineStat(
               icon: Icons.payments_rounded,
+              color: FinavigColors.teal,
               label: 'Upcoming fees',
-              value:
-                  totalUpcomingFees > 0 ? MoneyFormat.aed(totalUpcomingFees) : '—',
-              iconColor: FinavigColors.teal,
-              tint: FinavigColors.tealTint,
-              onDark: isDark,
+              value: totalUpcomingFees > 0
+                  ? MoneyFormat.aed(totalUpcomingFees)
+                  : '—',
             ),
           ),
         ],
@@ -62,75 +65,70 @@ class DocumentsInsightsSection extends StatelessWidget {
   }
 }
 
-class _InsightTile extends StatelessWidget {
-  final ThemeData theme;
-  final Color tileBg;
+/// One icon + label + value stat, drawn directly on the canvas.
+class _InlineStat extends StatelessWidget {
   final IconData icon;
+  final Color color;
   final String label;
   final String value;
-  final Color iconColor;
-  final Color? tint;
-  final bool onDark;
 
-  const _InsightTile({
-    required this.theme,
-    required this.tileBg,
+  const _InlineStat({
     required this.icon,
+    required this.color,
     required this.label,
     required this.value,
-    required this.iconColor,
-    required this.tint,
-    required this.onDark,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: tileBg,
-        borderRadius: BorderRadius.circular(FinavigRadius.card),
-      ),
-      child: Row(
-        children: [
-          BentoIconTile(
-            icon: icon,
-            color: iconColor,
-            tint: onDark ? tint?.withOpacity(0.16) : tint,
-            size: 36,
-            iconSize: 17,
-            radius: 11,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.55),
-                    fontWeight: FontWeight.w500,
+    final theme = Theme.of(context);
+    final fade = FinavigTransition.of(context);
+
+    return Row(
+      children: [
+        BentoIconTile(
+          icon: icon,
+          color: color,
+          size: 34,
+          iconSize: 16,
+          radius: 11,
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: fade.color(
+                    FinavigColors.textMutedLight,
+                    FinavigColors.textMuted,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.2,
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.9),
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: fade.color(
+                    FinavigColors.textPrimaryLight,
+                    FinavigColors.textPrimary,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12.5,
                 ),
-              ],
-            ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

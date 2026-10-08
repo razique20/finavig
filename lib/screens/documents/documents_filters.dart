@@ -37,7 +37,8 @@ extension DocSortX on DocSort {
   }
 }
 
-/// Inline search field used at the top of the Documents content sheet.
+/// Inline search field at the top of the Documents workspace — a soft pill
+/// on the canvas, matching the chip language of the rest of the page.
 class DocumentsSearchField extends StatelessWidget {
   final String query;
   final ValueChanged<String> onChanged;
@@ -50,16 +51,17 @@ class DocumentsSearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final fade = FinavigTransition.of(context);
+    final radius = BorderRadius.circular(24);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: TextField(
         onChanged: onChanged,
         style: TextStyle(
-          color: isDark
-              ? FinavigColors.textPrimary
-              : FinavigColors.textPrimaryLight,
+          color: fade.color(
+            FinavigColors.textPrimaryLight,
+            FinavigColors.textPrimary,
+          ),
           fontSize: 14,
           fontWeight: FontWeight.w500,
         ),
@@ -67,16 +69,20 @@ class DocumentsSearchField extends StatelessWidget {
           isDense: true,
           hintText: 'Search documents…',
           hintStyle: TextStyle(
-            color: isDark
-                ? FinavigColors.textMuted
-                : FinavigColors.textMutedLight,
+            color: fade.color(
+              FinavigColors.textMutedLight,
+              FinavigColors.textMuted,
+            ),
             fontSize: 14,
             fontWeight: FontWeight.w400,
           ),
           prefixIcon: Icon(
             Icons.search_rounded,
             size: 20,
-            color: isDark ? Colors.white : FinavigColors.textSecondaryLight,
+            color: fade.color(
+              FinavigColors.textSecondaryLight,
+              FinavigColors.textSecondary,
+            ),
           ),
           suffixIcon: query.isEmpty
               ? null
@@ -84,18 +90,33 @@ class DocumentsSearchField extends StatelessWidget {
                   icon: Icon(
                     Icons.close_rounded,
                     size: 18,
-                    color: isDark ? Colors.white : FinavigColors.textSecondaryLight,
+                    color: fade.color(
+                      FinavigColors.textSecondaryLight,
+                      FinavigColors.textSecondary,
+                    ),
                   ),
                   onPressed: () => onChanged(''),
                 ),
           filled: true,
-          fillColor: isDark
-              ? FinavigColors.slate.withOpacity(0.55)
-              : FinavigColors.cloud,
-          contentPadding: EdgeInsets.zero,
+          fillColor: fade.color(
+            FinavigColors.cloud,
+            FinavigColors.slate.withValues(alpha: 0.55),
+          ),
+          contentPadding: const EdgeInsets.symmetric(vertical: 13),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: radius,
             borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: radius,
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: radius,
+            borderSide: BorderSide(
+              color: fade.color(FinavigColors.ink, Colors.white),
+              width: 1.2,
+            ),
           ),
         ),
       ),
@@ -128,28 +149,32 @@ class DocumentsStatusChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final fade = FinavigTransition.of(context);
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          _chip(theme, 'All', DocFilter.all, allCount),
-          _chip(theme, 'Critical', DocFilter.critical, criticalCount),
-          _chip(theme, '≤30 days', DocFilter.upcoming, upcomingCount),
-          _chip(theme, 'Later', DocFilter.later, laterCount),
-          _chip(theme, 'Expired', DocFilter.expired, expiredCount),
+          _chip(theme, fade, 'All', DocFilter.all, allCount),
+          _chip(theme, fade, 'Critical', DocFilter.critical, criticalCount),
+          _chip(theme, fade, '≤30 days', DocFilter.upcoming, upcomingCount),
+          _chip(theme, fade, 'Later', DocFilter.later, laterCount),
+          _chip(theme, fade, 'Expired', DocFilter.expired, expiredCount),
         ],
       ),
     );
   }
 
+  /// Pill chip: solid ink (light) / solid white (dark) while selected, and a
+  /// hairline-outlined ghost otherwise — the same chip language as the
+  /// header pills, so a selected filter always reads as the strongest mark.
   Widget _chip(
     ThemeData theme,
+    FinavigTransition fade,
     String label,
     DocFilter filter,
     int count,
   ) {
-    final isDark = theme.brightness == Brightness.dark;
     final isSelected = selected == filter;
     return Padding(
       padding: const EdgeInsets.only(right: 8),
@@ -158,13 +183,12 @@ class DocumentsStatusChips extends StatelessWidget {
           '$label ($count)',
           style: TextStyle(
             color: isSelected
-                ? (isDark
-                    ? FinavigColors.cyanSecondary
-                    : FinavigColors.navyPrimary)
-                : (isDark
-                    ? FinavigColors.textSecondary
-                    : FinavigColors.textPrimaryLight),
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                ? fade.color(Colors.white, FinavigColors.ink)
+                : fade.color(
+                    FinavigColors.textSecondaryLight,
+                    FinavigColors.textSecondary,
+                  ),
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
             fontSize: 12,
           ),
         ),
@@ -172,18 +196,17 @@ class DocumentsStatusChips extends StatelessWidget {
         onSelected: (_) => onSelected(filter),
         showCheckmark: false,
         labelPadding: const EdgeInsets.symmetric(horizontal: 4),
-        backgroundColor: isDark ? FinavigColors.slate : FinavigColors.cloud,
-        selectedColor: isDark
-            ? FinavigColors.navyPrimary.withOpacity(0.4)
-            : FinavigColors.navyPrimary.withOpacity(0.12),
-        side: BorderSide(
-          color: isSelected
-              ? (isDark
-                  ? FinavigColors.cyanSecondary
-                  : FinavigColors.navyPrimary)
-              : (isDark
-                  ? FinavigColors.slateLight.withOpacity(0.3)
-                  : FinavigColors.fog),
+        backgroundColor: Colors.transparent,
+        selectedColor: fade.color(FinavigColors.ink, Colors.white),
+        shape: StadiumBorder(
+          side: BorderSide(
+            color: isSelected
+                ? Colors.transparent
+                : fade.color(
+                    FinavigColors.fog,
+                    Colors.white.withValues(alpha: 0.14),
+                  ),
+          ),
         ),
       ),
     );
@@ -208,6 +231,11 @@ class DocumentsActiveFiltersRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final fade = FinavigTransition.of(context);
+    final accent = fade.color(
+      FinavigColors.textPrimaryLight,
+      FinavigColors.textPrimary,
+    );
     final parts = <String>[
       if (query.isNotEmpty) '"${query.trim()}"',
       if (typeFilter != null) typeFilter!.displayName,
@@ -228,14 +256,20 @@ class DocumentsActiveFiltersRow extends StatelessWidget {
           Icon(
             Icons.filter_alt_rounded,
             size: 14,
-            color: theme.colorScheme.primary,
+            color: fade.color(
+              FinavigColors.textMutedLight,
+              FinavigColors.textMuted,
+            ),
           ),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
               'Filtered: ${parts.where((p) => p.isNotEmpty).join(' · ')}',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                color: fade.color(
+                  FinavigColors.textSecondaryLight,
+                  FinavigColors.textSecondary,
+                ),
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -246,8 +280,8 @@ class DocumentsActiveFiltersRow extends StatelessWidget {
             child: Text(
               'Clear',
               style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.w600,
+                color: accent,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
@@ -364,14 +398,14 @@ Future<DocSort?> showDocumentsSortSheet(BuildContext context, DocSort current) {
                 s.icon,
                 color: current == s
                     ? theme.colorScheme.primary
-                    : FinavigColors.adaptiveIcon(context, theme.colorScheme.outline),
+                    : FinavigColors.adaptiveIcon(
+                        context,
+                        theme.colorScheme.outline,
+                      ),
               ),
               title: Text(s.label),
               trailing: current == s
-                  ? Icon(
-                      Icons.check_rounded,
-                      color: theme.colorScheme.primary,
-                    )
+                  ? Icon(Icons.check_rounded, color: theme.colorScheme.primary)
                   : null,
               onTap: () => Navigator.pop(sheetContext, s),
             ),

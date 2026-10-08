@@ -3,9 +3,32 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:finavig/screens/documents/document_card.dart';
 import 'package:finavig/screens/documents_screen.dart';
 import 'package:finavig/services/document_scanner_service.dart';
 import 'package:finavig/theme/app_theme.dart';
+
+/// Seeds two locally cached documents (one soon, one far out) so the list has
+/// rows to lay out. Mirrors the JSON shape the scanner service persists.
+void seedDocuments(DateTime soon, DateTime far) {
+  String docJson(String id, DateTime d) {
+    final y = d.year;
+    final m = d.month.toString().padLeft(2, '0');
+    final day = d.day.toString().padLeft(2, '0');
+    return '{"collectionId":"personal","id":"$id",'
+        '"displayName":"Doc $id","docType":"drivingLicence",'
+        '"expiryDate":"$y-$m-$day",'
+        '"daysRemaining":${d.difference(DateTime.now()).inDays},'
+        '"isActive":true,"urgencyPriority":0,"expiresAt":"${d.toIso8601String()}"}';
+  }
+
+  SharedPreferences.setMockInitialValues({
+    'local_documents_v1': jsonEncode([
+      jsonDecode(docJson('a', soon)),
+      jsonDecode(docJson('b', far)),
+    ]),
+  });
+}
 
 void main() {
   setUp(() {
@@ -24,7 +47,9 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
   }
 
-  testWidgets('renders hero header and rounded content sheet', (tester) async {
+  testWidgets('renders the header and the flat, card-free workspace', (
+    tester,
+  ) async {
     await pumpDocuments(tester);
 
     // Hero header content — compact: title, one status line, no greeting.
@@ -43,30 +68,89 @@ void main() {
     expect(find.text('Next due'), findsOneWidget);
     expect(find.text('Upcoming fees'), findsOneWidget);
 
+    // Section caption above the ledger of rows.
+    expect(find.text('Tracked'), findsOneWidget);
+
     // The old layout's AppBar title is gone — the hero carries it now.
     expect(find.byType(AppBar), findsNothing);
     expect(find.byType(FloatingActionButton), findsNothing);
   });
 
-  testWidgets('status chips filter the document list', (tester) async {
-    final soon = DateTime.now().add(const Duration(days: 3));
-    final far = DateTime.now().add(const Duration(days: 200));
-    String docJson(String id, DateTime d) {
-      final y = d.year;
-      final m = d.month.toString().padLeft(2, '0');
-      final day = d.day.toString().padLeft(2, '0');
-      return '{"collectionId":"personal","id":"$id",'
-          '"displayName":"Doc $id","docType":"drivingLicence",'
-          '"expiryDate":"$y-$m-$day","daysRemaining":${d.difference(DateTime.now()).inDays},'
-          '"isActive":true,"urgencyPriority":0,"expiresAt":"${d.toIso8601String()}"}';
+  testWidgets('the workspace is a flat canvas with divided rows, not cards', (
+    tester,
+  ) async {
+    seedDocuments(
+      DateTime.now().add(const Duration(days: 3)),
+      DateTime.now().add(const Duration(days: 200)),
+    );
+    await pumpDocuments(tester);
+
+    // One canvas — no navy band and no rounded content sheet behind the rows.
+    final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
+    expect(scaffold.backgroundColor, FinavigColors.snowWhite);
+    expect(find.byType(Card), findsNothing);
+
+    final rows = find.byType(DocumentCard);
+    expect(rows, findsNWidgets(2));
+
+    // A row is drawn straight on the canvas: nothing inside it paints a
+    // filled card surface (the old layout's white rounded rectangle).
+    for (final material in tester.widgetList<Material>(
+      find.descendant(of: rows, matching: find.byType(Material)),
+    )) {
+      expect(
+        material.color == null || material.color == Colors.transparent,
+        isTrue,
+        reason: 'a document row must stay flat, not paint a card surface',
+      );
     }
 
-    SharedPreferences.setMockInitialValues({
-      'local_documents_v1': jsonEncode([
-        jsonDecode(docJson('a', soon)),
-        jsonDecode(docJson('b', far)),
-      ]),
-    });
+    // Rows are separated by hairlines instead of floating 10px apart.
+    expect(find.byType(Divider), findsOneWidget);
+  });
+
+  testWidgets('rows wrap instead of overflowing on a narrow phone', (
+    tester,
+  ) async {
+    // 320dp wide — narrower than any phone the app claims to support.
+    tester.view.physicalSize = const Size(960, 2400);
+    tester.view.devicePixelRatio = 3.0;
+    addTearDown(tester.view.reset);
+
+    seedDocuments(
+      DateTime.now().add(const Duration(days: 3)),
+      // Already expired: exercises the overdue countdown + warning line.
+      DateTime.now().subtract(const Duration(days: 12)),
+    );
+    await pumpDocuments(tester);
+
+    expect(find.byType(DocumentCard), findsNWidgets(2));
+    expect(find.byType(Divider), findsOneWidget);
+    expect(
+      tester.takeException(),
+      isNull,
+      reason: 'a dense row must wrap, not overflow',
+    );
+  });
+
+  testWidgets('the empty state is flat too, with the first-scan CTA', (
+    tester,
+  ) async {
+    await pumpDocuments(tester);
+
+    expect(find.text('Nothing tracked yet'), findsOneWidget);
+    expect(find.text('Add first document'), findsOneWidget);
+    expect(find.text('Try a demo document'), findsOneWidget);
+    expect(find.byType(DocumentCard), findsNothing);
+    expect(find.byType(Card), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('status chips filter the document list', (tester) async {
+    seedDocuments(
+      DateTime.now().add(const Duration(days: 3)),
+      DateTime.now().add(const Duration(days: 200)),
+    );
 
     await pumpDocuments(tester);
 

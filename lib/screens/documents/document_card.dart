@@ -5,11 +5,14 @@ import '../../services/collection_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/indicators/department_logo.dart';
 
-/// Document card — urgency-tinted left edge, then a scannable hierarchy of
-/// the main details: document identity, headline days-remaining with status,
-/// exact expiry date, renewal fee and authority, slim progress bar and an
-/// urgent-only warning. Actions open via long-press or the small ⋯ button.
-/// Extracted from `documents_screen.dart` so the list rebuilds per card.
+/// One document in the list — a flat row on the canvas, not a card.
+///
+/// The list reads as a divided ledger: the logo chip, then the document
+/// identity, a muted subtitle (type + expiry date), the urgency line
+/// (countdown + status pill + renewal facts), a slim urgency bar and an
+/// urgent-only warning. Rows are separated by hairlines in
+/// [DocumentsScreen]; there is deliberately no white rectangle around each
+/// one. Actions open via long-press or the small ⋯ button.
 class DocumentCard extends StatelessWidget {
   final ExpiryItem item;
   final VoidCallback onTap;
@@ -22,25 +25,23 @@ class DocumentCard extends StatelessWidget {
     required this.onAction,
   });
 
-  Color _accentColor(bool isDark) {
+  /// Urgency accent for a row. Expired documents keep the danger accent even
+  /// when `daysRemaining` reaches other bands. Light/dark variants go through
+  /// [FinavigTransition] so the colour cross-fades with the theme instead of
+  /// snapping at its halfway point.
+  Color _accent(FinavigTransition fade) {
     final days = item.daysRemaining;
-    if (isDark) {
-      if (days <= 7) return FinavigColors.danger;
-      if (days <= 30) return FinavigColors.warning;
-      if (days <= 60) return FinavigColors.caution;
-      return FinavigColors.safe;
-    } else {
-      if (days <= 7) return const Color(0xFFDC2626); // Dark red
-      if (days <= 30) return const Color(0xFFD97706); // Dark amber
-      if (days <= 60) return const Color(0xFFB45309); // Dark ochre
-      return const Color(0xFF059669); // Dark emerald
+    if (days < 0 || days <= 7) {
+      return fade.color(const Color(0xFFDC2626), FinavigColors.danger);
     }
+    if (days <= 30) {
+      return fade.color(const Color(0xFFD97706), FinavigColors.warning);
+    }
+    if (days <= 60) {
+      return fade.color(const Color(0xFFB45309), FinavigColors.caution);
+    }
+    return fade.color(const Color(0xFF059669), FinavigColors.safe);
   }
-
-  /// Accent used for the left edge tint. Expired documents keep the danger
-  /// accent even when `daysRemaining` reaches other bands.
-  Color _edgeAccent(bool isDark) =>
-      item.daysRemaining < 0 ? FinavigColors.danger : _accentColor(isDark);
 
   String get _statusLabel {
     final days = item.daysRemaining;
@@ -51,7 +52,7 @@ class DocumentCard extends StatelessWidget {
     return 'On track';
   }
 
-  /// Headline countdown shown large on the card.
+  /// Headline countdown shown on the row.
   String get _daysLabel => item.daysRemaining < 0
       ? '${-item.daysRemaining}d overdue'
       : '${item.daysRemaining}d left';
@@ -68,269 +69,227 @@ class DocumentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final accent = _edgeAccent(isDark);
+    final fade = FinavigTransition.of(context);
+    final accent = _accent(fade);
+    final currency = DocumentCollectionService.instance.activeCurrency;
 
-    return Material(
-      color: isDark
-          ? theme.colorScheme.surfaceContainerHighest.withOpacity(0.35)
-          : Colors.white,
-      elevation: isDark ? 0 : 1,
-      shadowColor: Colors.black.withOpacity(0.06),
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onTap,
-        onLongPress: onAction,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: isDark
-                  ? FinavigColors.slateLight.withOpacity(0.3)
-                  : FinavigColors.fog.withOpacity(0.5),
-            ),
-          ),
-          // IntrinsicHeight: the colored edge must stretch to the card's
-          // height, but the card sits in an unbounded scroll context where
-          // CrossAxisAlignment.stretch alone would force infinite height.
-          child: IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Colored urgency edge.
-                Container(width: 4, color: accent.withOpacity(0.8)),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(14),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Header: identity + menu.
-                        Row(
-                          children: [
-                            DepartmentLogo(item: item, size: 40),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    item.displayName,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 14,
-                                      color: isDark
-                                          ? FinavigColors.textPrimary
-                                          : FinavigColors.textPrimaryLight,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    item.docType.displayName,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: isDark
-                                          ? FinavigColors.textMuted
-                                          : FinavigColors.textSecondaryLight,
-                                    ),
-                                  ),
-                                ],
-                              ),
+    return InkWell(
+      onTap: onTap,
+      onLongPress: onAction,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            DepartmentLogo(item: item, size: 42),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Identity.
+                  Text(
+                    item.displayName,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14.5,
+                      color: fade.color(
+                        FinavigColors.textPrimaryLight,
+                        FinavigColors.textPrimary,
+                      ),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 3),
+                  // Type + exact expiry date.
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          '${item.docType.displayName} · Expires '
+                          '${ExpiryItem.formatDate(item.expiresAt)}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            fontSize: 12,
+                            color: fade.color(
+                              FinavigColors.textMutedLight,
+                              FinavigColors.textMuted,
                             ),
-                            // Compact inline actions trigger.
-                            SizedBox(
-                              width: 28,
-                              height: 28,
-                              child: IconButton(
-                                onPressed: onAction,
-                                tooltip: 'Actions',
-                                padding: EdgeInsets.zero,
-                                iconSize: 18,
-                                icon: Icon(
-                                  Icons.more_horiz_rounded,
-                                  color: isDark
-                                      ? FinavigColors.cyanSecondary
-                                      : FinavigColors.navyPrimary,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        // Headline: countdown + status on the left, exact
-                        // expiry date on the right.
-                        const SizedBox(height: 10),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              _daysLabel,
-                              style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 16,
-                                color: accent,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: accent.withOpacity(
-                                  isDark ? 0.15 : 0.10,
-                                ),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                _statusLabel,
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: accent,
-                                ),
-                              ),
-                            ),
-                            const Spacer(),
-                            Flexible(
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.calendar_today_rounded,
-                                    size: 12,
-                                    color: isDark
-                                        ? Colors.white
-                                        : FinavigColors.textSecondaryLight,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Flexible(
-                                    child: Text(
-                                      'Expires ${ExpiryItem.formatDate(item.expiresAt)}',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w500,
-                                        color: isDark
-                                            ? FinavigColors.textSecondary
-                                            : FinavigColors.textPrimaryLight,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        // Main facts: renewal fee first (the number people
-                        // plan around), then authority and assignment.
-                        const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 12,
-                          runSpacing: 4,
-                          children: [
-                            if (item.renewalFee != null &&
-                                item.renewalFee! > 0)
-                              _detail(
-                                theme,
-                                Icons.payments_outlined,
-                                'Fee ${DocumentCollectionService.instance.activeCurrency} ${item.renewalFee!.toStringAsFixed(0)}',
-                                bold: true,
-                              ),
-                            _detail(
-                              theme,
-                              Icons.account_balance_rounded,
-                              item.docType.renewalAuthority,
-                            ),
-                            if (item.location != null)
-                              _detail(
-                                theme,
-                                Icons.location_on_outlined,
-                                item.location!,
-                              ),
-                            if (item.assignedTo != null)
-                              _detail(
-                                theme,
-                                Icons.person_outline_rounded,
-                                'Owner: ${item.assignedTo}',
-                              ),
-                          ],
-                        ),
-                        // Slim progress bar — urgency at a glance.
-                        const SizedBox(height: 10),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: _timeProgress,
-                            minHeight: 4,
-                            backgroundColor: isDark
-                                ? theme.colorScheme.surfaceContainerHighest
-                                : FinavigColors.mist,
-                            valueColor: AlwaysStoppedAnimation<Color>(accent),
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        // Renewal warning — expiry-aware fallback keeps this
-                        // meaningful even when no warning was stored. Shown
-                        // only when it matters (≤30 days).
-                        if (item.daysRemaining <= 30) ...[
-                          const SizedBox(height: 8),
-                          Text(
-                            item.effectiveRenewalWarning,
-                            style: TextStyle(
-                              color: accent,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 9),
+                  // Urgency line: countdown, status pill, then the renewal
+                  // facts — wraps instead of clipping on narrow screens.
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 10,
+                    runSpacing: 6,
+                    children: [
+                      Text(
+                        _daysLabel,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                          color: accent,
+                        ),
+                      ),
+                      _StatusPill(
+                        label: _statusLabel,
+                        color: accent,
+                        fade: fade,
+                      ),
+                      if ((item.renewalFee ?? 0) > 0)
+                        _meta(
+                          fade,
+                          Icons.payments_outlined,
+                          'Fee $currency ${item.renewalFee!.toStringAsFixed(0)}',
+                          strong: true,
+                        ),
+                      _meta(
+                        fade,
+                        Icons.account_balance_rounded,
+                        item.docType.renewalAuthority,
+                      ),
+                      if (item.location != null)
+                        _meta(fade, Icons.location_on_outlined, item.location!),
+                      if (item.assignedTo != null)
+                        _meta(
+                          fade,
+                          Icons.person_outline_rounded,
+                          'Owner: ${item.assignedTo}',
+                        ),
+                    ],
+                  ),
+                  // Slim urgency bar — status at a glance.
+                  const SizedBox(height: 10),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(3),
+                    child: LinearProgressIndicator(
+                      value: _timeProgress,
+                      minHeight: 3,
+                      backgroundColor: fade.color(
+                        FinavigColors.mist,
+                        Colors.white.withValues(alpha: 0.08),
+                      ),
+                      valueColor: AlwaysStoppedAnimation<Color>(accent),
                     ),
                   ),
-                ),
-              ],
+                  // Renewal warning — expiry-aware fallback keeps this
+                  // meaningful even when no warning was stored. Shown only
+                  // when it matters (≤30 days).
+                  if (item.daysRemaining <= 30) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      item.effectiveRenewalWarning,
+                      style: TextStyle(
+                        color: accent,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
+              ),
             ),
-          ),
+            // Compact inline actions trigger.
+            SizedBox(
+              width: 28,
+              height: 28,
+              child: IconButton(
+                onPressed: onAction,
+                tooltip: 'Actions',
+                padding: EdgeInsets.zero,
+                iconSize: 18,
+                icon: Icon(
+                  Icons.more_horiz_rounded,
+                  color: fade.color(
+                    FinavigColors.textMutedLight,
+                    FinavigColors.textSecondary,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _detail(
-    ThemeData theme,
+  Widget _meta(
+    FinavigTransition fade,
     IconData icon,
     String text, {
-    bool bold = false,
+    bool strong = false,
   }) {
-    final isDark = theme.brightness == Brightness.dark;
-    final color = bold
-        ? (isDark ? FinavigColors.textPrimary : FinavigColors.textPrimaryLight)
-        : (isDark
-            ? FinavigColors.textSecondary
-            : FinavigColors.textPrimaryLight);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(
           icon,
-          size: 13,
-          color: isDark ? Colors.white : FinavigColors.textSecondaryLight,
+          size: 12,
+          color: fade.color(
+            FinavigColors.textMutedLight,
+            FinavigColors.textMuted,
+          ),
         ),
         const SizedBox(width: 4),
         Text(
           text,
           style: TextStyle(
-            color: color,
-            fontSize: 12,
-            fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
+            color: strong
+                ? fade.color(
+                    FinavigColors.textSecondaryLight,
+                    FinavigColors.textPrimary,
+                  )
+                : fade.color(
+                    FinavigColors.textMutedLight,
+                    FinavigColors.textMuted,
+                  ),
+            fontSize: 11.5,
+            fontWeight: strong ? FontWeight.w600 : FontWeight.w400,
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Tiny tinted pill carrying a document's status word ("Due now", "On track").
+class _StatusPill extends StatelessWidget {
+  final String label;
+  final Color color;
+  final FinavigTransition fade;
+
+  const _StatusPill({
+    required this.label,
+    required this.color,
+    required this.fade,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: fade.value(0.10, 0.18)),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 10.5,
+          fontWeight: FontWeight.w700,
+          color: color,
+        ),
+      ),
     );
   }
 }

@@ -22,11 +22,13 @@ import 'documents/documents_insights_section.dart';
 
 /// Documents tab (Tier 1): the full expiry-tracking workspace.
 ///
-/// Same anatomy as the redesigned Home tab: a navy hero header carrying the
-/// greeting, a live count, and the primary actions; below it a rounded
-/// content sheet with the search field, filter chips, compact insight tiles,
-/// and the document cards. The heavy lifting lives in `lib/screens/documents/`
-/// modules so each section rebuilds independently.
+/// One flat, airy canvas (no hero band, no rounded content sheet): the header
+/// carries the live count and the primary actions, then the search field,
+/// filter chips, inline insight stats and the document ledger follow straight
+/// down the page. Each document is a row divided by hairlines rather than a
+/// white card, so this tab reads as a linear workspace instead of a stack of
+/// panels. The heavy lifting lives in `lib/screens/documents/` modules so each
+/// section rebuilds independently.
 class DocumentsScreen extends StatefulWidget {
   const DocumentsScreen({super.key});
 
@@ -156,8 +158,8 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       case DocSort.name:
         list.sort(
           (a, b) => a.displayName.toLowerCase().compareTo(
-                b.displayName.toLowerCase(),
-              ),
+            b.displayName.toLowerCase(),
+          ),
         );
       case DocSort.fee:
         list.sort((a, b) {
@@ -204,13 +206,16 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final urgency = UrgencyEngine().compute(_items);
-    final isDark = theme.brightness == Brightness.dark;
     final filtered = _filtered;
 
+    // Light canvas (matching the redesigned Home, Money and Settings tabs) —
+    // the whole tab is drawn directly on it, with no rounded content sheet.
+    final canvas = FinavigTransition.of(
+      context,
+    ).color(FinavigColors.snowWhite, FinavigColors.obsidian);
+
     return Scaffold(
-      // Ink backdrop behind the hero; the content sheet covers the rest.
-      // Same backdrop colors as the redesigned Home tab.
-      backgroundColor: isDark ? FinavigColors.obsidian : FinavigColors.ink,
+      backgroundColor: canvas,
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(
@@ -232,80 +237,72 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                 ),
               ),
               SliverToBoxAdapter(
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surface,
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(28),
-                    ),
-                  ),
-                  child: _loading
-                      ? DocumentsSkeletonView()
-                      : Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 16),
-                            // Inline search field, styled like the tiles.
-                            DocumentsSearchField(
+                child: _loading
+                    ? const SizedBox(
+                        height: 420,
+                        child: DocumentsSkeletonView(),
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 14),
+                          // Inline search pill, matching the chip language.
+                          DocumentsSearchField(
+                            query: _query,
+                            onChanged: (v) => setState(() => _query = v),
+                          ),
+                          const SizedBox(height: 12),
+                          // Status filter chips.
+                          DocumentsStatusChips(
+                            selected: _filter,
+                            allCount: _items
+                                .where((i) => i.isActive || i.isExpired)
+                                .length,
+                            criticalCount: urgency.criticalCount,
+                            upcomingCount: urgency.highCount,
+                            laterCount: urgency.mediumCount + urgency.lowCount,
+                            expiredCount: _items
+                                .where((i) => !i.isActive && i.isExpired)
+                                .length,
+                            onSelected: (f) => setState(() => _filter = f),
+                          ),
+                          // Active-filter summary: visible only when it
+                          // matters, so the sheet never shows a phantom gap.
+                          if (_hasActiveFilters) ...[
+                            const SizedBox(height: 8),
+                            DocumentsActiveFiltersRow(
                               query: _query,
-                              onChanged: (v) => setState(() => _query = v),
-                            ),
-                            const SizedBox(height: 12),
-                            // Status filter chips.
-                            DocumentsStatusChips(
-                              selected: _filter,
-                              allCount: _items
-                                  .where((i) => i.isActive || i.isExpired)
-                                  .length,
-                              criticalCount: urgency.criticalCount,
-                              upcomingCount: urgency.highCount,
-                              laterCount:
-                                  urgency.mediumCount + urgency.lowCount,
-                              expiredCount: _items
-                                  .where((i) => !i.isActive && i.isExpired)
-                                  .length,
-                              onSelected: (f) => setState(() => _filter = f),
-                            ),
-                            // Active-filter summary: visible only when it
-                            // matters, so the sheet never shows a phantom gap.
-                            if (_hasActiveFilters) ...[
-                              const SizedBox(height: 8),
-                              DocumentsActiveFiltersRow(
-                                query: _query,
-                                typeFilter: _typeFilter,
-                                filter: _filter,
-                                onClear: _clearFilters,
-                              ),
-                            ],
-                            const SizedBox(height: 16),
-                            // Insight tiles: what the list means at a glance.
-                            DocumentsInsightsSection(
-                              nextDue: _nextDue,
-                              totalUpcomingFees: _totalUpcomingFees,
-                            ),
-                            const SizedBox(height: 16),
-                            // Document list.
-                            _buildDocumentList(theme, filtered),
-                            // Keep the last card scrollable clear of the
-                            // floating nav pill (height + margins ≈ 80).
-                            SizedBox(
-                              height: 8 +
-                                  MediaQuery.of(context).padding.bottom +
-                                  80,
+                              typeFilter: _typeFilter,
+                              filter: _filter,
+                              onClear: _clearFilters,
                             ),
                           ],
-                        ),
-                ),
+                          const SizedBox(height: 16),
+                          // Insight stats: what the list means at a glance.
+                          DocumentsInsightsSection(
+                            nextDue: _nextDue,
+                            totalUpcomingFees: _totalUpcomingFees,
+                          ),
+                          const SizedBox(height: 22),
+                          // Document ledger — divided rows, no cards.
+                          _buildListLabel(theme, filtered),
+                          _buildDocumentList(theme, filtered),
+                          // Keep the last card scrollable clear of the
+                          // floating nav pill (height + margins ≈ 80).
+                          SizedBox(
+                            height:
+                                8 + MediaQuery.of(context).padding.bottom + 80,
+                          ),
+                        ],
+                      ),
               ),
-              // White filler: extends the sheet across the rest of the
-              // viewport when content is short, and into overscroll —
-              // the navy backdrop never peeks out below the content,
-              // behind the floating nav pill.
+              // Canvas filler: extends the background across the rest of the
+              // viewport when content is short, and into overscroll — nothing
+              // else ever peeks out behind the floating nav pill.
               SliverFillRemaining(
                 hasScrollBody: false,
                 fillOverscroll: true,
-                child: ColoredBox(color: theme.colorScheme.surface),
+                child: ColoredBox(color: canvas),
               ),
             ],
           ),
@@ -315,8 +312,44 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   }
 
   // ------------------------------------------------------------------
-  // Document list — compact cards, tinted left accent by urgency
+  // Document list — a hairline-divided ledger, deliberately card-free
   // ------------------------------------------------------------------
+
+  /// Small caption above the list: what is being shown, and how much of it
+  /// once a filter narrows the view.
+  Widget _buildListLabel(ThemeData theme, List<ExpiryItem> filtered) {
+    final fade = FinavigTransition.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 2),
+      child: Row(
+        children: [
+          Text(
+            'Tracked',
+            style: theme.textTheme.labelSmall?.copyWith(
+              letterSpacing: 0.8,
+              fontWeight: FontWeight.w700,
+              color: fade.color(
+                FinavigColors.textMutedLight,
+                FinavigColors.textMuted,
+              ),
+            ),
+          ),
+          const Spacer(),
+          if (_hasActiveFilters)
+            Text(
+              '${filtered.length} shown',
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: fade.color(
+                  FinavigColors.textMutedLight,
+                  FinavigColors.textMuted,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildDocumentList(ThemeData theme, List<ExpiryItem> filtered) {
     if (filtered.isEmpty) {
@@ -326,41 +359,43 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       );
     }
 
+    final dividerColor = FinavigTransition.of(
+      context,
+    ).color(FinavigColors.fog, Colors.white.withValues(alpha: 0.08));
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         children: [
-          for (final item in filtered)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: DocumentCard(
-                item: item,
-                onTap: () async {
-                  await context.push('/document/${item.id}');
-                  await _loadData();
-                },
-                onAction: () async {
-                  await showDocumentActionSheet(
-                    context,
-                    item,
-                    _loadData,
-                  );
-                },
-              ),
+          for (final entry in filtered.asMap().entries) ...[
+            if (entry.key > 0)
+              Divider(height: 1, thickness: 1, color: dividerColor),
+            DocumentCard(
+              item: entry.value,
+              onTap: () async {
+                await context.push('/document/${entry.value.id}');
+                await _loadData();
+              },
+              onAction: () async {
+                await showDocumentActionSheet(context, entry.value, _loadData);
+              },
             ),
+          ],
         ],
       ),
     );
   }
 
   Widget _buildEmptyState(ThemeData theme) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-      ),
+    final fade = FinavigTransition.of(context);
+    final muted = fade.color(
+      FinavigColors.textMutedLight,
+      FinavigColors.textMuted,
+    );
+    return Padding(
+      // Flat on the canvas — no container, so the empty state keeps the
+      // card-free look of the rest of the tab.
+      padding: const EdgeInsets.symmetric(vertical: 30),
       child: Column(
         children: [
           EmptyStateIllustration(
@@ -373,7 +408,11 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
           Text(
             _hasActiveFilters ? 'No documents match' : 'Nothing tracked yet',
             style: theme.textTheme.titleMedium?.copyWith(
-              color: theme.colorScheme.outline,
+              color: fade.color(
+                FinavigColors.textPrimaryLight,
+                FinavigColors.textPrimary,
+              ),
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 6),
@@ -381,19 +420,17 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
             _hasActiveFilters
                 ? 'Try a different filter or clear the search.'
                 : 'Scan a trade licence, visa or Ejari to start tracking its expiry.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.outline.withOpacity(0.7),
-            ),
+            style: theme.textTheme.bodyMedium?.copyWith(color: muted),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           if (!_hasActiveFilters) ...[
             FilledButton.icon(
               onPressed: _openScanner,
               icon: const Icon(Icons.add_rounded, size: 18),
               label: const Text('Add first document'),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             TextButton.icon(
               onPressed: _addDemoDocument,
               icon: const Icon(Icons.auto_awesome_rounded, size: 16),
@@ -441,8 +478,8 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       _typeFilter = value == '__all__'
           ? null
           : DocumentTypeRegistry.instance.typesForPicker
-              .where((t) => t.key == value)
-              .firstOrNull;
+                .where((t) => t.key == value)
+                .firstOrNull;
     });
   }
 
