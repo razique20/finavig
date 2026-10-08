@@ -6,6 +6,7 @@ import 'package:finavig/screens/home_screen.dart';
 import 'package:finavig/screens/login_screen.dart';
 import 'package:finavig/screens/welcome_screen.dart';
 import 'package:finavig/theme/app_theme.dart';
+import 'package:finavig/widgets/finavig_wordmark.dart';
 
 /// One brand ink, four surfaces.
 ///
@@ -29,13 +30,21 @@ void main() {
     expect(FinavigColors.ink, const Color(0xFF0F172A));
   });
 
-  testWidgets('Welcome headline, CTA and reply bubble all use the brand ink',
-      (tester) async {
+  testWidgets('Welcome headline, CTA and reply bubble all use the brand ink', (
+    tester,
+  ) async {
     await pumpScreen(tester, const WelcomeScreen());
 
-    final headline = tester.widget<Text>(find.text('Finavig'));
-    expect(headline.style?.color, FinavigColors.ink,
-        reason: 'Welcome headline must be the Home hero navy');
+    // The wordmark sets a dotless "i" (the blue dot is drawn on top of it),
+    // so the headline text is "Fınavig" rather than "Finavig".
+    final headline = tester.widget<Text>(
+      find.text(FinavigWordmark.dotlessText),
+    );
+    expect(
+      headline.style?.color,
+      FinavigColors.ink,
+      reason: 'Welcome headline must be the Home hero navy',
+    );
 
     final cta = tester.widget<ElevatedButton>(
       find.widgetWithText(ElevatedButton, 'Continue to Login'),
@@ -48,10 +57,12 @@ void main() {
 
     // The outgoing reply bubble is the other ink plate on this screen.
     expect(
-      find.byWidgetPredicate((w) =>
-          w is Container &&
-          w.decoration is BoxDecoration &&
-          (w.decoration! as BoxDecoration).color == FinavigColors.ink),
+      find.byWidgetPredicate(
+        (w) =>
+            w is Container &&
+            w.decoration is BoxDecoration &&
+            (w.decoration! as BoxDecoration).color == FinavigColors.ink,
+      ),
       findsOneWidget,
       reason: 'Welcome reply bubble must be the Home hero navy',
     );
@@ -76,10 +87,12 @@ void main() {
     // The top balance card is Home's "hero" plate — the same ink as the
     // Money tab's hero band.
     expect(
-      find.byWidgetPredicate((w) =>
-          w is Container &&
-          w.decoration is BoxDecoration &&
-          (w.decoration! as BoxDecoration).color == FinavigColors.ink),
+      find.byWidgetPredicate(
+        (w) =>
+            w is Container &&
+            w.decoration is BoxDecoration &&
+            (w.decoration! as BoxDecoration).color == FinavigColors.ink,
+      ),
       findsOneWidget,
       reason: 'Home top card must be the shared brand ink',
     );

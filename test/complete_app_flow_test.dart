@@ -34,6 +34,7 @@ import 'package:finavig/screens/money_screen.dart';
 import 'package:finavig/screens/profile_screen.dart';
 import 'package:finavig/screens/records_screen.dart';
 import 'package:finavig/screens/welcome_screen.dart';
+import 'package:finavig/widgets/finavig_wordmark.dart';
 import 'package:finavig/services/demo_document_service.dart';
 import 'package:finavig/services/document_scanner_service.dart';
 import 'package:finavig/services/finance_service.dart';
@@ -343,7 +344,9 @@ void main() {
 
     testWidgets('WelcomeScreen shows brand and CTA', (tester) async {
       await pumpScreen(tester, const WelcomeScreen());
-      expect(find.text('Finavig'), findsOneWidget);
+      // Dotless "i": the brand-blue dot is drawn over the gap.
+      expect(find.text(FinavigWordmark.dotlessText), findsOneWidget);
+      expect(find.byKey(FinavigWordmark.dotKey), findsOneWidget);
       expect(
         find.text(
           'Do not save what is left after spending; '

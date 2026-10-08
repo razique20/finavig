@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../theme/app_theme.dart';
+import '../widgets/finavig_wordmark.dart';
 
 /// Pre-login welcome screen — the first thing a brand-new user sees after
 /// the splash.
@@ -63,9 +64,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             child: Column(
               children: [
                 const SizedBox(height: 28),
-                // Main headline — the wordmark itself, no logo mark.
-                const Text(
-                  'Finavig',
+                // Main headline — the wordmark itself, no logo mark. The “i”
+                // carries the brand-blue dot (see FinavigWordmark).
+                const FinavigWordmark(
                   style: TextStyle(
                     fontSize: 34,
                     fontWeight: FontWeight.w800,

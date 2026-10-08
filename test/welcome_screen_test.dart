@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:finavig/screens/welcome_screen.dart';
 import 'package:finavig/theme/app_theme.dart';
+import 'package:finavig/widgets/finavig_wordmark.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -33,9 +34,12 @@ void main() {
     expect(find.byType(Image), findsNothing);
     final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
     expect(scaffold.backgroundColor, Colors.white);
-    // Main headline — no logo mark on this screen.
-    expect(find.text('Finavig'), findsOneWidget);
+    // Main headline — no logo mark on this screen. The wordmark sets a dotless
+    // "i" so FinavigWordmark's blue dot can stand in for the font's own.
+    expect(find.text(FinavigWordmark.dotlessText), findsOneWidget);
+    expect(find.text('Finavig'), findsNothing);
     expect(find.text('FV'), findsNothing);
+    expect(find.byKey(FinavigWordmark.dotKey), findsOneWidget);
     // WhatsApp-style quote thread: two incoming quotes + a reply.
     expect(
       find.text(
