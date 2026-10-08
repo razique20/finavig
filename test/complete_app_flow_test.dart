@@ -16,6 +16,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:finavig/models/finance.dart';
+import 'package:finavig/models/gcc_country.dart';
 import 'package:finavig/router.dart';
 import 'package:finavig/screens/ai_budget_plan_screen.dart';
 import 'package:finavig/screens/ai_summary_screen.dart';
@@ -358,11 +359,41 @@ void main() {
 
     testWidgets('LoginScreen shows the user-type quiz', (tester) async {
       await pumpScreen(tester, const LoginScreen());
-      expect(find.text('GCC Edition'), findsWidgets);
+
+      // The header pill shows all six GCC flags instead of a "GCC Edition"
+      // label — one bundled asset each, so it renders the same everywhere.
+      expect(find.text('GCC Edition'), findsNothing);
+      for (final country in GccCountry.values) {
+        expect(
+          find.byWidgetPredicate(
+            (w) =>
+                w is Image &&
+                w.image is AssetImage &&
+                (w.image as AssetImage).assetName == country.flagAsset,
+          ),
+          findsOneWidget,
+          reason: '${country.displayName} flag missing from the header pill',
+        );
+      }
+
       expect(find.text('What type of user are you?'), findsWidgets);
       expect(find.text('New to Finavig'), findsWidgets);
       expect(find.text('Already a member?'), findsWidgets);
       expect(find.text('Continue'), findsWidgets);
+
+      // Every description line and the security cue wear the brand blue.
+      for (final label in const [
+        'Tap once to choose — double-tap to continue.',
+        'Create a free account',
+        'Sign in to your account',
+        'Secure sign-in — your data stays private',
+      ]) {
+        expect(
+          tester.widget<Text>(find.text(label)).style?.color,
+          FinavigColors.accent,
+          reason: '"$label" must carry the brand blue',
+        );
+      }
       expect(tester.takeException(), isNull);
     });
 

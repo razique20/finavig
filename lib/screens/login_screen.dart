@@ -22,7 +22,7 @@ import 'app_lock_flows.dart';
 const Duration _kStepTransition = Duration(milliseconds: 320);
 
 /// Login & Sign-up — a Material-3 centred auth screen: a quiet
-/// brand header (wordmark + GCC Edition pill) above the quiz
+/// brand header (wordmark + a pill of all six GCC flags) above the quiz
 /// flow, which sits in a soft card on a flat surface.
 ///
 /// Always renders the app's dark brand theme — the same
@@ -495,11 +495,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(width: 10),
+              // All six GCC members at a glance — extra-small flags in place of
+              // the "GCC Edition" label. Each flag keeps a hairline border so
+              // the white-edged ones stay visible on the white surface (same
+              // treatment as the country picker, at a fraction of the size).
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
                 decoration: BoxDecoration(
                   color: FinavigColors.ink.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(99),
@@ -507,14 +508,33 @@ class _LoginScreenState extends State<LoginScreen> {
                     color: FinavigColors.ink.withValues(alpha: 0.25),
                   ),
                 ),
-                child: const Text(
-                  'GCC Edition',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.3,
-                    color: FinavigColors.ink,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (final country in GccCountry.values) ...[
+                      if (country != GccCountry.values.first)
+                        const SizedBox(width: 3),
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(2),
+                          border: Border.all(
+                            color: Colors.black.withValues(alpha: 0.10),
+                          ),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(1.5),
+                          child: Image.asset(
+                            country.flagAsset,
+                            width: 16,
+                            height: 11,
+                            fit: BoxFit.cover,
+                            gaplessPlayback: true,
+                            semanticLabel: country.displayName,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ],
@@ -1533,9 +1553,9 @@ class _QuizQuestion extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               height: 1.45,
-              color: isDark
-                  ? FinavigColors.textSecondary
-                  : FinavigColors.textSecondaryLight,
+              // The step description carries the brand blue — the deep step on
+              // the white surface, the bright one on an ink one.
+              color: isDark ? FinavigColors.accentBright : FinavigColors.accent,
             ),
           ),
         ],
@@ -1751,10 +1771,7 @@ class _ModeOption extends StatelessWidget {
               child: Icon(
                 icon,
                 size: 20,
-                color: FinavigColors.adaptiveIcon(
-                  context,
-                  FinavigColors.ink,
-                ),
+                color: FinavigColors.adaptiveIcon(context, FinavigColors.ink),
               ),
             ),
             const SizedBox(width: 14),
@@ -1780,7 +1797,13 @@ class _ModeOption extends StatelessWidget {
                     subtitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 12, color: subColor),
+                    style: TextStyle(
+                      fontSize: 12,
+                      // Same blue as the step descriptions above.
+                      color: isDark
+                          ? FinavigColors.accentBright
+                          : FinavigColors.accent,
+                    ),
                   ),
                 ],
               ),
@@ -1843,11 +1866,7 @@ class _DotSeparator extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       '·',
-      style: TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.w800,
-        color: color,
-      ),
+      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: color),
     );
   }
 }
@@ -1884,7 +1903,7 @@ class _LegalLink extends StatelessWidget {
   }
 }
 
-/// Quiet security line under the CTA — a fintech trust cue.
+/// Security line under the CTA — a fintech trust cue, in the brand blue.
 class _TrustRow extends StatelessWidget {
   final bool isDark;
 
@@ -1892,9 +1911,7 @@ class _TrustRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isDark
-        ? FinavigColors.textMuted
-        : FinavigColors.textMutedLight;
+    final color = isDark ? FinavigColors.accentBright : FinavigColors.accent;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
