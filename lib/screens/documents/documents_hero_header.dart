@@ -147,8 +147,9 @@ class DocumentsHeroHeader extends StatelessWidget {
   }
 }
 
-/// Documents header action button — the same dark chip + white icon as the
-/// Home and Money headers (ink chip in light mode, translucent white in dark).
+/// Documents header action button — a soft accent chip in light mode and a
+/// translucent white chip in dark, like the Home and Money headers. The glyph
+/// is the dark ink on the light canvas; in dark mode it flips to white.
 class _CanvasIconButton extends StatelessWidget {
   final IconData icon;
   final String tooltip;
@@ -167,7 +168,7 @@ class _CanvasIconButton extends StatelessWidget {
       message: tooltip,
       child: Material(
         color: fade.color(
-          FinavigColors.ink,
+          FinavigColors.accent.withValues(alpha: 0.10),
           Colors.white.withValues(alpha: 0.12),
         ),
         borderRadius: BorderRadius.circular(13),
@@ -178,7 +179,11 @@ class _CanvasIconButton extends StatelessWidget {
           child: SizedBox(
             width: 40,
             height: 40,
-            child: Icon(icon, size: 20, color: Colors.white),
+            child: Icon(
+              icon,
+              size: 20,
+              color: fade.color(FinavigColors.ink, Colors.white),
+            ),
           ),
         ),
       ),

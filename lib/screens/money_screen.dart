@@ -904,9 +904,9 @@ class _MoneyScreenState extends State<MoneyScreen> {
   }
 }
 
-/// Dark-chip icon button on the Money header — same style as the redesigned
-/// Home page's header buttons (ink chip in light mode, translucent white in
-/// dark).
+/// Header icon button on the Money tab — a soft accent chip in light mode and
+/// a translucent white chip in dark, like the Home and Documents headers. The
+/// glyph is the dark ink on the light canvas; in dark mode it flips to white.
 class _MoneyHeroIconButton extends StatelessWidget {
   final IconData icon;
   final String tooltip;
@@ -928,7 +928,7 @@ class _MoneyHeroIconButton extends StatelessWidget {
       child: Material(
         color: enabled
             ? fade.color(
-                FinavigColors.ink,
+                FinavigColors.accent.withValues(alpha: 0.10),
                 Colors.white.withValues(alpha: 0.12),
               )
             : fade.color(
@@ -946,7 +946,7 @@ class _MoneyHeroIconButton extends StatelessWidget {
             child: Icon(
               icon,
               color: enabled
-                  ? Colors.white
+                  ? fade.color(FinavigColors.ink, Colors.white)
                   : fade.color(
                       FinavigColors.textMutedLight,
                       Colors.white.withValues(alpha: 0.35),

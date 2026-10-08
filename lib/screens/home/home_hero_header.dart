@@ -104,15 +104,15 @@ class HomeHeroHeader extends StatelessWidget {
                       padding: const EdgeInsets.all(6),
                       child: Row(
                         children: [
-                          // Profile / collection chip — the same dark chip as
-                          // the header's icon buttons (ink in light mode,
-                          // translucent white in dark), so all three read as
-                          // one row instead of a lone tinted accent. Built
-                          // from Material like its siblings: the balance card
-                          // below stays the screen's one ink plate.
+                          // Profile / collection chip — the same soft accent
+                          // chip as the header's other icon buttons (accent
+                          // tint in light mode, translucent white in dark), so
+                          // all three read as one row. No dark plate here: the
+                          // balance card below is the screen's only ink
+                          // surface.
                           Material(
                             color: fade.color(
-                              FinavigColors.ink,
+                              FinavigColors.accent.withValues(alpha: 0.12),
                               Colors.white.withValues(alpha: 0.12),
                             ),
                             borderRadius: BorderRadius.circular(12),
@@ -121,7 +121,10 @@ class HomeHeroHeader extends StatelessWidget {
                               height: 38,
                               child: Icon(
                                 activeCollection?.icon ?? Icons.person_rounded,
-                                color: Colors.white,
+                                color: fade.color(
+                                  FinavigColors.ink,
+                                  Colors.white,
+                                ),
                                 size: 19,
                               ),
                             ),
@@ -291,8 +294,9 @@ class HomeHeroHeader extends StatelessWidget {
   }
 }
 
-/// Home header action button — the same dark chip + white icon as the Money
-/// tab's hero icon buttons (ink in light mode, translucent white in dark).
+/// Home header action button — a soft accent chip in light mode and a
+/// translucent white chip in dark, like the Settings header buttons. The
+/// glyph is the dark ink on the light canvas; in dark mode it flips to white.
 class _CanvasIconButton extends StatelessWidget {
   final IconData icon;
   final String tooltip;
@@ -311,7 +315,7 @@ class _CanvasIconButton extends StatelessWidget {
       message: tooltip,
       child: Material(
         color: fade.color(
-          FinavigColors.ink,
+          FinavigColors.accent.withValues(alpha: 0.10),
           Colors.white.withValues(alpha: 0.12),
         ),
         borderRadius: BorderRadius.circular(13),
@@ -322,7 +326,11 @@ class _CanvasIconButton extends StatelessWidget {
           child: SizedBox(
             width: 40,
             height: 40,
-            child: Icon(icon, size: 20, color: Colors.white),
+            child: Icon(
+              icon,
+              size: 20,
+              color: fade.color(FinavigColors.ink, Colors.white),
+            ),
           ),
         ),
       ),
@@ -376,7 +384,7 @@ class HomeNotificationBell extends StatelessWidget {
           message: 'Alerts & notifications',
           child: Material(
             color: fade.color(
-              FinavigColors.ink,
+              FinavigColors.accent.withValues(alpha: 0.10),
               Colors.white.withValues(alpha: 0.12),
             ),
             borderRadius: BorderRadius.circular(13),
@@ -384,12 +392,12 @@ class HomeNotificationBell extends StatelessWidget {
             child: InkWell(
               borderRadius: BorderRadius.circular(13),
               onTap: () => _showNotificationsSheet(context),
-              child: const SizedBox(
+              child: SizedBox(
                 width: 40,
                 height: 40,
                 child: Icon(
                   Icons.notifications_outlined,
-                  color: Colors.white,
+                  color: fade.color(FinavigColors.ink, Colors.white),
                   size: 20,
                 ),
               ),
@@ -406,7 +414,10 @@ class HomeNotificationBell extends StatelessWidget {
                 color: FinavigColors.danger,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: fade.color(FinavigColors.ink, FinavigColors.obsidian),
+                  color: fade.color(
+                    FinavigColors.snowWhite,
+                    FinavigColors.obsidian,
+                  ),
                   width: 1.5,
                 ),
               ),
