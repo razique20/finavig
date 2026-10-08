@@ -162,9 +162,8 @@ final router = GoRouter(
     //   Documents — Tier 1: full expiry tracking
     //   Profile   — settings, collections, account
     StatefulShellRoute.indexedStack(
-      builder: (context, state, navigationShell) => _AppShell(
-        navigationShell: navigationShell,
-      ),
+      builder: (context, state, navigationShell) =>
+          _AppShell(navigationShell: navigationShell),
       branches: [
         StatefulShellBranch(
           navigatorKey: _homeShellKey,
@@ -205,10 +204,11 @@ final router = GoRouter(
       ],
     ),
   ],
-  errorBuilder: (context, state) => Scaffold(
-    body: Center(child: Text('Page not found: ${state.uri}')),
-  ),
-);/// Bottom navigation shell with the four main tabs.
+  errorBuilder: (context, state) =>
+      Scaffold(body: Center(child: Text('Page not found: ${state.uri}'))),
+);
+
+/// Bottom navigation shell with the four main tabs.
 ///
 /// Floating dark pill design: icon-only destinations with a filled circular
 /// indicator for the active tab, plus a center "universal quick action" (+)
@@ -317,8 +317,14 @@ class _AppShellState extends State<_AppShell> {
                   FinavigShadows.raised.first.color,
                   Colors.black.withValues(alpha: 0.4),
                 ),
-                blurRadius: fade.value(FinavigShadows.raised.first.blurRadius, 24),
-                offset: Offset(0, fade.value(FinavigShadows.raised.first.offset.dy, 8)),
+                blurRadius: fade.value(
+                  FinavigShadows.raised.first.blurRadius,
+                  24,
+                ),
+                offset: Offset(
+                  0,
+                  fade.value(FinavigShadows.raised.first.offset.dy, 8),
+                ),
               ),
             ],
           ),
@@ -343,10 +349,9 @@ class _AppShellState extends State<_AppShell> {
                   active: widget.navigationShell.currentIndex == 1,
                   tooltip: 'Money',
                   showDot: _budgetStatus != null,
-                  dotColor:
-                      _budgetStatus?.status == BudgetAlertLevel.exceeded
-                          ? FinavigColors.danger
-                          : FinavigColors.warning,
+                  dotColor: _budgetStatus?.status == BudgetAlertLevel.exceeded
+                      ? FinavigColors.danger
+                      : FinavigColors.warning,
                   onTap: () => _goBranch(1),
                 ),
                 // Universal quick action (+): scan a document, log money,
@@ -395,19 +400,22 @@ class _AppShellState extends State<_AppShell> {
   }
 }
 
-/// Center "universal quick action" (+) button inside the nav pill: a flat
-/// violet orb that opens the quick action menu from any tab.
+/// Center "universal quick action" (+) button inside the nav pill: a flat dark
+/// orb (the brand ink, not the old violet) that opens the quick action menu
+/// from any tab.
 class _QuickActionButton extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
 
-  const _QuickActionButton({
-    required this.onTap,
-    this.onLongPress,
-  });
+  const _QuickActionButton({required this.onTap, this.onLongPress});
 
   @override
   Widget build(BuildContext context) {
+    // Same dark plate as the Home balance card and the Settings avatar: the
+    // orb is the dock's one filled element, so it wears the brand ink instead
+    // of an unrelated accent. In dark mode it is lifted off the slate pill by
+    // a lighter end-stop plus a hairline; the glyph stays white.
+    final fade = FinavigTransition.of(context);
     return Expanded(
       child: Center(
         child: Tooltip(
@@ -424,10 +432,22 @@ class _QuickActionButton extends StatelessWidget {
                 height: 38,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: const LinearGradient(
+                  gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [FinavigColors.violet, FinavigColors.violetDark],
+                    colors: [
+                      fade.color(FinavigColors.ink, FinavigColors.charcoal),
+                      fade.color(
+                        FinavigColors.inkDeep,
+                        FinavigColors.slateLight,
+                      ),
+                    ],
+                  ),
+                  border: Border.all(
+                    color: fade.color(
+                      Colors.transparent,
+                      Colors.white.withValues(alpha: 0.10),
+                    ),
                   ),
                 ),
                 child: const Icon(
@@ -444,8 +464,10 @@ class _QuickActionButton extends StatelessWidget {
   }
 }
 
-/// One icon-only destination inside the floating nav pill. The active tab
-/// gets a filled circular backdrop; status dots mirror the shell badges.
+/// One icon-only destination inside the floating nav pill. The active tab is
+/// marked by its glyph alone — the filled icon variant in brand ink (white in
+/// dark) rather than a circular selection plate; status dots mirror the shell
+/// badges.
 class _NavPillItem extends StatelessWidget {
   final IconData icon;
   final bool active;
@@ -465,9 +487,9 @@ class _NavPillItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Dock colours resolve through the theme transition factor so the pill,
-    // the active-tab backdrop and every glyph cross-fade with the theme
-    // animation instead of snapping at its halfway point.
+    // Dock colours resolve through the theme transition factor so the pill
+    // and every glyph cross-fade with the theme animation instead of snapping
+    // at its halfway point.
     final fade = FinavigTransition.of(context);
     return Expanded(
       child: Tooltip(
@@ -482,23 +504,18 @@ class _NavPillItem extends StatelessWidget {
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  Container(
+                  // No selection plate: the active tab is signalled by the
+                  // glyph colour plus the filled icon variant the shell
+                  // already swaps in (home_rounded, person_rounded, …), which
+                  // keeps the dock calm and the labels' optical centre steady.
+                  SizedBox(
                     width: 42,
                     height: 42,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: active
-                          ? fade.color(
-                              FinavigColors.ink,
-                              Colors.white.withValues(alpha: 0.14),
-                            )
-                          : Colors.transparent,
-                    ),
                     child: Icon(
                       icon,
                       size: 21,
                       color: active
-                          ? Colors.white
+                          ? fade.color(FinavigColors.ink, Colors.white)
                           // White in dark mode — dimmed just enough that the
                           // active tab still reads against it.
                           : fade.color(
@@ -536,4 +553,3 @@ class _NavPillItem extends StatelessWidget {
     );
   }
 }
-

@@ -36,6 +36,7 @@ import 'package:finavig/screens/welcome_screen.dart';
 import 'package:finavig/services/demo_document_service.dart';
 import 'package:finavig/services/document_scanner_service.dart';
 import 'package:finavig/services/finance_service.dart';
+import 'package:finavig/theme/app_theme.dart';
 
 void main() {
   setUp(() async {
@@ -117,56 +118,71 @@ void main() {
     });
 
     testWidgets(
-        'document lifecycle: seed → listed in vault → open detail → renew',
-        (tester) async {
-      // A document created by the scanner lands in the local vault.
-      final demo = await DemoDocumentService.instance.addDemoDocument();
-      expect(demo.displayName, contains('Demo: '));
+      'document lifecycle: seed → listed in vault → open detail → renew',
+      (tester) async {
+        // A document created by the scanner lands in the local vault.
+        final demo = await DemoDocumentService.instance.addDemoDocument();
+        expect(demo.displayName, contains('Demo: '));
 
-      await pumpAt(tester, '/documents');
-      // The vault lists the tracked document (and its demo affordance).
-      expect(find.textContaining('Sample Trade Licence'), findsWidgets);
+        await pumpAt(tester, '/documents');
+        // The vault lists the tracked document (and its demo affordance).
+        expect(find.textContaining('Sample Trade Licence'), findsWidgets);
 
-      // Opening a document goes through the deep-link route the notification
-      // tap service uses.
-      await go(tester, '/document/${demo.id}');
-      expect(find.text(demo.displayName), findsWidgets);
+        // Opening a document goes through the deep-link route the notification
+        // tap service uses.
+        await go(tester, '/document/${demo.id}');
+        expect(find.text(demo.displayName), findsWidgets);
 
-      // The renew action is offered from the detail screen's overflow menu.
-      await tester.tap(find.byIcon(Icons.more_vert));
-      await tester.pumpAndSettle();
-      expect(find.text('Mark as renewed'), findsWidgets);
+        // The renew action is offered from the detail screen's overflow menu.
+        await tester.tap(find.byIcon(Icons.more_vert));
+        await tester.pumpAndSettle();
+        expect(find.text('Mark as renewed'), findsWidgets);
 
-      // Cancel out of the popup without mutating the document.
-      await tester.tapAt(const Offset(10, 10));
-      await tester.pumpAndSettle();
-      expect(tester.takeException(), isNull);
-    });
+        // Cancel out of the popup without mutating the document.
+        await tester.tapAt(const Offset(10, 10));
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+      },
+    );
 
-    testWidgets('money lifecycle: log income + expense into records and money',
-        (tester) async {
-      await addTx(FinanceKind.income, FinanceCategory.sales, 'Client retainer',
-          18500);
-      await addTx(FinanceKind.expense, FinanceCategory.rent, 'Warehouse rent',
-          4200);
-      await addTx(FinanceKind.expense, FinanceCategory.transport, 'Fleet fuel',
-          640);
+    testWidgets(
+      'money lifecycle: log income + expense into records and money',
+      (tester) async {
+        await addTx(
+          FinanceKind.income,
+          FinanceCategory.sales,
+          'Client retainer',
+          18500,
+        );
+        await addTx(
+          FinanceKind.expense,
+          FinanceCategory.rent,
+          'Warehouse rent',
+          4200,
+        );
+        await addTx(
+          FinanceKind.expense,
+          FinanceCategory.transport,
+          'Fleet fuel',
+          640,
+        );
 
-      await pumpAt(tester, '/money');
-      expect(find.text('Net this month'), findsOneWidget);
+        await pumpAt(tester, '/money');
+        expect(find.text('Net this month'), findsOneWidget);
 
-      // The ledger shows the logged line items.
-      await go(tester, '/records');
-      expect(find.text('Records'), findsWidgets);
-      expect(find.text('Client retainer'), findsWidgets);
-      expect(find.text('Warehouse rent'), findsWidgets);
-      expect(tester.takeException(), isNull);
-    });
+        // The ledger shows the logged line items.
+        await go(tester, '/records');
+        expect(find.text('Records'), findsWidgets);
+        expect(find.text('Client retainer'), findsWidgets);
+        expect(find.text('Warehouse rent'), findsWidgets);
+        expect(tester.takeException(), isNull);
+      },
+    );
 
-    testWidgets('budget + envelope flows surface their created items',
-        (tester) async {
-      await FinanceService.instance
-          .upsertBudget(FinanceCategory.rent, 5000);
+    testWidgets('budget + envelope flows surface their created items', (
+      tester,
+    ) async {
+      await FinanceService.instance.upsertBudget(FinanceCategory.rent, 5000);
       await FinanceService.instance.addEnvelope('New Laptop', 6000, 500);
 
       await pumpAt(tester, '/budgets');
@@ -179,8 +195,9 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('every full-screen route resolves to its heading',
-        (tester) async {
+    testWidgets('every full-screen route resolves to its heading', (
+      tester,
+    ) async {
       await pumpAt(tester, '/home');
 
       const routes = <String, String>{
@@ -194,10 +211,16 @@ void main() {
 
       for (final entry in routes.entries) {
         await go(tester, entry.key);
-        expect(find.text(entry.value), findsWidgets,
-            reason: 'route ${entry.key} should show "${entry.value}"');
-        expect(tester.takeException(), isNull,
-            reason: 'route ${entry.key} threw during build');
+        expect(
+          find.text(entry.value),
+          findsWidgets,
+          reason: 'route ${entry.key} should show "${entry.value}"',
+        );
+        expect(
+          tester.takeException(),
+          isNull,
+          reason: 'route ${entry.key} threw during build',
+        );
       }
     });
 
@@ -212,8 +235,9 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('quick action sheet opens from the shell (+) orb',
-        (tester) async {
+    testWidgets('quick action sheet opens from the shell (+) orb', (
+      tester,
+    ) async {
       await pumpAt(tester, '/home');
 
       await tester.tap(find.byIcon(Icons.add_rounded).first);
@@ -224,8 +248,9 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('quick action orb (+) is flat — no shadow around it',
-        (tester) async {
+    testWidgets('quick action orb (+) is flat — no shadow around it', (
+      tester,
+    ) async {
       await pumpAt(tester, '/home');
 
       // The orb is the only tooltip-badged widget in the nav pill, so locate it
@@ -245,12 +270,62 @@ void main() {
       for (final element in orbContainers.evaluate()) {
         final decoration = (element.widget as Container).decoration;
         if (decoration is! BoxDecoration) continue;
-        expect(decoration.boxShadow, isNull,
-            reason: 'the + orb must not draw a shadow');
-        if (decoration.gradient != null) gradientCircles++;
+        expect(
+          decoration.boxShadow,
+          isNull,
+          reason: 'the + orb must not draw a shadow',
+        );
+        final gradient = decoration.gradient;
+        if (gradient is LinearGradient) {
+          gradientCircles++;
+          // The orb is the brand ink plate, not the old violet accent.
+          expect(gradient.colors, [
+            FinavigColors.ink,
+            FinavigColors.inkDeep,
+          ], reason: 'the + orb must wear the dark brand ink');
+        }
       }
-      // The violet gradient circle stays; only its shadow was removed.
+      // The (now ink) gradient circle stays; only its shadow was removed.
       expect(gradientCircles, 1);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('bottom nav marks the active tab with its glyph, not a plate', (
+      tester,
+    ) async {
+      await pumpAt(tester, '/home');
+
+      // Locate the dock's Home destination by its tooltip: `home_rounded` also
+      // appears in category lists, so the icon alone is ambiguous here.
+      final homeTab = find.byWidgetPredicate(
+        (w) => w is Tooltip && w.message == 'Home',
+      );
+      expect(homeTab, findsOneWidget);
+
+      // Home is the active branch, so its filled glyph is the brand ink.
+      final glyph = tester.widget<Icon>(
+        find.descendant(of: homeTab, matching: find.byType(Icon)).first,
+      );
+      expect(
+        glyph.color,
+        FinavigColors.ink,
+        reason: 'the active tab glyph carries the selection colour',
+      );
+
+      // …and nothing draws a circular selection backdrop behind it.
+      expect(
+        find.descendant(
+          of: homeTab,
+          matching: find.byWidgetPredicate(
+            (w) =>
+                w is Container &&
+                w.decoration is BoxDecoration &&
+                (w.decoration! as BoxDecoration).shape == BoxShape.circle,
+          ),
+        ),
+        findsNothing,
+        reason: 'the dock selects with the glyph, not a circle',
+      );
       expect(tester.takeException(), isNull);
     });
   });
@@ -269,8 +344,10 @@ void main() {
       await pumpScreen(tester, const WelcomeScreen());
       expect(find.text('Finavig'), findsOneWidget);
       expect(
-        find.text('Do not save what is left after spending; '
-            'spend what is left after saving.'),
+        find.text(
+          'Do not save what is left after spending; '
+          'spend what is left after saving.',
+        ),
         findsOneWidget,
       );
       expect(
@@ -329,8 +406,9 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('EnvelopesScreen renders header and new-envelope action',
-        (tester) async {
+    testWidgets('EnvelopesScreen renders header and new-envelope action', (
+      tester,
+    ) async {
       await pumpScreen(tester, const EnvelopesScreen());
       expect(find.text('Savings envelopes'), findsWidgets);
       expect(find.text('New envelope'), findsWidgets);
@@ -343,8 +421,9 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('GlobalSearchScreen shows the empty-state prompt',
-        (tester) async {
+    testWidgets('GlobalSearchScreen shows the empty-state prompt', (
+      tester,
+    ) async {
       await pumpScreen(tester, const GlobalSearchScreen());
       expect(find.text('Search all your documents'), findsOneWidget);
       expect(tester.takeException(), isNull);
@@ -356,8 +435,9 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('CashFlowForecastScreen renders header and filters',
-        (tester) async {
+    testWidgets('CashFlowForecastScreen renders header and filters', (
+      tester,
+    ) async {
       await pumpScreen(tester, const CashFlowForecastScreen());
       expect(find.text('90-Day Cash-Flow Forecast'), findsWidgets);
       expect(find.text('All Events'), findsWidgets);
@@ -376,8 +456,9 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('AlertsRemindersScreen renders notification switches',
-        (tester) async {
+    testWidgets('AlertsRemindersScreen renders notification switches', (
+      tester,
+    ) async {
       await pumpScreen(tester, const AlertsRemindersScreen());
       expect(find.text('Alerts & Reminders'), findsWidgets);
       expect(find.text('Renewal notifications'), findsWidgets);
