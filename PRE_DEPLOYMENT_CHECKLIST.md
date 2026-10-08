@@ -137,7 +137,7 @@ toggled per cohort without a store release.
 - App icon + adaptive icon + store assets (`assets/store/`)
 - Budget 80/100% alert engine + OS channels
 - Local-only (offline) mode as first-class citizen
-- CI: analyze + file-size ratchet + full 484-test suite
+- CI: analyze + file-size ratchet + full 525-test suite
 
 **Backend steps required before release (not app code):**
 

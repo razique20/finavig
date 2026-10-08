@@ -3,7 +3,7 @@
 > **AI-powered budgeting & cash-flow intelligence — with every document expiry tracked and every renewal fee forecast.**  
 > **Finavig** is a financial budgeting & intelligence platform for personal & small-business use, with built-in document expiry tracking and renewal alerts. Built for mobile and web.
 
-📚 **Project documentation** lives in [`docs/`](docs/): [technical documentation](docs/technical-documentation.md), [architecture & workflows](ARCHITECTURE.md), [credit ↔ Money sync](docs/credit-money-sync.md), [market study](docs/market-study.md), [feasibility study](docs/feasibility-study.md), and a [screenshot gallery](docs/README.md#-screenshot-gallery) of every feature.
+📚 **Project documentation** lives in [`docs/`](docs/): [technical documentation](docs/technical-documentation.md), [architecture & workflows](ARCHITECTURE.md), [credit ↔ Money sync](docs/credit-money-sync.md), [market study](docs/market-study.md), [feasibility study](docs/feasibility-study.md), the [launch playbook](docs/launch-playbook.md) (run, ship and win the first users), and a [screenshot gallery](docs/README.md#-screenshot-gallery) of every feature.
 
 ---
 
@@ -120,7 +120,7 @@ Run the comprehensive unit and integration test suite:
 ```bash
 flutter test
 ```
-*Current test suite: **484 passing unit & widget tests** across 49 suites covering document expiry math, financial category rules, credit ↔ Money sync, anomaly detection thresholds, budget tracking, App Lock, and complete end-to-end flows (see [`docs/app-test-report.md`](docs/app-test-report.md) and [`docs/credit-money-sync-verification.md`](docs/credit-money-sync-verification.md)).*
+*Current test suite: **525 passing unit & widget tests** across 54 suites covering document expiry math, financial category rules, credit ↔ Money sync, anomaly detection thresholds, budget tracking, App Lock, and complete end-to-end flows (see [`docs/app-test-report.md`](docs/app-test-report.md) and [`docs/credit-money-sync-verification.md`](docs/credit-money-sync-verification.md)).*
 
 ---
 

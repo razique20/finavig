@@ -387,7 +387,7 @@ WhatsApp/email alerts are intentionally not wired: secrets must never ship in th
 
 ### 7.4 CI
 
-`.github/workflows/ci.yml` runs on every push to `main` and every PR: `flutter analyze --no-pub` (errors fatal — the codebase carries a documented pre-existing warning/info baseline), the file-size ratchet, and the full test suite (484 tests, 49 suites) including goldens.
+`.github/workflows/ci.yml` runs on every push to `main` and every PR: `flutter analyze --no-pub` (errors fatal — the codebase carries a documented pre-existing warning/info baseline), the file-size ratchet, and the full test suite (525 tests, 54 suites) including goldens.
 
 ---
 
@@ -446,7 +446,7 @@ supabase/
   migrate_companies_to_collections.sql        legacy single-company → collections
   migrate_documents_local_only_fields.sql     adds location, renewal_history,
                                               custom_reminder_days
-test/                     49 suites, 484 tests — sync contract (DocSync), finance math,
+test/                     54 suites, 525 tests — sync contract (DocSync), finance math,
                           credit↔Money sync, recurrence, anomaly, categories, AI intent
                           routing (incl. persistence), NL parser, OCR, App Lock,
                           UI redesign contracts, goldens
@@ -474,7 +474,7 @@ flutter build web --release
 flutter build apk --release    # Android (configure signing first — see PRE_DEPLOYMENT_CHECKLIST.md)
 
 flutter analyze
-flutter test                   # 49 suites, 484 tests (goldens included)
+flutter test                   # 54 suites, 525 tests (goldens included)
 dart run tool/perf_budget_check.dart   # file-size ratchet
 ```
 

@@ -5,7 +5,7 @@ Branch: `main`
 Scope: complete user flows + screen-by-screen UI flow across the whole app
 
 > **Point-in-time snapshot.** The counts below (400 tests / 45 files) are what
-> this pass recorded. The suite has since grown to **484 tests across 49 suites**
+> this pass recorded. The suite has since grown to **525 tests across 54 suites**
 > (`flutter test`, all passing) with the credit ↔ Money sync, App Lock and
 > welcome/login additions — see [`credit-money-sync-verification.md`](credit-money-sync-verification.md)
 > and [`app-lock-test-report.md`](app-lock-test-report.md).

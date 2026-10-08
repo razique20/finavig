@@ -355,7 +355,7 @@ flowchart LR
     PUSH["git push"] --> CI["CI gates"]
     subgraph CI
         A["flutter analyze --no-pub<br/>(0 errors required)"]
-        B["flutter test --no-pub<br/>(484 tests, 49 suites)"]
+        B["flutter test --no-pub<br/>(525 tests, 54 suites)"]
         C["dart run tool/perf_budget_check.dart<br/>(file-size ratchet)"]
     end
     CI --> REL["Store build<br/>flutter build appbundle/ipa<br/>--analyze-size"]
