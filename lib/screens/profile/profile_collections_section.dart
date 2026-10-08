@@ -32,6 +32,7 @@ class ProfileCollectionsSection extends StatelessWidget {
     final entitlements = EntitlementService.instance;
     return ProfileSectionGroup(
       title: 'My Collections',
+      accent: FinavigColors.teal,
       action: IconButton(
         onPressed: onCreate,
         icon: const Icon(Icons.add_circle_outline),

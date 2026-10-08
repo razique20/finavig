@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/document_collection.dart';
+import '../models/subscription_tier.dart';
+import '../services/app_lock_service.dart';
 import '../services/auth_service.dart';
 import '../services/collection_service.dart';
 import '../services/document_scanner_service.dart';
 import '../services/entitlement_service.dart';
 import '../services/finance_service.dart';
 import '../services/tab_scroll_registry.dart';
+import '../services/theme_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/widgets.dart';
 import 'profile/app_lock_section.dart';
-import 'profile/profile_account_section.dart';
 import 'profile/profile_appearance_section.dart';
 import 'profile/profile_backup_nudge.dart';
 import 'profile/profile_collections_section.dart';
@@ -20,18 +23,10 @@ import 'profile/profile_sheets.dart';
 import 'profile/profile_sections.dart';
 import 'profile/profile_subscription_section.dart';
 
-/// Profile tab — Settings, redesigned to the visual language of the Home and
-/// Documents tabs: a navy hero header over a rounded content sheet.
-///
-/// The heavy lifting lives in `lib/screens/profile/` modules so each section
-/// rebuilds independently:
-/// 1. Hero (identity, badges, sign out) — `profile_hero.dart`
-/// 2. Account card (role, phone, active collection) — `profile_account_section.dart`
-/// 3. Subscription (plan, meters, upgrade) — `profile_subscription_section.dart`
-/// 4. Collections — `profile_collections_section.dart`
-/// 5. Appearance (theme) + Preferences (alerts link) — `profile_appearance_section.dart`
-/// 6. AI summary key — `profile_account_section.dart`
-/// 7. Help & support — `profile_sheets.dart`
+/// Profile tab — Settings, laid out as a clean, airy list: a centred page
+/// title, a circular avatar with the user's name/email, then full-width white
+/// rows. The detailed controls (appearance, subscription, collections,
+/// security, AI key) open in bottom sheets so the main surface stays flat.
 ///
 /// Every control saves immediately — there is no Save button.
 class ProfileScreen extends StatefulWidget {
@@ -47,7 +42,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final ScrollController _scrollController = ScrollController();
 
   List<DocumentCollection> _collections = [];
-  String _activeId = DocumentCollection.personalId;
   bool _loading = true;
   String _userName = 'Unknown User';
   String _userRole = 'Document Admin';
@@ -62,7 +56,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final service = DocumentCollectionService.instance;
     if (service.collections.isNotEmpty) {
       _collections = service.collections;
-      _activeId = service.activeCollectionId;
       _loading = false;
     }
     _loadCollections();
@@ -93,14 +86,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (mounted) {
       setState(() {
         _collections = service.collections;
-        _activeId = service.activeCollectionId;
         _loading = false;
       });
     }
   }
 
   Future<void> _loadSettings() async {
-    // Re-read the user's tier so the subscription card is current (the admin
+    // Re-read the user's tier so the subscription row is current (the admin
     // may have processed an upgrade since this session started).
     await EntitlementService.instance.refresh();
 
@@ -175,6 +167,77 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  /// Opens a titled bottom sheet wrapping [child] — the shared chrome for the
+  /// detailed settings surfaces (appearance, subscription, collections).
+  void _showSheet({required String title, required Widget child}) {
+    showModalBottomSheet<void>(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(ctx).size.height * 0.85,
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.only(top: 4, bottom: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                  child: Text(
+                    title,
+                    style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ),
+                child,
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openAppearance() => _showSheet(
+        title: 'Customize my experience',
+        child: const ProfileAppearanceSection(),
+      );
+
+  void _openSubscription() => _showSheet(
+        title: 'Manage subscription',
+        child: ProfileSubscriptionSection(collections: _collections),
+      );
+
+  void _openCollections() {
+    // Live off the service so rename / delete / switch reflect immediately
+    // inside the sheet (the sheet route is not rebuilt by this screen's
+    // setState).
+    final service = DocumentCollectionService.instance;
+    _showSheet(
+      title: 'My Collections',
+      child: ListenableBuilder(
+        listenable: service,
+        builder: (ctx, _) => ProfileCollectionsSection(
+          collections: service.collections,
+          activeId: service.activeCollectionId,
+          onCreate: _createCollection,
+          onRename: _renameCollection,
+          onDelete: _deleteCollection,
+          onSwitch: _switchTo,
+        ),
+      ),
+    );
+  }
+
   // ------------------------------------------------------------------
   // Collection management
   // ------------------------------------------------------------------
@@ -197,11 +260,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
       await DocumentCollectionService.instance.setActive(created.id);
       await _loadCollections();
-      if (mounted) {
-        messenger.showSnackBar(
-          SnackBar(content: Text('Collection "${res.name}" created')),
-        );
-      }
+      messenger.showSnackBar(
+        SnackBar(content: Text('Collection "${res.name}" created')),
+      );
     } catch (e) {
       if (mounted) _showError('Could not create collection: $e');
     }
@@ -273,204 +334,192 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _deleteAccount() async {
+    if (!AuthService.instance.isSignedIn) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Sign in to delete your account.')),
+      );
+      return;
+    }
+    await showDeleteAccountSheet(context);
+  }
+
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 
+  /// The flat settings list. Listens to the theme + app-lock services so the
+  /// "current value" columns stay live.
+  Widget _buildList() {
+    final tierInfo = TierInfo.all[EntitlementService.instance.tier]!;
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        ThemeService.instance,
+        AppLockService.instance,
+      ]),
+      builder: (context, _) {
+        return ProfileList(
+          children: [
+            ProfileListRow(
+              icon: Icons.person_outline_rounded,
+              title: 'Manage profile',
+              value: _userRole,
+              onTap: _editProfile,
+            ),
+            ProfileListRow(
+              icon: Icons.tune_rounded,
+              title: 'Customize my experience',
+              onTap: _openAppearance,
+            ),
+            ProfileListRow(
+              icon: Icons.notifications_none_rounded,
+              title: 'Manage notifications',
+              onTap: () => context.push('/alerts-reminders'),
+            ),
+            ProfileListRow(
+              icon: Icons.folder_outlined,
+              title: 'My Collections',
+              value: '${_collections.length}',
+              onTap: _openCollections,
+            ),
+            ProfileListRow(
+              icon: Icons.workspace_premium_outlined,
+              title: 'Manage subscription',
+              value: tierInfo.name,
+              onTap: _openSubscription,
+            ),
+            ProfileListRow(
+              icon: Icons.lock_outline_rounded,
+              title: 'Security & App Lock',
+              value: AppLockService.instance.isEnabled ? 'On' : 'Off',
+              onTap: () => showAppLockSettingsSheet(context),
+            ),
+            ProfileListRow(
+              icon: Icons.auto_awesome_outlined,
+              title: 'AI Summary',
+              value: _geminiKey.isEmpty ? 'Shared key' : 'Custom key',
+              onTap: _editGeminiKey,
+            ),
+            ProfileListRow(
+              icon: Icons.help_outline_rounded,
+              title: 'FAQ',
+              onTap: () => showFaqSheet(
+                context,
+                onOpenSupportTicket: () => showProfileSupportSheet(context),
+              ),
+            ),
+            ProfileListRow(
+              icon: Icons.menu_book_outlined,
+              title: 'App guide',
+              onTap: () => showAppGuideDialog(context),
+            ),
+            ProfileListRow(
+              icon: Icons.chat_bubble_outline_rounded,
+              title: 'Submit a request',
+              onTap: () => showProfileSupportSheet(context),
+            ),
+            ProfileListRow(
+              icon: Icons.history_rounded,
+              title: 'My requests',
+              onTap: () => showProfileRequestHistorySheet(context),
+            ),
+            ProfileListRow(
+              icon: Icons.battery_saver_outlined,
+              title: 'Ensure reminders work',
+              onTap: openBatteryGuidance,
+            ),
+            ProfileListRow(
+              icon: Icons.download_outlined,
+              title: 'Download my data',
+              onTap: () => exportUserData(context),
+            ),
+            ProfileListRow(
+              icon: Icons.delete_outline_rounded,
+              title: 'Delete account',
+              danger: true,
+              onTap: _deleteAccount,
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // Hero backdrop resolves through the theme transition factor so it
-    // cross-fades with the theme animation instead of snapping.
+    // Canvas + wash resolve through the theme transition factor so they
+    // cross-fade with the theme animation instead of snapping.
     final fade = FinavigTransition.of(context);
+    final canvas = fade.color(FinavigColors.snowWhite, FinavigColors.obsidian);
+    final wash = LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [
+        fade.color(FinavigColors.accentSoft, const Color(0xFF151830)),
+        canvas,
+      ],
+      stops: const [0.0, 0.55],
+    );
 
     return Scaffold(
-      // Ink backdrop behind the hero; the content sheet covers the rest.
-      // Same backdrop as Home/Documents.
-      backgroundColor: fade.color(FinavigColors.ink, FinavigColors.obsidian),
-      body: SafeArea(
-        bottom: false,
-        child: RefreshIndicator(
-          color: theme.colorScheme.secondary,
-          onRefresh: _loadSettings,
-          child: CustomScrollView(
-            controller: _scrollController,
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              SliverToBoxAdapter(
-                child: ProfileHeroHeader(
-                  userName: _userName,
-                  userAge: _userAge,
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surface,
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(28),
-                    ),
-                  ),
-                  child: _loading
-                      ? SizedBox(
-                          height: 320,
+      backgroundColor: canvas,
+      body: Container(
+        decoration: BoxDecoration(gradient: wash),
+        child: SafeArea(
+          bottom: false,
+          child: RefreshIndicator(
+            color: theme.colorScheme.secondary,
+            onRefresh: _loadSettings,
+            child: CustomScrollView(
+              controller: _scrollController,
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ProfileSettingsHeader(
+                        userName: _userName,
+                        userAge: _userAge,
+                      ),
+                      const SizedBox(height: 18),
+                      // Data-safety nudge: scans are device-local until
+                      // Storage sync ships — point at exports.
+                      const ProfileBackupNudge(),
+                      const SizedBox(height: 16),
+                      if (_loading)
+                        SizedBox(
+                          height: 240,
                           child: Center(
                             child: CircularProgressIndicator(
                               color: theme.colorScheme.secondary,
                             ),
                           ),
                         )
-                      : Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 20),
-                            ProfileAccountCard(
-                              userRole: _userRole,
-                              userPhone: _userPhone,
-                              collections: _collections,
-                              activeId: _activeId,
-                              onEditProfile: _editProfile,
-                            ),
-                            const SizedBox(height: 16),
-                            // Data-safety nudge: scans are device-local
-                            // until Storage sync ships — point at exports.
-                            const ProfileBackupNudge(),
-                            const SizedBox(height: 16),
-                            ProfileSubscriptionSection(
-                              collections: _collections,
-                            ),
-                            const SizedBox(height: 16),
-                            ProfileCollectionsSection(
-                              collections: _collections,
-                              activeId: _activeId,
-                              onCreate: _createCollection,
-                              onRename: _renameCollection,
-                              onDelete: _deleteCollection,
-                              onSwitch: _switchTo,
-                            ),
-                            const SizedBox(height: 16),
-                            const ProfileAppearanceSection(),
-                            const SizedBox(height: 16),
-                            const ProfilePreferencesSection(),
-                            const SizedBox(height: 16),
-                            const ProfileSecuritySection(),
-                            const SizedBox(height: 16),
-                            ProfileAiSection(
-                              geminiKey: _geminiKey,
-                              onEditGeminiKey: _editGeminiKey,
-                            ),
-                            const SizedBox(height: 16),
-                            ProfileSectionGroup(
-                              title: 'Help & Support',
-                              children: [
-                                ProfileSettingsTile(
-                                  icon: Icons.quiz_rounded,
-                                  iconColor: const Color(0xFFD97706),
-                                  title: 'Frequently Asked Questions (FAQ)',
-                                  subtitle:
-                                      'Instant answers for documents, money, AI & account',
-                                  trailing: Icon(
-                                    Icons.chevron_right_rounded,
-                                    size: 20,
-                                    color: FinavigColors.adaptiveIcon(context, Colors.grey),
-                                  ),
-                                  onTap: () => showFaqSheet(
-                                    context,
-                                    onOpenSupportTicket: () =>
-                                        showProfileSupportSheet(context),
-                                  ),
-                                ),
-                                ProfileSettingsTile(
-                                  icon: Icons.auto_stories_rounded,
-                                  iconColor: Colors.teal,
-                                  title: 'App Guide',
-                                  subtitle:
-                                      'Interactive walkthrough of all Finavig features',
-                                  trailing: Icon(
-                                    Icons.chevron_right_rounded,
-                                    size: 20,
-                                    color: FinavigColors.adaptiveIcon(context, Colors.grey),
-                                  ),
-                                  onTap: () => showAppGuideDialog(context),
-                                ),
-                                ProfileSettingsTile(
-                                  icon: Icons.add_comment_rounded,
-                                  iconColor: Colors.teal,
-                                  title: 'Submit a Request',
-                                  subtitle:
-                                      'Request a tracking option, report a bug, or get help',
-                                  trailing: Icon(
-                                    Icons.chevron_right_rounded,
-                                    size: 20,
-                                    color: FinavigColors.adaptiveIcon(context, Colors.grey),
-                                  ),
-                                  onTap: () => showProfileSupportSheet(context),
-                                ),
-                                ProfileSettingsTile(
-                                  icon: Icons.history_rounded,
-                                  iconColor: Colors.blueGrey,
-                                  title: 'My Requests',
-                                  subtitle:
-                                      'View status of your previous submissions',
-                                  trailing: Icon(
-                                    Icons.chevron_right_rounded,
-                                    size: 20,
-                                    color: FinavigColors.adaptiveIcon(context, Colors.grey),
-                                  ),
-                                  onTap: () =>
-                                      showProfileRequestHistorySheet(context),
-                                ),
-                                ProfileSettingsTile(
-                                  icon: Icons.delete_forever_rounded,
-                                  iconColor: Colors.red,
-                                  title: 'Delete Account',
-                                  subtitle:
-                                      'Permanently erase your account and all data',
-                                  trailing: Icon(
-                                    Icons.chevron_right_rounded,
-                                    size: 20,
-                                    color: FinavigColors.adaptiveIcon(context, Colors.grey),
-                                  ),
-                                  onTap: () async {
-                                    final signedIn =
-                                        AuthService.instance.isSignedIn;
-                                    if (!signedIn) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                              'Sign in to delete your account.'),
-                                        ),
-                                      );
-                                      return;
-                                    }
-                                    await showDeleteAccountSheet(context);
-                                  },
-                                ),
-                              ],
-                            ),
-                            // Keep the last card scrollable clear of the
-                            // floating nav pill (height + margins ≈ 80).
-                            SizedBox(
-                              height:
-                                  8 + MediaQuery.of(context).padding.bottom + 80,
-                            ),
-                          ],
+                      else ...[
+                        _buildList(),
+                        // Keep the last row clear of the floating nav pill
+                        // (height + margins ≈ 80).
+                        SizedBox(
+                          height:
+                              16 + MediaQuery.of(context).padding.bottom + 80,
                         ),
+                      ],
+                    ],
+                  ),
                 ),
-              ),
-              // Sheet filler: extends the sheet across the rest of the
-              // viewport when content is short, and into overscroll —
-              // the navy backdrop never peeks out below the content,
-              // behind the floating nav pill.
-              SliverFillRemaining(
-                hasScrollBody: false,
-                fillOverscroll: true,
-                child: ColoredBox(color: theme.colorScheme.surface),
-              ),
-            ],
+                // Canvas filler: extends the background across the rest of
+                // the viewport and into overscroll behind the nav pill.
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  fillOverscroll: true,
+                  child: ColoredBox(color: canvas),
+                ),
+              ],
+            ),
           ),
         ),
       ),

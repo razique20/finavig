@@ -140,6 +140,12 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
 
+      // The collections live behind the "My Collections" row now.
+      await tester.ensureVisible(find.text('My Collections'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('My Collections'));
+      await tester.pumpAndSettle();
+
       expect(find.text('Alpha Corp'), findsOneWidget);
       expect(find.text('LOCKED'), findsOneWidget);
     });

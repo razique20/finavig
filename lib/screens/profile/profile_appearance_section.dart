@@ -14,7 +14,8 @@ import '../../theme/app_theme.dart';
 import 'profile_sections.dart';
 
 /// Appearance section — theme mode segmented control. Changes persist via
-/// [ThemeService] and apply instantly through the root MaterialApp.
+/// [ThemeService] and apply instantly through the root MaterialApp. Shown
+/// inside the "Customize my experience" bottom sheet.
 class ProfileAppearanceSection extends StatelessWidget {
   const ProfileAppearanceSection({super.key});
 
@@ -22,6 +23,7 @@ class ProfileAppearanceSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return ProfileSectionGroup(
       title: 'Appearance',
+      accent: FinavigColors.sky,
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
@@ -69,65 +71,66 @@ class ProfileAppearanceSection extends StatelessWidget {
   }
 }
 
+/// OEM battery-saver guidance (don't kill my app). Missed reminders are the
+/// highest-impact reliability risk on Xiaomi/Huawei/Samsung — this hands the
+/// user the vendor-specific fix.
+Future<void> openBatteryGuidance() async {
+  final uri = Uri.parse('https://dontkillmyapp.com');
+  try {
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  } catch (_) {
+    // No browser available — nothing sensible to do; ignore.
+  }
+}
+
+/// Bundle all tracked data into one JSON file (PDPL data-portability).
+///
+/// Uses the caller's context after async work only through
+/// [ScaffoldMessenger], which survives navigation.
+Future<void> exportUserData(BuildContext context) async {
+  final messenger = ScaffoldMessenger.of(context);
+  try {
+    final json = await UserDataExportService.instance.buildExportJson();
+    final path = await FilePicker.platform.saveFile(
+      fileName:
+          'finavig-data-export-${DateTime.now().toIso8601String().split('T').first}.json',
+      bytes: Uint8List.fromList(utf8.encode(json)),
+    );
+    if (path != null) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('Data export saved to $path')),
+      );
+      return;
+    }
+    // saveFile cancelled or unsupported — fall back to the share sheet.
+    await SharePlus.instance.share(
+      ShareParams(
+        title: 'Finavig data export',
+        text: json,
+      ),
+    );
+  } catch (_) {
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Text('Could not build the export — please try again.'),
+      ),
+    );
+  }
+}
+
 /// Preferences section — link tile into the standalone Alerts & Reminders
 /// screen (notifications, bill spikes, budget alerts & lead times), plus the
 /// OEM battery guidance and the PDPL "Download my data" export.
 class ProfilePreferencesSection extends StatelessWidget {
   const ProfilePreferencesSection({super.key});
 
-  /// OEM battery-saver guidance (don't kill my app). Missed reminders are
-  /// the highest-impact reliability risk on Xiaomi/Huawei/Samsung — this
-  /// hands the user the vendor-specific fix.
-  static Future<void> _openBatteryGuidance() async {
-    final uri = Uri.parse('https://dontkillmyapp.com');
-    try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
-    } catch (_) {
-      // No browser available — nothing sensible to do; ignore.
-    }
-  }
-
-  /// Bundle all tracked data into one JSON file (PDPL data-portability).
-  ///
-  /// Uses the section's own context after async work only through
-  /// [ScaffoldMessenger], which survives navigation.
-  static Future<void> _exportUserData(BuildContext context) async {
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      final json = await UserDataExportService.instance.buildExportJson();
-      final path = await FilePicker.platform.saveFile(
-        fileName:
-            'finavig-data-export-${DateTime.now().toIso8601String().split('T').first}.json',
-        bytes: Uint8List.fromList(utf8.encode(json)),
-      );
-      if (path != null) {
-        messenger.showSnackBar(
-          SnackBar(content: Text('Data export saved to $path')),
-        );
-        return;
-      }
-      // saveFile cancelled or unsupported — fall back to the share sheet.
-      await SharePlus.instance.share(
-        ShareParams(
-          title: 'Finavig data export',
-          text: json,
-        ),
-      );
-    } catch (_) {
-      messenger.showSnackBar(
-        const SnackBar(
-          content: Text('Could not build the export — please try again.'),
-        ),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return ProfileSectionGroup(
       title: 'Preferences',
+      accent: FinavigColors.blue,
       children: [
         ProfileSettingsTile(
           icon: Icons.notifications_active_rounded,
@@ -144,7 +147,7 @@ class ProfilePreferencesSection extends StatelessWidget {
           subtitle:
               'Some phones kill background alerts — check these settings',
           trailing: const Icon(Icons.open_in_new_rounded, size: 16),
-          onTap: _openBatteryGuidance,
+          onTap: openBatteryGuidance,
         ),
         ProfileSettingsTile(
           icon: Icons.download_rounded,
@@ -152,7 +155,7 @@ class ProfilePreferencesSection extends StatelessWidget {
           title: 'Download my data',
           subtitle: 'Export documents & finance data as a JSON file',
           trailing: const Icon(Icons.chevron_right_rounded, size: 20),
-          onTap: () => _exportUserData(context),
+          onTap: () => exportUserData(context),
         ),
       ],
     );

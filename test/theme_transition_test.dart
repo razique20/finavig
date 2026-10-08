@@ -311,9 +311,8 @@ void main() {
       };
     }
 
-    /// The grouped card wrapping the section that owns [label] — anchored on a
-    /// child row/control, since the section title sits above the card.
-    Container sectionTile(WidgetTester tester, String label) => tester
+    /// The rounded list-row card that owns [label].
+    Container rowTile(WidgetTester tester, String label) => tester
         .widgetList<Container>(
           find.ancestor(of: find.text(label), matching: find.byType(Container)),
         )
@@ -323,34 +322,38 @@ void main() {
               d.borderRadius == BorderRadius.circular(FinavigRadius.card);
         });
 
-    testWidgets('section tiles cross-fade instead of snapping',
-        (tester) async {
+    testWidgets('list rows cross-fade instead of snapping', (tester) async {
+      const lightTile = Colors.white;
+      final darkTile = FinavigColors.charcoal;
+
       final flip = await mountSettings(tester);
       expect(
-        (sectionTile(tester, 'System').decoration as BoxDecoration).color,
-        Colors.white,
+        (rowTile(tester, 'FAQ').decoration as BoxDecoration).color,
+        lightTile,
       );
 
       flip(() {});
       await tester.pump(const Duration(milliseconds: 50));
       await tester.pump(const Duration(milliseconds: 50));
 
-      final mid =
-          (sectionTile(tester, 'System').decoration as BoxDecoration).color!;
-      expect(strictlyBetween(mid.r, 1.0, FinavigColors.slate.r), isTrue,
-          reason: 'settings tile must be mid-transition, was ${mid.r}');
-      expect(strictlyBetween(mid.a, 1.0, 0.5), isTrue,
-          reason: 'settings tile alpha must be mid-transition, was ${mid.a}');
+      final mid = (rowTile(tester, 'FAQ').decoration as BoxDecoration).color!;
+      expect(strictlyBetween(mid.r, darkTile.r, lightTile.r), isTrue,
+          reason: 'settings row must be mid-transition, was ${mid.r}');
 
       await tester.pumpAndSettle();
       final settled =
-          (sectionTile(tester, 'System').decoration as BoxDecoration).color!;
-      expect(settled.r, FinavigColors.slate.r);
-      expect(settled.a, closeTo(0.5, 0.002));
+          (rowTile(tester, 'FAQ').decoration as BoxDecoration).color!;
+      expect(settled.r, closeTo(darkTile.r, 0.002));
     });
 
     testWidgets('appearance selector moves to the tapped mode', (tester) async {
       await mountSettings(tester);
+
+      // The selector lives in the "Customize my experience" sheet.
+      await tester.ensureVisible(find.text('Customize my experience'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Customize my experience'));
+      await tester.pumpAndSettle();
 
       Set<ThemeMode> selection() => tester
           .widget<SegmentedButton<ThemeMode>>(

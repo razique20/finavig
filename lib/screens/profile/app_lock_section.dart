@@ -21,6 +21,7 @@ class ProfileSecuritySection extends StatelessWidget {
         final enabled = service.isEnabled;
         return ProfileSectionGroup(
           title: 'Security',
+          accent: FinavigColors.violet,
           children: [
             ProfileSettingsTile(
               icon: enabled ? Icons.lock_rounded : Icons.lock_open_rounded,

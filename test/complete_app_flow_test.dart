@@ -204,10 +204,10 @@ void main() {
     testWidgets('settings surface exposes the core sections', (tester) async {
       await pumpAt(tester, '/profile');
       expect(find.text('Settings'), findsWidgets);
-      expect(find.text('Subscription'), findsWidgets);
+      expect(find.text('Manage profile'), findsWidgets);
+      expect(find.text('Manage subscription'), findsWidgets);
       expect(find.text('My Collections'), findsWidgets);
-      expect(find.text('Appearance'), findsWidgets);
-      expect(find.text('Alerts & Reminders'), findsWidgets);
+      expect(find.text('Manage notifications'), findsWidgets);
       expect(find.text('AI Summary'), findsWidgets);
       expect(tester.takeException(), isNull);
     });
@@ -317,7 +317,7 @@ void main() {
     testWidgets('ProfileScreen shows settings sections', (tester) async {
       await pumpScreen(tester, const ProfileScreen());
       expect(find.text('Settings'), findsWidgets);
-      expect(find.text('Subscription'), findsWidgets);
+      expect(find.text('Manage subscription'), findsWidgets);
       expect(find.text('My Collections'), findsWidgets);
       expect(tester.takeException(), isNull);
     });

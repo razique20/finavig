@@ -3,39 +3,153 @@ import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/bento_icon_tile.dart';
 
-/// Shared building blocks for the Profile (Settings) screen — extracted from
-/// `profile_screen.dart` so each section widget owns its pieces and rebuilds
-/// independently. Same anatomy as `money_sections.dart`.
+/// Shared building blocks for the Profile (Settings) screen — the flat list
+/// rows of the new airy layout, plus the grouped card rows reused inside the
+/// bottom sheets (collections, subscription, security, AI).
 
-/// Tile background color: white in light mode, translucent slate in dark.
-///
-/// Resolved through [FinavigTransition] rather than branching on brightness so
-/// the settings tiles cross-fade with the theme animation instead of snapping
-/// at its halfway point.
-Color profileTileBg(BuildContext context) => FinavigTransition.of(context).color(
-      Colors.white,
-      FinavigColors.slate.withValues(alpha: 0.5),
+/// Accent-tinted card background for the grouped sheet cards — a soft pastel
+/// wash in light mode that deepens in dark mode. Interpolated through
+/// [FinavigTransition] so it cross-fades with the theme animation.
+Color profileAccentBg(BuildContext context, Color accent) =>
+    FinavigTransition.of(context).color(
+      accent.withValues(alpha: 0.07),
+      accent.withValues(alpha: 0.15),
     );
 
-/// A grouped settings card: title row (like "My Collections") over a rounded
-/// tile-background column of rows, matching the sheet's tile style.
-class ProfileSectionGroup extends StatelessWidget {
-  final String title;
-  final Widget? action;
+/// A vertical stack of [ProfileListRow]s with even breathing room.
+class ProfileList extends StatelessWidget {
   final List<Widget> children;
 
-  const ProfileSectionGroup({
+  const ProfileList({super.key, required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        children: [
+          for (var i = 0; i < children.length; i++) ...[
+            children[i],
+            if (i < children.length - 1) const SizedBox(height: 10),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// One full-width settings row — a white (or dark) rounded card with a leading
+/// outline icon, a title, an optional current value and a trailing arrow.
+/// The flat list anatomy of the redesigned Settings page.
+class ProfileListRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? value;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+
+  /// Danger rows (delete account) paint their icon and title red.
+  final bool danger;
+
+  const ProfileListRow({
     super.key,
+    required this.icon,
     required this.title,
-    required this.children,
-    this.action,
+    this.value,
+    this.trailing,
+    this.onTap,
+    this.danger = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final fade = FinavigTransition.of(context);
-    final tileBg = profileTileBg(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final fg = danger
+        ? FinavigColors.danger
+        : fade.color(FinavigColors.textPrimaryLight, FinavigColors.textPrimary);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: fade.color(Colors.white, FinavigColors.charcoal),
+        borderRadius: BorderRadius.circular(FinavigRadius.card),
+        boxShadow: FinavigShadows.adaptive(isDark),
+        border: Border.all(
+          color: fade.color(Colors.transparent, Colors.white.withValues(alpha: 0.06)),
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(FinavigRadius.card),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(FinavigRadius.card),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            child: Row(
+              children: [
+                Icon(icon, size: 22, color: fg),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: fg,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (value != null) ...[
+                  Text(
+                    value!,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.outline,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                trailing ??
+                    Icon(
+                      Icons.arrow_forward_rounded,
+                      size: 18,
+                      color: theme.colorScheme.outline,
+                    ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A grouped settings card (used inside the bottom sheets): an accent-marked
+/// title row over a rounded, accent-tinted column of rows.
+class ProfileSectionGroup extends StatelessWidget {
+  final String title;
+  final Widget? action;
+  final List<Widget> children;
+
+  /// Accent that tints the card and its title marker.
+  final Color accent;
+
+  const ProfileSectionGroup({
+    super.key,
+    required this.title,
+    required this.children,
+    this.action,
+    this.accent = FinavigColors.indigo,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final fade = FinavigTransition.of(context);
+    final tileBg = profileAccentBg(context, accent);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -44,6 +158,15 @@ class ProfileSectionGroup extends StatelessWidget {
         children: [
           Row(
             children: [
+              Container(
+                width: 4,
+                height: 14,
+                decoration: BoxDecoration(
+                  color: accent,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   title,
@@ -87,7 +210,7 @@ class ProfileSectionGroup extends StatelessWidget {
 }
 
 /// One tappable settings row: tinted circular icon, title, optional subtitle,
-/// and a trailing widget — the same row anatomy as the notification rows.
+/// and a trailing widget — the grouped-row anatomy reused inside the sheets.
 class ProfileSettingsTile extends StatelessWidget {
   final IconData icon;
   final Color? iconColor;

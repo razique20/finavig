@@ -1,24 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../models/subscription_tier.dart';
 import '../../services/auth_service.dart';
-import '../../services/entitlement_service.dart';
-import '../../services/supabase_service.dart';
-import '../../widgets/hero_widgets.dart';
+import '../../theme/app_theme.dart';
 
-/// Hero header of the Profile (Settings) tab — navy ink backdrop carrying the
-/// user's identity: avatar initials, name, email, plan/sync badges, and the
-/// sign-out action (it lives here because the floating bottom nav pill covers
-/// the end of the scroll content).
-class ProfileHeroHeader extends StatelessWidget {
+/// Header of the Profile (Settings) tab — a centred page title, a circular
+/// avatar, the user's name and email. Matches the clean, airy list layout: a
+/// soft gradient wash behind, no navy hero, no plan pills (plan status lives
+/// in the "Manage subscription" row instead).
+class ProfileSettingsHeader extends StatelessWidget {
   final String userName;
 
   /// Exact age derived from the DOB captured at signup; null hides the line
   /// (accounts created before DOB capture).
   final int? userAge;
 
-  const ProfileHeroHeader({
+  const ProfileSettingsHeader({
     super.key,
     required this.userName,
     this.userAge,
@@ -27,14 +24,13 @@ class ProfileHeroHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final email = AuthService.instance.userEmail;
-    final isCloudSynced =
-        SupabaseService.hasCredentials && AuthService.instance.isSignedIn;
+    final fade = FinavigTransition.of(context);
     final signedIn = AuthService.instance.isSignedIn;
-    final entitlements = EntitlementService.instance;
-    final tier = entitlements.tier;
-    final tierInfo = TierInfo.all[tier]!;
-    final daysLeft = entitlements.daysUntilPlanExpiry();
+    final email = AuthService.instance.userEmail;
+    final titleColor = fade.color(
+      FinavigColors.textPrimaryLight,
+      FinavigColors.textPrimary,
+    );
 
     final initials = userName
         .trim()
@@ -46,116 +42,97 @@ class ProfileHeroHeader extends StatelessWidget {
         .toUpperCase();
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Text(
-                'Settings',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const Spacer(),
-              if (signedIn)
-                HeroIconButton(
-                  icon: Icons.logout_rounded,
-                  tooltip: 'Sign out',
-                  onTap: () => _signOut(context),
-                ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              // Avatar: white on the ink hero — quiet, premium, no glare.
-              Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.14),
-                  borderRadius: BorderRadius.circular(17),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.18),
-                    width: 1,
-                  ),
-                ),
+              const SizedBox(width: 40),
+              Expanded(
                 child: Center(
                   child: Text(
-                    initials.isEmpty ? 'U' : initials,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
+                    'Settings',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      color: titleColor,
                       fontWeight: FontWeight.w700,
-                      letterSpacing: 0.5,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      userName,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      email ?? 'local@finavig.app',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.white.withOpacity(0.65),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (userAge != null) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        'Age $userAge',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: Colors.white.withOpacity(0.55),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
+              SizedBox(
+                width: 40,
+                child: signedIn
+                    ? _CircleIconButton(
+                        icon: Icons.logout_rounded,
+                        tooltip: 'Sign out',
+                        onTap: () => _signOut(context),
+                      )
+                    : null,
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          // Plan + sync status badges.
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _HeroPill(
-                icon: Icons.workspace_premium_rounded,
-                label: tierInfo.name,
+          const SizedBox(height: 18),
+          Container(
+            width: 84,
+            height: 84,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [
+                  fade.color(const Color(0xFF2563EB), const Color(0xFF1D4ED8)),
+                  fade.color(const Color(0xFF1E3A8A), const Color(0xFF111C3F)),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              _HeroPill(
-                icon: isCloudSynced
-                    ? Icons.cloud_done_rounded
-                    : Icons.storage_rounded,
-                label: isCloudSynced ? 'Cloud synced' : 'Local only',
+              boxShadow: FinavigShadows.adaptive(
+                theme.brightness == Brightness.dark,
               ),
-              if (daysLeft != null && !entitlements.isPlanExpired)
-                _HeroPill(
-                  icon: Icons.hourglass_top_rounded,
-                  label: '$daysLeft day${daysLeft == 1 ? '' : 's'} left',
+            ),
+            child: Center(
+              child: Text(
+                initials.isEmpty ? 'U' : initials,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 26,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1,
                 ),
-            ],
+              ),
+            ),
           ),
+          const SizedBox(height: 14),
+          Text(
+            userName,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: titleColor,
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            email ?? 'local@finavig.app',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.outline,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          if (userAge != null) ...[
+            const SizedBox(height: 2),
+            Text(
+              'Age $userAge',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.outline,
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -192,37 +169,43 @@ class ProfileHeroHeader extends StatelessWidget {
   }
 }
 
-/// Frosted pill in the hero (plan / sync status) — a quieter variant of the
-/// hero action pills on Home.
-class _HeroPill extends StatelessWidget {
+/// Round header action button that adapts to the light canvas (accent in light
+/// mode, white icon on a translucent chip in dark).
+class _CircleIconButton extends StatelessWidget {
   final IconData icon;
-  final String label;
+  final String tooltip;
+  final VoidCallback onTap;
 
-  const _HeroPill({required this.icon, required this.label});
+  const _CircleIconButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.10),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.18)),
+    final fade = FinavigTransition.of(context);
+    return Material(
+      color: fade.color(
+        FinavigColors.accent.withValues(alpha: 0.10),
+        Colors.white.withValues(alpha: 0.08),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: Colors.white),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Tooltip(
+          message: tooltip,
+          child: SizedBox(
+            width: 40,
+            height: 40,
+            child: Icon(
+              icon,
+              size: 20,
+              color: fade.color(FinavigColors.accent, Colors.white),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
