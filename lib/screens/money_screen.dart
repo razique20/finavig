@@ -181,12 +181,14 @@ class _MoneyScreenState extends State<MoneyScreen> {
     final summary = FinanceMath.summaryForMonth(_transactions, now);
     final spendByCategory = FinanceMath.spendByCategory(_transactions, now);
 
-    final isDark = theme.brightness == Brightness.dark;
+    // Light canvas (matching the redesigned Home tab); the hero is now a dark
+    // ink card floating on top instead of a full-width band.
+    final canvas = FinavigTransition.of(
+      context,
+    ).color(Colors.white, FinavigColors.obsidian);
 
     return Scaffold(
-      // Ink backdrop behind the hero; the content sheet covers the rest.
-      // Same backdrop colors as the redesigned Home and Documents tabs.
-      backgroundColor: isDark ? FinavigColors.obsidian : FinavigColors.ink,
+      backgroundColor: canvas,
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(
@@ -200,14 +202,8 @@ class _MoneyScreenState extends State<MoneyScreen> {
               SliverToBoxAdapter(
                 child: Container(
                   width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surface,
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(28),
-                    ),
-                  ),
                   child: _loading
-                      ? MoneySkeletonView()
+                      ? const SizedBox(height: 420, child: MoneySkeletonView())
                       : Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -388,14 +384,12 @@ class _MoneyScreenState extends State<MoneyScreen> {
                         ),
                 ),
               ),
-              // White filler: extends the sheet across the rest of the
-              // viewport when content is short, and into overscroll —
-              // the navy backdrop never peeks out below the content,
-              // behind the floating nav pill.
+              // Canvas filler: extends the background across the rest of the
+              // viewport and into overscroll behind the floating nav pill.
               SliverFillRemaining(
                 hasScrollBody: false,
                 fillOverscroll: true,
-                child: ColoredBox(color: theme.colorScheme.surface),
+                child: ColoredBox(color: canvas),
               ),
             ],
           ),
@@ -408,17 +402,18 @@ class _MoneyScreenState extends State<MoneyScreen> {
   // Hero header: title, quick actions, month net + action pills
   // ------------------------------------------------------------------
 
-  /// Navy gradient hero, same family as Home/Documents: title + quick
-  /// actions, one live status line, the month net as the headline number,
-  /// and the primary action pills.
+  /// Money header, same family as the redesigned Home tab: the title and
+  /// quick actions sit on the canvas, and the month net lives in a dark ink
+  /// card carrying the live status line and the primary action pills.
   Widget _buildHeroHeader(
     ThemeData theme,
     ({double income, double expense, double net}) summary,
   ) {
     final monthName = DateFormat('MMMM yyyy').format(DateTime.now());
+    final fade = FinavigTransition.of(context);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -427,7 +422,10 @@ class _MoneyScreenState extends State<MoneyScreen> {
               Text(
                 'Money',
                 style: theme.textTheme.titleLarge?.copyWith(
-                  color: Colors.white,
+                  color: fade.color(
+                    FinavigColors.textPrimaryLight,
+                    FinavigColors.textPrimary,
+                  ),
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -466,120 +464,143 @@ class _MoneyScreenState extends State<MoneyScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 18),
-          // One-line live status: month + record count (tappable to view transactions).
-          InkWell(
-            onTap: () => context.push('/records'),
-            borderRadius: BorderRadius.circular(6),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
+          const SizedBox(height: 16),
+          // The month summary is the dark ink card — same language as Home.
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: fade.color(FinavigColors.ink, FinavigColors.charcoal),
+              borderRadius: BorderRadius.circular(FinavigRadius.card + 4),
+              border: Border.all(
+                color: fade.color(
+                  Colors.transparent,
+                  Colors.white.withValues(alpha: 0.06),
+                ),
+              ),
+              boxShadow: FinavigShadows.adaptive(
+                theme.brightness == Brightness.dark,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // One-line live status: month + record count (tappable to view transactions).
+                InkWell(
+                  onTap: () => context.push('/records'),
+                  borderRadius: BorderRadius.circular(6),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '$monthName · ${_transactions.length} records',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.white.withOpacity(0.85),
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 10,
+                        color: Colors.white.withOpacity(0.7),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 6),
                 Text(
-                  '$monthName · ${_transactions.length} records',
+                  'Net this month',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.white.withOpacity(0.85),
+                    color: Colors.white.withOpacity(0.6),
                     fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                // FittedBox: long balances scale down instead of overflowing the
+                // hero on narrow screens (same fix as Home). No Flexible wrapper —
+                // the hero Column gets unbounded height inside the sliver, so a
+                // flex child here would crash the layout.
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    MoneyFormat.aed(summary.net),
+                    style: theme.textTheme.displayLarge?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -1.0,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '${MoneyFormat.aed(summary.income)} in · ${MoneyFormat.aed(summary.expense)} out',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: Colors.white.withOpacity(0.6),
+                    fontWeight: FontWeight.w500,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(width: 4),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 10,
-                  color: Colors.white.withOpacity(0.7),
+                const SizedBox(height: 16),
+                // 3 navigation pills in an equal-width row. Credit
+                // moved out of the dark hero into the light sheet
+                // below (see _CreditShortcutCard); three across still
+                // fits every label thanks to the pill's tightened
+                // metrics.
+                Row(
+                  children: [
+                    Expanded(
+                      child: _MoneyActionPill(
+                        icon: Icons.receipt_long_rounded,
+                        label: 'Transactions',
+                        onTap: () => context.push('/records'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _MoneyActionPill(
+                        icon: Icons.account_balance_wallet_rounded,
+                        label: 'Budgets',
+                        onTap: () => context.push('/budgets'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _MoneyActionPill(
+                        icon: Icons.savings_rounded,
+                        label: 'Envelopes',
+                        onTap: () => context.push('/envelopes'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                // AI Budget Planner + Add Record side by side (quota is enforced
+                // in-service).
+                Row(
+                  children: [
+                    Expanded(
+                      child: _MoneyAddCard(
+                        icon: Icons.auto_awesome_rounded,
+                        label: 'AI Budget Plan',
+                        onTap: () => showAiBudgetPlanSheet(context),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _MoneyAddCard(
+                        icon: Icons.add_rounded,
+                        label: 'Add Record',
+                        onTap: _showAddTransactionSheet,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Net this month',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: Colors.white.withOpacity(0.6),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 4),
-          // FittedBox: long balances scale down instead of overflowing the
-          // hero on narrow screens (same fix as Home). No Flexible wrapper —
-          // the hero Column gets unbounded height inside the sliver, so a
-          // flex child here would crash the layout.
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              MoneyFormat.aed(summary.net),
-              style: theme.textTheme.displayLarge?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-                letterSpacing: -1.0,
-              ),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            '${MoneyFormat.aed(summary.income)} in · ${MoneyFormat.aed(summary.expense)} out',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: Colors.white.withOpacity(0.6),
-              fontWeight: FontWeight.w500,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 16),
-          // 3 navigation pills in an equal-width row. Credit
-          // moved out of the dark hero into the light sheet
-          // below (see _CreditShortcutCard); three across still
-          // fits every label thanks to the pill's tightened
-          // metrics.
-          Row(
-            children: [
-              Expanded(
-                child: _MoneyActionPill(
-                  icon: Icons.receipt_long_rounded,
-                  label: 'Transactions',
-                  onTap: () => context.push('/records'),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _MoneyActionPill(
-                  icon: Icons.account_balance_wallet_rounded,
-                  label: 'Budgets',
-                  onTap: () => context.push('/budgets'),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _MoneyActionPill(
-                  icon: Icons.savings_rounded,
-                  label: 'Envelopes',
-                  onTap: () => context.push('/envelopes'),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          // AI Budget Planner + Add Record side by side (quota is enforced
-          // in-service).
-          Row(
-            children: [
-              Expanded(
-                child: _MoneyAddCard(
-                  icon: Icons.auto_awesome_rounded,
-                  label: 'AI Budget Plan',
-                  onTap: () => showAiBudgetPlanSheet(context),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _MoneyAddCard(
-                  icon: Icons.add_rounded,
-                  label: 'Add Record',
-                  onTap: _showAddTransactionSheet,
-                ),
-              ),
-            ],
           ),
         ],
       ),
@@ -883,8 +904,9 @@ class _MoneyScreenState extends State<MoneyScreen> {
   }
 }
 
-/// Frosted glass icon button in the Money hero header — same style as the
-/// Home/Documents hero icon buttons.
+/// Dark-chip icon button on the Money header — same style as the redesigned
+/// Home page's header buttons (ink chip in light mode, translucent white in
+/// dark).
 class _MoneyHeroIconButton extends StatelessWidget {
   final IconData icon;
   final String tooltip;
@@ -900,13 +922,21 @@ class _MoneyHeroIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fade = FinavigTransition.of(context);
     return Tooltip(
       message: tooltip,
       child: Material(
         color: enabled
-            ? Colors.white.withOpacity(0.12)
-            : Colors.white.withOpacity(0.05),
+            ? fade.color(
+                FinavigColors.ink,
+                Colors.white.withValues(alpha: 0.12),
+              )
+            : fade.color(
+                FinavigColors.mist,
+                Colors.white.withValues(alpha: 0.05),
+              ),
         borderRadius: BorderRadius.circular(13),
+        clipBehavior: Clip.antiAlias,
         child: InkWell(
           borderRadius: BorderRadius.circular(13),
           onTap: enabled ? onTap : null,
@@ -915,7 +945,12 @@ class _MoneyHeroIconButton extends StatelessWidget {
             height: 40,
             child: Icon(
               icon,
-              color: enabled ? Colors.white : Colors.white.withOpacity(0.35),
+              color: enabled
+                  ? Colors.white
+                  : fade.color(
+                      FinavigColors.textMutedLight,
+                      Colors.white.withValues(alpha: 0.35),
+                    ),
               size: 20,
             ),
           ),
