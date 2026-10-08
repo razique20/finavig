@@ -1,12 +1,17 @@
-/// Central credentials file — the single source of truth for all API
-/// credentials used by the app.
+/// Central credentials file — the single source of truth for the client-safe
+/// API credentials used by the app.
 ///
 /// Replaces the previous `--dart-define-from-file=.env.local` build-time
 /// injection: edit the values below and rebuild, no env file needed.
 ///
-/// NOTE: values here are compiled into the app binary. That is fine for the
-/// anon (publishable) Supabase key, but never put a service_role key or any
-/// other server-only secret in this file.
+/// NOTE: values here are compiled into the app binary. Only the anon
+/// (publishable) Supabase key may live here — never put a service_role key or
+/// any other server-only secret in this file.
+///
+/// The Groq API key is **not** here. It is held server-side as the
+/// `GROQ_API_KEY` secret of the `groq-proxy` Edge Function, which meters AI
+/// usage per user; rotate it with
+/// `supabase/functions/groq-proxy/rotate-key.sh`.
 class AppCredentials {
   AppCredentials._();
 
@@ -17,16 +22,4 @@ class AppCredentials {
   /// Your Supabase anon (publishable) key.
   static const String supabaseAnonKey =
       'sb_publishable_GgyDJs0On_xdoFr4QLxlWA_wyRlktjf';
-
-  // ── Groq ───────────────────────────────────────────────────────────────
-  /// In-app default Groq API key (AI summaries, budget plans, Ask Finavig
-  /// routing). Users can override it at runtime in Settings; this constant
-  /// is the out-of-the-box fallback.
-  ///
-  /// NOTE: like every client-embedded value this can be extracted from the
-  /// binary — it is protected only by Groq-side spend limits and the app's
-  /// per-user quota counters. Move AI calls behind a Supabase Edge Function
-  /// (key stored server-side) before scaling beyond the pilot.
-  static const String groqApiKey =
-      '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';
 }

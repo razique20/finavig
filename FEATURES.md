@@ -445,9 +445,10 @@ a centre **+** universal quick action (long-press for Ask Finavig AI).
   on this device") stays visible until it is.
 - **Team features (assignment, audit history, team export) are gated in the UI but
   depend on the Business tier being granted** — the app cannot enable them itself.
-- **Client-embedded Groq fallback key** — the Edge Function is the intended path, but
-  `AppCredentials` still carries an in-app default key for out-of-the-box use; it is
-  protected only by Groq-side spend limits and the per-tier quota counters.
+- **Shared-key AI depends on the Edge Function** — no Groq key ships in the app;
+  shared-key calls go through `groq-proxy`, so that function must be deployed with
+  the `GROQ_API_KEY` secret set or they fail (users who supply their own key still
+  work). Rotate the key with `supabase/functions/groq-proxy/rotate-key.sh`.
 - **No fine / penalty calculation inside the app.** `README.md` and
   `FINAVIG_APP_EXPLAINER.md` advertise "Penalty & Fine Risk Estimates" (e.g. *Driver
   Licence expired → fine 500 + 12 black points*), but no such code exists: there is

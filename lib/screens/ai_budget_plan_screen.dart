@@ -1409,7 +1409,7 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Finavig includes an in-app Groq API key by default. You can optional enter a custom key below.',
+              'Finavig AI uses a shared server-side key by default. Optionally enter your own Groq key below to use your own quota.',
               style: TextStyle(fontSize: 13, height: 1.4),
             ),
             const SizedBox(height: 14),

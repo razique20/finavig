@@ -505,6 +505,7 @@ class AiIntentRouterService {
               userPrompt: text.length > _maxUserInputChars
                   ? text.substring(0, _maxUserInputChars)
                   : text,
+              feature: 'intent',
               maxTokens: _maxCompletionTokens,
               temperature: 0,
               model: _escalationModel,

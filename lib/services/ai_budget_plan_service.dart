@@ -490,6 +490,7 @@ class AiBudgetPlanService {
           : await GroqApiService.instance.generateSummary(
               systemPrompt: systemPrompt,
               userPrompt: context,
+              feature: 'budget_plan',
               maxTokens: 900,
               temperature: 0.2,
             );

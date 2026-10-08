@@ -78,6 +78,17 @@ Note: a Groq-side failure is returned to the app as **502 `groq_error`** (with
 
 ## Rotating the key
 
+Use the helper script — it stores the new key as the function secret **and**
+strips any copy that may have crept back into `lib/config/app_credentials.dart`:
+
+```bash
+./supabase/functions/groq-proxy/rotate-key.sh gsk_new_key
+# or, with no argument, it reads GROQ_API_KEY or the value in
+# lib/config/app_credentials.dart
+```
+
+Or do it by hand:
+
 ```bash
 supabase secrets set GROQ_API_KEY=gsk_new_key
 # redeploy is optional; the secret is read at request time

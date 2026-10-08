@@ -19,11 +19,14 @@ void main() {
   });
 
   group('GroqApiService', () {
-    test('uses embedded default Groq API key out-of-the-box', () async {
+    test('ships with no client-side key (calls go through the server proxy)',
+        () async {
       final service = GroqApiService.instance;
-      expect(service.apiKey, isNotEmpty);
-      expect(service.apiKey, startsWith('gsk_'));
-      expect(service.isConfigured, isTrue);
+      await service.clearCustomApiKey();
+      expect(service.apiKey, isEmpty);
+      // Supabase isn't initialised in unit tests, so the proxy isn't
+      // reachable and no call can be made yet.
+      expect(service.isConfigured, isFalse);
     });
 
     test('supports setting and clearing custom API key override', () async {
@@ -32,9 +35,10 @@ void main() {
 
       await service.setCustomApiKey(customKey);
       expect(service.apiKey, equals(customKey));
+      expect(service.isConfigured, isTrue);
 
       await service.clearCustomApiKey();
-      expect(service.apiKey, startsWith('gsk_'));
+      expect(service.apiKey, isEmpty);
     });
   });
 
