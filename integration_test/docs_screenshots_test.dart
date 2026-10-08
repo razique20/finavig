@@ -10,6 +10,7 @@ import 'package:finavig/screens/money/money_sections.dart';
 import 'package:finavig/services/collection_service.dart';
 import 'package:finavig/services/credit_service.dart';
 import 'package:finavig/services/demo_document_service.dart';
+import 'package:finavig/services/document_scanner_service.dart';
 import 'package:finavig/services/finance_service.dart';
 import 'package:finavig/theme/app_theme.dart';
 
@@ -33,8 +34,17 @@ void main() {
     // Keep the shots free of the first-run guide banner.
     await prefs.setBool('hasSeenAppGuide', true);
 
-    // One demo licence (21 days out) so the Money renewal outlook is populated.
+    // Exactly one demo licence (21 days out) so the Money renewal outlook is
+    // populated. The stored vault survives across runs on the same simulator
+    // and `addDemoDocument` mints a new id every call, so clear any demo
+    // documents a previous tour left behind first — otherwise the shots
+    // accumulate duplicate rows and double the renewal totals.
+    await DemoDocumentService.instance.removeAll();
     await DemoDocumentService.instance.addDemoDocument();
+    // Logged so the capture script (and CI) can prove the frame was taken with
+    // a deterministic vault rather than an accumulating one.
+    final trackedDocs = await DocumentScannerService.instance.getAllItems();
+    debugPrint('==DOCS: ${trackedDocs.length}==');
 
     final collectionId = DocumentCollectionService.instance.activeCollectionId;
 
@@ -64,20 +74,55 @@ void main() {
     }
 
     // A live-looking month for the Money tab and the ledger.
-    await addTxn(FinanceKind.income, FinanceCategory.sales, 'Client retainer',
-        18500, 9);
     await addTxn(
-        FinanceKind.expense, FinanceCategory.rent, 'Warehouse rent', 4200, 8);
+      FinanceKind.income,
+      FinanceCategory.sales,
+      'Client retainer',
+      18500,
+      9,
+    );
     await addTxn(
-        FinanceKind.expense, FinanceCategory.salaries, 'Team salaries', 9600, 7);
-    await addTxn(FinanceKind.expense, FinanceCategory.suppliers,
-        'Supplier restock', 3100, 5);
+      FinanceKind.expense,
+      FinanceCategory.rent,
+      'Warehouse rent',
+      4200,
+      8,
+    );
     await addTxn(
-        FinanceKind.expense, FinanceCategory.utilities, 'DEWA — August', 940, 4);
-    await addTxn(FinanceKind.expense, FinanceCategory.transport, 'Fleet fuel',
-        640, 3);
-    await addTxn(FinanceKind.expense, FinanceCategory.renewals,
-        'Trade licence renewal', 2500, 1);
+      FinanceKind.expense,
+      FinanceCategory.salaries,
+      'Team salaries',
+      9600,
+      7,
+    );
+    await addTxn(
+      FinanceKind.expense,
+      FinanceCategory.suppliers,
+      'Supplier restock',
+      3100,
+      5,
+    );
+    await addTxn(
+      FinanceKind.expense,
+      FinanceCategory.utilities,
+      'DEWA — August',
+      940,
+      4,
+    );
+    await addTxn(
+      FinanceKind.expense,
+      FinanceCategory.transport,
+      'Fleet fuel',
+      640,
+      3,
+    );
+    await addTxn(
+      FinanceKind.expense,
+      FinanceCategory.renewals,
+      'Trade licence renewal',
+      2500,
+      1,
+    );
 
     // Credit book: an open borrowed loan (earliest deadline, so it sorts
     // first), an outstanding loan the user gave, and one already settled.
@@ -164,8 +209,11 @@ void main() {
 
     /// Asserts the anchor for this stop, announces it, then dwells.
     Future<void> stop(String name, String anchor) async {
-      expect(find.textContaining(anchor), findsWidgets,
-          reason: 'stop $name never rendered "$anchor"');
+      expect(
+        find.textContaining(anchor),
+        findsWidgets,
+        reason: 'stop $name never rendered "$anchor"',
+      );
       debugPrint('==SCREEN: $name==');
       await dwell();
     }
@@ -218,8 +266,11 @@ void main() {
       of: find.text('Credit'),
       matching: find.byType(SectionHeader),
     );
-    expect(creditHeader, findsWidgets,
-        reason: 'the Money sheet has no Credit section header');
+    expect(
+      creditHeader,
+      findsWidgets,
+      reason: 'the Money sheet has no Credit section header',
+    );
     await tester.ensureVisible(creditHeader.first);
     for (var i = 0; i < 20; i++) {
       await tester.pump(const Duration(milliseconds: 100));
@@ -233,8 +284,11 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
     // Still on Money (the header exists) with the section body expanded.
-    expect(creditHeader, findsWidgets,
-        reason: 'expanding Credit left the Money sheet');
+    expect(
+      creditHeader,
+      findsWidgets,
+      reason: 'expanding Credit left the Money sheet',
+    );
     await stop('34-money-credit', 'For rent');
 
     // ── Records: ledger with the credit-linked row and its chip ───────────
