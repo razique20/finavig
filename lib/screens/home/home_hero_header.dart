@@ -12,9 +12,9 @@ import '../../services/theme_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/widgets.dart';
 
-/// Navy gradient hero of the Home tab: greeting + collection switcher,
-/// dark-mode quick toggle, notification bell, then the month balance and
-/// action pills.
+/// Header of the Home tab on the light, airy canvas: a greeting + collection
+/// switcher chip, the dark-mode toggle and the notification bell, then a
+/// gradient "Net this month" balance card carrying the quick actions.
 class HomeHeroHeader extends StatelessWidget {
   final DocumentCollection? activeCollection;
   final List<ExpiryItem> items;
@@ -56,6 +56,7 @@ class HomeHeroHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final fade = FinavigTransition.of(context);
     final hour = DateTime.now().hour;
     final greeting = hour < 12
         ? 'Good morning'
@@ -71,71 +72,94 @@ class HomeHeroHeader extends StatelessWidget {
     );
     final nextRenewal = _nextRenewalLabel();
 
+    // Balance card — same brand ink as the Money tab's hero band.
+    final cardColor = fade.color(FinavigColors.ink, FinavigColors.obsidian);
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              // Left: collection avatar + switcher.
-              InkWell(
-                onTap: onCollectionSwitcherTap,
-                borderRadius: BorderRadius.circular(10),
-                child: Padding(
-                  padding: const EdgeInsets.all(2),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(13),
-                        ),
-                        child: Icon(
-                          activeCollection?.icon ?? Icons.person_rounded,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+              // Left: greeting + collection switcher chip.
+              Expanded(
+                child: Material(
+                  color: fade.color(Colors.white, FinavigColors.charcoal),
+                  borderRadius: BorderRadius.circular(16),
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    onTap: onCollectionSwitcherTap,
+                    child: Padding(
+                      padding: const EdgeInsets.all(6),
+                      child: Row(
                         children: [
-                          Text(
-                            greeting,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.white.withOpacity(0.7),
+                          Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: FinavigColors.accent
+                                  .withValues(alpha: fade.value(0.12, 0.18)),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              activeCollection?.icon ?? Icons.person_rounded,
+                              color: fade.color(
+                                FinavigColors.accent,
+                                Colors.white,
+                              ),
+                              size: 19,
                             ),
                           ),
-                          Row(
-                            children: [
-                              Text(
-                                activeCollection?.name ?? 'Personal',
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  greeting,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.outline,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
-                              Icon(
-                                Icons.expand_more_rounded,
-                                size: 16,
-                                color: Colors.white.withOpacity(0.7),
-                              ),
-                            ],
+                                Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        activeCollection?.name ?? 'Personal',
+                                        style: theme.textTheme.titleMedium
+                                            ?.copyWith(
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.expand_more_rounded,
+                                      size: 16,
+                                      color: theme.colorScheme.outline,
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),
-              const Spacer(),
-              // Dark mode toggle.
-              HeroIconButton(
-                icon: isDark ? Icons.light_mode_rounded : Icons.dark_mode_outlined,
-                tooltip: isDark ? 'Switch to light mode' : 'Switch to dark mode',
+              const SizedBox(width: 10),
+              _CanvasIconButton(
+                icon: isDark
+                    ? Icons.light_mode_rounded
+                    : Icons.dark_mode_outlined,
+                tooltip:
+                    isDark ? 'Switch to light mode' : 'Switch to dark mode',
                 onTap: () async {
                   final mode = ThemeService.instance.mode;
                   await ThemeService.instance.setMode(
@@ -150,99 +174,142 @@ class HomeHeroHeader extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 22),
-          // Balance block.
-          Text(
-            'Net this month',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: Colors.white.withOpacity(0.6),
-              fontWeight: FontWeight.w600,
+          const SizedBox(height: 16),
+          // Balance card — dark blue, the page's focal element.
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: cardColor,
+              borderRadius: BorderRadius.circular(FinavigRadius.card + 4),
+              boxShadow: FinavigShadows.adaptive(isDark),
             ),
-          ),
-          const SizedBox(height: 4),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              // Flexible: inside a Row the FittedBox would otherwise get
-              // unbounded width and never scale down — long balances
-              // overflowed the hero on narrow screens.
-              Flexible(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    MoneyFormat.aed(summary.net),
-                    style: theme.textTheme.displayLarge?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -1.0,
-                    ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Net this month',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.75),
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-              ),
-              if (summary.income > 0 || summary.expense > 0) ...[
-                const SizedBox(width: 12),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 7),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      DocumentCollectionService.instance.activeCurrency,
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: Colors.white.withOpacity(0.85),
-                        fontWeight: FontWeight.w600,
+                const SizedBox(height: 4),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          MoneyFormat.aed(summary.net),
+                          style: theme.textTheme.displayLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -1.0,
+                          ),
+                        ),
                       ),
                     ),
+                    if (summary.income > 0 || summary.expense > 0) ...[
+                      const SizedBox(width: 12),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 7),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.16),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            DocumentCollectionService
+                                .instance.activeCurrency,
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '${MoneyFormat.aed(summary.income)} in · '
+                  '${MoneyFormat.aed(summary.expense)} out'
+                  '${nextRenewal == null ? '' : ' · next: $nextRenewal'}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.72),
+                    fontWeight: FontWeight.w500,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    HeroActionPill(
+                      icon: Icons.south_west_rounded,
+                      label: 'Record',
+                      outlined: true,
+                      onTap: onQuickAddRecord,
+                    ),
+                    const SizedBox(width: 10),
+                    HeroActionPill(
+                      icon: Icons.north_east_rounded,
+                      label: 'Budget',
+                      filled: true,
+                      onTap: () => context.push('/budgets'),
+                    ),
+                  ],
                 ),
               ],
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            '${MoneyFormat.aed(summary.income)} in · ${MoneyFormat.aed(summary.expense)} out'
-            '${nextRenewal == null ? '' : ' · next: $nextRenewal'}',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: Colors.white.withOpacity(0.6),
-              fontWeight: FontWeight.w500,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 16),
-          // Action pills.
-          Row(
-            children: [
-              HeroActionPill(
-                icon: Icons.south_west_rounded,
-                label: 'Record',
-                outlined: true,
-                onTap: onQuickAddRecord,
-              ),
-              const SizedBox(width: 10),
-              HeroActionPill(
-                icon: Icons.north_east_rounded,
-                label: 'Budget',
-                filled: true,
-                onTap: () => context.push('/budgets'),
-              ),
-              const SizedBox(width: 10),
-              HeroActionPill(
-                icon: Icons.more_horiz_rounded,
-                label: '',
-                outlined: true,
-                tooltip: 'Switch collection',
-                onTap: onCollectionSwitcherTap,
-              ),
-            ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Home header action button — the same dark chip + white icon as the Money
+/// tab's hero icon buttons (ink in light mode, translucent white in dark).
+class _CanvasIconButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  const _CanvasIconButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final fade = FinavigTransition.of(context);
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: fade.color(
+          FinavigColors.ink,
+          Colors.white.withValues(alpha: 0.12),
+        ),
+        borderRadius: BorderRadius.circular(13),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(13),
+          onTap: onTap,
+          child: SizedBox(
+            width: 40,
+            height: 40,
+            child: Icon(icon, size: 20, color: Colors.white),
+          ),
+        ),
       ),
     );
   }
@@ -286,14 +353,19 @@ class HomeNotificationBell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final count = _count;
+    final fade = FinavigTransition.of(context);
     return Stack(
       clipBehavior: Clip.none,
       children: [
         Tooltip(
           message: 'Alerts & notifications',
           child: Material(
-            color: Colors.white.withOpacity(0.12),
+            color: fade.color(
+              FinavigColors.ink,
+              Colors.white.withValues(alpha: 0.12),
+            ),
             borderRadius: BorderRadius.circular(13),
+            clipBehavior: Clip.antiAlias,
             child: InkWell(
               borderRadius: BorderRadius.circular(13),
               onTap: () => _showNotificationsSheet(context),
@@ -318,7 +390,10 @@ class HomeNotificationBell extends StatelessWidget {
               decoration: BoxDecoration(
                 color: FinavigColors.danger,
                 shape: BoxShape.circle,
-                border: Border.all(color: FinavigColors.ink, width: 1.5),
+                border: Border.all(
+                  color: fade.color(FinavigColors.ink, FinavigColors.obsidian),
+                  width: 1.5,
+                ),
               ),
               constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
               child: Text(
@@ -469,7 +544,8 @@ class HomeNotificationBell extends StatelessWidget {
                       Icon(
                         Icons.notifications_off_rounded,
                         size: 40,
-                        color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline),
+                        color: FinavigColors.adaptiveIcon(
+                            context, theme.colorScheme.outline),
                       ),
                       const SizedBox(height: 12),
                       Text(
@@ -527,7 +603,7 @@ class _NotificationRow extends StatelessWidget {
     return ListTile(
       leading: CircleAvatar(
         radius: 18,
-        backgroundColor: color.withOpacity(0.15),
+        backgroundColor: color.withValues(alpha: 0.15),
         child: Icon(icon, size: 18, color: color),
       ),
       title: Text(

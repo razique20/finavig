@@ -5,10 +5,12 @@ import '../../services/demo_document_service.dart';
 
 import '../../models/expiry_item.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/bento_icon_tile.dart';
 import '../../widgets/indicators/empty_state_illustration.dart';
 
 /// "Next renewals · N" section of the Home tab — the 3 nearest upcoming
-/// documents with the full list behind "View all" (Expiry List screen).
+/// documents as white list cards, with the full list behind "View all"
+/// (Expiry List screen).
 class HomeUpcomingSection extends StatelessWidget {
   final List<ExpiryItem> upcomingItems;
 
@@ -30,7 +32,7 @@ class HomeUpcomingSection extends StatelessWidget {
                 child: Text(
                   'Next renewals · ${upcoming.length}',
                   style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
@@ -49,7 +51,7 @@ class HomeUpcomingSection extends StatelessWidget {
                 .take(3)
                 .map(
                   (item) => Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
+                    padding: const EdgeInsets.only(bottom: 10),
                     child: HomeUpcomingTile(item: item),
                   ),
                 ),
@@ -66,12 +68,19 @@ class HomeEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final fade = FinavigTransition.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
+        color: fade.color(Colors.white, FinavigColors.charcoal),
+        borderRadius: BorderRadius.circular(FinavigRadius.card),
+        border: Border.all(
+          color: fade.color(
+            Colors.transparent,
+            Colors.white.withValues(alpha: 0.06),
+          ),
+        ),
       ),
       child: Column(
         children: [
@@ -87,7 +96,7 @@ class HomeEmptyState extends StatelessWidget {
           Text(
             'Scan a trade licence, visa or Ejari to start tracking its expiry.',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.outline.withOpacity(0.7),
+              color: theme.colorScheme.outline,
             ),
             textAlign: TextAlign.center,
           ),
@@ -105,7 +114,7 @@ class HomeEmptyState extends StatelessWidget {
   }
 }
 
-/// One upcoming-renewal row: doc-type icon, name, expiry date and a
+/// One upcoming-renewal row: doc-type icon chip, name, expiry date and a
 /// colour-coded days-remaining counter (red ≤7d, amber ≤30d, green beyond).
 class HomeUpcomingTile extends StatelessWidget {
   final ExpiryItem item;
@@ -115,71 +124,80 @@ class HomeUpcomingTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final fade = FinavigTransition.of(context);
     final isCritical = item.daysRemaining <= 7;
+    final accent =
+        isCritical ? FinavigColors.danger : FinavigColors.accent;
 
-    return Material(
-      color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.4),
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        onTap: () => context.push('/document/${item.id}'),
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: isCritical
-                      ? Colors.red.withOpacity(0.12)
-                      : theme.colorScheme.primary.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(10),
+    return Container(
+      decoration: BoxDecoration(
+        color: fade.color(Colors.white, FinavigColors.charcoal),
+        borderRadius: BorderRadius.circular(FinavigRadius.card),
+        boxShadow: FinavigShadows.adaptive(
+          theme.brightness == Brightness.dark,
+        ),
+        border: Border.all(
+          color: fade.color(
+            Colors.transparent,
+            Colors.white.withValues(alpha: 0.06),
+          ),
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(FinavigRadius.card),
+        child: InkWell(
+          onTap: () => context.push('/document/${item.id}'),
+          borderRadius: BorderRadius.circular(FinavigRadius.card),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                BentoIconTile(
+                  icon: item.docType.icon,
+                  color: accent,
+                  size: 40,
+                  iconSize: 20,
+                  radius: 12,
                 ),
-                child: Center(
-                  child: Icon(
-                    item.docType.icon,
-                    color: isCritical ? Colors.red : theme.colorScheme.primary,
-                    size: 20,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.displayName,
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${item.docType.displayName} • ${item.expiresAt.day}/${item.expiresAt.month}/${item.expiresAt.year}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.outline,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.displayName,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${item.docType.displayName} • ${item.expiresAt.day}/${item.expiresAt.month}/${item.expiresAt.year}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.outline,
-                      ),
-                    ),
-                  ],
+                const SizedBox(width: 8),
+                Text(
+                  '${item.daysRemaining}d',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    color: isCritical
+                        ? FinavigColors.danger
+                        : item.daysRemaining <= 30
+                            ? FinavigColors.warning
+                            : FinavigColors.safe,
+                  ),
                 ),
-              ),
-              Text(
-                '${item.daysRemaining}d',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: isCritical
-                      ? FinavigColors.danger
-                      : item.daysRemaining <= 30
-                          ? FinavigColors.warning
-                          : FinavigColors.safe,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

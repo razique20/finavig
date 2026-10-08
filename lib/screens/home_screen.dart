@@ -17,12 +17,12 @@ import 'home/home_hero_header.dart';
 import 'home/home_upcoming_section.dart';
 import 'money/forms/transaction_form_sheet.dart';
 
-/// Home tab: cross-tier dashboard.
+/// Home tab: cross-tier dashboard on the light, airy canvas.
 ///
-/// Only the essentials: what needs attention (documents), where the money
-/// stands this month (budget summary), and the next renewals. Details live in
-/// the Documents and Money tabs. The heavy lifting lives in `lib/screens/home/`
-/// modules so each section rebuilds independently.
+/// A greeting + gradient balance card, a bento categories grid, the alert
+/// banners, and the next renewals. Details live in the Documents and Money
+/// tabs. The heavy lifting lives in `lib/screens/home/` modules so each
+/// section rebuilds independently.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -107,101 +107,101 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final urgency = UrgencyEngine().compute(_items);
-    final isDark = theme.brightness == Brightness.dark;
+    // Canvas + wash resolve through the theme transition factor so they
+    // cross-fade with the theme animation instead of snapping.
+    final fade = FinavigTransition.of(context);
+    final canvas = fade.color(FinavigColors.snowWhite, FinavigColors.obsidian);
+    final wash = LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [
+        fade.color(FinavigColors.accentSoft, const Color(0xFF151830)),
+        canvas,
+      ],
+      stops: const [0.0, 0.55],
+    );
 
     return Scaffold(
-      // Ink backdrop behind the hero; the content sheet covers the rest.
-      backgroundColor: isDark ? FinavigColors.obsidian : FinavigColors.ink,
-      body: SafeArea(
-        bottom: false,
-        child: RefreshIndicator(
-          color: theme.colorScheme.secondary,
-          onRefresh: _loadData,
-          child: CustomScrollView(
-            controller: _scrollController,
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              SliverToBoxAdapter(
-                child: HomeHeroHeader(
-                  activeCollection: _activeCollection,
-                  items: _items,
-                  dismissedAttentionCount: _dismissedAttentionCount,
-                  onCollectionSwitcherTap: _showCollectionSwitcher,
-                  onQuickAddRecord: _quickAddRecord,
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surface,
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(28),
-                    ),
-                  ),
-                  child: _loading
-                      ? HomeSkeletonView()
-                      : Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 20),
-                            HomeCategoriesGrid(
-                              pendingActionsCount: urgency.pendingActions.length,
-                              onScanTap: _openScanner,
-                            ),
-                            const FirstRunGuideBanner(),
-                            HomePlanRestrictionBanner(),
-                            // Both banners own their top margin internally and
-                            // collapse to zero height when not applicable, so
-                            // no reserved gap can ever appear between sections.
-                            HomeAttentionBanner(
-                              pendingActionNames: urgency.pendingActions
-                                  .map((a) => a.displayName)
-                                  .toList(),
-                              dismissedAttentionCount: _dismissedAttentionCount,
-                              onDismiss: (count) => setState(
-                                () => _dismissedAttentionCount = count,
-                              ),
-                            ),
-                            if (_expiredItems.isNotEmpty)
-                              HomeExpiredAlert(
-                                expiredItems: _expiredItems
-                                    .map(
-                                      (i) => HomeExpiredItem(
-                                        id: i.id,
-                                        displayName: i.displayName,
-                                        daysRemaining: i.daysRemaining,
-                                      ),
-                                    )
-                                    .toList(),
-                              ),
-                            const SizedBox(height: 20),
-                            HomeUpcomingSection(
-                              upcomingItems: _upcomingItems(),
-                            ),
-                            // Keep the last tile scrollable clear of the
-                            // floating nav pill (height + margins ≈ 80).
-                            SizedBox(
-                              height: 8 +
-                                  MediaQuery.of(context).padding.bottom +
-                                  80,
-                            ),
-                          ],
+      backgroundColor: canvas,
+      body: Container(
+        decoration: BoxDecoration(gradient: wash),
+        child: SafeArea(
+          bottom: false,
+          child: RefreshIndicator(
+            color: theme.colorScheme.secondary,
+            onRefresh: _loadData,
+            child: CustomScrollView(
+              controller: _scrollController,
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      HomeHeroHeader(
+                        activeCollection: _activeCollection,
+                        items: _items,
+                        dismissedAttentionCount: _dismissedAttentionCount,
+                        onCollectionSwitcherTap: _showCollectionSwitcher,
+                        onQuickAddRecord: _quickAddRecord,
+                      ),
+                      const SizedBox(height: 22),
+                      if (_loading)
+                        const SizedBox(height: 420, child: HomeSkeletonView())
+                      else ...[
+                        HomeCategoriesGrid(
+                          pendingActionsCount: urgency.pendingActions.length,
+                          onScanTap: _openScanner,
                         ),
+                        const FirstRunGuideBanner(),
+                        HomePlanRestrictionBanner(),
+                        // Both banners own their top margin internally and
+                        // collapse to zero height when not applicable, so
+                        // no reserved gap can ever appear between sections.
+                        HomeAttentionBanner(
+                          pendingActionNames: urgency.pendingActions
+                              .map((a) => a.displayName)
+                              .toList(),
+                          dismissedAttentionCount: _dismissedAttentionCount,
+                          onDismiss: (count) => setState(
+                            () => _dismissedAttentionCount = count,
+                          ),
+                        ),
+                        if (_expiredItems.isNotEmpty)
+                          HomeExpiredAlert(
+                            expiredItems: _expiredItems
+                                .map(
+                                  (i) => HomeExpiredItem(
+                                    id: i.id,
+                                    displayName: i.displayName,
+                                    daysRemaining: i.daysRemaining,
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                        const SizedBox(height: 20),
+                        HomeUpcomingSection(
+                          upcomingItems: _upcomingItems(),
+                        ),
+                        // Keep the last tile clear of the floating nav pill
+                        // (height + margins ≈ 80).
+                        SizedBox(
+                          height:
+                              8 + MediaQuery.of(context).padding.bottom + 80,
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
-              ),
-              // White filler: extends the sheet across the rest of the
-              // viewport when content is short, and into overscroll
-              // (iOS bounce) — the navy backdrop never peeks out below
-              // the content, behind the floating nav pill. Kept empty: a
-              // fill-remaining sliver queries the child's intrinsics
-              // during overscroll, which a shrinkWrap grid can't do.
-              SliverFillRemaining(
-                hasScrollBody: false,
-                fillOverscroll: true,
-                child: ColoredBox(color: theme.colorScheme.surface),
-              ),
-            ],
+                // Canvas filler: extends the background across the rest of
+                // the viewport and into overscroll behind the nav pill.
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  fillOverscroll: true,
+                  child: ColoredBox(color: canvas),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -230,7 +230,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _openScanner() => openGatedScanner(context);
 
   /// Quick-add a money record without leaving Home: the same form sheet the
-  /// Money tab uses; FinanceService notifies and the hero totals refresh.
+  /// Money tab uses; FinanceService notifies and the balance card refreshes.
   Future<void> _quickAddRecord() async {
     final created = await showModalBottomSheet<FinanceTransaction>(
       context: context,

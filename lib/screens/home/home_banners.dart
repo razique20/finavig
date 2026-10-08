@@ -38,33 +38,33 @@ class HomePlanRestrictionBanner extends StatelessWidget {
         : 'Your current plan limits company collections. Upgrade to unlock all.';
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: InkWell(
         onTap: () => showTierRequestSheet(context),
-        borderRadius: BorderRadius.circular(FinavigRadius.card),
+        borderRadius: BorderRadius.circular(FinavigRadius.tile),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: bannerBg,
-            borderRadius: BorderRadius.circular(FinavigRadius.card),
+            borderRadius: BorderRadius.circular(FinavigRadius.tile),
           ),
           child: Row(
             children: [
               Container(
-                width: 44,
-                height: 44,
+                width: 34,
+                height: 34,
                 decoration: BoxDecoration(
                   color: iconColor.withValues(alpha: fade.value(0.15, 0.18)),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(11),
                 ),
                 child: const Icon(
                   Icons.lock_rounded,
                   color: iconColor,
-                  size: 21,
+                  size: 17,
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,16 +72,16 @@ class HomePlanRestrictionBanner extends StatelessWidget {
                     Text(
                       title,
                       style: TextStyle(
-                        fontSize: 15,
+                        fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: textColor,
                       ),
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: TextStyle(fontSize: 13, color: subtitleColor),
-                      maxLines: 2,
+                      style: TextStyle(fontSize: 11, color: subtitleColor),
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
@@ -93,11 +93,16 @@ class HomePlanRestrictionBanner extends StatelessWidget {
                   backgroundColor: fade.color(FinavigColors.ink, Colors.white),
                   foregroundColor: fade.color(Colors.white, FinavigColors.ink),
                   visualDensity: VisualDensity.compact,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  minimumSize: const Size(0, 30),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
                 ),
                 onPressed: () => showTierRequestSheet(context),
-                child: const Text('Renew', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+                child: const Text('Renew',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 11)),
               ),
             ],
           ),
@@ -147,22 +152,22 @@ class HomeAttentionBanner extends StatelessWidget {
         fade.color(const Color(0xFFB91C1C), const Color(0xFFFCA5A5));
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: InkWell(
         onTap: () => context.go('/documents'),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(FinavigRadius.tile),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: bannerBg,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(FinavigRadius.tile),
             border: Border.all(color: bannerBorder),
           ),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
                   color: iconColor.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
@@ -170,10 +175,10 @@ class HomeAttentionBanner extends StatelessWidget {
                 child: Icon(
                   Icons.warning_amber_rounded,
                   color: iconColor,
-                  size: 22,
+                  size: 18,
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,16 +186,16 @@ class HomeAttentionBanner extends StatelessWidget {
                     Text(
                       '${pending.length} renewal${pending.length == 1 ? '' : 's'} need attention',
                       style: TextStyle(
-                        fontSize: 15,
+                        fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: textColor,
                       ),
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 2),
                     Text(
                       pending.take(2).join(', ') +
                           (pending.length > 2 ? ' +${pending.length - 2}' : ''),
-                      style: TextStyle(fontSize: 13, color: subtitleColor),
+                      style: TextStyle(fontSize: 11, color: subtitleColor),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -250,30 +255,30 @@ class HomeExpiredAlert extends StatelessWidget {
         fade.color(FinavigColors.red, const Color(0xFFFCA5A5));
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: InkWell(
         onTap: () => context.push('/document/${worst.id}'),
-        borderRadius: BorderRadius.circular(FinavigRadius.card),
+        borderRadius: BorderRadius.circular(FinavigRadius.tile),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: cardBg,
-            borderRadius: BorderRadius.circular(FinavigRadius.card),
+            borderRadius: BorderRadius.circular(FinavigRadius.tile),
           ),
           child: Row(
             children: [
               Container(
-                width: 42,
-                height: 42,
+                width: 34,
+                height: 34,
                 decoration: BoxDecoration(
                   color: accentColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(13),
+                  borderRadius: BorderRadius.circular(11),
                 ),
                 child: Icon(
                   Icons.event_busy_rounded,
                   color: accentColor,
-                  size: 20,
+                  size: 17,
                 ),
               ),
               const SizedBox(width: 12),

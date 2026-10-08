@@ -55,17 +55,17 @@ class _FirstRunGuideBannerState extends State<FirstRunGuideBanner> {
     final theme = Theme.of(context);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           gradient: FinavigGradients.primary,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(FinavigRadius.tile),
           boxShadow: [
             BoxShadow(
-              color: FinavigColors.accent.withOpacity(0.25),
-              blurRadius: 18,
-              offset: const Offset(0, 6),
+              color: FinavigColors.accent.withValues(alpha: 0.22),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -74,9 +74,9 @@ class _FirstRunGuideBannerState extends State<FirstRunGuideBanner> {
             const Icon(
               Icons.auto_stories_rounded,
               color: Colors.white,
-              size: 22,
+              size: 18,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -103,7 +103,9 @@ class _FirstRunGuideBannerState extends State<FirstRunGuideBanner> {
               onPressed: _dismiss,
               style: TextButton.styleFrom(
                 foregroundColor: Colors.white70,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
+                minimumSize: const Size(0, 30),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                padding: const EdgeInsets.symmetric(horizontal: 6),
               ),
               child: const Text('Later'),
             ),
@@ -113,9 +115,13 @@ class _FirstRunGuideBannerState extends State<FirstRunGuideBanner> {
               style: FilledButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: FinavigColors.accent,
-                padding: const EdgeInsets.symmetric(horizontal: 14),
+                visualDensity: VisualDensity.compact,
+                minimumSize: const Size(0, 30),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               ),
-              child: const Text('Take the tour'),
+              child: const Text('Take the tour',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
             ),
           ],
         ),

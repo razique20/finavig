@@ -123,4 +123,29 @@ void main() {
     expect(find.text('Expense'), findsOneWidget);
     expect(find.text('Income'), findsOneWidget);
   });
+
+  testWidgets('home renders without overflowing a narrow phone viewport',
+      (tester) async {
+    tester.view.physicalSize = const Size(1179, 2556);
+    tester.view.devicePixelRatio = 3.0; // logical ≈ 393 wide
+    addTearDown(tester.view.reset);
+
+    final errors = <FlutterErrorDetails>[];
+    final original = FlutterError.onError;
+    FlutterError.onError = (d) {
+      errors.add(d);
+      original?.call(d);
+    };
+    addTearDown(() => FlutterError.onError = original);
+
+    await pumpHome(tester);
+
+    final overflows = errors
+        .map((e) =>
+            '${e.exception}\n${e.informationCollector?.call().join('\n') ?? ''}')
+        .where((s) => s.contains('overflowed'))
+        .toList();
+    expect(overflows, isEmpty,
+        reason: 'Home must not overflow at 393px width: $overflows');
+  });
 }

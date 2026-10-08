@@ -1,7 +1,7 @@
 // Regression guard: with documents tracked and no urgent renewals, the gap
-// between the categories grid and the "Next renewals" section must stay tight
-// section spacing — no phantom blank area (the removed "This month" card and
-// the collapsed attention banner must not reserve space).
+// between the categories bento and the "Next renewals" section must stay tight
+// section spacing — no phantom blank area (the collapsed attention banner must
+// not reserve space).
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -52,21 +52,18 @@ void main() {
     expect(find.textContaining('Next renewals'), findsOneWidget);
     expect(find.text('This month'), findsNothing);
 
-    // The categories GridView must carry explicit zero padding: with the
-    // shell's extendBody: true, an unpadded scroll view inherits the nav-pill
-    // bottom inset as implicit sliver padding — a ~120px blank band under the
-    // tiles (regression: phantom gap between Categories and Next renewals).
-    final grid = tester.widget<GridView>(find.byType(GridView));
-    expect(grid.padding, EdgeInsets.zero);
-
-    final gridBottom = tester.getBottomRight(find.byType(GridView)).dy;
+    // The categories bento ends with the full-width Scan CTA card.
+    final scanCard = find
+        .ancestor(of: find.text('Scan'), matching: find.byType(Material))
+        .first;
+    final gridBottom = tester.getBottomRight(scanCard).dy;
     final titleTop = tester.getTopLeft(find.textContaining('Next renewals')).dy;
 
     // Tight section spacing only — a stale/collapsed section must never
     // reserve a blank band here.
     expect(titleTop - gridBottom, lessThan(60),
         reason:
-            'Gap between Categories grid and Next renewals should be small '
+            'Gap between the categories grid and Next renewals should be small '
             'section spacing, got ${titleTop - gridBottom}px');
   });
 }

@@ -7,9 +7,9 @@ import 'package:finavig/screens/login_screen.dart';
 import 'package:finavig/screens/welcome_screen.dart';
 import 'package:finavig/theme/app_theme.dart';
 
-/// One brand ink, three surfaces.
+/// One brand ink, four surfaces.
 ///
-/// The Home hero band, the Welcome headline / CTA / reply bubble and the
+/// The Home balance card, the Welcome headline / CTA / reply bubble and the
 /// Login CTA are all [FinavigColors.ink]. They must stay that: if the ink is
 /// retuned, every surface moves together instead of one screen silently
 /// drifting to a different navy (which reads black next to the others).
@@ -70,11 +70,18 @@ void main() {
     );
   });
 
-  testWidgets('Home hero band uses the brand ink', (tester) async {
+  testWidgets('Home balance card uses the brand ink', (tester) async {
     await pumpScreen(tester, const HomeScreen());
 
-    final scaffold = tester.widget<Scaffold>(find.byType(Scaffold).first);
-    expect(scaffold.backgroundColor, FinavigColors.ink,
-        reason: 'Home top section must be the shared brand ink');
+    // The top balance card is Home's "hero" plate — the same ink as the
+    // Money tab's hero band.
+    expect(
+      find.byWidgetPredicate((w) =>
+          w is Container &&
+          w.decoration is BoxDecoration &&
+          (w.decoration! as BoxDecoration).color == FinavigColors.ink),
+      findsOneWidget,
+      reason: 'Home top card must be the shared brand ink',
+    );
   });
 }
