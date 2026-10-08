@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Launch/normal window background — matches FinavigColors.ink (#0F172A)
-         so the native pre-Flutter screen blends into the Flutter splash. -->
-    <color name="launch_bg">#0F172A</color>
+    <!-- Launch/normal window background — plain white, matching the Flutter
+         splash so the native pre-Flutter screen blends into it. -->
+    <color name="launch_bg">#FFFFFF</color>
 </resources>

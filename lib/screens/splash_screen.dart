@@ -4,10 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/app_version_service.dart';
 import '../services/auth_service.dart';
+import '../theme/app_theme.dart';
 import '../widgets/dialogs/app_version_dialog.dart';
-
-/// Full-bleed splash backdrop image (dark market-chart photo).
-const String kSplashBackgroundAsset = 'assets/images/splash_bg.jpg';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -29,7 +27,7 @@ class _SplashScreenState extends State<SplashScreen>
       duration: const Duration(milliseconds: 1800),
     );
 
-    // Mark: a simple fade-in over the first stretch of the timeline.
+    // Wordmark: a simple fade-in over the first stretch of the timeline.
     _markFade = CurvedAnimation(
       parent: _controller,
       curve: const Interval(0.0, 0.3, curve: Curves.easeOut),
@@ -82,86 +80,38 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Deliberately plain: a white field with the wordmark dead center.
     return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          // Backdrop: full-bleed finance image, cover-fitted to every screen.
-          Image.asset(
-            kSplashBackgroundAsset,
-            fit: BoxFit.cover,
-            alignment: Alignment.center,
+      backgroundColor: Colors.white,
+      body: Center(
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) => Opacity(
+            opacity: _markFade.value.clamp(0.0, 1.0),
+            child: child,
           ),
-          // Ink scrim: darkens the photo so the FV mark reads clearly,
-          // and blends the edges into the app's ink palette.
-          const DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xD90F172A), // 85% ink
-                  Color(0x990F172A), // 60% ink
-                  Color(0xE60B1120), // 90% ink-deep
-                ],
-                stops: [0.0, 0.45, 1.0],
-              ),
-            ),
-          ),
-          // Deliberately minimal: just the FV mark, top center.
-          SafeArea(
-            child: Column(
-              children: [
-                const SizedBox(height: 48),
-                AnimatedBuilder(
-                  animation: _controller,
-                  builder: (context, child) => Opacity(
-                    opacity: _markFade.value.clamp(0.0, 1.0),
-                    child: child,
-                  ),
-                  child: const _FvMonogram(),
-                ),
-              ],
-            ),
-          ),
-          // Version + OS stamp, pinned to the bottom right —
-          // quiet and out of the way while the FV mark
-          // owns the top center.
-          Positioned(
-            right: 16,
-            bottom: MediaQuery.of(context).padding.bottom + 16,
-            child: Text(
-              AppVersionService.fullVersionDisplay,
-              textAlign: TextAlign.right,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                letterSpacing: 1.2,
-                color: Color(0x59FFFFFF), // white @ 35%
-              ),
-            ),
-          ),
-        ],
+          child: const _Wordmark(),
+        ),
       ),
     );
   }
 }
 
-/// Solid white "FV" glyphs at the top of the splash.
-class _FvMonogram extends StatelessWidget {
-  const _FvMonogram();
+/// The "Finavig" wordmark, ink on white.
+class _Wordmark extends StatelessWidget {
+  const _Wordmark();
 
   @override
   Widget build(BuildContext context) {
     return const Text(
-      'FV',
+      'Finavig',
       textAlign: TextAlign.center,
       style: TextStyle(
-        fontSize: 72,
+        fontSize: 40,
         height: 1.0,
         fontWeight: FontWeight.w900,
-        letterSpacing: 4.0,
-        color: Colors.white,
+        letterSpacing: 1.0,
+        color: FinavigColors.ink,
       ),
     );
   }

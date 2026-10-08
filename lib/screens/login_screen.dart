@@ -16,6 +16,11 @@ import '../theme/app_theme.dart';
 import '../widgets/dialogs/legal_info_dialogs.dart';
 import 'app_lock_flows.dart';
 
+/// One beat for the whole step change: the cross-fade/slide of the two steps
+/// and the height settle of their container run together, so the centred
+/// block glides to its new position instead of snapping to it.
+const Duration _kStepTransition = Duration(milliseconds: 320);
+
 /// Login & Sign-up — a Material-3 centred auth screen: a quiet
 /// brand header (wordmark + GCC Edition pill) above the quiz
 /// flow, which sits in a soft card on a flat surface.
@@ -412,20 +417,20 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Force the dark brand theme (welcome's blue/dark-blue
-    // look) regardless of the system brightness, so the
-    // welcome → login handoff is seamless. The Builder lets
-    // everything below resolve Theme.of against it.
+    // Force the light brand theme (the plain-white welcome look)
+    // regardless of the system brightness, so the welcome → login
+    // handoff is seamless. The Builder lets everything below resolve
+    // Theme.of against it.
     return Theme(
-      data: FinavigTheme.dark(),
+      data: FinavigTheme.light(),
       child: Builder(
         builder: (context) {
           final theme = Theme.of(context);
           final isDark = theme.brightness == Brightness.dark;
 
           return Scaffold(
-            // Same navy as the welcome page behind the CTA.
-            backgroundColor: FinavigColors.ink,
+            // Same plain white as the splash and welcome screens.
+            backgroundColor: Colors.white,
             // The sheet IS the screen — a flat surface under a
             // centred header, with the quiz flow in a soft M3 card.
             body: SafeArea(bottom: false, child: _glassSheet(theme, isDark)),
@@ -496,10 +501,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: FinavigColors.violet.withValues(alpha: 0.15),
+                  color: FinavigColors.ink.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(99),
                   border: Border.all(
-                    color: FinavigColors.violet.withValues(alpha: 0.4),
+                    color: FinavigColors.ink.withValues(alpha: 0.25),
                   ),
                 ),
                 child: const Text(
@@ -508,7 +513,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.3,
-                    color: FinavigColors.violet,
+                    color: FinavigColors.ink,
                   ),
                 ),
               ),
@@ -547,13 +552,28 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Mirror the card's vertical padding so the step
                 // content stays centred in the full card height.
                 constraints: BoxConstraints(minHeight: viewport.maxHeight - 52),
-                child: IntrinsicHeight(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 320),
+                // No IntrinsicHeight: it pinned the column to the child's
+                // intrinsic height and fought the AnimatedSize below, which is
+                // what has to own the height while steps of different sizes
+                // swap over.
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Height settle: the box adopts the incoming step's
+                    // height immediately and animates the difference across
+                    // the same beat as the cross-fade. Without it the box held
+                    // the taller outgoing step for its whole 320 ms and then
+                    // collapsed by ~80 px in a single frame, which is what
+                    // kicked the email field up and back down.
+                    AnimatedSize(
+                      duration: _kStepTransition,
+                      // Ease in and out: the settle starts gently so it never
+                      // reads as a snap, however tall the outgoing step was.
+                      curve: Curves.easeInOutCubic,
+                      alignment: Alignment.topCenter,
+                      child: AnimatedSwitcher(
+                        duration: _kStepTransition,
                         switchInCurve: Curves.easeOutCubic,
                         switchOutCurve: Curves.easeInCubic,
                         transitionBuilder: (child, animation) {
@@ -569,12 +589,24 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           );
                         },
+                        // Only the incoming step sizes the box. The outgoing
+                        // one is positioned out of the layout so it cannot
+                        // hold the height open; it just fades (clipped as the
+                        // box shrinks under it) — a collapse, not a
+                        // single-frame jump.
                         layoutBuilder: (currentChild, previousChildren) {
                           return Stack(
-                            alignment: Alignment.topLeft,
+                            alignment: Alignment.topCenter,
                             children: [
-                              ...previousChildren,
                               if (currentChild != null) currentChild,
+                              ...previousChildren.map(
+                                (child) => Positioned(
+                                  top: 0,
+                                  left: 0,
+                                  right: 0,
+                                  child: child,
+                                ),
+                              ),
                             ],
                           );
                         },
@@ -586,16 +618,16 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: _buildStep(isDark),
                         ),
                       ),
-                      if (_error != null) ...[
-                        const SizedBox(height: 14),
-                        _errorBanner(isDark),
-                      ],
-                      const SizedBox(height: 20),
-                      _actionRow(isDark),
-                      const SizedBox(height: 16),
-                      _TrustRow(isDark: isDark),
+                    ),
+                    if (_error != null) ...[
+                      const SizedBox(height: 14),
+                      _errorBanner(isDark),
                     ],
-                  ),
+                    const SizedBox(height: 20),
+                    _actionRow(isDark),
+                    const SizedBox(height: 16),
+                    _TrustRow(isDark: isDark),
+                  ],
                 ),
               ),
             ),
@@ -648,6 +680,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ],
             Expanded(
               child: _PrimaryButton(
+                isDark: isDark,
                 label: _step < _totalSteps - 1
                     ? 'Continue'
                     : (_isSignUp ? 'Create account' : 'Sign in'),
@@ -799,10 +832,13 @@ class _LoginScreenState extends State<LoginScreen> {
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.mark_email_read_outlined,
             size: 14,
-            color: Colors.white,
+            color: FinavigColors.adaptiveIcon(
+              context,
+              FinavigColors.textSecondaryLight,
+            ),
           ),
           const SizedBox(width: 6),
           Flexible(
@@ -821,7 +857,7 @@ class _LoginScreenState extends State<LoginScreen> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: FinavigColors.violet,
+                color: FinavigColors.ink,
               ),
             ),
           ),
@@ -940,7 +976,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       ? Icons.visibility_off_rounded
                       : Icons.visibility_rounded,
                   size: 20,
-                  color: Colors.white,
+                  color: FinavigColors.adaptiveIcon(
+                    context,
+                    FinavigColors.textSecondaryLight,
+                  ),
                 ),
                 onPressed: () {
                   setState(() {
@@ -965,7 +1004,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: FinavigColors.violet,
+                    color: FinavigColors.ink,
                   ),
                 ),
               ),
@@ -1007,10 +1046,13 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.cake_rounded,
                   size: 19,
-                  color: Colors.white,
+                  color: FinavigColors.adaptiveIcon(
+                    context,
+                    FinavigColors.textSecondaryLight,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -1032,10 +1074,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 if (_selectedDob != null)
                   GestureDetector(
                     onTap: () => setState(() => _selectedDob = null),
-                    child: const Icon(
+                    child: Icon(
                       Icons.close_rounded,
                       size: 18,
-                      color: Colors.white,
+                      color: FinavigColors.adaptiveIcon(
+                        context,
+                        FinavigColors.textSecondaryLight,
+                      ),
                     ),
                   ),
               ],
@@ -1170,10 +1215,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
                 ),
-                const Icon(
+                Icon(
                   Icons.expand_more_rounded,
                   size: 22,
-                  color: Colors.white,
+                  color: FinavigColors.adaptiveIcon(
+                    context,
+                    FinavigColors.textSecondaryLight,
+                  ),
                 ),
               ],
             ),
@@ -1245,7 +1293,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         decoration: BoxDecoration(
                           color: selected
-                              ? FinavigColors.violet.withOpacity(0.10)
+                              ? FinavigColors.ink.withOpacity(0.06)
                               : (sheetDark
                                     ? Colors.white.withOpacity(0.05)
                                     : FinavigColors.cloud),
@@ -1254,7 +1302,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           border: Border.all(
                             color: selected
-                                ? FinavigColors.violet
+                                ? FinavigColors.ink
                                 : (sheetDark
                                       ? Colors.white.withOpacity(0.08)
                                       : Colors.black.withOpacity(0.05)),
@@ -1320,7 +1368,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ? const Icon(
                                       Icons.check_circle_rounded,
                                       size: 20,
-                                      color: FinavigColors.violet,
+                                      color: FinavigColors.ink,
                                     )
                                   : null,
                             ),
@@ -1403,7 +1451,14 @@ class _LoginScreenState extends State<LoginScreen> {
         fontSize: 13,
       ),
       errorText: errorText,
-      prefixIcon: Icon(icon, size: 19, color: Colors.white),
+      prefixIcon: Icon(
+        icon,
+        size: 19,
+        color: FinavigColors.adaptiveIcon(
+          context,
+          FinavigColors.textSecondaryLight,
+        ),
+      ),
       prefixIconConstraints: iconSlot,
       suffixIconConstraints: iconSlot,
       suffixIcon: suffixIcon,
@@ -1518,7 +1573,7 @@ class _StepProgress extends StatelessWidget {
                   margin: EdgeInsets.only(right: i == total - 1 ? 0 : 5),
                   decoration: BoxDecoration(
                     color: done
-                        ? FinavigColors.violet
+                        ? FinavigColors.ink
                         : (isDark
                               ? Colors.white.withOpacity(0.12)
                               : Colors.black.withOpacity(0.08)),
@@ -1545,13 +1600,15 @@ class _StepProgress extends StatelessWidget {
   }
 }
 
-/// Primary action — flat violet, same as the app's FilledButtons.
+/// Primary action — the app's ink button (white on ink canvases).
 class _PrimaryButton extends StatelessWidget {
+  final bool isDark;
   final String label;
   final bool busy;
   final VoidCallback onPressed;
 
   const _PrimaryButton({
+    required this.isDark,
     required this.label,
     required this.busy,
     required this.onPressed,
@@ -1559,16 +1616,19 @@ class _PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Inverted CTA: solid white with ink text — the opposite of the
-    // old dark button — so the action pops off the ink canvas.
+    // On the plain-white surface the CTA is the home hero's ink navy,
+    // matching the welcome screen's "Continue to Login". On an ink canvas it
+    // stays the inverted white button so it still pops.
+    final background = isDark ? Colors.white : FinavigColors.ink;
+    final foreground = isDark ? FinavigColors.ink : Colors.white;
     return SizedBox(
       height: 52,
       child: FilledButton(
         onPressed: busy ? null : onPressed,
         style: FilledButton.styleFrom(
-          backgroundColor: Colors.white,
-          foregroundColor: FinavigColors.ink,
-          disabledBackgroundColor: Colors.white.withOpacity(0.5),
+          backgroundColor: background,
+          foregroundColor: foreground,
+          disabledBackgroundColor: background.withOpacity(0.5),
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(FinavigRadius.button),
@@ -1580,9 +1640,7 @@ class _PrimaryButton extends StatelessWidget {
                 height: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: const AlwaysStoppedAnimation<Color>(
-                    FinavigColors.ink,
-                  ),
+                  valueColor: AlwaysStoppedAnimation<Color>(foreground),
                 ),
               )
             : Text(
@@ -1668,12 +1726,12 @@ class _ModeOption extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: selected
-              ? FinavigColors.violet.withOpacity(0.10)
+              ? FinavigColors.ink.withOpacity(0.06)
               : (isDark ? Colors.white.withOpacity(0.05) : FinavigColors.cloud),
           borderRadius: BorderRadius.circular(FinavigRadius.tile),
           border: Border.all(
             color: selected
-                ? FinavigColors.violet
+                ? FinavigColors.ink
                 : (isDark
                       ? Colors.white.withOpacity(0.08)
                       : Colors.black.withOpacity(0.05)),
@@ -1685,10 +1743,19 @@ class _ModeOption extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.10),
+                color: isDark
+                    ? Colors.white.withOpacity(0.10)
+                    : FinavigColors.ink.withOpacity(0.06),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, size: 20, color: Colors.white),
+              child: Icon(
+                icon,
+                size: 20,
+                color: FinavigColors.adaptiveIcon(
+                  context,
+                  FinavigColors.ink,
+                ),
+              ),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -1723,7 +1790,7 @@ class _ModeOption extends StatelessWidget {
                   ? Icons.check_circle_rounded
                   : Icons.arrow_forward_ios_rounded,
               size: selected ? 20 : 16,
-              color: selected ? FinavigColors.violet : subColor,
+              color: selected ? FinavigColors.ink : subColor,
             ),
           ],
         ),

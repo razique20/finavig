@@ -30,13 +30,10 @@ void main() {
     await tester.pumpWidget(buildTestApp());
     await tester.pumpAndSettle();
 
-    // Full-bleed brand artwork behind everything.
-    expect(
-      find.byWidgetPredicate((w) =>
-          w is Image &&
-          w.image == const AssetImage('assets/images/splash_bg.jpg')),
-      findsOneWidget,
-    );
+    // Plain white, like the splash: no backdrop artwork on this screen.
+    expect(find.byType(Image), findsNothing);
+    final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
+    expect(scaffold.backgroundColor, Colors.white);
     // Main headline — no logo mark on this screen.
     expect(find.text('Finavig'), findsOneWidget);
     expect(find.text('FV'), findsNothing);
