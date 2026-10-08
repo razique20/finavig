@@ -229,6 +229,10 @@ class DocumentCard extends StatelessWidget {
     String text, {
     bool strong = false,
   }) {
+    // The label is Flexible on purpose: a Row hands its non-flex children
+    // unbounded width, so a long value ("Dubai DED / Department of Economic
+    // Development") would otherwise paint straight out of the row. Flexible
+    // caps it at the run's width and lets it ellipsize instead.
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -241,20 +245,24 @@ class DocumentCard extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 4),
-        Text(
-          text,
-          style: TextStyle(
-            color: strong
-                ? fade.color(
-                    FinavigColors.textSecondaryLight,
-                    FinavigColors.textPrimary,
-                  )
-                : fade.color(
-                    FinavigColors.textMutedLight,
-                    FinavigColors.textMuted,
-                  ),
-            fontSize: 11.5,
-            fontWeight: strong ? FontWeight.w600 : FontWeight.w400,
+        Flexible(
+          child: Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: strong
+                  ? fade.color(
+                      FinavigColors.textSecondaryLight,
+                      FinavigColors.textPrimary,
+                    )
+                  : fade.color(
+                      FinavigColors.textMutedLight,
+                      FinavigColors.textMuted,
+                    ),
+              fontSize: 11.5,
+              fontWeight: strong ? FontWeight.w600 : FontWeight.w400,
+            ),
           ),
         ),
       ],

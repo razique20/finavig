@@ -10,13 +10,21 @@ import 'package:finavig/theme/app_theme.dart';
 
 /// Seeds two locally cached documents (one soon, one far out) so the list has
 /// rows to lay out. Mirrors the JSON shape the scanner service persists.
-void seedDocuments(DateTime soon, DateTime far) {
+///
+/// [docType] defaults to a type with a short authority; pass `tradeLicence` to
+/// exercise the longest real one ("Dubai DED / Department of Economic
+/// Development"), which is what used to blow out a row's width.
+void seedDocuments(
+  DateTime soon,
+  DateTime far, {
+  String docType = 'drivingLicence',
+}) {
   String docJson(String id, DateTime d) {
     final y = d.year;
     final m = d.month.toString().padLeft(2, '0');
     final day = d.day.toString().padLeft(2, '0');
     return '{"collectionId":"personal","id":"$id",'
-        '"displayName":"Doc $id","docType":"drivingLicence",'
+        '"displayName":"Doc $id","docType":"$docType",'
         '"expiryDate":"$y-$m-$day",'
         '"daysRemaining":${d.difference(DateTime.now()).inDays},'
         '"isActive":true,"urgencyPriority":0,"expiresAt":"${d.toIso8601String()}"}';
@@ -38,9 +46,23 @@ void main() {
     DocumentScannerService.instance.clearCache();
   });
 
-  Future<void> pumpDocuments(WidgetTester tester) async {
+  Future<void> pumpDocuments(
+    WidgetTester tester, {
+    double textScale = 1.0,
+  }) async {
     await tester.pumpWidget(
-      MaterialApp(theme: FinavigTheme.light(), home: const DocumentsScreen()),
+      MaterialApp(
+        theme: FinavigTheme.light(),
+        // Larger system text is the accessibility setting that squeezed the
+        // reported row over: same layout, wider glyphs.
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(textScale)),
+          child: child!,
+        ),
+        home: const DocumentsScreen(),
+      ),
     );
     // _loadData: collection + items from the (empty) local cache.
     await tester.pump();
@@ -121,15 +143,64 @@ void main() {
       DateTime.now().add(const Duration(days: 3)),
       // Already expired: exercises the overdue countdown + warning line.
       DateTime.now().subtract(const Duration(days: 12)),
+      // The longest real authority string — the width regression that blew a
+      // row out by ~23px on an iPhone-width screen.
+      docType: 'tradeLicence',
     );
     await pumpDocuments(tester);
 
     expect(find.byType(DocumentCard), findsNWidgets(2));
     expect(find.byType(Divider), findsOneWidget);
+    expect(find.textContaining('Dubai DED'), findsNWidgets(2));
     expect(
       tester.takeException(),
       isNull,
       reason: 'a dense row must wrap, not overflow',
+    );
+  });
+
+  testWidgets('a long authority never overflows an iPhone-width row', (
+    tester,
+  ) async {
+    // 393dp — the viewport in the reported overflow screenshot.
+    tester.view.physicalSize = const Size(1179, 2556);
+    tester.view.devicePixelRatio = 3.0;
+    addTearDown(tester.view.reset);
+
+    seedDocuments(
+      DateTime.now().add(const Duration(days: 19)),
+      DateTime.now().subtract(const Duration(days: 4)),
+      docType: 'tradeLicence',
+    );
+    await pumpDocuments(tester);
+
+    expect(
+      tester.takeException(),
+      isNull,
+      reason: 'the long DED authority must ellipsize, not overflow',
+    );
+  });
+
+  testWidgets('a long authority survives larger system text, no overflow', (
+    tester,
+  ) async {
+    // 402dp (iPhone 16 Pro, as in the screenshot) at 1.3x system text.
+    tester.view.physicalSize = const Size(1206, 2622);
+    tester.view.devicePixelRatio = 3.0;
+    addTearDown(tester.view.reset);
+
+    seedDocuments(
+      DateTime.now().add(const Duration(days: 19)),
+      DateTime.now().subtract(const Duration(days: 4)),
+      docType: 'tradeLicence',
+    );
+    await pumpDocuments(tester, textScale: 1.3);
+
+    expect(find.byType(DocumentCard), findsNWidgets(2));
+    expect(
+      tester.takeException(),
+      isNull,
+      reason: 'scaled-up text must ellipsize, not overflow',
     );
   });
 
