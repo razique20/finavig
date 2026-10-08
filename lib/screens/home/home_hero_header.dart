@@ -49,9 +49,19 @@ class HomeHeroHeader extends StatelessWidget {
   }
 
   static String _monthAbbrev(int month) => const [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-      ][month - 1];
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ][month - 1];
 
   @override
   Widget build(BuildContext context) {
@@ -61,8 +71,8 @@ class HomeHeroHeader extends StatelessWidget {
     final greeting = hour < 12
         ? 'Good morning'
         : hour < 17
-            ? 'Good afternoon'
-            : 'Good evening';
+        ? 'Good afternoon'
+        : 'Good evening';
     final isDark = theme.brightness == Brightness.dark;
 
     final now = DateTime.now();
@@ -94,21 +104,26 @@ class HomeHeroHeader extends StatelessWidget {
                       padding: const EdgeInsets.all(6),
                       child: Row(
                         children: [
-                          Container(
-                            width: 38,
-                            height: 38,
-                            decoration: BoxDecoration(
-                              color: FinavigColors.accent
-                                  .withValues(alpha: fade.value(0.12, 0.18)),
-                              borderRadius: BorderRadius.circular(12),
+                          // Profile / collection chip — the same dark chip as
+                          // the header's icon buttons (ink in light mode,
+                          // translucent white in dark), so all three read as
+                          // one row instead of a lone tinted accent. Built
+                          // from Material like its siblings: the balance card
+                          // below stays the screen's one ink plate.
+                          Material(
+                            color: fade.color(
+                              FinavigColors.ink,
+                              Colors.white.withValues(alpha: 0.12),
                             ),
-                            child: Icon(
-                              activeCollection?.icon ?? Icons.person_rounded,
-                              color: fade.color(
-                                FinavigColors.accent,
-                                Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            child: SizedBox(
+                              width: 38,
+                              height: 38,
+                              child: Icon(
+                                activeCollection?.icon ?? Icons.person_rounded,
+                                color: Colors.white,
+                                size: 19,
                               ),
-                              size: 19,
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -131,8 +146,8 @@ class HomeHeroHeader extends StatelessWidget {
                                         activeCollection?.name ?? 'Personal',
                                         style: theme.textTheme.titleMedium
                                             ?.copyWith(
-                                          fontWeight: FontWeight.w700,
-                                        ),
+                                              fontWeight: FontWeight.w700,
+                                            ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -158,8 +173,9 @@ class HomeHeroHeader extends StatelessWidget {
                 icon: isDark
                     ? Icons.light_mode_rounded
                     : Icons.dark_mode_outlined,
-                tooltip:
-                    isDark ? 'Switch to light mode' : 'Switch to dark mode',
+                tooltip: isDark
+                    ? 'Switch to light mode'
+                    : 'Switch to dark mode',
                 onTap: () async {
                   final mode = ThemeService.instance.mode;
                   await ThemeService.instance.setMode(
@@ -225,8 +241,7 @@ class HomeHeroHeader extends StatelessWidget {
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
-                            DocumentCollectionService
-                                .instance.activeCurrency,
+                            DocumentCollectionService.instance.activeCurrency,
                             style: theme.textTheme.labelMedium?.copyWith(
                               color: Colors.white.withValues(alpha: 0.9),
                               fontWeight: FontWeight.w600,
@@ -418,10 +433,11 @@ class HomeNotificationBell extends StatelessWidget {
     final rows = <Widget>[];
 
     // --- Upcoming renewals (within 30 days) ---
-    final pending = items
-        .where((i) => i.isActive && !i.isExpired && i.daysRemaining <= 30)
-        .toList()
-      ..sort((a, b) => a.expiresAt.compareTo(b.expiresAt));
+    final pending =
+        items
+            .where((i) => i.isActive && !i.isExpired && i.daysRemaining <= 30)
+            .toList()
+          ..sort((a, b) => a.expiresAt.compareTo(b.expiresAt));
     for (final item in pending) {
       rows.add(
         _NotificationRow(
@@ -456,8 +472,8 @@ class HomeNotificationBell extends StatelessWidget {
     if (AlertPreferencesService.instance.billSpikesEnabled) {
       for (final anomaly
           in AnomalyDetectionService.instance.detectRecentAnomalies(
-        FinanceService.instance.activeTransactions,
-      )) {
+            FinanceService.instance.activeTransactions,
+          )) {
         rows.add(
           _NotificationRow(
             icon: Icons.trending_up_rounded,
@@ -545,7 +561,9 @@ class HomeNotificationBell extends StatelessWidget {
                         Icons.notifications_off_rounded,
                         size: 40,
                         color: FinavigColors.adaptiveIcon(
-                            context, theme.colorScheme.outline),
+                          context,
+                          theme.colorScheme.outline,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       Text(
