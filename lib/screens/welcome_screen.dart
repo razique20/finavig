@@ -126,6 +126,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     child: ElevatedButton(
                       onPressed: _continueToLogin,
                       style: ElevatedButton.styleFrom(
+                        // Ink plate with a white label (the shared-plate
+                        // contract in test/brand_ink_consistency_test.dart);
+                        // the blue lives on the line underneath instead.
                         backgroundColor: FinavigColors.ink,
                         foregroundColor: Colors.white,
                         elevation: 0,
@@ -150,9 +153,11 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     'Budgets · Cash flow · Document expiry alerts',
                     style: TextStyle(
                       fontSize: 11,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                       letterSpacing: 0.6,
-                      color: FinavigColors.textMutedLight,
+                      // Brand blue: the deep step stays readable at 11px on
+                      // the white surface.
+                      color: FinavigColors.accent,
                     ),
                   ),
                 ),
@@ -171,10 +176,7 @@ class _IncomingQuoteBubble extends StatelessWidget {
   final String quote;
   final String attribution;
 
-  const _IncomingQuoteBubble({
-    required this.quote,
-    required this.attribution,
-  });
+  const _IncomingQuoteBubble({required this.quote, required this.attribution});
 
   @override
   Widget build(BuildContext context) {
@@ -216,10 +218,13 @@ class _IncomingQuoteBubble extends StatelessWidget {
                 const SizedBox(height: 5),
                 Text(
                   '— $attribution',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: FinavigColors.ink,
+                    // Brand blue on the light bubble: it needs the deep step
+                    // (#1E40AF) to stay readable at 11px, unlike the bright
+                    // step used inside the ink reply bubble.
+                    color: FinavigColors.accent,
                   ),
                 ),
               ],
@@ -288,10 +293,12 @@ class _ReplyBubble extends StatelessWidget {
                     children: [
                       Text(
                         replyToName,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: Colors.white.withOpacity(0.9),
+                          // Bright blue step: the deep accent disappears
+                          // against the ink bubble.
+                          color: FinavigColors.accentBright,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -323,9 +330,9 @@ class _ReplyBubble extends StatelessWidget {
                   alignment: Alignment.centerRight,
                   child: Text(
                     timestamp,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 10,
-                      color: Colors.white.withValues(alpha: 0.7),
+                      color: FinavigColors.accentBright,
                     ),
                   ),
                 ),
