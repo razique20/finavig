@@ -75,7 +75,6 @@ class HomeHeroHeader extends StatelessWidget {
         : hour < 17
         ? 'Good afternoon'
         : 'Good evening';
-    final isDark = theme.brightness == Brightness.dark;
 
     final now = DateTime.now();
     final summary = FinanceMath.summaryForMonth(
@@ -106,12 +105,7 @@ class HomeHeroHeader extends StatelessWidget {
                       padding: const EdgeInsets.all(6),
                       child: Row(
                         children: [
-                          // Profile / collection chip — the same soft accent
-                          // chip as the header's other icon buttons (accent
-                          // tint in light mode, translucent white in dark), so
-                          // all three read as one row. No dark plate here: the
-                          // balance card below is the screen's only ink
-                          // surface.
+                          // Profile / collection chip.
                           Material(
                             color: fade.color(
                               FinavigColors.accent.withValues(alpha: 0.12),
@@ -175,10 +169,10 @@ class HomeHeroHeader extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               _CanvasIconButton(
-                icon: isDark
+                icon: theme.brightness == Brightness.dark
                     ? Icons.light_mode_rounded
                     : Icons.dark_mode_outlined,
-                tooltip: isDark
+                tooltip: theme.brightness == Brightness.dark
                     ? 'Switch to light mode'
                     : 'Switch to dark mode',
                 onTap: () async {
@@ -203,7 +197,7 @@ class HomeHeroHeader extends StatelessWidget {
             decoration: BoxDecoration(
               color: cardColor,
               borderRadius: BorderRadius.circular(FinavigRadius.card + 4),
-              boxShadow: FinavigShadows.adaptive(isDark),
+              boxShadow: FinavigShadows.adaptive(theme.brightness == Brightness.dark),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -290,13 +284,67 @@ class HomeHeroHeader extends StatelessWidget {
               ],
             ),
           ),
-          // AI Summary card — blue, links to full AI executive summary.
-          const SizedBox(height: 14),
-          _AiSummaryCard(
-            onTap: () => context.push('/ai-summary'),
-            spending: MoneyFormat.aed(summary.expense),
-            budgetPct: budgetUsagePct,
-            docCount: items.where((i) => i.isActive).length,
+        ],
+      ),
+    );
+  }
+}
+
+/// Quick stats row showing Spending, Budget usage, and Document count.
+/// Used above the Categories grid on the home page.
+class HomeQuickStats extends StatelessWidget {
+  final String spending;
+  final int budgetPct;
+  final int docCount;
+
+  const HomeQuickStats({
+    super.key,
+    required this.spending,
+    required this.budgetPct,
+    required this.docCount,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final fade = FinavigTransition.of(context);
+    final tileBg = fade.color(
+      Colors.white,
+      FinavigColors.slate.withValues(alpha: 0.5),
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          Expanded(
+            child: _QuickStatTile(
+              icon: Icons.trending_up_rounded,
+              label: 'Spending',
+              value: spending,
+              accent: FinavigColors.accentBright,
+              bg: tileBg,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: _QuickStatTile(
+              icon: Icons.flag_outlined,
+              label: 'Plans',
+              value: '${budgetPct}%',
+              accent: FinavigColors.amber,
+              bg: tileBg,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: _QuickStatTile(
+              icon: Icons.description_outlined,
+              label: 'Docs',
+              value: '$docCount',
+              accent: FinavigColors.accentSoft,
+              bg: tileBg,
+            ),
           ),
         ],
       ),
@@ -304,15 +352,75 @@ class HomeHeroHeader extends StatelessWidget {
   }
 }
 
-/// Compact AI summary card on the home header — dark blue with sparkle icon,
-/// summary preview, and a link to the full AI Executive Summary screen.
-class _AiSummaryCard extends StatelessWidget {
+/// Single stat tile in the quick stats row.
+class _QuickStatTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color accent;
+  final Color bg;
+
+  const _QuickStatTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.accent,
+    required this.bg,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      color: bg,
+      borderRadius: BorderRadius.circular(12),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => context.push('/ai-summary'),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            children: [
+              Icon(icon, size: 16, color: accent),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.outline,
+                      ),
+                    ),
+                    Text(
+                      value,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// AI Summary card — dark blue with sparkle icon, summary preview,
+/// and a link to the full AI Executive Summary screen.
+/// Can be used below the categories grid on the home page.
+class AiSummaryCard extends StatelessWidget {
   final VoidCallback onTap;
   final String spending;
   final int budgetPct;
   final int docCount;
 
-  const _AiSummaryCard({
+  const AiSummaryCard({
+    super.key,
     required this.onTap,
     required this.spending,
     required this.budgetPct,
@@ -473,10 +581,8 @@ class _AiSummaryStat extends StatelessWidget {
   }
 }
 
-
 /// Home header action button — a soft accent chip in light mode and a
-/// translucent white chip in dark, like the Settings header buttons. The
-/// glyph is the dark ink on the light canvas; in dark mode it flips to white.
+/// translucent white chip in dark, like the Settings header buttons.
 class _CanvasIconButton extends StatelessWidget {
   final IconData icon;
   final String tooltip;
@@ -773,8 +879,6 @@ class HomeNotificationBell extends StatelessWidget {
                 )
               else
                 Flexible(
-                  // Lazy builder over the prebuilt alert rows: the sheet's
-                  // height is bounded, so only the visible rows lay out.
                   child: ListView.builder(
                     shrinkWrap: true,
                     padding: const EdgeInsets.symmetric(vertical: 8),

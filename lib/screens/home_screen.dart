@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../models/document_collection.dart';
 import '../models/expiry_item.dart';
@@ -121,6 +122,14 @@ class _HomeScreenState extends State<HomeScreen> {
       stops: const [0.0, 0.55],
     );
 
+    // Common data for quick stats and AI summary card.
+    final expense = FinanceMath.summaryForMonth(
+      FinanceService.instance.activeTransactions,
+      DateTime.now(),
+    ).expense;
+    final budgetPct = _budgetUsagePct();
+    final docCount = _items.where((i) => i.isActive).length;
+
     return Scaffold(
       backgroundColor: canvas,
       body: Container(
@@ -142,11 +151,20 @@ class _HomeScreenState extends State<HomeScreen> {
                         activeCollection: _activeCollection,
                         items: _items,
                         dismissedAttentionCount: _dismissedAttentionCount,
-                        budgetUsagePct: _budgetUsagePct(),
+                        budgetUsagePct: budgetPct,
                         onCollectionSwitcherTap: _showCollectionSwitcher,
                         onQuickAddRecord: _quickAddRecord,
                       ),
                       const SizedBox(height: 22),
+                      // Quick stats row: Spending, Plans, Docs — above categories.
+                      if (!_loading) ...[
+                        HomeQuickStats(
+                          spending: MoneyFormat.aed(expense),
+                          budgetPct: budgetPct,
+                          docCount: docCount,
+                        ),
+                        const SizedBox(height: 16),
+                      ],
                       if (_loading)
                         const SizedBox(height: 420, child: HomeSkeletonView())
                       else ...[
@@ -183,6 +201,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(height: 20),
                         HomeUpcomingSection(
                           upcomingItems: _upcomingItems(),
+                        ),
+                        const SizedBox(height: 20),
+                        // AI Summary card — below categories, links to full AI summary.
+                        AiSummaryCard(
+                          onTap: () => context.push('/ai-summary'),
+                          spending: MoneyFormat.aed(expense),
+                          budgetPct: budgetPct,
+                          docCount: docCount,
                         ),
                         // Keep the last tile clear of the floating nav pill
                         // (height + margins ≈ 80).
