@@ -142,6 +142,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         activeCollection: _activeCollection,
                         items: _items,
                         dismissedAttentionCount: _dismissedAttentionCount,
+                        budgetUsagePct: _budgetUsagePct(),
                         onCollectionSwitcherTap: _showCollectionSwitcher,
                         onQuickAddRecord: _quickAddRecord,
                       ),
@@ -206,6 +207,22 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  /// Monthly budget usage percentage (0-100), or 0 if no budgets exist.
+  int _budgetUsagePct() {
+    final budgets = FinanceService.instance.activeBudgets;
+    if (budgets.isEmpty) return 0;
+    final spend = FinanceMath.spendByCategory(
+      FinanceService.instance.activeTransactions,
+      DateTime.now(),
+      collectionId: FinanceService.instance.activeCollectionIdSafe,
+    );
+    final statuses = FinanceMath.budgetStatuses(budgets, spend);
+    return (statuses.fold<double>(
+      0.0,
+      (prev, s) => prev + (s.ratio * 100),
+    )).round();
   }
 
   /// Upcoming (active, not yet expired) documents sorted by expiry.

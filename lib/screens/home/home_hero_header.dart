@@ -22,6 +22,7 @@ class HomeHeroHeader extends StatelessWidget {
   /// The "renewals need attention" count the user dismissed this session —
   /// excluded from the bell badge so it matches the banner.
   final int? dismissedAttentionCount;
+  final int budgetUsagePct;
   final VoidCallback onCollectionSwitcherTap;
   final VoidCallback onQuickAddRecord;
 
@@ -30,6 +31,7 @@ class HomeHeroHeader extends StatelessWidget {
     required this.activeCollection,
     required this.items,
     required this.dismissedAttentionCount,
+    required this.budgetUsagePct,
     required this.onCollectionSwitcherTap,
     required this.onQuickAddRecord,
   });
@@ -292,6 +294,9 @@ class HomeHeroHeader extends StatelessWidget {
           const SizedBox(height: 14),
           _AiSummaryCard(
             onTap: () => context.push('/ai-summary'),
+            spending: MoneyFormat.aed(summary.expense),
+            budgetPct: budgetUsagePct,
+            docCount: items.where((i) => i.isActive).length,
           ),
         ],
       ),
@@ -303,8 +308,16 @@ class HomeHeroHeader extends StatelessWidget {
 /// summary preview, and a link to the full AI Executive Summary screen.
 class _AiSummaryCard extends StatelessWidget {
   final VoidCallback onTap;
+  final String spending;
+  final int budgetPct;
+  final int docCount;
 
-  const _AiSummaryCard({required this.onTap});
+  const _AiSummaryCard({
+    required this.onTap,
+    required this.spending,
+    required this.budgetPct,
+    required this.docCount,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -385,7 +398,7 @@ class _AiSummaryCard extends StatelessWidget {
                     child: _AiSummaryStat(
                       icon: Icons.trending_up_rounded,
                       label: 'Spending',
-                      value: '\$' '0',
+                      value: spending,
                       acclColor: FinavigColors.accentBright,
                     ),
                   ),
@@ -394,7 +407,7 @@ class _AiSummaryCard extends StatelessWidget {
                     child: _AiSummaryStat(
                       icon: Icons.flag_outlined,
                       label: 'Plans',
-                      value: '\$' '0',
+                      value: '${budgetPct}%',
                       acclColor: FinavigColors.amber,
                     ),
                   ),
@@ -403,7 +416,7 @@ class _AiSummaryCard extends StatelessWidget {
                     child: _AiSummaryStat(
                       icon: Icons.description_outlined,
                       label: 'Docs',
-                      value: '0',
+                      value: '$docCount',
                       acclColor: FinavigColors.accentSoft,
                     ),
                   ),
