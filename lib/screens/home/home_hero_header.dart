@@ -446,25 +446,35 @@ class _QuickStatTile extends StatelessWidget {
       child: InkWell(
         onTap: () => context.push('/ai-summary'),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           child: Row(
             children: [
-              Icon(icon, size: 16, color: accent),
-              const SizedBox(width: 8),
+              Icon(icon, size: 14, color: accent),
+              const SizedBox(width: 6),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       label,
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: theme.colorScheme.outline,
+                        fontSize: 10,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    Text(
-                      value,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
+                    SizedBox(
+                      width: double.infinity,
+                      child: Text(
+                        value,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
