@@ -941,8 +941,8 @@ class _MoneyHeroIconButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(13),
           onTap: enabled ? onTap : null,
           child: SizedBox(
-            width: 40,
-            height: 40,
+            width: 36,
+            height: 36,
             child: Icon(
               icon,
               color: enabled
@@ -951,7 +951,7 @@ class _MoneyHeroIconButton extends StatelessWidget {
                       FinavigColors.textMutedLight,
                       Colors.white.withValues(alpha: 0.35),
                     ),
-              size: 20,
+              size: 17,
             ),
           ),
         ),
@@ -1030,13 +1030,13 @@ class _CreditShortcutCard extends StatelessWidget {
           child: Row(
             children: [
               Container(
-                width: 40,
-                height: 40,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
                   color: accent.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(Icons.handshake_rounded, size: 20, color: accent),
+                child: Icon(Icons.handshake_rounded, size: 17, color: accent),
               ),
               const SizedBox(width: 12),
               Expanded(

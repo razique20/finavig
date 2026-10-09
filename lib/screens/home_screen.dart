@@ -47,11 +47,11 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     if (DocumentScannerService.instance.isInitialized) {
-      _activeCollection = DocumentCollectionService
-          .instance.collections
-          .where((c) =>
-              c.id ==
-              DocumentCollectionService.instance.activeCollectionId)
+      _activeCollection = DocumentCollectionService.instance.collections
+          .where(
+            (c) =>
+                c.id == DocumentCollectionService.instance.activeCollectionId,
+          )
           .firstOrNull;
       _items = DocumentScannerService.instance.activeItems;
       _loading = false;
@@ -88,8 +88,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadData() async {
-    final collection =
-        await DocumentCollectionService.instance.getActiveCollection();
+    final collection = await DocumentCollectionService.instance
+        .getActiveCollection();
     final items = await DocumentScannerService().getAllItems(
       includeExpired: true,
     );
@@ -181,9 +181,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               .map((a) => a.displayName)
                               .toList(),
                           dismissedAttentionCount: _dismissedAttentionCount,
-                          onDismiss: (count) => setState(
-                            () => _dismissedAttentionCount = count,
-                          ),
+                          onDismiss: (count) =>
+                              setState(() => _dismissedAttentionCount = count),
                         ),
                         if (_expiredItems.isNotEmpty)
                           HomeExpiredAlert(
@@ -197,9 +196,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 )
                                 .toList(),
                           ),
-                        HomeUpcomingSection(
-                          upcomingItems: _upcomingItems(),
-                        ),
+                        HomeUpcomingSection(upcomingItems: _upcomingItems()),
                         // Keep the last tile clear of the floating nav pill
                         // (height + margins ≈ 80).
                         SizedBox(

@@ -7,6 +7,7 @@ import '../../models/document_collection.dart';
 import '../../services/alert_preferences_service.dart';
 import '../../services/anomaly_detection_service.dart';
 import '../../services/collection_service.dart';
+import '../../services/document_scanner_service.dart';
 import '../../services/finance_service.dart';
 import '../../services/theme_service.dart';
 import '../../theme/app_theme.dart';
@@ -113,15 +114,15 @@ class HomeHeroHeader extends StatelessWidget {
                             ),
                             borderRadius: BorderRadius.circular(12),
                             child: SizedBox(
-                              width: 38,
-                              height: 38,
+                              width: 34,
+                              height: 34,
                               child: Icon(
                                 activeCollection?.icon ?? Icons.person_rounded,
                                 color: fade.color(
                                   FinavigColors.ink,
                                   Colors.white,
                                 ),
-                                size: 19,
+                                size: 16,
                               ),
                             ),
                           ),
@@ -187,6 +188,18 @@ class HomeHeroHeader extends StatelessWidget {
                 items: items,
                 dismissedAttentionCount: dismissedAttentionCount,
               ),
+              // Refresh button - top right corner of the header
+              const SizedBox(width: 4),
+              _CanvasIconButton(
+                icon: Icons.refresh_rounded,
+                tooltip: 'Refresh data from cloud',
+                onTap: () async {
+                  // Trigger a full refresh of documents and finance data
+                  await DocumentScannerService.instance.refresh();
+                  await DocumentCollectionService.instance.reset();
+                  await FinanceService.instance.refresh();
+                },
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -197,7 +210,9 @@ class HomeHeroHeader extends StatelessWidget {
             decoration: BoxDecoration(
               color: cardColor,
               borderRadius: BorderRadius.circular(FinavigRadius.card + 4),
-              boxShadow: FinavigShadows.adaptive(theme.brightness == Brightness.dark),
+              boxShadow: FinavigShadows.adaptive(
+                theme.brightness == Brightness.dark,
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -328,10 +343,7 @@ class _AiSummaryLink extends StatelessWidget {
                 child: Text(
                   'AI Summary',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: fade.color(
-                      FinavigColors.accent,
-                      Colors.white,
-                    ),
+                    color: fade.color(FinavigColors.accent, Colors.white),
                     fontWeight: FontWeight.w600,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -374,7 +386,6 @@ class HomeQuickStats extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final fade = FinavigTransition.of(context);
     final tileBg = fade.color(
       Colors.white,
@@ -569,10 +580,7 @@ class AiSummaryCard extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               // Divider line.
-              Container(
-                height: 1,
-                color: Colors.white.withValues(alpha: 0.12),
-              ),
+              Container(height: 1, color: Colors.white.withValues(alpha: 0.12)),
               const SizedBox(height: 12),
               // Quick insights grid: 3 small stat tiles.
               Row(
@@ -632,11 +640,7 @@ class _AiSummaryStat extends StatelessWidget {
     final theme = Theme.of(context);
     return Column(
       children: [
-        Icon(
-          icon,
-          size: 14,
-          color: acclColor,
-        ),
+        Icon(icon, size: 14, color: acclColor),
         const SizedBox(height: 2),
         Text(
           value,
@@ -685,11 +689,11 @@ class _CanvasIconButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(13),
           onTap: onTap,
           child: SizedBox(
-            width: 40,
-            height: 40,
+            width: 36,
+            height: 36,
             child: Icon(
               icon,
-              size: 20,
+              size: 17,
               color: fade.color(FinavigColors.ink, Colors.white),
             ),
           ),
@@ -754,12 +758,12 @@ class HomeNotificationBell extends StatelessWidget {
               borderRadius: BorderRadius.circular(13),
               onTap: () => _showNotificationsSheet(context),
               child: SizedBox(
-                width: 40,
-                height: 40,
+                width: 36,
+                height: 36,
                 child: Icon(
                   Icons.notifications_outlined,
                   color: fade.color(FinavigColors.ink, Colors.white),
-                  size: 20,
+                  size: 17,
                 ),
               ),
             ),

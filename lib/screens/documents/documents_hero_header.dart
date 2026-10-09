@@ -177,11 +177,11 @@ class _CanvasIconButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(13),
           onTap: onTap,
           child: SizedBox(
-            width: 40,
-            height: 40,
+            width: 36,
+            height: 36,
             child: Icon(
               icon,
-              size: 20,
+              size: 17,
               color: fade.color(FinavigColors.ink, Colors.white),
             ),
           ),

@@ -78,7 +78,7 @@ class DocumentCard extends StatelessWidget {
       onLongPress: onAction,
       borderRadius: BorderRadius.circular(12),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 12),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -93,7 +93,7 @@ class DocumentCard extends StatelessWidget {
                     item.displayName,
                     style: theme.textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w600,
-                      fontSize: 14.5,
+                      fontSize: 13.5,
                       color: fade.color(
                         FinavigColors.textPrimaryLight,
                         FinavigColors.textPrimary,
@@ -102,7 +102,7 @@ class DocumentCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(height: 2),
                   // Type + exact expiry date.
                   Row(
                     children: [
@@ -111,7 +111,7 @@ class DocumentCard extends StatelessWidget {
                           '${item.docType.displayName} · Expires '
                           '${ExpiryItem.formatDate(item.expiresAt)}',
                           style: theme.textTheme.bodySmall?.copyWith(
-                            fontSize: 12,
+                            fontSize: 11,
                             color: fade.color(
                               FinavigColors.textMutedLight,
                               FinavigColors.textMuted,
@@ -123,19 +123,19 @@ class DocumentCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 9),
+                  const SizedBox(height: 7),
                   // Urgency line: countdown, status pill, then the renewal
                   // facts — wraps instead of clipping on narrow screens.
                   Wrap(
                     crossAxisAlignment: WrapCrossAlignment.center,
                     spacing: 10,
-                    runSpacing: 6,
+                    runSpacing: 5,
                     children: [
                       Text(
                         _daysLabel,
                         style: TextStyle(
                           fontWeight: FontWeight.w800,
-                          fontSize: 14,
+                          fontSize: 13,
                           color: accent,
                         ),
                       ),
@@ -167,7 +167,7 @@ class DocumentCard extends StatelessWidget {
                     ],
                   ),
                   // Slim urgency bar — status at a glance.
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(3),
                     child: LinearProgressIndicator(
@@ -184,12 +184,12 @@ class DocumentCard extends StatelessWidget {
                   // meaningful even when no warning was stored. Shown only
                   // when it matters (≤30 days).
                   if (item.daysRemaining <= 30) ...[
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(
                       item.effectiveRenewalWarning,
                       style: TextStyle(
                         color: accent,
-                        fontSize: 11,
+                        fontSize: 10.5,
                         fontWeight: FontWeight.w500,
                       ),
                       maxLines: 2,
@@ -207,7 +207,7 @@ class DocumentCard extends StatelessWidget {
                 onPressed: onAction,
                 tooltip: 'Actions',
                 padding: EdgeInsets.zero,
-                iconSize: 18,
+                iconSize: 17,
                 icon: Icon(
                   Icons.more_horiz_rounded,
                   color: fade.color(
@@ -238,7 +238,7 @@ class DocumentCard extends StatelessWidget {
       children: [
         Icon(
           icon,
-          size: 12,
+          size: 11,
           color: fade.color(
             FinavigColors.textMutedLight,
             FinavigColors.textMuted,
@@ -260,7 +260,7 @@ class DocumentCard extends StatelessWidget {
                       FinavigColors.textMutedLight,
                       FinavigColors.textMuted,
                     ),
-              fontSize: 11.5,
+              fontSize: 10.5,
               fontWeight: strong ? FontWeight.w600 : FontWeight.w400,
             ),
           ),
