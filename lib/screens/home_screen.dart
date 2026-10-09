@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 import '../models/document_collection.dart';
 import '../models/expiry_item.dart';
@@ -198,17 +197,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 )
                                 .toList(),
                           ),
-                        const SizedBox(height: 20),
                         HomeUpcomingSection(
                           upcomingItems: _upcomingItems(),
-                        ),
-                        const SizedBox(height: 20),
-                        // AI Summary card — below categories, links to full AI summary.
-                        AiSummaryCard(
-                          onTap: () => context.push('/ai-summary'),
-                          spending: MoneyFormat.aed(expense),
-                          budgetPct: budgetPct,
-                          docCount: docCount,
                         ),
                         // Keep the last tile clear of the floating nav pill
                         // (height + margins ≈ 80).
