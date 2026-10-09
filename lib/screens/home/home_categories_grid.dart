@@ -182,66 +182,6 @@ class HomeCategoriesGrid extends StatelessWidget {
             ),
           ]),
           const SizedBox(height: 10),
-          // Full-width feature tile: AI Summary.
-          Material(
-            color: fade.color(
-              FinavigColors.lilac.withValues(alpha: 0.10),
-              FinavigColors.lilac.withValues(alpha: 0.18),
-            ),
-            borderRadius: BorderRadius.circular(FinavigRadius.tile),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: () => context.push('/ai-summary'),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                child: Row(
-                  children: [
-                    const BentoIconTile(
-                      icon: Icons.auto_awesome_rounded,
-                      color: FinavigColors.lilac,
-                      size: 38,
-                      iconSize: 19,
-                      radius: 12,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'AI Summary',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12,
-                            ),
-                          ),
-                          const SizedBox(height: 1),
-                          Text(
-                            'Executive summary of your documents',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.outline,
-                              fontSize: 10,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                    Icon(
-                      Icons.arrow_forward_rounded,
-                      size: 18,
-                      color: theme.colorScheme.outline,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
           // Full-width primary CTA: Scan.
           Material(
             borderRadius: BorderRadius.circular(FinavigRadius.tile),
