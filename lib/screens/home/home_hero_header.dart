@@ -281,10 +281,78 @@ class HomeHeroHeader extends StatelessWidget {
                     ),
                   ],
                 ),
+                const SizedBox(height: 12),
+                // AI Summary text link below the balance card.
+                _AiSummaryLink(onTap: () => context.push('/ai-summary')),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Subtle text link to AI Summary, placed below the balance card.
+class _AiSummaryLink extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _AiSummaryLink({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final fade = FinavigTransition.of(context);
+
+    return Material(
+      color: fade.color(
+        const Color(0xFF1E3A8A).withValues(alpha: 0.15), // blue-900 tint
+        const Color(0xFF172554).withValues(alpha: 0.25), // dark blue-950 tint
+      ),
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.auto_awesome_rounded,
+                size: 14,
+                color: FinavigColors.accentBright,
+              ),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  'AI Summary',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: fade.color(
+                      FinavigColors.accent,
+                      Colors.white,
+                    ),
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  '— see full insights',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: fade.color(
+                      FinavigColors.textSecondaryLight,
+                      FinavigColors.textMuted,
+                    ),
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
