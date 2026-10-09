@@ -288,11 +288,178 @@ class HomeHeroHeader extends StatelessWidget {
               ],
             ),
           ),
+          // AI Summary card — blue, links to full AI executive summary.
+          const SizedBox(height: 14),
+          _AiSummaryCard(
+            onTap: () => context.push('/ai-summary'),
+          ),
         ],
       ),
     );
   }
 }
+
+/// Compact AI summary card on the home header — dark blue with sparkle icon,
+/// summary preview, and a link to the full AI Executive Summary screen.
+class _AiSummaryCard extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _AiSummaryCard({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final fade = FinavigTransition.of(context);
+
+    // Dark blue gradient card.
+    final cardColor = fade.color(
+      const Color(0xFF1E3A8A), // blue-900
+      const Color(0xFF172554), // dark blue-950
+    );
+
+    return Material(
+      color: cardColor,
+      borderRadius: BorderRadius.circular(FinavigRadius.card),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header row: sparkle icon + label + chevron.
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: FinavigColors.accentBright.withValues(alpha: 0.25),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.auto_awesome_rounded,
+                      size: 20,
+                      color: FinavigColors.accentBright,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'AI Summary',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          'Your spending, budgets & documents',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: Colors.white.withValues(alpha: 0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    size: 20,
+                    color: Colors.white70,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              // Divider line.
+              Container(
+                height: 1,
+                color: Colors.white.withValues(alpha: 0.12),
+              ),
+              const SizedBox(height: 12),
+              // Quick insights grid: 3 small stat tiles.
+              Row(
+                children: [
+                  Expanded(
+                    child: _AiSummaryStat(
+                      icon: Icons.trending_up_rounded,
+                      label: 'Spending',
+                      value: '\$' '0',
+                      acclColor: FinavigColors.accentBright,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _AiSummaryStat(
+                      icon: Icons.flag_outlined,
+                      label: 'Plans',
+                      value: '\$' '0',
+                      acclColor: FinavigColors.amber,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _AiSummaryStat(
+                      icon: Icons.description_outlined,
+                      label: 'Docs',
+                      value: '0',
+                      acclColor: FinavigColors.accentSoft,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// One small stat tile inside the AI summary card.
+class _AiSummaryStat extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color acclColor;
+
+  const _AiSummaryStat({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.acclColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      children: [
+        Icon(
+          icon,
+          size: 14,
+          color: acclColor,
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: theme.textTheme.titleSmall?.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        Text(
+          label,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: Colors.white.withValues(alpha: 0.6),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 
 /// Home header action button — a soft accent chip in light mode and a
 /// translucent white chip in dark, like the Settings header buttons. The
