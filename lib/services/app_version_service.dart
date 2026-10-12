@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'auth_service.dart';
+import '../services/supabase_service.dart';
 
 enum VersionCheckStatus {
   upToDate,
@@ -38,6 +39,9 @@ class AppVersionService {
 
   /// Current app version built into this release.
   static const String currentAppVersion = '1.0.0';
+
+  /// Shared table used by the admin console for app health / version adoption.
+  static const String usageStatsTable = 'app_usage_stats';
 
   /// Dummy App Store link for iOS releases.
   static const String dummyAppStoreUrl =
@@ -182,6 +186,88 @@ class AppVersionService {
         minRequiredVersion: currentAppVersion,
         isForceUpdate: false,
       );
+    }
+  }
+
+  /// Tracks or updates the current user's row in `app_usage_stats`.
+  ///
+  /// Call this once after the user is signed in, ideally on each sign-in or
+  /// cold app launch. It is best-effort: if Supabase is not configured or the
+  /// DB call fails, this method silently degrades and never throws.
+  Future<void> trackAppUsage() async {
+    final auth = AuthService.instance;
+    if (!auth.isAvailable) {
+      debugPrint('AppVersionService.trackAppUsage: Supabase not initialized');
+      return;
+    }
+    if (!auth.isSignedIn) {
+      debugPrint('AppVersionService.trackAppUsage: no signed-in session');
+      return;
+    }
+
+    try {
+      final client = SupabaseService.clientOrNull;
+      if (client == null) {
+        debugPrint('AppVersionService.trackAppUsage: Supabase client unavailable');
+        return;
+      }
+
+      final userId = auth.currentUserId;
+      if (userId == null || userId.isEmpty) {
+        debugPrint('AppVersionService.trackAppUsage: currentUserId missing');
+        return;
+      }
+
+      debugPrint(
+        'AppVersionService.trackAppUsage: target=$usageStatsTable user=$userId platform=${osPlatformKey} version=$currentAppVersion supabase=${SupabaseService.currentProjectUrl ?? '<unknown>'}',
+      );
+
+      final now = DateTime.now().toIso8601String();
+      final payload = <String, dynamic>{
+        'user_id': userId,
+        'platform': osPlatformKey,
+        'app_version': currentAppVersion,
+        'last_app_open': now,
+        'total_sessions': 1,
+      };
+
+      // Upsert one row per user so the admin console can see active users,
+      // platform distribution, and version adoption.
+      await client.from(usageStatsTable).upsert(payload);
+      debugPrint('AppVersionService.trackAppUsage: upsert succeeded');
+    } catch (e) {
+      debugPrint('AppVersionService.trackAppUsage: FAILED — $e');
+    }
+  }
+
+  /// Increments the current user's session count in `app_usage_stats`.
+  ///
+  /// Call this on foreground/resume if you want session counts to reflect
+  /// in-app usage, not just cold starts.
+  Future<void> recordSession() async {
+    final auth = AuthService.instance;
+    if (!auth.isAvailable || !auth.isSignedIn) return;
+
+    try {
+      final client = SupabaseService.clientOrNull;
+      if (client == null) return;
+
+      final userId = auth.currentUserId;
+      if (userId == null || userId.isEmpty) return;
+
+      final existing = await client
+          .from(usageStatsTable)
+          .select('total_sessions')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      final current = (existing?['total_sessions'] as int?) ?? 0;
+      await client
+          .from(usageStatsTable)
+          .update({'total_sessions': current + 1, 'last_app_open': DateTime.now().toIso8601String()})
+          .eq('user_id', userId);
+    } catch (e) {
+      debugPrint('AppVersionService: Failed to record session — $e');
     }
   }
 

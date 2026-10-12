@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -7,8 +8,7 @@ import 'custom_document_type_service.dart';
 import 'document_scanner_service.dart';
 import 'entitlement_service.dart';
 import 'finance_service.dart';
-
-import 'supabase_service.dart';
+import '../services/supabase_service.dart';
 
 /// Thin wrapper around Supabase Auth.
 ///
@@ -41,10 +41,12 @@ class AuthService {
     required String email,
     required String password,
   }) async {
+    debugPrint('AuthService.signIn: before signInWithPassword email=$email');
     await SupabaseService.client.auth.signInWithPassword(
       email: email,
       password: password,
     );
+    debugPrint('AuthService.signIn: after signInWithPassword session=${_session != null} userId=$currentUserId');
   }
 
   /// Create a new account. Email confirmation is controlled by the Supabase
@@ -59,13 +61,20 @@ class AuthService {
     required String password,
     DateTime? dateOfBirth,
   }) async {
-    await SupabaseService.client.auth.signUp(
+    final client = SupabaseService.clientOrNull;
+    if (client == null) {
+      debugPrint('AuthService.signUp: Supabase client unavailable');
+      return;
+    }
+    debugPrint('AuthService.signUp: before signUp email=$email hasCredentials=${SupabaseService.hasCredentials} project=${SupabaseService.currentProjectUrl}');
+    await client.auth.signUp(
       email: email,
       password: password,
       data: dateOfBirth != null
           ? {'date_of_birth': dateOfBirth.toIso8601String().substring(0, 10)}
           : null,
     );
+    debugPrint('AuthService.signUp: after signUp session=${_session != null} isSignedIn=$isSignedIn currentUserId=$currentUserId');
   }
 
   /// Send a password-reset email.

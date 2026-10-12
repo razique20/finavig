@@ -4,6 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/app_version_service.dart';
 import '../services/auth_service.dart';
+import '../services/supabase_service.dart';
+import 'dart:async' as async_dispatcher;
 import '../theme/app_theme.dart';
 import '../widgets/dialogs/app_version_dialog.dart';
 
@@ -47,6 +49,14 @@ class _SplashScreenState extends State<SplashScreen>
     final versionResult = await AppVersionService.instance.checkAppVersion(
       platform: AppVersionService.osPlatformKey,
     );
+
+    // Best-effort: tell the admin console this user opened the app.
+    // Do not block startup on this — if Supabase is misconfigured or the
+    // user is not signed in yet, this is intentionally a no-op.
+    debugPrint('Splash: Supabase initialized=${SupabaseService.isInitialized} '
+        'signedIn=${AuthService.instance.isSignedIn} '
+        'project=${SupabaseService.currentProjectUrl ?? '<unknown>'}');
+    async_dispatcher.unawaited(AppVersionService.instance.trackAppUsage());
     if (mounted && versionResult.shouldPromptUpdate) {
       final allowed = await AppVersionDialog.showIfNeeded(context, versionResult);
       if (!allowed && versionResult.status == VersionCheckStatus.forceUpdate) {

@@ -63,4 +63,25 @@ class SupabaseService {
   static void reset() {
     _instance = null;
   }
+
+  /// Returns the current Supabase project URL the app is using, or null when
+  /// Supabase is not configured / not initialized.
+  ///
+  /// In this SDK version the auth client does not expose a stable public `url`
+  /// getter, so we read the project URL from the config constants instead.
+  static String? get currentProjectUrl {
+    try {
+      final client = _instance?.client;
+      if (client != null) {
+        final auth = client.auth;
+        final url = (auth as dynamic).url;
+        if (url != null) return url.toString();
+      }
+    } catch (_) {
+      // Some SDK versions do not expose a public auth.url getter.
+    }
+    return AppCredentials.supabaseUrl.isNotEmpty && !AppCredentials.supabaseUrl.contains('YOUR-PROJECT')
+        ? AppCredentials.supabaseUrl
+        : null;
+  }
 }

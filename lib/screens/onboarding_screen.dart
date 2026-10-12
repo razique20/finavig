@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'dart:async' as async_dispatcher;
+
+import '../services/app_version_service.dart';
+import '../services/auth_service.dart';
+import '../services/supabase_service.dart';
 import '../services/notification_service.dart';
 import '../theme/app_theme.dart';
 
@@ -72,7 +77,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           action: () {
             SharedPreferences.getInstance().then((prefs) {
               prefs.setBool('hasOnboarded', true);
-              if (context.mounted) context.go('/home');
+              if (context.mounted) {
+                debugPrint('Onboarding: entering home Supabase initialized='
+                    '${SupabaseService.isInitialized} signedIn=${AuthService.instance.isSignedIn}'
+                    ' project=${SupabaseService.currentProjectUrl ?? "<unknown>"}');
+                async_dispatcher.unawaited(AppVersionService.instance.trackAppUsage());
+                context.go('/home');
+              }
             });
           },
         ),
