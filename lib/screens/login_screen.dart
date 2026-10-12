@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import '../services/app_version_service.dart';
-import '../services/supabase_service.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -272,9 +271,6 @@ class _LoginScreenState extends State<LoginScreen> {
       // Best-effort: report the first launch after sign-in to the admin
       // app-health pipeline. Do not block entry into the app if this fails.
       if (mounted) {
-        debugPrint('LoginScreen: after submit Supabase initialized='
-            '${SupabaseService.isInitialized} signedIn=${AuthService.instance.isSignedIn}'
-            ' project=${SupabaseService.currentProjectUrl ?? "<unknown>"}');
         unawaited(AppVersionService.instance.trackAppUsage());
       }
 

@@ -219,7 +219,7 @@ class AppVersionService {
       }
 
       debugPrint(
-        'AppVersionService.trackAppUsage: target=$usageStatsTable user=$userId platform=${osPlatformKey} version=$currentAppVersion supabase=${SupabaseService.currentProjectUrl ?? '<unknown>'}',
+        'AppVersionService.trackAppUsage: writing uid=$userId plat=${osPlatformKey} ver=$currentAppVersion',
       );
 
       final now = DateTime.now().toIso8601String();

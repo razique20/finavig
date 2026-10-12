@@ -41,12 +41,10 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    debugPrint('AuthService.signIn: before signInWithPassword email=$email');
     await SupabaseService.client.auth.signInWithPassword(
       email: email,
       password: password,
     );
-    debugPrint('AuthService.signIn: after signInWithPassword session=${_session != null} userId=$currentUserId');
   }
 
   /// Create a new account. Email confirmation is controlled by the Supabase
@@ -66,7 +64,6 @@ class AuthService {
       debugPrint('AuthService.signUp: Supabase client unavailable');
       return;
     }
-    debugPrint('AuthService.signUp: before signUp email=$email hasCredentials=${SupabaseService.hasCredentials} project=${SupabaseService.currentProjectUrl}');
     await client.auth.signUp(
       email: email,
       password: password,
@@ -74,7 +71,6 @@ class AuthService {
           ? {'date_of_birth': dateOfBirth.toIso8601String().substring(0, 10)}
           : null,
     );
-    debugPrint('AuthService.signUp: after signUp session=${_session != null} isSignedIn=$isSignedIn currentUserId=$currentUserId');
   }
 
   /// Send a password-reset email.
