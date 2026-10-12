@@ -240,37 +240,6 @@ class AppVersionService {
     }
   }
 
-  /// Increments the current user's session count in `app_usage_stats`.
-  ///
-  /// Call this on foreground/resume if you want session counts to reflect
-  /// in-app usage, not just cold starts.
-  Future<void> recordSession() async {
-    final auth = AuthService.instance;
-    if (!auth.isAvailable || !auth.isSignedIn) return;
-
-    try {
-      final client = SupabaseService.clientOrNull;
-      if (client == null) return;
-
-      final userId = auth.currentUserId;
-      if (userId == null || userId.isEmpty) return;
-
-      final existing = await client
-          .from(usageStatsTable)
-          .select('total_sessions')
-          .eq('user_id', userId)
-          .maybeSingle();
-
-      final current = (existing?['total_sessions'] as int?) ?? 0;
-      await client
-          .from(usageStatsTable)
-          .update({'total_sessions': current + 1, 'last_app_open': DateTime.now().toIso8601String()})
-          .eq('user_id', userId);
-    } catch (e) {
-      debugPrint('AppVersionService: Failed to record session — $e');
-    }
-  }
-
   /// Compares two semantic version strings (e.g. "1.0.0" vs "1.1.0").
   /// Returns -1 if v1 < v2, 1 if v1 > v2, and 0 if v1 == v2.
   static int compareVersions(String v1, String v2) {
