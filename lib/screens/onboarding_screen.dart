@@ -76,6 +76,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             SharedPreferences.getInstance().then((prefs) {
               prefs.setBool('hasOnboarded', true);
               if (context.mounted) {
+                // Canonical post-onboarding reporting site for app-health.
                 async_dispatcher.unawaited(AppVersionService.instance.trackAppUsage());
                 context.go('/home');
               }

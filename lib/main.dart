@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'dart:async';
 
 import 'app.dart';
-import 'services/app_version_service.dart';
 import 'services/alert_preferences_service.dart';
 import 'services/app_lock_service.dart';
 import 'services/auth_service.dart';
@@ -75,10 +74,10 @@ void main() async {
   // AuthService.isSignedIn is already correct on cold start.
   await _prewarmServices();
 
-  // Best-effort: report this launch to the admin app-health pipeline.
-  // This should eventually end up in app_version_service.dart; kept here for
-  // now so startup never blocks on DB observability.
-  unawaited(AppVersionService.instance.trackAppUsage());
+  // Retention note: app-launch usage reporting is intentionally centralized in
+  // the splash screen and post-auth paths so each launch writes once.
+  // This main() call is no longer needed and has been removed to avoid
+  // duplicate app_usage_stats upserts on cold start.
 
   // Route notification taps to the tapped document (cold start included).
   // After prewarm so the router mounts with services loaded; a very early

@@ -49,7 +49,7 @@ class _SplashScreenState extends State<SplashScreen>
       platform: AppVersionService.osPlatformKey,
     );
 
-    // Best-effort: tell the admin console this user opened the app.
+    // Best-effort: report this launch to the admin app-health pipeline.
     // Do not block startup on this — if Supabase is misconfigured or the
     // user is not signed in yet, this is intentionally a no-op.
     async_dispatcher.unawaited(AppVersionService.instance.trackAppUsage());

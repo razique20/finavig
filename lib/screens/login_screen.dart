@@ -268,8 +268,9 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
 
-      // Best-effort: report the first launch after sign-in to the admin
-      // app-health pipeline. Do not block entry into the app if this fails.
+      // Best-effort: report this launch to the admin app-health pipeline.
+      // This is the canonical post-sign-in reporting site.
+      // Do not block entry into the app if this fails.
       if (mounted) {
         unawaited(AppVersionService.instance.trackAppUsage());
       }
