@@ -89,6 +89,7 @@ class SupportService {
     required String title,
     required String description,
     required String requestType,
+    String? featureName,
   }) async {
     final userId = AuthService.instance.currentUserId;
     final userEmail = AuthService.instance.userEmail ?? 'guest@finavig.app';
@@ -111,14 +112,18 @@ class SupportService {
     final client = SupabaseService.clientOrNull;
     if (client != null) {
       try {
-        final inserted = await client.from('support_requests').insert({
+        final insertData = <String, dynamic>{
           'user_id': userId,
           'user_email': userEmail,
           'request_type': requestType,
           'title': title.trim(),
           'description': description.trim(),
           'status': 'open',
-        }).select().maybeSingle();
+        };
+        if (requestType == 'feature_request' && featureName != null && featureName.trim().isNotEmpty) {
+          insertData['feature_name'] = featureName.trim();
+        }
+        final inserted = await client.from('support_requests').insert(insertData).select().maybeSingle();
 
         if (inserted != null) {
           syncedToSupabase = true;
