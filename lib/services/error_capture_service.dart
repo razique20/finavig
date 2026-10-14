@@ -1,9 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/app_version_service.dart';
+import '../services/supabase_service.dart';
+import 'auth_service.dart';
 
 /// One captured error: message, where it came from, when, and the first
 /// frames of the stack. Small enough to persist in SharedPreferences.
@@ -57,7 +61,12 @@ class ErrorCaptureService {
   static const int maxRecords = 20;
   static const String _prefsKey = 'finavig.error_log.v1';
 
+  /// The live `error_reports` table has no unique fingerprint column, so
+  /// identical errors within this window are submitted only once.
+  static const Duration _resubmitCooldown = Duration(minutes: 1);
+
   final List<CapturedError> _records = [];
+  final Map<String, DateTime> _lastSubmitted = {};
 
   /// Newest-first snapshot of captured errors (memory + persisted entries).
   List<CapturedError> get records => List.unmodifiable(_records);
@@ -111,6 +120,7 @@ class ErrorCaptureService {
         _records.removeLast();
       }
       unawaited(_persist());
+      unawaited(_submitToAdmin(entry));
       debugPrint('[ErrorCapture] ($context) ${entry.message}');
     } catch (_) {
       // Never let the error recorder itself crash the app.
@@ -161,5 +171,56 @@ class ErrorCaptureService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_prefsKey);
     } catch (_) {}
+  }
+
+  /// Best-effort: submit a newly captured error to the admin error_reports
+  /// table so the console can show crashes and error frequency.
+  ///
+  /// Writes the column set the live table actually has (P1.3: platform,
+  /// app_version, device_info, error_type, error_message, stack_trace,
+  /// severity, created_at) — the older message/context/timestamp shape does
+  /// not exist anymore and would make every insert fail.
+  ///
+  /// Does not block app execution and does not throw. If Supabase is not
+  /// configured, not signed in, or the DB call fails, this is silently no-op.
+  Future<void> _submitToAdmin(CapturedError entry) async {
+    try {
+      final auth = AuthService.instance;
+      if (!auth.isAvailable || !auth.isSignedIn) return;
+
+      final client = SupabaseService.clientOrNull;
+      if (client == null) return;
+
+      final userId = auth.currentUserId;
+      if (userId == null || userId.isEmpty) return;
+
+      // Dedup locally: a hot error loop must not flood the console with
+      // identical rows (the table has no unique index to fall back on).
+      final key = '${entry.context}|${entry.message}';
+      final now = DateTime.now();
+      final last = _lastSubmitted[key];
+      if (last != null && now.difference(last) < _resubmitCooldown) return;
+      _lastSubmitted[key] = now;
+      if (_lastSubmitted.length > 50) {
+        _lastSubmitted.remove(_lastSubmitted.keys.first);
+      }
+
+      await client.from('error_reports').insert(
+        {
+          'user_id': userId,
+          'platform': Platform.operatingSystem,
+          'app_version': AppVersionService.currentAppVersion,
+          'device_info':
+              '${Platform.operatingSystem} ${Platform.operatingSystemVersion}',
+          'error_type': entry.context,
+          'error_message': entry.message,
+          'stack_trace': entry.stackHead,
+          'severity': 'error',
+          'created_at': entry.timestamp.toIso8601String(),
+        },
+      );
+    } catch (e) {
+      debugPrint('[ErrorCapture] _submitToAdmin failed: $e');
+    }
   }
 }
