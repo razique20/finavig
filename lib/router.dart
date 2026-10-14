@@ -307,8 +307,8 @@ class _AppShellState extends State<_AppShell> {
             // Soft white pill on light mode, deep surface on dark — modern
             // floating dock with a diffuse shadow instead of a hard black bar.
             color: fade.color(
-              Colors.white,
-              FinavigColors.slate.withValues(alpha: 0.92),
+              Colors.white.withValues(alpha: 0.92),
+              FinavigColors.slate.withValues(alpha: 0.85),
             ),
             borderRadius: BorderRadius.circular(30),
             boxShadow: [
