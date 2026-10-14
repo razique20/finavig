@@ -10,6 +10,24 @@ import '../../services/support_service.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/error_messages.dart';
 
+// ignore_for_file: deprecated_member_use
+
+/// Simple immutable value type used to describe one feature category option.
+@immutable
+class _CategoryItem {
+  const _CategoryItem({
+    required this.value,
+    required this.label,
+    required this.icon,
+    required this.color,
+  });
+
+  final String value;
+  final String label;
+  final IconData icon;
+  final Color color;
+}
+
 /// Opens the edit-profile bottom sheet (role / phone). Returns the saved
 /// values so the caller can update its state — sheets stay stateless.
 Future<void> showProfileEditSheet(
@@ -170,6 +188,8 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
   final descCtrl = TextEditingController();
   String selectedType = 'tracking_option_request';
 
+  String? selectedFeatureCategory;
+
   await showModalBottomSheet<bool>(
     context: context,
     useRootNavigator: true,
@@ -180,6 +200,33 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
     ),
     builder: (ctx) => StatefulBuilder(
       builder: (ctx, setSheetState) {
+        /// Small value type so the const list of feature categories is valid.
+        const categoryItems = <_CategoryItem>[
+          _CategoryItem(value: 'AI Features', label: 'AI Features', icon: Icons.auto_awesome_rounded, color: Colors.indigo),
+          _CategoryItem(value: 'Document Management', label: 'Document Management', icon: Icons.folder_open_rounded, color: Colors.teal),
+          _CategoryItem(value: 'Finance & Payments', label: 'Finance & Payments', icon: Icons.account_balance_wallet_rounded, color: Colors.green),
+          _CategoryItem(value: 'Notifications & Reminders', label: 'Notifications & Reminders', icon: Icons.notifications_rounded, color: Colors.orange),
+          _CategoryItem(value: 'User Interface', label: 'User Interface', icon: Icons.palette_rounded, color: Colors.pink),
+          _CategoryItem(value: 'Performance & Speed', label: 'Performance & Speed', icon: Icons.tune_rounded, color: Colors.amber),
+          _CategoryItem(value: 'Security & Privacy', label: 'Security & Privacy', icon: Icons.security_rounded, color: Colors.redAccent),
+          _CategoryItem(value: 'Integration & Export', label: 'Integration & Export', icon: Icons.share_rounded, color: Colors.purple),
+          _CategoryItem(value: 'Account & Subscription', label: 'Account & Subscription', icon: Icons.business_rounded, color: Colors.blue),
+          _CategoryItem(value: 'Other', label: 'Other', icon: Icons.more_horiz_rounded, color: Colors.grey),
+        ];
+
+        DropdownMenuItem<String> buildCategoryMenuItem(_CategoryItem cat) {
+          return DropdownMenuItem<String>(
+            value: cat.value,
+            child: Row(
+              children: [
+                Icon(cat.icon, size: 18, color: cat.color),
+                const SizedBox(width: 10),
+                Text(cat.label),
+              ],
+            ),
+          );
+        }
+
         return SafeArea(
           child: Padding(
             padding: EdgeInsets.only(
@@ -236,7 +283,6 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
                     ],
                   ),
                   const SizedBox(height: 20),
-
                   // Request type
                   Text(
                     'Request Type',
@@ -245,6 +291,7 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
                     ),
                   ),
                   const SizedBox(height: 8),
+                  // Request type dropdown
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -264,8 +311,7 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
                             value: 'tracking_option_request',
                             child: Row(
                               children: [
-                                Icon(Icons.track_changes_rounded,
-                                    size: 18, color: Colors.teal),
+                                Icon(Icons.track_changes_rounded, size: 18, color: Colors.teal),
                                 SizedBox(width: 10),
                                 Text('Tracking Option Request'),
                               ],
@@ -275,8 +321,7 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
                             value: 'feature_request',
                             child: Row(
                               children: [
-                                Icon(Icons.lightbulb_outline_rounded,
-                                    size: 18, color: Colors.amber),
+                                Icon(Icons.lightbulb_outline_rounded, size: 18, color: Colors.amber),
                                 SizedBox(width: 10),
                                 Text('Feature Request'),
                               ],
@@ -286,8 +331,7 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
                             value: 'bug_report',
                             child: Row(
                               children: [
-                                Icon(Icons.bug_report_outlined,
-                                    size: 18, color: Colors.redAccent),
+                                Icon(Icons.bug_report_outlined, size: 18, color: Colors.redAccent),
                                 SizedBox(width: 10),
                                 Text('Bug Report'),
                               ],
@@ -297,8 +341,7 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
                             value: 'support_request',
                             child: Row(
                               children: [
-                                Icon(Icons.help_outline_rounded,
-                                    size: 18, color: Colors.blue),
+                                Icon(Icons.help_outline_rounded, size: 18, color: Colors.blue),
                                 SizedBox(width: 10),
                                 Text('General Support'),
                               ],
@@ -312,7 +355,6 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
                     ),
                   ),
                   const SizedBox(height: 16),
-
                   // Title
                   Text(
                     'Title',
@@ -333,7 +375,6 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
                     ),
                   ),
                   const SizedBox(height: 16),
-
                   // Description
                   Text(
                     'Description',
@@ -355,7 +396,40 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
                     ),
                   ),
                   const SizedBox(height: 24),
-
+                  // Feature category (only shown for feature requests)
+                  if (selectedType == 'feature_request') ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      'Feature Category',
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: theme.colorScheme.outline.withOpacity(0.3),
+                        ),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: selectedFeatureCategory,
+                          hint: const Text('Select a category'),
+                          isExpanded: true,
+                          borderRadius: BorderRadius.circular(12),
+                          items: categoryItems.map((cat) => buildCategoryMenuItem(cat)).toList(),
+                          onChanged: (v) {
+                            setSheetState(() => selectedFeatureCategory = v);
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                   // Submit
                   SizedBox(
                     width: double.infinity,
@@ -380,14 +454,13 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
                           );
                           return;
                         }
-
                         final result =
                             await SupportService.instance.submitRequest(
                           title: title,
                           description: desc,
                           requestType: selectedType,
+                          featureName: selectedType == 'feature_request' ? selectedFeatureCategory : null,
                         );
-
                         if (ctx.mounted) {
                           ScaffoldMessenger.of(ctx).showSnackBar(
                             SnackBar(
@@ -424,7 +497,6 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
 /// their current status.
 Future<void> showProfileRequestHistorySheet(BuildContext context) async {
   final theme = Theme.of(context);
-
   showModalBottomSheet(
     context: context,
     useRootNavigator: true,
@@ -505,8 +577,7 @@ Future<void> showProfileRequestHistorySheet(BuildContext context) async {
                               Icon(
                                 Icons.inbox_rounded,
                                 size: 56,
-                                color:
-                                    FinavigColors.adaptiveIcon(context, theme.colorScheme.outline.withOpacity(0.4)),
+                                color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline.withOpacity(0.4)),
                               ),
                               const SizedBox(height: 12),
                               Text(
@@ -541,6 +612,7 @@ Future<void> showProfileRequestHistorySheet(BuildContext context) async {
                       },
                     );
                   },
+
                 ),
               ),
             ],
