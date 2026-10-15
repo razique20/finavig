@@ -1537,6 +1537,9 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
             category: FinanceCategory.renewals,
             title: '${item.displayName} renewal',
             amount: fee!,
+            // Renewal fee is shown in the active collection's currency — stamp
+            // the row with it so non-AE workspaces don't store a bare 'AED'.
+            currency: DocumentCollectionService.instance.activeCurrency,
             occurredAt: DateTime.now(),
             note: note ?? 'Logged from document renewal',
             documentId: item.id,

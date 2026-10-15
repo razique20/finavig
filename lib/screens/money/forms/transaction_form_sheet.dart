@@ -79,6 +79,10 @@ class _TransactionFormSheetState extends State<TransactionFormSheet> {
       category: _category,
       title: title,
       amount: amount,
+      // The amount is typed in the active collection's currency (the form
+      // label says so) — stamp it, otherwise the model's 'AED' default gets
+      // stored and the admin console misreads KWD/SAR rows as AED.
+      currency: DocumentCollectionService.instance.activeCurrency,
       occurredAt: now,
       documentId: _linkedDocument?.id,
     );
@@ -92,6 +96,7 @@ class _TransactionFormSheetState extends State<TransactionFormSheet> {
         category: _category,
         title: title,
         amount: amount,
+        currency: DocumentCollectionService.instance.activeCurrency,
         frequency: RecurrenceFrequency.monthly,
         dayOfMonth: now.day,
         startDate: DateTime(now.year, now.month, 1),

@@ -11,10 +11,10 @@ import '../services/tab_scroll_registry.dart';
 import '../services/urgency_engine.dart';
 import '../theme/app_theme.dart';
 import '../widgets/dialogs/upgrade_dialog.dart';
-import '../widgets/indicators/empty_state_illustration.dart';
 import '../widgets/attachment_thumbnail.dart';
 import '../widgets/shimmer_skeleton.dart';
 import 'documents/document_action_sheets.dart';
+import 'documents/documents_empty_state.dart';
 import 'documents/document_card.dart';
 import 'documents/documents_filters.dart';
 import 'documents/documents_hero_header.dart';
@@ -387,63 +387,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   }
 
   Widget _buildEmptyState(ThemeData theme) {
-    final fade = FinavigTransition.of(context);
-    final muted = fade.color(
-      FinavigColors.textMutedLight,
-      FinavigColors.textMuted,
-    );
-    return Padding(
-      // Flat on the canvas — no container, so the empty state keeps the
-      // card-free look of the rest of the tab.
-      padding: const EdgeInsets.symmetric(vertical: 30),
-      child: Column(
-        children: [
-          EmptyStateIllustration(
-            scene: _hasActiveFilters
-                ? EmptyStateScene.search
-                : EmptyStateScene.document,
-            size: 104,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            _hasActiveFilters ? 'No documents match' : 'Nothing tracked yet',
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: fade.color(
-                FinavigColors.textPrimaryLight,
-                FinavigColors.textPrimary,
-              ),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            _hasActiveFilters
-                ? 'Try a different filter or clear the search.'
-                : 'Scan a trade licence, visa or Ejari to start tracking its expiry.',
-            style: theme.textTheme.bodyMedium?.copyWith(color: muted),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          if (!_hasActiveFilters) ...[
-            FilledButton.icon(
-              onPressed: _openScanner,
-              icon: const Icon(Icons.add_rounded, size: 18),
-              label: const Text('Add first document'),
-            ),
-            const SizedBox(height: 4),
-            TextButton.icon(
-              onPressed: _addDemoDocument,
-              icon: const Icon(Icons.auto_awesome_rounded, size: 16),
-              label: const Text('Try a demo document'),
-            ),
-          ] else
-            TextButton(
-              onPressed: _clearFilters,
-              child: const Text('Clear filters'),
-            ),
-        ],
-      ),
-    );
+    return DocumentsEmptyState(hasActiveFilters: _hasActiveFilters);
   }
 
   // ------------------------------------------------------------------
