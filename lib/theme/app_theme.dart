@@ -7,21 +7,28 @@ import 'package:google_fonts/google_fonts.dart';
 // ──────────────────────────────────────────────────────────────────────────────
 // FinavigColors — the single source of truth for every color in the app.
 //
-// Modern bento palette: a calm indigo accent, ink hero backdrops, a soft
-// off-white canvas in light mode and deep desaturated surfaces in dark mode.
-// Legacy names (navyPrimary, cyanSecondary, …) are kept as aliases so every
-// existing call site picks up the new look automatically.
+// Derived from the four-quadrant logo identity:
+//   🟢 Green (top-left)  · 🔴 Red (top-right)
+//   🔵 Blue  (bottom-left) · 🟡 Gold (bottom-right)
+// with dark navy text. Legacy names are kept as aliases so every existing
+// call site picks up the new look automatically.
 // ──────────────────────────────────────────────────────────────────────────────
 
 class FinavigColors {
   FinavigColors._();
 
-  // ── Brand accents ───────────────────────────────────────────────────────
-  // Navy royal — derived from the logo navy (#001848) + white + gold trace.
-  static const Color accent = Color(0xFF1E40AF); // blue-800 — icons/links/active states
-  static const Color accentDeep = Color(0xFF1E3A8A); // blue-900
-  static const Color accentBright = Color(0xFF3B82F6); // blue-500 — dark-mode primary
-  static const Color accentSoft = Color(0xFFEFF6FF); // blue-50
+  // ── Logo quadrant colours ───────────────────────────────────────────────
+  // Extracted from the four-quadrant cross/plus logo.
+  static const Color logoGreen = Color(0xFF00B140); // top-left quadrant
+  static const Color logoRed   = Color(0xFFE02020); // top-right quadrant
+  static const Color logoBlue  = Color(0xFF2E8BC0); // bottom-left quadrant
+  static const Color logoGold  = Color(0xFFF0A830); // bottom-right quadrant
+
+  // ── Brand accents — derived from logo blue ─────────────────────────────
+  static const Color accent = Color(0xFF2671A8); // slightly deeper logo blue — icons/links/active
+  static const Color accentDeep = Color(0xFF1B5A8A); // dark step
+  static const Color accentBright = Color(0xFF2E8BC0); // logo blue — dark-mode primary
+  static const Color accentSoft = Color(0xFFE8F4FA); // logo-blue-50
 
   // Legacy aliases — map old names onto the new accent so the whole app
   // modernizes without touching every call site.
@@ -34,17 +41,17 @@ class FinavigColors {
   static const Color violetDark = accentDeep;
   static const Color cyanAccent = accentBright;
   static const Color violetAccent = accent;
-  static const Color emerald = Color(0xFF10B981);
+  static const Color emerald = logoGreen;
   static const Color emeraldAccent = emerald;
   static const Color textPrimaryDark = textPrimary;
 
-  // ── Tier premium gold — from the logo's trace gold (#D8A848) ───────────
-  static const Color tierGold = Color(0xFFD8A848);
+  // ── Tier premium gold — from the logo's gold quadrant ──────────────────
+  static const Color tierGold = logoGold;
   static const Color tierGoldDark = Color(0xFFA16207); // readable on light
 
-  // ── Ink (hero backdrops, dark CTAs) ─────────────────────────────────────
-  static const Color ink = Color(0xFF0F172A);
-  static const Color inkDeep = Color(0xFF0B1120);
+  // ── Ink (hero backdrops, dark CTAs) — logo navy ────────────────────────
+  static const Color ink = Color(0xFF0A1A3F);
+  static const Color inkDeep = Color(0xFF071230);
 
   // ── Surfaces — Dark mode ────────────────────────────────────────────────
   static const Color obsidian = Color(0xFF0C0E14);
@@ -59,22 +66,23 @@ class FinavigColors {
   static const Color fog = Color(0xFFDFE3EC); // hairlines
 
   // ── Bento tile tints (accent + matching pastel container) ───────────────
-  static const Color indigo = Color(0xFF1E40AF);
-  static const Color indigoTint = Color(0xFFEFF6FF);
-  static const Color blue = Color(0xFF3B82F6);
-  static const Color blueTint = Color(0xFFDBEAFE);
-  static const Color sky = Color(0xFF0EA5E9);
+  // Primary four — derived from the logo quadrants.
+  static const Color indigo = Color(0xFF2671A8); // logo-blue deeper
+  static const Color indigoTint = Color(0xFFE8F4FA);
+  static const Color blue = logoBlue;
+  static const Color blueTint = Color(0xFFD6EDF8);
+  static const Color sky = Color(0xFF38A1D4); // lighter logo blue step
   static const Color skyTint = Color(0xFFE0F2FE);
-  static const Color teal = Color(0xFF14B8A6);
-  static const Color tealTint = Color(0xFFCCFBF1);
-  static const Color green = Color(0xFF22C55E);
-  static const Color greenTint = Color(0xFFDCFCE7);
-  static const Color amber = Color(0xFFF59E0B);
-  static const Color amberTint = Color(0xFFFEF3C7);
+  static const Color teal = logoGreen;
+  static const Color tealTint = Color(0xFFD4F5E0);
+  static const Color green = logoGreen;
+  static const Color greenTint = Color(0xFFD4F5E0);
+  static const Color amber = logoGold;
+  static const Color amberTint = Color(0xFFFDF2D8);
   static const Color orange = Color(0xFFF97316);
   static const Color orangeTint = Color(0xFFFFEDD5);
-  static const Color red = Color(0xFFEF4444);
-  static const Color redTint = Color(0xFFFEE2E2);
+  static const Color red = logoRed;
+  static const Color redTint = Color(0xFFFCE0E0);
   static const Color pink = Color(0xFFEC4899);
   static const Color pinkTint = Color(0xFFFCE7F3);
   static const Color lilac = Color(0xFF4F46E5); // AI accents — brighter indigo step
@@ -263,7 +271,7 @@ class FinavigGradients {
   FinavigGradients._();
 
   static const LinearGradient primary = LinearGradient(
-    colors: [Color(0xFF2563EB), Color(0xFF1E3A8A)],
+    colors: [Color(0xFF2E8BC0), Color(0xFF1B5A8A)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
@@ -284,7 +292,7 @@ class FinavigGradients {
   );
 
   static const LinearGradient splash = LinearGradient(
-    colors: [Color(0xFF0B1120), Color(0xFF151830), Color(0xFF172554)],
+    colors: [Color(0xFF071230), Color(0xFF0A1A3F), Color(0xFF132D5A)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );

@@ -321,8 +321,8 @@ class _AiSummaryLink extends StatelessWidget {
 
     return Material(
       color: fade.color(
-        const Color(0xFF1E3A8A).withValues(alpha: 0.15), // blue-900 tint
-        const Color(0xFF172554).withValues(alpha: 0.25), // dark blue-950 tint
+        const Color(0xFF1B5A8A).withValues(alpha: 0.15), // logo-blue deep tint
+        const Color(0xFF132D5A).withValues(alpha: 0.25), // dark logo-navy tint
       ),
       borderRadius: BorderRadius.circular(10),
       child: InkWell(
@@ -401,7 +401,7 @@ class HomeQuickStats extends StatelessWidget {
               icon: Icons.trending_up_rounded,
               label: 'Spending',
               value: spending,
-              accent: FinavigColors.accentBright,
+              accent: FinavigColors.logoBlue,
               bg: tileBg,
             ),
           ),
@@ -411,7 +411,7 @@ class HomeQuickStats extends StatelessWidget {
               icon: Icons.flag_outlined,
               label: 'Plans',
               value: '${budgetPct}%',
-              accent: FinavigColors.amber,
+              accent: FinavigColors.logoGold,
               bg: tileBg,
             ),
           ),
@@ -421,7 +421,7 @@ class HomeQuickStats extends StatelessWidget {
               icon: Icons.description_outlined,
               label: 'Docs',
               value: '$docCount',
-              accent: FinavigColors.accentSoft,
+              accent: FinavigColors.logoGreen,
               bg: tileBg,
             ),
           ),
@@ -520,8 +520,8 @@ class AiSummaryCard extends StatelessWidget {
 
     // Dark blue gradient card.
     final cardColor = fade.color(
-      const Color(0xFF1E3A8A), // blue-900
-      const Color(0xFF172554), // dark blue-950
+      const Color(0xFF1B5A8A), // logo-blue deep
+      const Color(0xFF132D5A), // dark logo-navy
     );
 
     return Material(
@@ -590,7 +590,7 @@ class AiSummaryCard extends StatelessWidget {
                       icon: Icons.trending_up_rounded,
                       label: 'Spending',
                       value: spending,
-                      acclColor: FinavigColors.accentBright,
+                      acclColor: FinavigColors.logoBlue,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -599,7 +599,7 @@ class AiSummaryCard extends StatelessWidget {
                       icon: Icons.flag_outlined,
                       label: 'Plans',
                       value: '${budgetPct}%',
-                      acclColor: FinavigColors.amber,
+                      acclColor: FinavigColors.logoGold,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -608,7 +608,7 @@ class AiSummaryCard extends StatelessWidget {
                       icon: Icons.description_outlined,
                       label: 'Docs',
                       value: '$docCount',
-                      acclColor: FinavigColors.accentSoft,
+                      acclColor: FinavigColors.logoGreen,
                     ),
                   ),
                 ],

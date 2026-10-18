@@ -137,21 +137,21 @@ class HomeCategoriesGrid extends StatelessWidget {
           row([
             tile(
               icon: Icons.description_rounded,
-              accent: FinavigColors.violet,
+              accent: FinavigColors.logoBlue,
               label: 'Documents',
               subtitle: 'Files',
               onTap: () => context.go('/documents'),
             ),
             tile(
               icon: Icons.calendar_month_rounded,
-              accent: FinavigColors.amber,
+              accent: FinavigColors.logoRed,
               label: 'Renewals',
               subtitle: 'Expiries',
               onTap: () => context.push('/expiry-list'),
             ),
             tile(
               icon: Icons.savings_rounded,
-              accent: FinavigColors.teal,
+              accent: FinavigColors.logoGreen,
               label: 'Envelopes',
               subtitle: 'Savings',
               onTap: () => context.push('/envelopes'),
@@ -161,21 +161,21 @@ class HomeCategoriesGrid extends StatelessWidget {
           row([
             tile(
               icon: Icons.receipt_long_rounded,
-              accent: FinavigColors.blue,
+              accent: FinavigColors.logoGold,
               label: 'Records',
               subtitle: 'Ledger',
               onTap: () => context.push('/records'),
             ),
             tile(
               icon: Icons.trending_up_rounded,
-              accent: FinavigColors.sky,
+              accent: FinavigColors.logoBlue,
               label: 'Forecast',
               subtitle: '90 days',
               onTap: () => context.push('/cash-flow-forecast'),
             ),
             tile(
               icon: Icons.flag_rounded,
-              accent: FinavigColors.lilac,
+              accent: FinavigColors.logoGreen,
               label: 'AI Planner',
               subtitle: 'AI budget',
               onTap: () => context.push('/ai-budget-plan'),
@@ -191,8 +191,8 @@ class HomeCategoriesGrid extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    fade.color(const Color(0xFF2563EB), const Color(0xFF1D4ED8)),
-                    fade.color(const Color(0xFF1E3A8A), const Color(0xFF111C3F)),
+                    fade.color(const Color(0xFF2E8BC0), const Color(0xFF2671A8)),
+                    fade.color(const Color(0xFF1B5A8A), const Color(0xFF0E3A5C)),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,

@@ -47,14 +47,14 @@ class FinavigWordmark extends StatelessWidget {
   /// Style of the word — the dot inherits its size and letter spacing from it.
   final TextStyle style;
 
-  /// Colour of the dot. Defaults to the bright brand blue, which stays
-  /// unmistakably blue against the ink wordmark on a white page.
+  /// Colour of the dot. Defaults to the logo blue (bottom-left quadrant),
+  /// which stays unmistakably blue against the ink wordmark on a white page.
   final Color dotColor;
 
   const FinavigWordmark({
     super.key,
     required this.style,
-    this.dotColor = FinavigColors.accentBright,
+    this.dotColor = FinavigColors.logoBlue,
   });
 
   @override
