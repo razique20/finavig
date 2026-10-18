@@ -491,64 +491,45 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: AnimatedOpacity(
                   duration: const Duration(milliseconds: 120),
                   opacity: _wordmarkPressed ? 0.55 : 1.0,
-                  child: Text(
-                    'Finavig',
-                    style: GoogleFonts.inter(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.5,
-                      color: isDark ? Colors.white : FinavigColors.ink,
-                    ),
+                  child: Image.asset(
+                    'assets/images/logo.png',
+                    width: 32,
+                    height: 32,
                   ),
                 ),
               ),
               const SizedBox(width: 10),
-              // All six GCC members at a glance — extra-small flags in place of
-              // the "GCC Edition" label. Each flag keeps a hairline border so
-              // the white-edged ones stay visible on the white surface (same
-              // treatment as the country picker, at a fraction of the size).
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-                decoration: BoxDecoration(
-                  color: FinavigColors.ink.withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(99),
-                  border: Border.all(
-                    color: FinavigColors.ink.withValues(alpha: 0.25),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    for (final country in GccCountry.values) ...[
-                      if (country != GccCountry.values.first)
-                        const SizedBox(width: 3),
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(2),
-                          border: Border.all(
-                            color: Colors.black.withValues(alpha: 0.10),
-                          ),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(1.5),
-                          child: Image.asset(
-                            country.flagAsset,
-                            width: 16,
-                            height: 11,
-                            fit: BoxFit.cover,
-                            gaplessPlayback: true,
-                            semanticLabel: country.displayName,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
+              // Four logo-color dots — echo the quadrant palette.
+              _buildLogoColorDots(),
             ],
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildLogoColorDots() {
+    const colors = [
+      FinavigColors.logoGreen,
+      FinavigColors.logoRed,
+      FinavigColors.logoBlue,
+      FinavigColors.logoGold,
+    ];
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (int i = 0; i < colors.length; i++) ...[
+          if (i != 0) const SizedBox(width: 5),
+          Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(
+              color: colors[i],
+              shape: BoxShape.circle,
+            ),
+          ),
+        ],
+      ],
     );
   }
 

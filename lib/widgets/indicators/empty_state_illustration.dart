@@ -46,6 +46,22 @@ class EmptyStateIllustration extends StatelessWidget {
     final tint =
         isDark ? FinavigColors.cyanAccent : FinavigColors.navyPrimary;
 
+    // The document scene uses the app logo; all other scenes use icons.
+    if (scene == EmptyStateScene.document) {
+      return SizedBox(
+        width: size,
+        height: size,
+        child: Center(
+          child: Image.asset(
+            'assets/New Logo/finavig-mark-transparent.png',
+            width: size * 0.55,
+            height: size * 0.55,
+            fit: BoxFit.contain,
+          ),
+        ),
+      );
+    }
+
     // The box keeps the [size] footprint so the surrounding spacing is
     // unchanged, but the icon itself paints no background.
     return SizedBox(

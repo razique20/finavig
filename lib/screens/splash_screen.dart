@@ -86,7 +86,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    // Deliberately plain: a white field with the wordmark dead center.
+    // Deliberately plain: a white field with the logo dead center.
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
@@ -96,28 +96,12 @@ class _SplashScreenState extends State<SplashScreen>
             opacity: _markFade.value.clamp(0.0, 1.0),
             child: child,
           ),
-          child: const _Wordmark(),
+          child: Image.asset(
+            'assets/images/logo.png',
+            width: 120,
+            height: 120,
+          ),
         ),
-      ),
-    );
-  }
-}
-
-/// The "Finavig" wordmark, ink on white.
-class _Wordmark extends StatelessWidget {
-  const _Wordmark();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Text(
-      'Finavig',
-      textAlign: TextAlign.center,
-      style: TextStyle(
-        fontSize: 40,
-        height: 1.0,
-        fontWeight: FontWeight.w900,
-        letterSpacing: 1.0,
-        color: FinavigColors.ink,
       ),
     );
   }

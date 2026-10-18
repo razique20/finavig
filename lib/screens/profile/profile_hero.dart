@@ -72,43 +72,22 @@ class ProfileSettingsHeader extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 18),
-          // Avatar — the same dark brand plate as the Home balance card
-          // (ink in light mode, charcoal in dark) instead of the old blue
-          // gradient, so the initials read as one brand mark with the rest of
-          // the app. The dark-mode variant gets a hairline so it still lifts
-          // off the obsidian canvas.
+          // NFT-style avatar — profile picture in the Settings header.
           Container(
             width: 84,
             height: 84,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [
-                  fade.color(FinavigColors.ink, FinavigColors.charcoal),
-                  fade.color(FinavigColors.inkDeep, FinavigColors.slate),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              border: Border.all(
-                color: fade.color(
-                  Colors.transparent,
-                  Colors.white.withValues(alpha: 0.08),
-                ),
-              ),
               boxShadow: FinavigShadows.adaptive(
                 theme.brightness == Brightness.dark,
               ),
             ),
-            child: Center(
-              child: Text(
-                initials.isEmpty ? 'U' : initials,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 26,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1,
-                ),
+            child: ClipOval(
+              child: Image.asset(
+                'assets/images/nft_avatar.jpg',
+                width: 84,
+                height: 84,
+                fit: BoxFit.cover,
               ),
             ),
           ),
