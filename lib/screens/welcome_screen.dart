@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../theme/app_theme.dart';
-import '../widgets/finavig_wordmark.dart';
 
 /// Pre-login welcome screen — the first thing a brand-new user sees after
 /// the splash.
@@ -64,17 +63,12 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             child: Column(
               children: [
                 const SizedBox(height: 28),
-                // Main headline — the wordmark itself, no logo mark. The “i”
-                // carries the brand-blue dot (see FinavigWordmark).
                 Image.asset(
                   'assets/images/logo.png',
                   width: 80,
                   height: 80,
                 ),
-                const SizedBox(height: 14),
-                // Four logo-color dots — echo the quadrant palette.
-                const _LogoColorDots(),
-                const SizedBox(height: 10),
+                const SizedBox(height: 16),
                 const Text(
                   'AI-powered financial & document intelligence',
                   textAlign: TextAlign.center,
@@ -121,41 +115,25 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 // CTA pinned above the quiet footer line.
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
-                  child: Container(
-                    height: 60,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [
-                          FinavigColors.logoGreen,
-                          FinavigColors.logoBlue,
-                          FinavigColors.logoGold,
-                          FinavigColors.logoRed,
-                        ],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      ),
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    padding: const EdgeInsets.all(2.5),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _continueToLogin,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: FinavigColors.ink,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(28),
-                          ),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: _continueToLogin,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: FinavigColors.ink,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(28),
                         ),
-                        child: const Text(
-                          'Continue to Login',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.2,
-                          ),
+                      ),
+                      child: const Text(
+                        'Continue to Login',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.2,
                         ),
                       ),
                     ),
@@ -354,38 +332,6 @@ class _ReplyBubble extends StatelessWidget {
             ),
           ),
         ),
-      ],
-    );
-  }
-}
-
-/// Four colored dots echoing the logo's four quadrant colors —
-/// green (top-left), red (top-right), blue (bottom-left), gold (bottom-right).
-class _LogoColorDots extends StatelessWidget {
-  const _LogoColorDots();
-
-  @override
-  Widget build(BuildContext context) {
-    const colors = [
-      FinavigColors.logoGreen,
-      FinavigColors.logoRed,
-      FinavigColors.logoBlue,
-      FinavigColors.logoGold,
-    ];
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (int i = 0; i < colors.length; i++) ...[
-          if (i != 0) const SizedBox(width: 6),
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: colors[i],
-              shape: BoxShape.circle,
-            ),
-          ),
-        ],
       ],
     );
   }

@@ -498,38 +498,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
-              // Four logo-color dots — echo the quadrant palette.
-              _buildLogoColorDots(),
             ],
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildLogoColorDots() {
-    const colors = [
-      FinavigColors.logoGreen,
-      FinavigColors.logoRed,
-      FinavigColors.logoBlue,
-      FinavigColors.logoGold,
-    ];
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (int i = 0; i < colors.length; i++) ...[
-          if (i != 0) const SizedBox(width: 5),
-          Container(
-            width: 7,
-            height: 7,
-            decoration: BoxDecoration(
-              color: colors[i],
-              shape: BoxShape.circle,
-            ),
-          ),
-        ],
-      ],
     );
   }
 
