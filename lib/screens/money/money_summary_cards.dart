@@ -58,8 +58,8 @@ class BillSpikeAlertsCard extends StatelessWidget {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: FinavigColors.warning.withOpacity(
-                      isDark ? 0.2 : 0.14,
+                    color: FinavigColors.warning.withValues(
+                      alpha: isDark ? 0.2 : 0.14,
                     ),
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -76,8 +76,8 @@ class BillSpikeAlertsCard extends StatelessWidget {
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: isDark
-                          ? Colors.amberAccent
-                          : Colors.orange.shade900,
+                          ? FinavigColors.warning
+                          : FinavigColors.tierGoldDark,
                     ),
                   ),
                 ),
@@ -87,7 +87,7 @@ class BillSpikeAlertsCard extends StatelessWidget {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: FinavigColors.warning.withOpacity(0.2),
+                    color: FinavigColors.warning.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -148,7 +148,7 @@ class BillSpikeAlertsCard extends StatelessWidget {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.15),
+                      color: FinavigColors.danger.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
@@ -156,7 +156,7 @@ class BillSpikeAlertsCard extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
-                        color: Colors.redAccent,
+                        color: FinavigColors.danger,
                       ),
                     ),
                   ),
