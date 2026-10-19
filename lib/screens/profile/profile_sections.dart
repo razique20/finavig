@@ -16,7 +16,38 @@ Color profileAccentBg(BuildContext context, Color accent) =>
       accent.withValues(alpha: 0.15),
     );
 
-/// A vertical stack of [ProfileListRow]s with even breathing room.
+/// Section header row inside the Profile settings list.
+class ProfileSectionHeader extends StatelessWidget {
+  final String title;
+
+  const ProfileSectionHeader({super.key, required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final fade = FinavigTransition.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(left: 6, top: 12, bottom: 2),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          title.toUpperCase(),
+          style: theme.textTheme.labelSmall?.copyWith(
+            fontWeight: FontWeight.w700,
+            fontSize: 11,
+            letterSpacing: 0.9,
+            color: fade.color(
+              FinavigColors.textMutedLight,
+              FinavigColors.textSecondary,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A vertical stack of [ProfileListRow]s and section headers with even breathing room.
 class ProfileList extends StatelessWidget {
   final List<Widget> children;
 
@@ -30,7 +61,8 @@ class ProfileList extends StatelessWidget {
         children: [
           for (var i = 0; i < children.length; i++) ...[
             children[i],
-            if (i < children.length - 1) const SizedBox(height: 10),
+            if (i < children.length - 1)
+              SizedBox(height: children[i] is ProfileSectionHeader ? 4 : 8),
           ],
         ],
       ),

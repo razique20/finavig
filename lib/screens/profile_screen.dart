@@ -98,14 +98,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     final prefs = await SharedPreferences.getInstance();
     final email = AuthService.instance.userEmail;
-    final derivedName = email != null && email.contains('@')
+    final rawName = email != null && email.contains('@')
         ? email
               .split('@')
               .first
               .replaceAll('.', ' ')
               .replaceAll('_', ' ')
-              .toUpperCase()
+              .trim()
         : 'Unknown User';
+    final derivedName = _toTitleCase(rawName);
 
     if (!mounted) return;
     setState(() {
@@ -115,6 +116,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _userAge = _ageFromDob(prefs.getString('userDateOfBirth'));
       _geminiKey = prefs.getString('gemini.apiKey.v1') ?? '';
     });
+  }
+
+  /// Convert raw name to clean Title Case.
+  static String _toTitleCase(String text) {
+    if (text.isEmpty) return text;
+    return text.split(' ').where((w) => w.isNotEmpty).map((word) {
+      return word[0].toUpperCase() + word.substring(1).toLowerCase();
+    }).join(' ');
   }
 
   /// Exact age in years from the ISO DOB captured at signup (null when the
@@ -344,6 +353,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await showDeleteAccountSheet(context);
   }
 
+  Future<void> _signOut() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Sign out?'),
+        content: const Text(
+          'You will need to sign in again to see your documents.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sign out'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      await AuthService.instance.signOut();
+      if (mounted) context.go('/login');
+    }
+  }
+
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.red),
@@ -362,21 +397,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (context, _) {
         return ProfileList(
           children: [
+            const ProfileSectionHeader(title: 'Account & Plan'),
             ProfileListRow(
               icon: Icons.person_outline_rounded,
               title: 'Manage profile',
               value: _userRole,
               onTap: _editProfile,
-            ),
-            ProfileListRow(
-              icon: Icons.tune_rounded,
-              title: 'Customize my experience',
-              onTap: _openAppearance,
-            ),
-            ProfileListRow(
-              icon: Icons.notifications_none_rounded,
-              title: 'Manage notifications',
-              onTap: () => context.push('/alerts-reminders'),
             ),
             ProfileListRow(
               icon: Icons.folder_outlined,
@@ -390,6 +416,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
               value: tierInfo.name,
               onTap: _openSubscription,
             ),
+            const ProfileSectionHeader(title: 'Preferences & Security'),
+            ProfileListRow(
+              icon: Icons.tune_rounded,
+              title: 'Customize my experience',
+              onTap: _openAppearance,
+            ),
+            ProfileListRow(
+              icon: Icons.notifications_none_rounded,
+              title: 'Manage notifications',
+              onTap: () => context.push('/alerts-reminders'),
+            ),
             ProfileListRow(
               icon: Icons.lock_outline_rounded,
               title: 'Security & App Lock',
@@ -402,6 +439,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               value: _geminiKey.isEmpty ? 'Shared key' : 'Custom key',
               onTap: _editGeminiKey,
             ),
+            const ProfileSectionHeader(title: 'Help & Support'),
             ProfileListRow(
               icon: Icons.help_outline_rounded,
               title: 'FAQ',
@@ -430,6 +468,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               title: 'Ensure reminders work',
               onTap: openBatteryGuidance,
             ),
+            const ProfileSectionHeader(title: 'Data & Account'),
             ProfileListRow(
               icon: Icons.download_outlined,
               title: 'Download my data',
@@ -441,6 +480,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               danger: true,
               onTap: _deleteAccount,
             ),
+            if (AuthService.instance.isSignedIn)
+              ProfileListRow(
+                icon: Icons.logout_rounded,
+                title: 'Sign out',
+                danger: true,
+                onTap: _signOut,
+              ),
           ],
         );
       },
@@ -501,11 +547,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         )
                       else ...[
                         _buildList(),
-                        // Keep the last row clear of the floating nav pill
-                        // (height + margins ≈ 80).
+                        // Generous clearance above the floating nav pill dock
                         SizedBox(
                           height:
-                              16 + MediaQuery.of(context).padding.bottom + 80,
+                              24 + MediaQuery.paddingOf(context).bottom + 84,
                         ),
                       ],
                     ],

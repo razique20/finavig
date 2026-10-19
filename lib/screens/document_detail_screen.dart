@@ -275,11 +275,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: daysRemaining <= 7
-                      ? Colors.red
-                      : daysRemaining <= 30
-                      ? Colors.orange
-                      : Colors.green,
+                  color: FinavigColors.urgencyColor(daysRemaining),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -920,16 +916,16 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
               icon: Icons.calendar_today_rounded,
               label: 'Expiry date',
               value: DateFormat('dd MMM yyyy').format(item.expiresAt),
-              valueColor: item.daysRemaining <= 7 ? Colors.red : null,
+              valueColor: item.daysRemaining <= 7 ? FinavigColors.danger : null,
             ),
             _InfoTile(
               icon: Icons.timer_outlined,
               label: 'Days remaining',
               value: '${item.daysRemaining} days',
               valueColor: item.daysRemaining <= 7
-                  ? Colors.red
+                  ? FinavigColors.danger
                   : item.daysRemaining <= 30
-                  ? Colors.amber
+                  ? FinavigColors.warning
                   : null,
             ),
             _InfoTile(

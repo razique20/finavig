@@ -307,8 +307,8 @@ class _AppShellState extends State<_AppShell> {
             // Soft white pill on light mode, deep surface on dark — modern
             // floating dock with a diffuse shadow instead of a hard black bar.
             color: fade.color(
-              Colors.white.withValues(alpha: 0.92),
-              FinavigColors.slate.withValues(alpha: 0.85),
+              Colors.white,
+              FinavigColors.slate.withValues(alpha: 0.92),
             ),
             borderRadius: BorderRadius.circular(30),
             boxShadow: [
@@ -503,11 +503,20 @@ class _NavPillItem extends StatelessWidget {
             child: Center(
               child: Stack(
                 clipBehavior: Clip.none,
+                alignment: Alignment.center,
                 children: [
-                  // No selection plate: the active tab is signalled by the
-                  // glyph colour plus the filled icon variant the shell
-                  // already swaps in (home_rounded, person_rounded, …), which
-                  // keeps the dock calm and the labels' optical centre steady.
+                  if (active)
+                    Container(
+                      width: 44,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: fade.color(
+                          FinavigColors.ink.withValues(alpha: 0.08),
+                          Colors.white.withValues(alpha: 0.14),
+                        ),
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                    ),
                   SizedBox(
                     width: 42,
                     height: 42,
