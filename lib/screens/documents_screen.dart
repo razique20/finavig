@@ -387,7 +387,12 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   }
 
   Widget _buildEmptyState(ThemeData theme) {
-    return DocumentsEmptyState(hasActiveFilters: _hasActiveFilters);
+    return DocumentsEmptyState(
+      hasActiveFilters: _hasActiveFilters,
+      onClearFilters: _clearFilters,
+      onAddFirst: _openScanner,
+      onTryDemo: _addDemoDocument,
+    );
   }
 
   // ------------------------------------------------------------------
