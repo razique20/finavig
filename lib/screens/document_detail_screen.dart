@@ -173,7 +173,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       body: SingleChildScrollView(
         padding: EdgeInsets.fromLTRB(
           16,
-          MediaQuery.of(context).padding.top + kToolbarHeight + 8,
+          MediaQuery.of(context).padding.top + kToolbarHeight,
           16,
           16,
         ),
