@@ -7,11 +7,9 @@ import '../theme/app_theme.dart';
 /// Pre-login welcome screen — the first thing a brand-new user sees after
 /// the splash.
 ///
-/// Plain white, like the splash: a single main headline up top, a short
-/// thread of quotes styled like a WhatsApp conversation (an incoming quote,
-/// a reply bubble with the quoted-reply block, and one more quote), and
-/// a single "Continue to Login" CTA that marks onboarding-seen and
-/// advances to the login page.
+/// A modern feature walkthrough carousel showcasing Finavig's three core
+/// pillars, with smooth page transitions, animated dot indicators, and a
+/// "Get Started" CTA that marks onboarding as seen and advances to login.
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
 
@@ -21,18 +19,52 @@ class WelcomeScreen extends StatefulWidget {
 
 class _WelcomeScreenState extends State<WelcomeScreen>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
+  late final AnimationController _fadeController;
   late final Animation<double> _fade;
   late final Animation<Offset> _slide;
+  late final PageController _pageController;
+  int _currentPage = 0;
+
+  static const _pillars = <_FeaturePillar>[
+    _FeaturePillar(
+      icon: Icons.radar_rounded,
+      accentColor: FinavigColors.danger,
+      tintColor: FinavigColors.redTint,
+      title: 'Smart Document\nExpiry Radar',
+      subtitle:
+          'Track passports, visas, trade licenses and IDs in one place — '
+          'with escalating alerts so you never miss a renewal deadline.',
+    ),
+    _FeaturePillar(
+      icon: Icons.account_balance_wallet_rounded,
+      accentColor: FinavigColors.logoGreen,
+      tintColor: FinavigColors.greenTint,
+      title: 'Cash Flow\n& Envelopes',
+      subtitle:
+          'Automated budget pacing, envelope allocation and 90-day '
+          'recurring expense predictions — your money on autopilot.',
+    ),
+    _FeaturePillar(
+      icon: Icons.auto_awesome_rounded,
+      accentColor: FinavigColors.lilac,
+      tintColor: FinavigColors.lilacTint,
+      title: 'AI Compliance\n& Insights',
+      subtitle:
+          'Point your camera at any document — OCR extracts the data '
+          'instantly and AI generates compliance summaries for you.',
+    ),
+  ];
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+    _pageController = PageController();
+    _fadeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 700),
     )..forward();
-    _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
+    _fade =
+        CurvedAnimation(parent: _fadeController, curve: Curves.easeOutCubic);
     _slide = Tween<Offset>(
       begin: const Offset(0, 0.06),
       end: Offset.zero,
@@ -41,7 +73,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
   @override
   void dispose() {
-    _controller.dispose();
+    _pageController.dispose();
+    _fadeController.dispose();
     super.dispose();
   }
 
@@ -53,8 +86,12 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    final fade = FinavigTransition.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor:
+          fade.color(FinavigColors.snowWhite, FinavigColors.obsidian),
       body: SafeArea(
         child: FadeTransition(
           opacity: _fade,
@@ -63,56 +100,62 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             child: Column(
               children: [
                 const SizedBox(height: 28),
+
+                // ── Logo ──────────────────────────────────────────────
                 Image.asset(
                   'assets/images/logo.png',
                   width: 80,
                   height: 80,
                 ),
                 const SizedBox(height: 16),
-                const Text(
+
+                Text(
                   'AI-powered financial & document intelligence',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                     letterSpacing: 0.3,
-                    color: FinavigColors.textSecondaryLight,
+                    color: fade.color(
+                      FinavigColors.textSecondaryLight,
+                      FinavigColors.textSecondary,
+                    ),
                   ),
                 ),
-                const Spacer(flex: 3),
-                // Quote thread — styled like a WhatsApp conversation.
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      _IncomingQuoteBubble(
-                        quote:
-                            'Do not save what is left after spending; '
-                            'spend what is left after saving.',
-                        attribution: 'Warren Buffett',
-                      ),
-                      SizedBox(height: 10),
-                      _ReplyBubble(
-                        replyToName: 'Warren Buffett',
-                        quotedText: '…spend what is left after saving.',
-                        message:
-                            "That's Finavig — budgets, cash flow and "
-                            'document alerts in one secure place.',
-                        timestamp: '9:39 PM',
-                      ),
-                      SizedBox(height: 10),
-                      _IncomingQuoteBubble(
-                        quote:
-                            'An investment in knowledge pays the best '
-                            'interest.',
-                        attribution: 'Benjamin Franklin',
-                      ),
-                    ],
+
+                const Spacer(flex: 2),
+
+                // ── Feature carousel ──────────────────────────────────
+                SizedBox(
+                  height: 320,
+                  child: PageView.builder(
+                    controller: _pageController,
+                    itemCount: _pillars.length,
+                    onPageChanged: (i) => setState(() => _currentPage = i),
+                    physics: const BouncingScrollPhysics(),
+                    itemBuilder: (context, index) {
+                      return _PillarCard(
+                        pillar: _pillars[index],
+                        isDark: isDark,
+                        fade: fade,
+                      );
+                    },
                   ),
                 ),
-                const Spacer(flex: 6),
-                // CTA pinned above the quiet footer line.
+
+                const SizedBox(height: 20),
+
+                // ── Page indicator dots ───────────────────────────────
+                _PageIndicator(
+                  count: _pillars.length,
+                  current: _currentPage,
+                  activeColor: _pillars[_currentPage].accentColor,
+                  inactiveColor: fade.color(FinavigColors.fog, FinavigColors.slateLight),
+                ),
+
+                const Spacer(flex: 4),
+
+                // ── CTA ───────────────────────────────────────────────
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
                   child: SizedBox(
@@ -121,15 +164,17 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     child: ElevatedButton(
                       onPressed: _continueToLogin,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: FinavigColors.ink,
+                        backgroundColor:
+                            fade.color(FinavigColors.ink, FinavigColors.accentBright),
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(28),
+                          borderRadius:
+                              BorderRadius.circular(FinavigRadius.button),
                         ),
                       ),
                       child: const Text(
-                        'Continue to Login',
+                        'Get Started',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -139,17 +184,19 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     ),
                   ),
                 ),
-                const Padding(
-                  padding: EdgeInsets.only(bottom: 28, top: 4),
+
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 28, top: 4),
                   child: Text(
                     'Budgets · Cash flow · Document expiry alerts',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 0.6,
-                      // Brand blue: the deep step stays readable at 11px on
-                      // the white surface.
-                      color: FinavigColors.accent,
+                      color: fade.color(
+                        FinavigColors.accent,
+                        FinavigColors.accentBright,
+                      ),
                     ),
                   ),
                 ),
@@ -162,177 +209,154 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   }
 }
 
-/// An incoming chat bubble carrying a quote and its attribution
-/// (WhatsApp-style, tail corner on the top-left).
-class _IncomingQuoteBubble extends StatelessWidget {
-  final String quote;
-  final String attribution;
+// ─────────────────────────────────────────────────────────────────────────────
+// Data model for a single carousel pillar.
+// ─────────────────────────────────────────────────────────────────────────────
 
-  const _IncomingQuoteBubble({required this.quote, required this.attribution});
+class _FeaturePillar {
+  final IconData icon;
+  final Color accentColor;
+  final Color tintColor;
+  final String title;
+  final String subtitle;
+
+  const _FeaturePillar({
+    required this.icon,
+    required this.accentColor,
+    required this.tintColor,
+    required this.title,
+    required this.subtitle,
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Individual pillar card rendered inside the PageView.
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _PillarCard extends StatelessWidget {
+  final _FeaturePillar pillar;
+  final bool isDark;
+  final FinavigTransition fade;
+
+  const _PillarCard({
+    required this.pillar,
+    required this.isDark,
+    required this.fade,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        Flexible(
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(12, 9, 12, 9),
-            decoration: BoxDecoration(
-              color: FinavigColors.cloud,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(4),
-                topRight: Radius.circular(18),
-                bottomLeft: Radius.circular(18),
-                bottomRight: Radius.circular(18),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  quote,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    height: 1.3,
-                    fontWeight: FontWeight.w500,
-                    color: FinavigColors.textPrimaryLight,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  '— $attribution',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    // Brand blue on the light bubble: it needs the deep step
-                    // (#1E40AF) to stay readable at 11px, unlike the bright
-                    // step used inside the ink reply bubble.
-                    color: FinavigColors.accent,
-                  ),
-                ),
-              ],
-            ),
-          ),
+    final iconBg = isDark
+        ? pillar.accentColor.withValues(alpha: 0.15)
+        : pillar.tintColor;
+    final cardBg = fade.color(Colors.white, FinavigColors.charcoal);
+    final borderColor =
+        fade.color(FinavigColors.fog, FinavigColors.slateLight);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 28),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(FinavigRadius.card),
+          border: Border.all(color: borderColor, width: 1),
+          boxShadow: FinavigShadows.adaptive(isDark),
         ),
-      ],
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Icon circle
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: iconBg,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                pillar.icon,
+                size: 36,
+                color: pillar.accentColor,
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // Title
+            Text(
+              pillar.title,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                height: 1.2,
+                letterSpacing: -0.3,
+                color: fade.color(
+                  FinavigColors.textPrimaryLight,
+                  FinavigColors.textPrimary,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Subtitle
+            Text(
+              pillar.subtitle,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w400,
+                height: 1.45,
+                color: fade.color(
+                  FinavigColors.textSecondaryLight,
+                  FinavigColors.textSecondary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
 
-/// An outgoing reply bubble with the WhatsApp-style quoted-reply block
-/// (accent bar, sender name, snippet) above the message itself.
-class _ReplyBubble extends StatelessWidget {
-  final String replyToName;
-  final String quotedText;
-  final String message;
-  final String timestamp;
+// ─────────────────────────────────────────────────────────────────────────────
+// Animated page-indicator dots. The active dot expands into a pill.
+// ─────────────────────────────────────────────────────────────────────────────
 
-  const _ReplyBubble({
-    required this.replyToName,
-    required this.quotedText,
-    required this.message,
-    required this.timestamp,
+class _PageIndicator extends StatelessWidget {
+  final int count;
+  final int current;
+  final Color activeColor;
+  final Color inactiveColor;
+
+  const _PageIndicator({
+    required this.count,
+    required this.current,
+    required this.activeColor,
+    required this.inactiveColor,
   });
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        Flexible(
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(12, 9, 12, 8),
-            decoration: const BoxDecoration(
-              // Flat ink, exactly like the Home hero band: no dark halo, which
-              // on a white page made the plate read black instead of navy.
-              color: FinavigColors.ink,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(18),
-                topRight: Radius.circular(4),
-                bottomLeft: Radius.circular(18),
-                bottomRight: Radius.circular(18),
-              ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Quoted-reply block.
-                Container(
-                  padding: const EdgeInsets.fromLTRB(8, 7, 8, 7),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.18),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border(
-                      left: BorderSide(
-                        color: Colors.white.withOpacity(0.75),
-                        width: 3,
-                      ),
-                    ),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        replyToName,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          // Bright blue step: the deep accent disappears
-                          // against the ink bubble.
-                          color: FinavigColors.accentBright,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        quotedText,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 11,
-                          height: 1.3,
-                          color: Colors.white.withOpacity(0.75),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 7),
-                Text(
-                  message,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    height: 1.3,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Text(
-                    timestamp,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      color: FinavigColors.accentBright,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(count, (i) {
+        final isActive = i == current;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          width: isActive ? 24 : 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: isActive ? activeColor : inactiveColor,
+            borderRadius: BorderRadius.circular(4),
           ),
-        ),
-      ],
+        );
+      }),
     );
   }
 }
