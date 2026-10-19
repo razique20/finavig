@@ -87,11 +87,10 @@ class _MoneyScreenState extends State<MoneyScreen> {
 
   /// Section ids currently minimized on this tab. Each section in the
   /// light sheet collapses to its header; tapping the header again
-  /// expands it. Every section starts minimized, so the sheet opens
-  /// as a compact index of headers the user can expand on demand.
+  /// expands it. High-priority sections (budgets, pace, transactions)
+  /// start expanded so actionable data is visible at a glance;
+  /// secondary analytics sections start collapsed.
   final Set<String> _collapsedSections = {
-    'budgets',
-    'pace',
     'weekly',
     'categories',
     'top',
@@ -99,7 +98,6 @@ class _MoneyScreenState extends State<MoneyScreen> {
     'recurring',
     'envelopes',
     'credit',
-    'transactions',
   };
 
   void _toggleSection(String id) => setState(() {
@@ -495,7 +493,7 @@ class _MoneyScreenState extends State<MoneyScreen> {
                       Text(
                         '$monthName · ${_transactions.length} records',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: Colors.white.withOpacity(0.85),
+                          color: Colors.white.withValues(alpha: 0.85),
                           fontWeight: FontWeight.w600,
                         ),
                         maxLines: 1,
@@ -505,7 +503,7 @@ class _MoneyScreenState extends State<MoneyScreen> {
                       Icon(
                         Icons.arrow_forward_ios_rounded,
                         size: 10,
-                        color: Colors.white.withOpacity(0.7),
+                        color: Colors.white.withValues(alpha: 0.7),
                       ),
                     ],
                   ),
@@ -514,7 +512,7 @@ class _MoneyScreenState extends State<MoneyScreen> {
                 Text(
                   'Net this month',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.white.withOpacity(0.6),
+                    color: Colors.white.withValues(alpha: 0.6),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -538,7 +536,7 @@ class _MoneyScreenState extends State<MoneyScreen> {
                 Text(
                   '${MoneyFormat.aed(summary.income)} in · ${MoneyFormat.aed(summary.expense)} out',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.white.withOpacity(0.6),
+                    color: Colors.white.withValues(alpha: 0.6),
                     fontWeight: FontWeight.w500,
                   ),
                   maxLines: 1,
@@ -1020,7 +1018,7 @@ class _CreditShortcutCard extends StatelessWidget {
     final theme = Theme.of(context);
     final accent = theme.colorScheme.primary;
     return Material(
-      color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.4),
+      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
@@ -1033,7 +1031,7 @@ class _CreditShortcutCard extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: accent.withOpacity(0.12),
+                  color: accent.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(Icons.handshake_rounded, size: 17, color: accent),
@@ -1082,7 +1080,7 @@ class _MoneyActionPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white.withOpacity(0.10),
+      color: Colors.white.withValues(alpha: 0.10),
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),

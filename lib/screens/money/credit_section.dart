@@ -144,14 +144,14 @@ class _TotalsRow extends StatelessWidget {
             child: _Total(
               label: 'I owe',
               value: totals.borrowed,
-              color: Colors.red,
+              color: FinavigColors.danger,
             ),
           ),
           Expanded(
             child: _Total(
               label: 'Owed to me',
               value: totals.lent,
-              color: Colors.green,
+              color: FinavigColors.safe,
             ),
           ),
           VerticalDivider(width: 24, thickness: 1, color: theme.dividerColor),
@@ -174,7 +174,7 @@ class _TotalsRow extends StatelessWidget {
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: totals.net < 0
-                          ? Colors.red
+                          ? FinavigColors.danger
                           : theme.colorScheme.onSurface,
                     ),
                   ),
@@ -246,7 +246,7 @@ class _CreditCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final borrowed = entry.direction == CreditDirection.borrowed;
-    final flowColor = borrowed ? Colors.red : Colors.green;
+    final flowColor = borrowed ? FinavigColors.danger : FinavigColors.safe;
     final settled = entry.isSettled;
     final overdue = CreditMath.isOverdue(entry);
     final hasPhone =
@@ -257,12 +257,12 @@ class _CreditCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.4),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(14),
         // Overdue entries get a soft red outline so they stand out
         // even in a long list.
         border: overdue
-            ? Border.all(color: theme.colorScheme.error.withOpacity(0.5))
+            ? Border.all(color: theme.colorScheme.error.withValues(alpha: 0.5))
             : null,
       ),
       child: Column(
@@ -273,7 +273,7 @@ class _CreditCard extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: flowColor.withOpacity(0.12),
+                  color: flowColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -392,11 +392,11 @@ class _CreditCard extends StatelessWidget {
                       leading: Icon(
                         Icons.delete_outline_rounded,
                         size: 18,
-                        color: Colors.red,
+                        color: FinavigColors.danger,
                       ),
                       title: Text(
                         'Delete',
-                        style: TextStyle(color: Colors.red),
+                        style: TextStyle(color: FinavigColors.danger),
                       ),
                       contentPadding: EdgeInsets.zero,
                     ),
@@ -451,7 +451,7 @@ class _DeadlineChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -612,7 +612,7 @@ class _TemplateTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Material(
-      color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.4),
+      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),

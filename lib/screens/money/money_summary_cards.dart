@@ -303,7 +303,7 @@ class SpendingPaceCard extends StatelessWidget {
                           theme,
                           'Projected month-end',
                           MoneyFormat.aed(projected),
-                          color: summary.net < 0 ? Colors.red : Colors.teal,
+                          color: summary.net < 0 ? FinavigColors.danger : FinavigColors.safe,
                         ),
                       ),
                       Expanded(
@@ -313,7 +313,7 @@ class SpendingPaceCard extends StatelessWidget {
                           summary.net > 0
                               ? MoneyFormat.aed(affordableDaily)
                               : '—',
-                          color: summary.net > 0 ? Colors.green : Colors.red,
+                          color: summary.net > 0 ? FinavigColors.safe : FinavigColors.danger,
                         ),
                       ),
                     ],
@@ -324,7 +324,7 @@ class SpendingPaceCard extends StatelessWidget {
                       child: Text(
                         'You are spending more than you earn this month — consider cutting back for the remaining $remainingDays days.',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: Colors.red,
+                          color: FinavigColors.danger,
                           fontSize: 11,
                         ),
                       ),
@@ -565,7 +565,7 @@ class _WeekBar extends StatelessWidget {
           width: 22,
           decoration: BoxDecoration(
             color: bucket.spend > 0
-                ? theme.colorScheme.primary.withOpacity(0.75)
+                ? theme.colorScheme.primary.withValues(alpha: 0.75)
                 : theme.colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(4),
           ),
@@ -670,7 +670,7 @@ class CategoryBreakdownCard extends StatelessWidget {
                           backgroundColor:
                               theme.colorScheme.surfaceContainerHighest,
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            theme.colorScheme.primary.withOpacity(0.6),
+                            theme.colorScheme.primary.withValues(alpha: 0.6),
                           ),
                         ),
                       ),
@@ -757,8 +757,8 @@ class _TopExpensesCardState extends State<TopExpensesCard> {
             else
               Container(
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest.withOpacity(
-                    0.4,
+                  color: theme.colorScheme.surfaceContainerHighest.withValues(
+                    alpha: 0.4,
                   ),
                   borderRadius: BorderRadius.circular(14),
                 ),
@@ -772,7 +772,7 @@ class _TopExpensesCardState extends State<TopExpensesCard> {
                           width: 32,
                           height: 32,
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withOpacity(0.1),
+                            color: theme.colorScheme.primary.withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
                           child: Center(
@@ -803,7 +803,7 @@ class _TopExpensesCardState extends State<TopExpensesCard> {
                           MoneyFormat.aed(top[i].amount),
                           style: theme.textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: Colors.red,
+                            color: FinavigColors.danger,
                           ),
                         ),
                       ),
@@ -888,8 +888,8 @@ class _RenewalBreakdownCardState extends State<RenewalBreakdownCard> {
               const SizedBox(height: 12),
               Container(
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest.withOpacity(
-                    0.4,
+                  color: theme.colorScheme.surfaceContainerHighest.withValues(
+                    alpha: 0.4,
                   ),
                   borderRadius: BorderRadius.circular(14),
                 ),
@@ -903,8 +903,8 @@ class _RenewalBreakdownCardState extends State<RenewalBreakdownCard> {
                           width: 36,
                           height: 36,
                           decoration: BoxDecoration(
-                            color: upcoming[idx].docType.primaryColor.withOpacity(
-                              0.12,
+                            color: upcoming[idx].docType.primaryColor.withValues(
+                              alpha: 0.12,
                             ),
                             borderRadius: BorderRadius.circular(8),
                           ),

@@ -315,7 +315,7 @@ Future<String?> showDocumentsTypeFilterSheet(BuildContext context) {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: theme.colorScheme.outline.withOpacity(0.3),
+                color: theme.colorScheme.outline.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -378,7 +378,7 @@ Future<DocSort?> showDocumentsSortSheet(BuildContext context, DocSort current) {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: theme.colorScheme.outline.withOpacity(0.3),
+              color: theme.colorScheme.outline.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(2),
             ),
           ),

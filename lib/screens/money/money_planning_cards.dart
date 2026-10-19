@@ -163,7 +163,7 @@ class BudgetsSection extends StatelessWidget {
                           color: isOverAllocated
                               ? theme.colorScheme.error
                               : (totalAllocated == overallBudget
-                                    ? Colors.orange
+                                    ? FinavigColors.warning
                                     : theme.colorScheme.primary),
                         ),
                       ),
@@ -410,8 +410,8 @@ class _TransactionsSectionState extends State<TransactionsSection> {
             else
               Container(
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest.withOpacity(
-                    0.4,
+                  color: theme.colorScheme.surfaceContainerHighest.withValues(
+                    alpha: 0.4,
                   ),
                   borderRadius: BorderRadius.circular(14),
                 ),

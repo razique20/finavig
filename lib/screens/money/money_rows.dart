@@ -32,9 +32,9 @@ class BudgetRow extends StatelessWidget {
     final ratio = limit <= 0 ? 0.0 : (spent / limit).clamp(0.0, 1.0);
     final over = spent > limit;
     final barColor = over
-        ? Colors.red
+        ? FinavigColors.danger
         : ratio > 0.8
-        ? Colors.orange
+        ? FinavigColors.warning
         : theme.colorScheme.primary;
 
     return InkWell(
@@ -43,7 +43,7 @@ class BudgetRow extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.4),
+          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -63,7 +63,7 @@ class BudgetRow extends StatelessWidget {
                 Text(
                   '${MoneyFormat.aed(spent)} / ${MoneyFormat.aed(limit)}',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: over ? Colors.red : theme.colorScheme.outline,
+                    color: over ? FinavigColors.danger : theme.colorScheme.outline,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -92,7 +92,7 @@ class BudgetRow extends StatelessWidget {
                 child: Text(
                   'Over budget by ${MoneyFormat.aed(spent - limit)}',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.red,
+                    color: FinavigColors.danger,
                     fontSize: 11,
                   ),
                 ),
@@ -129,14 +129,14 @@ class EnvelopeCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.4),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: [
           Row(
             children: [
-              const Icon(Icons.savings_rounded, size: 18, color: Colors.teal),
+              const Icon(Icons.savings_rounded, size: 18, color: FinavigColors.safe),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -168,7 +168,7 @@ class EnvelopeCard extends StatelessWidget {
               value: envelope.progress,
               minHeight: 6,
               backgroundColor: theme.colorScheme.surfaceContainerHighest,
-              valueColor: const AlwaysStoppedAnimation<Color>(Colors.teal),
+              valueColor: const AlwaysStoppedAnimation<Color>(FinavigColors.safe),
             ),
           ),
           const SizedBox(height: 8),
@@ -200,10 +200,10 @@ class EnvelopeCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
-          color: Colors.teal.withOpacity(0.12),
+          color: FinavigColors.safe.withValues(alpha: 0.12),
           shape: BoxShape.circle,
         ),
-        child: Icon(icon, size: 16, color: Colors.teal),
+        child: Icon(icon, size: 16, color: FinavigColors.safe),
       ),
     );
   }
@@ -222,7 +222,7 @@ class TransactionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isIncome = transaction.kind == FinanceKind.income;
-    final amountColor = isIncome ? Colors.green : Colors.red;
+    final amountColor = isIncome ? FinavigColors.safe : FinavigColors.danger;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -232,7 +232,7 @@ class TransactionTile extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: amountColor.withOpacity(0.1),
+              color: amountColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -332,7 +332,7 @@ class RecurringCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isIncome = template.kind == FinanceKind.income;
-    final amountColor = isIncome ? Colors.green : Colors.red;
+    final amountColor = isIncome ? FinavigColors.safe : FinavigColors.danger;
 
     final nextDue = RecurrenceMath.nextOccurrence(
       template,
@@ -346,7 +346,7 @@ class RecurringCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.4),
+          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
