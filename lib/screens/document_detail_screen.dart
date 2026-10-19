@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui' show ImageFilter;
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -116,44 +117,66 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     final daysRemaining = item.daysRemaining;
     final expiresAt = item.expiresAt;
 
+    final isDark = theme.brightness == Brightness.dark;
+    final barBg = isDark
+        ? FinavigColors.obsidian.withValues(alpha: 0.72)
+        : Colors.white.withValues(alpha: 0.78);
+
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
-      appBar: AppBar(
-        title: Text(
-          item.displayName,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+      extendBodyBehindAppBar: true,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: AppBar(
+              backgroundColor: barBg,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              title: Text(
+                item.displayName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined),
+                  onPressed: () => _editDocument(context, item),
+                  tooltip: 'Edit document',
+                ),
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert),
+                  onSelected: (value) => _handleMenuAction(context, value, item),
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(value: 'edit', child: Text('Edit document')),
+                    const PopupMenuItem(
+                      value: 'renew',
+                      child: Text('Mark as renewed'),
+                    ),
+                    const PopupMenuItem(value: 'share', child: Text('Share details')),
+                    const PopupMenuItem(
+                      value: 'export',
+                      child: Text('Export report'),
+                    ),
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Text('Remove document'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit_outlined),
-            onPressed: () => _editDocument(context, item),
-            tooltip: 'Edit document',
-          ),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            onSelected: (value) => _handleMenuAction(context, value, item),
-            itemBuilder: (context) => [
-              const PopupMenuItem(value: 'edit', child: Text('Edit document')),
-              const PopupMenuItem(
-                value: 'renew',
-                child: Text('Mark as renewed'),
-              ),
-              const PopupMenuItem(value: 'share', child: Text('Share details')),
-              const PopupMenuItem(
-                value: 'export',
-                child: Text('Export report'),
-              ),
-              const PopupMenuItem(
-                value: 'delete',
-                child: Text('Remove document'),
-              ),
-            ],
-          ),
-        ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          MediaQuery.of(context).padding.top + kToolbarHeight + 8,
+          16,
+          16,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
