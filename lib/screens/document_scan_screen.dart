@@ -18,6 +18,7 @@ import '../services/document_scanner_service.dart';
 import '../services/gcc_authority_catalog.dart';
 import '../services/uae_authority_catalog.dart';
 import '../services/uae_document_ocr_service.dart';
+import '../theme/app_theme.dart';
 import '../widgets/dialogs/companion_suggestion_sheet.dart';
 import '../widgets/dialogs/upgrade_dialog.dart';
 
@@ -224,7 +225,7 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('No clear UAE document fields recognized. You can still enter details manually.'),
-            backgroundColor: Colors.orange,
+            backgroundColor: FinavigColors.warning,
           ),
         );
         setState(() {
@@ -464,7 +465,7 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
                           content: Text(
                             e.message.toString().replaceFirst('Bad state: ', ''),
                           ),
-                          backgroundColor: Colors.red,
+                          backgroundColor: FinavigColors.danger,
                         ),
                       );
                     } catch (_) {
@@ -472,7 +473,7 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
                         ScaffoldMessenger.of(sheetContext).showSnackBar(
                           const SnackBar(
                             content: Text('Could not save the document type'),
-                            backgroundColor: Colors.red,
+                            backgroundColor: FinavigColors.danger,
                           ),
                         );
                       }
@@ -601,7 +602,7 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(isEdit ? '${item.displayName} updated ✓' : '${item.displayName} added to tracking'),
-          backgroundColor: Colors.green,
+          backgroundColor: FinavigColors.safe,
         ),
       );
       final rootNavigatorContext = Navigator.of(context, rootNavigator: true).context;
@@ -614,7 +615,7 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(friendlyError(e, context: 'Could not save the document')),
-          backgroundColor: Colors.red,
+          backgroundColor: FinavigColors.danger,
         ),
       );
     } finally {
@@ -665,10 +666,10 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer.withOpacity(0.2),
+                      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: theme.colorScheme.primary.withOpacity(0.4),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.4),
                         style: BorderStyle.solid,
                       ),
                     ),
@@ -789,7 +790,7 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
                   padding: const EdgeInsets.all(16),
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                    color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: theme.colorScheme.primary),
                   ),
@@ -1088,9 +1089,7 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: daysRemaining <= 30
-                              ? Colors.red.shade100
-                              : theme.colorScheme.primaryContainer,
+                          color: FinavigColors.urgencyBg(daysRemaining, brightness: theme.brightness),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -1098,9 +1097,7 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: daysRemaining <= 30
-                                ? Colors.red.shade900
-                                : theme.colorScheme.onPrimaryContainer,
+                            color: FinavigColors.urgencyColor(daysRemaining),
                           ),
                         ),
                       ),
@@ -1157,7 +1154,7 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
                             ? 'Confirm & Save Document'
                             : 'Save document'),
                 style: FilledButton.styleFrom(
-                  backgroundColor: (isEdit || _ocrResult != null) ? Colors.green.shade700 : null,
+                  backgroundColor: (isEdit || _ocrResult != null) ? FinavigColors.safe : null,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
