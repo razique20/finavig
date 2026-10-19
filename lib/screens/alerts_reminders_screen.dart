@@ -97,10 +97,10 @@ class _AlertsRemindersScreenState extends State<AlertsRemindersScreen> {
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: FinavigColors.indigo.withOpacity(isDark ? 0.18 : 0.08),
+                    color: FinavigColors.indigo.withValues(alpha: isDark ? 0.18 : 0.08),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: FinavigColors.indigo.withOpacity(0.25),
+                      color: FinavigColors.indigo.withValues(alpha: 0.25),
                     ),
                   ),
                   child: Row(
@@ -108,7 +108,7 @@ class _AlertsRemindersScreenState extends State<AlertsRemindersScreen> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: FinavigColors.indigo.withOpacity(0.2),
+                          color: FinavigColors.indigo.withValues(alpha: 0.2),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -153,7 +153,7 @@ class _AlertsRemindersScreenState extends State<AlertsRemindersScreen> {
                     _buildSwitchTile(
                       theme: theme,
                       icon: Icons.trending_up_rounded,
-                      iconColor: Colors.orange,
+                      iconColor: FinavigColors.warning,
                       title: 'Bill spike alerts',
                       subtitle: 'Flag bills unusually higher than average',
                       value: _billSpikesEnabled,
@@ -224,7 +224,7 @@ class _AlertsRemindersScreenState extends State<AlertsRemindersScreen> {
                     _buildDropdownTile<int>(
                       theme: theme,
                       icon: Icons.priority_high_rounded,
-                      iconColor: Colors.redAccent,
+                      iconColor: FinavigColors.danger,
                       title: 'Escalation',
                       subtitle: 'Final escalation to stakeholders',
                       value: _escalationCadence,
@@ -262,7 +262,7 @@ class _AlertsRemindersScreenState extends State<AlertsRemindersScreen> {
     required List<Widget> children,
   }) {
     return Material(
-      color: isDark ? FinavigColors.slate.withOpacity(0.5) : Colors.white,
+      color: isDark ? FinavigColors.slate.withValues(alpha: 0.5) : Colors.white,
       borderRadius: BorderRadius.circular(16),
       clipBehavior: Clip.antiAlias,
       child: Column(children: children),
@@ -275,8 +275,8 @@ class _AlertsRemindersScreenState extends State<AlertsRemindersScreen> {
       indent: 52,
       endIndent: 16,
       color: isDark
-          ? Colors.white.withOpacity(0.06)
-          : Colors.black.withOpacity(0.05),
+          ? Colors.white.withValues(alpha: 0.06)
+          : Colors.black.withValues(alpha: 0.05),
     );
   }
 
@@ -353,7 +353,7 @@ class _AlertsRemindersScreenState extends State<AlertsRemindersScreen> {
       trailing: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: iconColor.withOpacity(0.12),
+          color: iconColor.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
