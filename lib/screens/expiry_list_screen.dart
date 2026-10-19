@@ -139,7 +139,7 @@ class _ExpiryListScreenState extends State<ExpiryListScreen> {
                               onDeleted: () =>
                                   _updateSpec((s) => s.copyWith(docType: null)),
                               backgroundColor: _spec.docType!.primaryColor
-                                  .withOpacity(0.15),
+                                  .withValues(alpha: 0.15),
                               labelStyle: TextStyle(
                                 color: _spec.docType!.primaryColor,
                               ),
@@ -154,8 +154,8 @@ class _ExpiryListScreenState extends State<ExpiryListScreen> {
                               deleteIcon: const Icon(Icons.close, size: 16),
                               onDeleted: () =>
                                   _updateSpec((s) => s.copyWith(urgency: null)),
-                              backgroundColor: _spec.urgency!.color.withOpacity(
-                                0.15,
+                              backgroundColor: _spec.urgency!.color.withValues(
+                                alpha: 0.15,
                               ),
                               labelStyle: TextStyle(
                                 color: _spec.urgency!.color,
@@ -317,7 +317,7 @@ class _ExpiryListScreenState extends State<ExpiryListScreen> {
                 ? 'Try clearing filters to see all documents'
                 : 'Upload documents to start tracking their expiry dates.',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.outline.withOpacity(0.7),
+              color: theme.colorScheme.outline.withValues(alpha: 0.7),
             ),
             textAlign: TextAlign.center,
           ),
@@ -379,7 +379,7 @@ class _ExpiryListScreenState extends State<ExpiryListScreen> {
                 height: 4,
                 margin: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.outline.withOpacity(0.3),
+                  color: theme.colorScheme.outline.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -402,9 +402,9 @@ class _ExpiryListScreenState extends State<ExpiryListScreen> {
                       '$daysLeft days left',
                       style: TextStyle(
                         color: daysLeft <= 7
-                            ? Colors.red
+                            ? FinavigColors.danger
                             : daysLeft <= 30
-                            ? Colors.amber
+                            ? FinavigColors.warning
                             : theme.colorScheme.primary,
                         fontWeight: FontWeight.bold,
                       ),
@@ -439,7 +439,7 @@ class _ExpiryListScreenState extends State<ExpiryListScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.edit_calendar, color: Colors.green),
+                leading: Icon(Icons.edit_calendar, color: FinavigColors.safe),
                 title: const Text('Update expiry date'),
                 subtitle: const Text('Correct or adjust date'),
                 onTap: () {
@@ -460,7 +460,7 @@ class _ExpiryListScreenState extends State<ExpiryListScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.download_rounded, color: Colors.teal),
+                leading: Icon(Icons.download_rounded, color: FinavigColors.safe),
                 title: const Text('Download document'),
                 subtitle: const Text('Save a copy locally'),
                 onTap: () {
@@ -688,7 +688,7 @@ class _ExpiryListScreenState extends State<ExpiryListScreen> {
             content: Text(
               '${item.displayName} renewed — now expires ${ExpiryItem.formatDate(result.newExpiry)} ✓',
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: FinavigColors.safe,
           ),
         );
       }
@@ -706,7 +706,7 @@ class _ExpiryListScreenState extends State<ExpiryListScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(friendlyError(error, context: 'Action failed')),
-        backgroundColor: Colors.red,
+        backgroundColor: FinavigColors.danger,
       ),
     );
   }
@@ -739,7 +739,7 @@ class _ExpiryListScreenState extends State<ExpiryListScreen> {
                 height: 4,
                 margin: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.outline.withOpacity(0.3),
+                  color: theme.colorScheme.outline.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -794,7 +794,7 @@ class _ExpiryListScreenState extends State<ExpiryListScreen> {
                                 _updateSpec((s) => s.copyWith(docType: type));
                                 Navigator.pop(ctx);
                               },
-                              selectedColor: type.primaryColor.withOpacity(0.2),
+                              selectedColor: type.primaryColor.withValues(alpha: 0.2),
                             ),
                           ),
                         ],
@@ -812,7 +812,7 @@ class _ExpiryListScreenState extends State<ExpiryListScreen> {
                             level.icon,
                             size: 16,
                             color: level == UrgencyLevel.critical
-                                ? Colors.red
+                                ? FinavigColors.danger
                                 : level.color,
                           ),
                           label: Text(level.title),
@@ -821,7 +821,7 @@ class _ExpiryListScreenState extends State<ExpiryListScreen> {
                             _updateSpec((s) => s.copyWith(urgency: level));
                             Navigator.pop(ctx);
                           },
-                          selectedColor: level.color.withOpacity(0.2),
+                          selectedColor: level.color.withValues(alpha: 0.2),
                         ),
                       ),
                       const Divider(height: 24),
