@@ -425,26 +425,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Force the light brand theme (the plain-white welcome look)
-    // regardless of the system brightness, so the welcome → login
-    // handoff is seamless. The Builder lets everything below resolve
-    // Theme.of against it.
-    return Theme(
-      data: FinavigTheme.light(),
-      child: Builder(
-        builder: (context) {
-          final theme = Theme.of(context);
-          final isDark = theme.brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final fade = FinavigTransition.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-          return Scaffold(
-            // Same plain white as the splash and welcome screens.
-            backgroundColor: Colors.white,
-            // The sheet IS the screen — a flat surface under a
-            // centred header, with the quiz flow in a soft M3 card.
-            body: SafeArea(bottom: false, child: _glassSheet(theme, isDark)),
-          );
-        },
-      ),
+    return Scaffold(
+      backgroundColor: fade.color(FinavigColors.snowWhite, FinavigColors.obsidian),
+      body: SafeArea(bottom: false, child: _glassSheet(theme, isDark)),
     );
   }
 
