@@ -481,7 +481,7 @@ class _SettledChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final color = FinavigColors.safe;
+    const color = FinavigColors.safe;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -491,7 +491,7 @@ class _SettledChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.check_circle_rounded, size: 12, color: color),
+          Icon(Icons.check_circle_rounded, size: 12, color: color),
           const SizedBox(width: 4),
           Text(
             'Settled ${CreditMath.formatDate(settledAt)}',
