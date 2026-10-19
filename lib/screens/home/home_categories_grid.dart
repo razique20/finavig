@@ -52,7 +52,7 @@ class HomeCategoriesGrid extends StatelessWidget {
           child: InkWell(
             onTap: onTap,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -64,7 +64,7 @@ class HomeCategoriesGrid extends StatelessWidget {
                     iconSize: 19,
                     radius: 12,
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
@@ -74,17 +74,19 @@ class HomeCategoriesGrid extends StatelessWidget {
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: labelColor,
                           fontWeight: FontWeight.w700,
-                          fontSize: 12,
+                          fontSize: 12.5,
+                          height: 1.25,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 1),
+                      const SizedBox(height: 2),
                       Text(
                         subtitle,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.outline,
-                          fontSize: 10,
+                          fontSize: 10.5,
+                          height: 1.2,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

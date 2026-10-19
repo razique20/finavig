@@ -172,30 +172,23 @@ class _HomeScreenState extends State<HomeScreen> {
                           onScanTap: _openScanner,
                         ),
                         const FirstRunGuideBanner(),
-                        HomePlanRestrictionBanner(),
-                        // Both banners own their top margin internally and
-                        // collapse to zero height when not applicable, so
-                        // no reserved gap can ever appear between sections.
-                        HomeAttentionBanner(
+                        HomeConsolidatedAlerts(
                           pendingActionNames: urgency.pendingActions
                               .map((a) => a.displayName)
                               .toList(),
                           dismissedAttentionCount: _dismissedAttentionCount,
-                          onDismiss: (count) =>
+                          onDismissAttention: (count) =>
                               setState(() => _dismissedAttentionCount = count),
+                          expiredItems: _expiredItems
+                              .map(
+                                (i) => HomeExpiredItem(
+                                  id: i.id,
+                                  displayName: i.displayName,
+                                  daysRemaining: i.daysRemaining,
+                                ),
+                              )
+                              .toList(),
                         ),
-                        if (_expiredItems.isNotEmpty)
-                          HomeExpiredAlert(
-                            expiredItems: _expiredItems
-                                .map(
-                                  (i) => HomeExpiredItem(
-                                    id: i.id,
-                                    displayName: i.displayName,
-                                    daysRemaining: i.daysRemaining,
-                                  ),
-                                )
-                                .toList(),
-                          ),
                         HomeUpcomingSection(upcomingItems: _upcomingItems()),
                         // Keep the last tile clear of the floating nav pill
                         // (height + margins ≈ 80).

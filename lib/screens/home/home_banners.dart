@@ -204,7 +204,7 @@ class HomeAttentionBanner extends StatelessWidget {
               ),
               Icon(
                 Icons.chevron_right_rounded,
-                color: textColor.withOpacity(0.7),
+                color: textColor.withValues(alpha: 0.7),
               ),
               if (pending.isNotEmpty)
                 // Close button: hides the banner until the pending count
@@ -219,7 +219,7 @@ class HomeAttentionBanner extends StatelessWidget {
                       child: Icon(
                         Icons.close_rounded,
                         size: 20,
-                        color: textColor.withOpacity(0.8),
+                        color: textColor.withValues(alpha: 0.8),
                       ),
                     ),
                   ),
@@ -228,6 +228,157 @@ class HomeAttentionBanner extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Consolidated alert section on the Home tab.
+///
+/// When multiple alert banners are active (e.g. expired items + attention
+/// renewals + plan restrictions), this widget prevents them from stacking
+/// infinitely down the canvas. It highlights the highest-priority alert
+/// (Expired > Attention > Plan restriction) and provides a clean, animated
+/// expand/collapse toggle to inspect the others without pushing the home feed
+/// completely offscreen.
+class HomeConsolidatedAlerts extends StatefulWidget {
+  final List<String> pendingActionNames;
+  final int? dismissedAttentionCount;
+  final void Function(int pendingCount) onDismissAttention;
+  final List<HomeExpiredItem> expiredItems;
+
+  const HomeConsolidatedAlerts({
+    super.key,
+    required this.pendingActionNames,
+    required this.dismissedAttentionCount,
+    required this.onDismissAttention,
+    required this.expiredItems,
+  });
+
+  @override
+  State<HomeConsolidatedAlerts> createState() => _HomeConsolidatedAlertsState();
+}
+
+class _HomeConsolidatedAlertsState extends State<HomeConsolidatedAlerts> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final entitlements = EntitlementService.instance;
+    final hasPlanAlert =
+        entitlements.isPlanExpired || entitlements.lockedCollectionsCount > 0;
+    final hasExpired = widget.expiredItems.isNotEmpty;
+    final hasAttention = widget.pendingActionNames.isNotEmpty &&
+        widget.dismissedAttentionCount != widget.pendingActionNames.length;
+
+    final activeBanners = <Widget>[
+      if (hasExpired)
+        HomeExpiredAlert(expiredItems: widget.expiredItems),
+      if (hasAttention)
+        HomeAttentionBanner(
+          pendingActionNames: widget.pendingActionNames,
+          dismissedAttentionCount: widget.dismissedAttentionCount,
+          onDismiss: widget.onDismissAttention,
+        ),
+      if (hasPlanAlert)
+        const HomePlanRestrictionBanner(),
+    ];
+
+    if (activeBanners.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    if (activeBanners.length == 1) {
+      return activeBanners.first;
+    }
+
+    final theme = Theme.of(context);
+    final fade = FinavigTransition.of(context);
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Always show the most critical banner first.
+        activeBanners.first,
+
+        // Expand/collapse toggle pill bar
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              InkWell(
+                onTap: () => setState(() => _expanded = !_expanded),
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: fade.color(
+                            FinavigColors.ink.withValues(alpha: 0.08),
+                            Colors.white.withValues(alpha: 0.12),
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '${activeBanners.length} alerts',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: fade.color(
+                              FinavigColors.textSecondaryLight,
+                              FinavigColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        _expanded
+                            ? 'Show less'
+                            : '+${activeBanners.length - 1} more',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      Icon(
+                        _expanded
+                            ? Icons.keyboard_arrow_up_rounded
+                            : Icons.keyboard_arrow_down_rounded,
+                        size: 16,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Animated expansion of secondary alerts
+        AnimatedCrossFade(
+          firstChild: const SizedBox.shrink(),
+          secondChild: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (var i = 1; i < activeBanners.length; i++) activeBanners[i],
+            ],
+          ),
+          crossFadeState:
+              _expanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+          duration: const Duration(milliseconds: 220),
+        ),
+      ],
     );
   }
 }
