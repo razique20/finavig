@@ -361,7 +361,7 @@ class _CreditCard extends StatelessWidget {
                         leading: Icon(
                           Icons.check_circle_outline_rounded,
                           size: 18,
-                          color: Colors.green,
+                          color: FinavigColors.safe,
                         ),
                         title: Text(
                           borrowed ? 'Mark as repaid' : 'Money received back',
@@ -481,7 +481,7 @@ class _SettledChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    const color = Colors.green;
+    final color = FinavigColors.safe;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
