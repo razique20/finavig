@@ -98,6 +98,7 @@ class FinavigColors {
   static const Color cautionBgLight = Color(0xFFFFFBEB);
 
   static const Color warning = Color(0xFFF59E0B);
+  static const Color warningDark = Color(0xFFB45309);
   static const Color warningBg = Color(0xFF3B2503);
   static const Color warningBgLight = Color(0xFFFFF7ED);
 

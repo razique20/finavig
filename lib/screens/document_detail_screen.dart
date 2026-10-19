@@ -10,7 +10,6 @@ import 'package:share_plus/share_plus.dart';
 
 import '../models/expiry_item.dart';
 import '../models/finance.dart';
-import '../models/renewal_record.dart';
 import '../models/subscription_tier.dart';
 import '../utils/error_messages.dart';
 import '../services/finance_service.dart';
@@ -114,7 +113,6 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
 
     final item = _item!;
     final urgency = item.urgency;
-    final now = DateTime.now();
     final daysRemaining = item.daysRemaining;
     final expiresAt = item.expiresAt;
 
@@ -220,9 +218,9 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: urgency.color.withOpacity(0.06),
+        color: urgency.color.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: urgency.color.withOpacity(0.2)),
+        border: Border.all(color: urgency.color.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -337,13 +335,16 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     final exists = isNetwork || (file != null && file.existsSync());
 
     if (!exists) {
+      final isDark = theme.brightness == Brightness.dark;
+      final warnColor = isDark ? FinavigColors.warning : FinavigColors.warningDark;
+      final warnBg = isDark ? FinavigColors.warningBg : FinavigColors.warningBgLight;
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.amber.shade50,
+          color: warnBg,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.amber.shade300),
+          border: Border.all(color: warnColor.withValues(alpha: 0.35)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -353,12 +354,12 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.amber.shade100,
+                    color: warnColor.withValues(alpha: 0.16),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.devices_other_rounded,
-                    color: Colors.amber.shade900,
+                    color: warnColor,
                     size: 24,
                   ),
                 ),
@@ -371,7 +372,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                         'File saved on another device',
                         style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: Colors.amber.shade900,
+                          color: warnColor,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -379,7 +380,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                         fileName,
                         style: theme.textTheme.bodySmall?.copyWith(
                           fontWeight: FontWeight.w600,
-                          color: Colors.amber.shade900,
+                          color: warnColor,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -393,7 +394,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
             Text(
               'This document attachment was stored locally on a different device. You can re-upload the file on this device to view it here in the future.',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: Colors.amber.shade900,
+                color: warnColor,
               ),
             ),
             const SizedBox(height: 12),
@@ -418,8 +419,8 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                   icon: const Icon(Icons.info_outline, size: 16),
                   label: const Text('Details'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.amber.shade900,
-                    side: BorderSide(color: Colors.amber.shade400),
+                    foregroundColor: warnColor,
+                    side: BorderSide(color: warnColor.withValues(alpha: 0.5)),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 10,
                       vertical: 8,
@@ -804,7 +805,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Attachment "${file.name}" saved to this device'),
-          backgroundColor: Colors.green,
+          backgroundColor: FinavigColors.safe,
         ),
       );
     } catch (e) {
@@ -829,22 +830,10 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isCritical
-            ? theme.colorScheme.errorContainer
-            : days <= 30
-            ? Colors.amber.shade50
-            : days <= 60
-            ? Colors.orange.shade50
-            : theme.colorScheme.surfaceContainerHighest,
+        color: FinavigColors.urgencyBg(days, brightness: theme.brightness),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isCritical
-              ? theme.colorScheme.error
-              : days <= 30
-              ? Colors.amber
-              : days <= 60
-              ? Colors.orange
-              : theme.colorScheme.outline,
+          color: FinavigColors.urgencyColor(days).withValues(alpha: 0.35),
         ),
       ),
       child: Row(
@@ -1027,7 +1016,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                         : theme.colorScheme.surfaceContainerHighest,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: theme.colorScheme.outline.withOpacity(0.3),
+                      color: theme.colorScheme.outline.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Center(
@@ -1091,7 +1080,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: hasCustom
-              ? theme.colorScheme.primary.withOpacity(0.5)
+              ? theme.colorScheme.primary.withValues(alpha: 0.5)
               : theme.colorScheme.outlineVariant,
         ),
       ),
@@ -1252,7 +1241,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                             ? 'Reset to standard reminder ladder (90/60/30/7 days)'
                             : 'Custom alert days updated: ${sorted.join(', ')} days',
                       ),
-                      backgroundColor: Colors.green,
+                      backgroundColor: FinavigColors.safe,
                     ),
                   );
                 },
@@ -1302,10 +1291,10 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
             width: double.infinity,
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.4),
+              color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
               ),
             ),
             child: Row(
@@ -1347,9 +1336,9 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                   children: [
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.event_available,
-                          color: Colors.green,
+                          color: FinavigColors.safe,
                           size: 18,
                         ),
                         const SizedBox(width: 8),
@@ -1367,13 +1356,13 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.green.withOpacity(0.12),
+                              color: FinavigColors.safe.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
                               '${DocumentCollectionService.instance.activeCurrency} ${rec.fee!.toStringAsFixed(0)}',
-                              style: const TextStyle(
-                                color: Colors.green,
+                              style: TextStyle(
+                                color: FinavigColors.safe,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 11,
                               ),
@@ -1427,7 +1416,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
             icon: const Icon(Icons.check_circle_rounded),
             label: const Text('Mark as renewed'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
+              backgroundColor: FinavigColors.safe,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
@@ -1470,7 +1459,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text('Reminders scheduled for ${item.displayName}'),
-          backgroundColor: Colors.green,
+          backgroundColor: FinavigColors.safe,
         ),
       );
     } catch (e) {
@@ -1559,7 +1548,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                 ? '${item.displayName} renewed — payment of ${MoneyFormat.aed(fee!)} logged & history saved ✓'
                 : '${item.displayName} renewed — now expires ${ExpiryItem.formatDate(newExpiry)} ✓',
           ),
-          backgroundColor: Colors.green,
+          backgroundColor: FinavigColors.safe,
         ),
       );
 
@@ -1571,7 +1560,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(friendlyError(e, context: 'Could not save the renewal')),
-          backgroundColor: Colors.red,
+          backgroundColor: FinavigColors.danger,
         ),
       );
     }
@@ -1592,7 +1581,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('${item.displayName} removed'),
-          backgroundColor: Colors.red,
+          backgroundColor: FinavigColors.danger,
         ),
       );
       if (context.canPop()) {
@@ -1605,7 +1594,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(friendlyError(e, context: 'Could not remove')),
-          backgroundColor: Colors.red,
+          backgroundColor: FinavigColors.danger,
         ),
       );
     }
@@ -1688,7 +1677,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         messenger.showSnackBar(
           const SnackBar(
             content: Text('Shared ✓'),
-            backgroundColor: Colors.green,
+            backgroundColor: FinavigColors.safe,
           ),
         );
       }
@@ -1719,7 +1708,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
               Navigator.pop(ctx);
               _removeDocument(context, item);
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: FinavigColors.danger),
             child: const Text('Remove'),
           ),
         ],

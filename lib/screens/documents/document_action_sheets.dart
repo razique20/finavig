@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../models/expiry_item.dart';
 import '../../utils/error_messages.dart';
 import '../../services/document_scanner_service.dart';
+import '../../theme/app_theme.dart';
 import '../../widgets/dialogs/renew_document_dialog.dart';
 
 /// Opens the per-document action bottom sheet and dispatches the chosen
@@ -30,7 +31,7 @@ Future<void> showDocumentActionSheet(
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: theme.colorScheme.outline.withOpacity(0.3),
+              color: theme.colorScheme.outline.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -51,11 +52,7 @@ Future<void> showDocumentActionSheet(
                 Text(
                   '${item.daysRemaining} days left',
                   style: TextStyle(
-                    color: item.daysRemaining <= 7
-                        ? Colors.red
-                        : item.daysRemaining <= 30
-                            ? Colors.orange
-                            : theme.colorScheme.primary,
+                    color: FinavigColors.urgencyColor(item.daysRemaining),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -64,9 +61,9 @@ Future<void> showDocumentActionSheet(
           ),
           const Divider(height: 1),
           ListTile(
-            leading: const Icon(
+            leading: Icon(
               Icons.event_available_rounded,
-              color: Colors.green,
+              color: FinavigColors.safe,
             ),
             title: const Text('Mark as renewed'),
             subtitle: const Text('Reset the expiry clock'),
@@ -91,7 +88,7 @@ Future<void> showDocumentActionSheet(
             onTap: () => Navigator.pop(ctx, 'assign'),
           ),
           ListTile(
-            leading: const Icon(Icons.delete_outline, color: Colors.red),
+            leading: Icon(Icons.delete_outline, color: FinavigColors.danger),
             title: const Text('Delete document'),
             subtitle: const Text('Remove from tracking'),
             onTap: () => Navigator.pop(ctx, 'delete'),
@@ -158,7 +155,7 @@ Future<void> _markRenewed(
         content: Text(
           '${item.displayName} renewed — now expires ${ExpiryItem.formatDate(result.newExpiry)} ✓',
         ),
-        backgroundColor: Colors.green,
+        backgroundColor: FinavigColors.safe,
       ),
     );
   } catch (e) {
@@ -166,7 +163,7 @@ Future<void> _markRenewed(
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(friendlyError(e, context: 'Could not renew')),
-        backgroundColor: Colors.red,
+        backgroundColor: FinavigColors.danger,
       ),
     );
   }
@@ -252,7 +249,7 @@ Future<void> _confirmDelete(
           child: const Text('Cancel'),
         ),
         FilledButton(
-          style: FilledButton.styleFrom(backgroundColor: Colors.red),
+          style: FilledButton.styleFrom(backgroundColor: FinavigColors.danger),
           onPressed: () => Navigator.pop(ctx, true),
           child: const Text('Delete'),
         ),
