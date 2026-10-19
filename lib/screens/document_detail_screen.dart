@@ -175,7 +175,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
           16,
           MediaQuery.of(context).padding.top + kToolbarHeight,
           16,
-          16,
+          8,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -193,7 +193,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
               _buildAttachedFileCard(theme, item),
             ],
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
 
             // Key info grid
             _buildInfoGrid(theme, item),
@@ -903,21 +903,27 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
   Widget _buildInfoGrid(ThemeData theme, ExpiryItem item) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          'Document details',
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Text(
+            'Document details',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              height: 1.0,
+              letterSpacing: 0,
+            ),
           ),
         ),
-        const SizedBox(height: 12),
         GridView.count(
           crossAxisCount: 2,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 2.8,
+          padding: EdgeInsets.zero,
+          mainAxisSpacing: 8,
+          crossAxisSpacing: 8,
+          childAspectRatio: 2.0,
           children: [
             _InfoTile(
               icon: Icons.folder_outlined,
@@ -1757,15 +1763,15 @@ class _InfoTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline)),
-          const SizedBox(width: 8),
+          Icon(icon, size: 15, color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline)),
+          const SizedBox(width: 6),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1774,12 +1780,13 @@ class _InfoTile extends StatelessWidget {
                   label,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.outline,
+                    fontSize: 11,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   value,
-                  style: theme.textTheme.bodyMedium?.copyWith(
+                  style: theme.textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.w500,
                     color: valueColor ?? theme.colorScheme.onSurface,
                   ),
