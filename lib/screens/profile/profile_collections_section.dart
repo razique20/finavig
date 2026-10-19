@@ -86,10 +86,10 @@ class ProfileCollectionsSection extends StatelessWidget {
                             ),
                           ),
                           IconButton(
-                            icon: const Icon(
+                            icon: Icon(
                               Icons.delete_outline,
                               size: 18,
-                              color: Colors.red,
+                              color: FinavigColors.danger,
                             ),
                             tooltip: 'Delete',
                             visualDensity: VisualDensity.compact,
@@ -103,11 +103,11 @@ class ProfileCollectionsSection extends StatelessWidget {
                         ],
                       )
                     : (activeId == collection.id
-                        ? const Tooltip(
+                        ? Tooltip(
                             message: 'Active collection',
                             child: Icon(
                               Icons.check_circle,
-                              color: Colors.green,
+                              color: FinavigColors.safe,
                               size: 20,
                             ),
                           )
@@ -124,10 +124,10 @@ class ProfileCollectionsSection extends StatelessWidget {
                                   onPressed: () => onRename(collection),
                                 ),
                                 IconButton(
-                                  icon: const Icon(
+                                  icon: Icon(
                                     Icons.delete_outline,
                                     size: 18,
-                                    color: Colors.red,
+                                    color: FinavigColors.danger,
                                   ),
                                   tooltip: 'Delete',
                                   visualDensity: VisualDensity.compact,
