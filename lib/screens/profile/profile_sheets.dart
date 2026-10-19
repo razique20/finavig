@@ -203,12 +203,12 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
         /// Small value type so the const list of feature categories is valid.
         const categoryItems = <_CategoryItem>[
           _CategoryItem(value: 'AI Features', label: 'AI Features', icon: Icons.auto_awesome_rounded, color: Colors.indigo),
-          _CategoryItem(value: 'Document Management', label: 'Document Management', icon: Icons.folder_open_rounded, color: Colors.teal),
-          _CategoryItem(value: 'Finance & Payments', label: 'Finance & Payments', icon: Icons.account_balance_wallet_rounded, color: Colors.green),
-          _CategoryItem(value: 'Notifications & Reminders', label: 'Notifications & Reminders', icon: Icons.notifications_rounded, color: Colors.orange),
+          _CategoryItem(value: 'Document Management', label: 'Document Management', icon: Icons.folder_open_rounded, color: FinavigColors.safe),
+          _CategoryItem(value: 'Finance & Payments', label: 'Finance & Payments', icon: Icons.account_balance_wallet_rounded, color: FinavigColors.safe),
+          _CategoryItem(value: 'Notifications & Reminders', label: 'Notifications & Reminders', icon: Icons.notifications_rounded, color: FinavigColors.warning),
           _CategoryItem(value: 'User Interface', label: 'User Interface', icon: Icons.palette_rounded, color: Colors.pink),
           _CategoryItem(value: 'Performance & Speed', label: 'Performance & Speed', icon: Icons.tune_rounded, color: Colors.amber),
-          _CategoryItem(value: 'Security & Privacy', label: 'Security & Privacy', icon: Icons.security_rounded, color: Colors.redAccent),
+          _CategoryItem(value: 'Security & Privacy', label: 'Security & Privacy', icon: Icons.security_rounded, color: FinavigColors.danger),
           _CategoryItem(value: 'Integration & Export', label: 'Integration & Export', icon: Icons.share_rounded, color: Colors.purple),
           _CategoryItem(value: 'Account & Subscription', label: 'Account & Subscription', icon: Icons.business_rounded, color: Colors.blue),
           _CategoryItem(value: 'Other', label: 'Other', icon: Icons.more_horiz_rounded, color: Colors.grey),
@@ -246,7 +246,7 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
                       width: 40,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.outline.withOpacity(0.3),
+                        color: theme.colorScheme.outline.withValues(alpha: 0.3),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -258,12 +258,12 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: Colors.teal.withOpacity(0.12),
+                          color: FinavigColors.safe.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.support_agent_rounded,
-                          color: Colors.teal,
+                          color: FinavigColors.safe,
                           size: 22,
                         ),
                       ),
@@ -298,7 +298,7 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: theme.colorScheme.outline.withOpacity(0.3),
+                        color: theme.colorScheme.outline.withValues(alpha: 0.3),
                       ),
                     ),
                     child: DropdownButtonHideUnderline(
@@ -311,7 +311,7 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
                             value: 'tracking_option_request',
                             child: Row(
                               children: [
-                                Icon(Icons.track_changes_rounded, size: 18, color: Colors.teal),
+                                Icon(Icons.track_changes_rounded, size: 18, color: FinavigColors.safe),
                                 SizedBox(width: 10),
                                 Text('Tracking Option Request'),
                               ],
@@ -331,7 +331,7 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
                             value: 'bug_report',
                             child: Row(
                               children: [
-                                Icon(Icons.bug_report_outlined, size: 18, color: Colors.redAccent),
+                                Icon(Icons.bug_report_outlined, size: 18, color: FinavigColors.danger),
                                 SizedBox(width: 10),
                                 Text('Bug Report'),
                               ],
@@ -412,7 +412,7 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: theme.colorScheme.outline.withOpacity(0.3),
+                          color: theme.colorScheme.outline.withValues(alpha: 0.3),
                         ),
                       ),
                       child: DropdownButtonHideUnderline(
@@ -518,7 +518,7 @@ Future<void> showProfileRequestHistorySheet(BuildContext context) async {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.outline.withOpacity(0.3),
+                    color: theme.colorScheme.outline.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -531,7 +531,7 @@ Future<void> showProfileRequestHistorySheet(BuildContext context) async {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: Colors.blueGrey.withOpacity(0.12),
+                        color: Colors.blueGrey.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
@@ -577,7 +577,7 @@ Future<void> showProfileRequestHistorySheet(BuildContext context) async {
                               Icon(
                                 Icons.inbox_rounded,
                                 size: 56,
-                                color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline.withOpacity(0.4)),
+                                color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline.withValues(alpha: 0.4)),
                               ),
                               const SizedBox(height: 12),
                               Text(
@@ -636,7 +636,7 @@ class ProfileSupportRequestCard extends StatelessWidget {
     final fade = FinavigTransition.of(context);
 
     final (Color statusColor, IconData statusIcon) = switch (item.status) {
-      'in_progress' => (Colors.orange, Icons.autorenew_rounded),
+      'in_progress' => (FinavigColors.warning, Icons.autorenew_rounded),
       'resolved' => (FinavigColors.safe, Icons.check_circle_outline_rounded),
       _ => (Colors.blueGrey, Icons.schedule_rounded), // 'open'
     };
@@ -655,9 +655,9 @@ class ProfileSupportRequestCard extends StatelessWidget {
     };
 
     final typeColor = switch (item.requestType) {
-      'tracking_option_request' => Colors.teal,
+      'tracking_option_request' => FinavigColors.safe,
       'feature_request' => Colors.amber.shade700,
-      'bug_report' => Colors.redAccent,
+      'bug_report' => FinavigColors.danger,
       _ => Colors.blue,
     };
 
@@ -687,7 +687,7 @@ class ProfileSupportRequestCard extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: typeColor.withOpacity(0.12),
+                  color: typeColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -712,7 +712,7 @@ class ProfileSupportRequestCard extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.12),
+                  color: statusColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -765,10 +765,10 @@ class ProfileSupportRequestCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: FinavigColors.cyanSecondary.withOpacity(0.08),
+                color: FinavigColors.cyanSecondary.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: FinavigColors.cyanSecondary.withOpacity(0.2),
+                  color: FinavigColors.cyanSecondary.withValues(alpha: 0.2),
                 ),
               ),
               child: Row(
@@ -801,7 +801,7 @@ class ProfileSupportRequestCard extends StatelessWidget {
           Text(
             _formatRequestDate(item.createdAt),
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.outline.withOpacity(0.6),
+              color: theme.colorScheme.outline.withValues(alpha: 0.6),
               fontSize: 11,
             ),
           ),
@@ -852,12 +852,12 @@ Future<void> showDeleteAccountSheet(BuildContext context) async {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.12),
+                    color: FinavigColors.danger.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
                     Icons.delete_forever_rounded,
-                    color: Colors.red,
+                    color: FinavigColors.danger,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -883,7 +883,7 @@ Future<void> showDeleteAccountSheet(BuildContext context) async {
                     color: Theme.of(sheetCtx)
                         .colorScheme
                         .onSurface
-                        .withOpacity(0.8),
+                        .withValues(alpha: 0.8),
                   ),
             ),
             const SizedBox(height: 18),
