@@ -321,10 +321,26 @@ class _LoginScreenState extends State<LoginScreen> {
         // start — so a fresh sign-up never saw it.
         final prefs = await SharedPreferences.getInstance();
         final hasOnboarded = prefs.getBool('hasOnboarded') ?? false;
-        if (_isSignUp && !hasOnboarded) {
-          context.go('/onboarding');
-        } else {
-          context.go('/home');
+        final destination = (_isSignUp && !hasOnboarded) ? '/onboarding' : '/home';
+
+        // Brief, quiet logo loader so the auth → app transition feels
+        // smoother than an instant pop into the home screen.
+        if (mounted) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            barrierColor: Colors.transparent,
+            builder: (_) => const _AuthLoader(),
+          );
+        }
+
+        await Future<void>.delayed(const Duration(milliseconds: 550));
+
+        if (mounted) {
+          // Pop the loader before navigating away.
+          Navigator.of(context, rootNavigator: true).pop();
+          await Future<void>.delayed(const Duration(milliseconds: 80));
+          context.go(destination);
         }
       }
     } catch (e) {
@@ -444,7 +460,6 @@ class _LoginScreenState extends State<LoginScreen> {
       child: Column(
         children: [
           _brandHeader(isDark),
-          _chrome(theme, isDark),
           Expanded(child: _stepsArea(theme, isDark)),
           _footer(theme, isDark),
         ],
@@ -456,37 +471,55 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _brandHeader(bool isDark) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              // Inter — the app's system typeface (matches the
-              // welcome screen's wordmark), not a serif display font.
-              // Tappable: the wordmark is a small, deliberate link
-              // back to the welcome pitch (its CTA returns here).
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTapDown: (_) => setState(() => _wordmarkPressed = true),
-                onTapUp: (_) => setState(() => _wordmarkPressed = false),
-                onTapCancel: () => setState(() => _wordmarkPressed = false),
-                onTap: () {
-                  if (_busy) return;
-                  context.go('/welcome');
-                },
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 120),
-                  opacity: _wordmarkPressed ? 0.55 : 1.0,
-                  child: Image.asset(
-                    'assets/New Logo/finavig-mark-transparent.png',
-                    width: 32,
-                    height: 32,
-                    fit: BoxFit.contain,
-                  ),
-                ),
+          // Tappable logo — returns to the welcome pitch.
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTapDown: (_) => setState(() => _wordmarkPressed = true),
+            onTapUp: (_) => setState(() => _wordmarkPressed = false),
+            onTapCancel: () => setState(() => _wordmarkPressed = false),
+            onTap: () {
+              if (_busy) return;
+              context.go('/welcome');
+            },
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 120),
+              opacity: _wordmarkPressed ? 0.55 : 1.0,
+              child: Image.asset(
+                'assets/New Logo/finavig-mark-transparent.png',
+                width: 44,
+                height: 44,
+                fit: BoxFit.contain,
               ),
-            ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Welcome back',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.4,
+              color: isDark
+                  ? FinavigColors.textPrimary
+                  : FinavigColors.textPrimaryLight,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Sign in to track documents, budgets and renewals',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w400,
+              height: 1.45,
+              color: isDark
+                  ? FinavigColors.textSecondary
+                  : FinavigColors.textSecondaryLight,
+            ),
           ),
         ],
       ),
@@ -495,113 +528,90 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // ── Chrome: quiz progress (on the surface sheet) ──────────
 
-  Widget _chrome(ThemeData theme, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-      child: _StepProgress(step: _step, total: _totalSteps, isDark: isDark),
-    );
-  }
-
-  // ── Steps: centered group of question + field + CTA ─────────────────────
+  // ── Steps: quiz block that can grow with the keyboard ──────────────────
 
   Widget _stepsArea(ThemeData theme, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 14, 24, 4),
-      child: LayoutBuilder(
-        builder: (context, viewport) {
-          // No card: the form sits directly on the ink canvas so the
-          // whole screen reads as one flat surface.
-          return Container(
-            width: double.infinity,
-            constraints: BoxConstraints(minHeight: viewport.maxHeight),
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
-              child: ConstrainedBox(
-                // Mirror the card's vertical padding so the step
-                // content stays centred in the full card height.
-                constraints: BoxConstraints(minHeight: viewport.maxHeight - 52),
-                // No IntrinsicHeight: it pinned the column to the child's
-                // intrinsic height and fought the AnimatedSize below, which is
-                // what has to own the height while steps of different sizes
-                // swap over.
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Height settle: the box adopts the incoming step's
-                    // height immediately and animates the difference across
-                    // the same beat as the cross-fade. Without it the box held
-                    // the taller outgoing step for its whole 320 ms and then
-                    // collapsed by ~80 px in a single frame, which is what
-                    // kicked the email field up and back down.
-                    AnimatedSize(
-                      duration: _kStepTransition,
-                      // Ease in and out: the settle starts gently so it never
-                      // reads as a snap, however tall the outgoing step was.
-                      curve: Curves.easeInOutCubic,
-                      alignment: Alignment.topCenter,
-                      child: AnimatedSwitcher(
-                        duration: _kStepTransition,
-                        switchInCurve: Curves.easeOutCubic,
-                        switchOutCurve: Curves.easeInCubic,
-                        transitionBuilder: (child, animation) {
-                          final slide = Tween<Offset>(
-                            begin: Offset(_dir * 0.06, 0),
-                            end: Offset.zero,
-                          ).animate(animation);
-                          return FadeTransition(
-                            opacity: animation,
-                            child: SlideTransition(
-                              position: slide,
-                              child: child,
-                            ),
-                          );
-                        },
-                        // Only the incoming step sizes the box. The outgoing
-                        // one is positioned out of the layout so it cannot
-                        // hold the height open; it just fades (clipped as the
-                        // box shrinks under it) — a collapse, not a
-                        // single-frame jump.
-                        layoutBuilder: (currentChild, previousChildren) {
-                          return Stack(
-                            alignment: Alignment.topCenter,
-                            children: [
-                              if (currentChild != null) currentChild,
-                              ...previousChildren.map(
-                                (child) => Positioned(
-                                  top: 0,
-                                  left: 0,
-                                  right: 0,
-                                  child: child,
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                        child: KeyedSubtree(
-                          // Keyed by step only — NOT the mode — so
-                          // re-tapping an answer at step 0 (which flips
-                          // _isSignUp) doesn't re-animate the slide.
-                          key: ValueKey('step-$_step'),
-                          child: _buildStep(isDark),
-                        ),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 4),
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 320),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Height settle: the box adopts the incoming step's
+              // height immediately and animates the difference across
+              // the same beat as the cross-fade. Without it the box held
+              // the taller outgoing step for its whole 320 ms and then
+              // collapsed by ~80 px in a single frame, which is what
+              // kicked the email field up and back down.
+              AnimatedSize(
+                duration: _kStepTransition,
+                // Ease in and out: the settle starts gently so it never
+                // reads as a snap, however tall the outgoing step was.
+                curve: Curves.easeInOutCubic,
+                alignment: Alignment.topCenter,
+                child: AnimatedSwitcher(
+                  duration: _kStepTransition,
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  transitionBuilder: (child, animation) {
+                    final slide = Tween<Offset>(
+                      begin: Offset(_dir * 0.06, 0),
+                      end: Offset.zero,
+                    ).animate(animation);
+                    return FadeTransition(
+                      opacity: animation,
+                      child: SlideTransition(
+                        position: slide,
+                        child: child,
                       ),
-                    ),
-                    if (_error != null) ...[
-                      const SizedBox(height: 14),
-                      _errorBanner(isDark),
-                    ],
-                    const SizedBox(height: 20),
-                    _actionRow(isDark),
-                    const SizedBox(height: 16),
-                    _TrustRow(isDark: isDark),
-                  ],
+                    );
+                  },
+                  // Only the incoming step sizes the box. The outgoing
+                  // one is positioned out of the layout so it cannot
+                  // hold the height open; it just fades (clipped as the
+                  // box shrinks under it) — a collapse, not a
+                  // single-frame jump.
+                  layoutBuilder: (currentChild, previousChildren) {
+                    return Stack(
+                      alignment: Alignment.topCenter,
+                      children: [
+                        if (currentChild != null) currentChild,
+                        ...previousChildren.map(
+                          (child) => Positioned(
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            child: child,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                  child: KeyedSubtree(
+                    // Keyed by step only — NOT the mode — so
+                    // re-tapping an answer at step 0 (which flips
+                    // _isSignUp) doesn't re-animate the slide.
+                    key: ValueKey('step-$_step'),
+                    child: _buildStep(isDark),
+                  ),
                 ),
               ),
-            ),
-          );
-        },
+              if (_error != null) ...[
+                const SizedBox(height: 10),
+                _errorBanner(isDark),
+              ],
+              const SizedBox(height: 16),
+              _actionRow(isDark),
+              const SizedBox(height: 12),
+              _TrustRow(isDark: isDark),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -844,14 +854,14 @@ class _LoginScreenState extends State<LoginScreen> {
       children: [
         _QuizQuestion(
           isDark: isDark,
-          title: 'What type of user are you?',
-          subtitle: 'Tap once to choose — double-tap to continue.',
+          title: 'How would you like to continue?',
+          subtitle: 'Choose an option to continue.',
         ),
         _ModeOption(
           isDark: isDark,
           icon: Icons.person_add_alt_rounded,
-          title: 'New to Finavig',
-          subtitle: 'Create a free account',
+          title: 'Create account',
+          subtitle: 'New to Finavig — set one up in seconds',
           selected: _modePicked && _isSignUp,
           onTap: () => _onOptionTap(true),
         ),
@@ -859,13 +869,13 @@ class _LoginScreenState extends State<LoginScreen> {
         _ModeOption(
           isDark: isDark,
           icon: Icons.login_rounded,
-          title: 'Already a member?',
-          subtitle: 'Sign in to your account',
+          title: 'Sign in',
+          subtitle: 'Already a member — jump straight in',
           selected: _modePicked && !_isSignUp,
           onTap: () => _onOptionTap(false),
         ),
         if (_stepError != null) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Text(
             _stepError!,
             style: const TextStyle(
@@ -1486,10 +1496,10 @@ class _QuizQuestion extends StatelessWidget {
         Text(
           title,
           style: TextStyle(
-            fontSize: 20,
-            height: 1.15,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.6,
+            fontSize: 19,
+            height: 1.2,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.3,
             color: isDark
                 ? FinavigColors.textPrimary
                 : FinavigColors.textPrimaryLight,
@@ -1508,7 +1518,7 @@ class _QuizQuestion extends StatelessWidget {
             ),
           ),
         ],
-        const SizedBox(height: 18),
+        const SizedBox(height: 14),
       ],
     );
   }
@@ -1591,7 +1601,7 @@ class _PrimaryButton extends StatelessWidget {
     final background = isDark ? Colors.white : FinavigColors.ink;
     final foreground = isDark ? FinavigColors.ink : Colors.white;
     return SizedBox(
-      height: 52,
+      height: 48,
       child: FilledButton(
         onPressed: busy ? null : onPressed,
         style: FilledButton.styleFrom(
@@ -1635,8 +1645,8 @@ class _BackButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 52,
-      height: 52,
+      width: 44,
+      height: 44,
       child: OutlinedButton(
         onPressed: onTap,
         style: OutlinedButton.styleFrom(
@@ -1647,12 +1657,12 @@ class _BackButton extends StatelessWidget {
                 : Colors.black.withOpacity(0.10),
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(26),
+            borderRadius: BorderRadius.circular(22),
           ),
         ),
         child: Icon(
           Icons.arrow_back_rounded,
-          size: 20,
+          size: 18,
           color: isDark
               ? FinavigColors.textPrimary
               : FinavigColors.textPrimaryLight,
@@ -1691,8 +1701,7 @@ class _ModeOption extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
-        curve: Curves.easeOut,
-        padding: const EdgeInsets.all(14),
+        curve: Curves.easeOut,            padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: selected
               ? FinavigColors.ink.withOpacity(0.06)
@@ -1710,20 +1719,20 @@ class _ModeOption extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: isDark
                     ? Colors.white.withOpacity(0.10)
                     : FinavigColors.ink.withOpacity(0.06),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
                 icon,
-                size: 20,
+                size: 18,
                 color: FinavigColors.adaptiveIcon(context, FinavigColors.ink),
               ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1734,14 +1743,14 @@ class _ModeOption extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
                       color: isDark
                           ? FinavigColors.textPrimary
                           : FinavigColors.textPrimaryLight,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 1),
                   Text(
                     subtitle,
                     maxLines: 1,
@@ -1761,7 +1770,7 @@ class _ModeOption extends StatelessWidget {
               selected
                   ? Icons.check_circle_rounded
                   : Icons.arrow_forward_ios_rounded,
-              size: selected ? 20 : 16,
+              size: selected ? 18 : 14,
               color: selected ? FinavigColors.ink : subColor,
             ),
           ],
@@ -1886,4 +1895,25 @@ class _TrustRow extends StatelessWidget {
 class AppVersionBadge {
   AppVersionBadge._();
   static const String version = 'v1.0.0';
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Post-auth loader: small logo on a transparent backdrop, shown briefly
+// while the app resolves the post-sign-in destination.
+// ──────────────────────────────────────────────────────────────────────────────
+
+class _AuthLoader extends StatelessWidget {
+  const _AuthLoader();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Image.asset(
+        'assets/New Logo/finavig-mark-transparent.png',
+        width: 48,
+        height: 48,
+        fit: BoxFit.contain,
+      ),
+    );
+  }
 }
