@@ -479,9 +479,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   duration: const Duration(milliseconds: 120),
                   opacity: _wordmarkPressed ? 0.55 : 1.0,
                   child: Image.asset(
-                    'assets/images/logo.png',
+                    'assets/New Logo/finavig-mark-transparent.png',
                     width: 32,
                     height: 32,
+                    fit: BoxFit.contain,
                   ),
                 ),
               ),
