@@ -6,7 +6,7 @@ class AppConstants {
 
   // ── Environment Flag ──────────────────────────────────────────────────────
   /// Set to `true` to use staging credentials, or `false` for production.
-  static const bool isStaging = true;
+  static const bool isStaging = false;
 
   // ── Staging Environment ───────────────────────────────────────────────────
   static const String stagingSupabaseUrl =
@@ -18,7 +18,7 @@ class AppConstants {
   static const String prodSupabaseUrl =
       'https://xyqtigapyespcasdhhul.supabase.co';
   static const String prodSupabaseAnonKey =
-      'sb_publishable_GgyDJs0On_xdoFr4QLxlWA_wyRlktjf';
+      'sb_publishable_2yC2sbcDdjPfcrdp5bhW9g_wSXz_xbv';
 
   // ── Active Supabase Configuration ─────────────────────────────────────────
   /// Active Supabase project URL based on [isStaging].
