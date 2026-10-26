@@ -118,6 +118,11 @@ class UpgradeRequestService {
   /// Open the platform mail client with the pre-filled request. Returns true
   /// when the mail client was launched; false means the message was only
   /// copied to the clipboard (no mail app available).
+  ///
+  /// On **iOS** the standard `mailto:` scheme opens Apple Mail.
+  /// On **Android** we first try the `googlegmail:` scheme to open Gmail
+  /// directly; if Gmail is not installed we fall back to the generic `mailto:`
+  /// which shows the system email-app chooser.
   Future<bool> send({
     EntitlementFeature? feature,
     SubscriptionTier? requestedTier,
@@ -129,6 +134,25 @@ class UpgradeRequestService {
       duration: duration,
     );
 
+    // On Android, prefer Gmail via the googlegmail: scheme so the user lands
+    // directly in the Gmail compose screen instead of a generic chooser.
+    if (!kIsWeb && Platform.isAndroid) {
+      final gmailUri = Uri(
+        scheme: 'googlegmail',
+        path: '///co',
+        queryParameters: {
+          'to': supportEmail,
+          'subject': message.subject,
+          'body': message.body,
+        },
+      );
+      if (await canLaunchUrl(gmailUri)) {
+        await launchUrl(gmailUri, mode: LaunchMode.externalApplication);
+        return true;
+      }
+    }
+
+    // iOS → Apple Mail via mailto:, Android fallback → system chooser.
     if (await canLaunchUrl(message.mailto)) {
       await launchUrl(message.mailto, mode: LaunchMode.externalApplication);
       return true;
