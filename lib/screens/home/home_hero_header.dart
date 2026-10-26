@@ -282,14 +282,14 @@ class HomeHeroHeader extends StatelessWidget {
                 Row(
                   children: [
                     HeroActionPill(
-                      icon: Icons.south_west_rounded,
+                      icon: Icons.edit_note_rounded,
                       label: 'Record',
                       outlined: true,
                       onTap: onQuickAddRecord,
                     ),
                     const SizedBox(width: 10),
                     HeroActionPill(
-                      icon: Icons.north_east_rounded,
+                      icon: Icons.account_balance_wallet_outlined,
                       label: 'Budget',
                       filled: true,
                       onTap: () => context.push('/budgets'),
