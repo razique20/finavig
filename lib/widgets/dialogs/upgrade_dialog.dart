@@ -315,64 +315,114 @@ class _TierRequestSheetState extends State<_TierRequestSheet> {
                 // Live price summary for the current selection.
                 _PriceSummaryCard(info: selectedInfo, duration: _duration),
                 const SizedBox(height: 14),
-                // 1. Instant Online Checkout via Dodo Payments
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed: _isPaying ? null : () => _payWithDodo(context),
-                    icon: _isPaying
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
+                // Online checkout is currently integrated for 1-month plans.
+                if (_duration == PlanDuration.oneMonth) ...[
+                  // 1. Instant Online Checkout via Dodo Payments
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: _isPaying ? null : () => _payWithDodo(context),
+                      icon: _isPaying
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.credit_card_rounded, size: 18),
+                      label: Text(
+                        _isPaying
+                            ? 'Opening Checkout...'
+                            : 'Pay with Dodo Payments · ${selectedInfo.name}',
+                      ),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: FinavigColors.navyPrimary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // 2. Secondary fallback action (email request)
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _request(context),
+                      icon: const Icon(Icons.mail_outline_rounded, size: 16),
+                      label: const Text(
+                        'Or request via email (1 Month)',
+                        style: TextStyle(fontSize: 13),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: theme.colorScheme.onSurface,
+                        side: BorderSide(color: theme.colorScheme.outlineVariant),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Cards, Apple Pay & Google Pay supported via Dodo Payments.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.outline,
+                    ),
+                  ),
+                ] else ...[
+                  // 3-Month and 1-Year plans: Email request flow
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: () => _request(context),
+                      icon: const Icon(Icons.send_rounded, size: 18),
+                      label: Text(
+                        'Request ${selectedInfo.name} · ${_duration.label}',
+                      ),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: FinavigColors.navyPrimary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest.withAlpha(80),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline_rounded,
+                          size: 16,
+                          color: theme.colorScheme.outline,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Instant online checkout is active for 1 Month. For ${_duration.label}, request above and our team will send your invoice/payment link.',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.outline,
+                              fontSize: 11.5,
                             ),
-                          )
-                        : const Icon(Icons.credit_card_rounded, size: 18),
-                    label: Text(
-                      _isPaying
-                          ? 'Opening Checkout...'
-                          : 'Pay with Dodo Payments · ${selectedInfo.name}',
-                    ),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: FinavigColors.navyPrimary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                // 2. Secondary fallback action (email request)
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () => _request(context),
-                    icon: const Icon(Icons.mail_outline_rounded, size: 16),
-                    label: Text(
-                      'Or request via email (${_duration.label})',
-                      style: const TextStyle(fontSize: 13),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: theme.colorScheme.onSurface,
-                      side: BorderSide(color: theme.colorScheme.outlineVariant),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Cards, Apple Pay & Google Pay supported via Dodo Payments.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.outline,
-                  ),
-                ),
+                ],
               ],
             ],
           ),
