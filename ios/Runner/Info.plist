@@ -91,5 +91,19 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<!-- Deep Linking: custom URL scheme for Dodo Payments checkout redirect -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>ae.finavig.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>finavig</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

@@ -29,6 +29,7 @@ import 'screens/global_search_screen.dart';
 import 'screens/ai_summary_screen.dart';
 import 'screens/ai_budget_plan_screen.dart';
 import 'screens/alerts_reminders_screen.dart';
+import 'screens/payment_success_screen.dart';
 import 'services/auth_service.dart';
 import 'services/tab_scroll_registry.dart';
 import 'widgets/dialogs/quick_action_sheet.dart';
@@ -53,7 +54,9 @@ final router = GoRouter(
     final path = state.uri.path;
     final isAuthRoute = path == '/login' || path == '/welcome';
 
-    if (!signedIn && !isAuthRoute && path != '/') return '/login';
+    if (!signedIn && !isAuthRoute && path != '/' && path != '/payment-success') {
+      return '/login';
+    }
     if (signedIn && isAuthRoute) return '/home';
     return null;
   },
@@ -77,6 +80,11 @@ final router = GoRouter(
       path: '/onboarding',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const OnboardingScreen(),
+    ),
+    GoRoute(
+      path: '/payment-success',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const PaymentSuccessScreen(),
     ),
     // Full-screen flows above the shell.
     GoRoute(

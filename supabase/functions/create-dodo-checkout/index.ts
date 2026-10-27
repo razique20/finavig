@@ -60,7 +60,7 @@ Deno.serve(async (req: Request) => {
 
   const tier = (body.tier as string)?.toLowerCase();
   const duration = (body.duration as string) || '1_month';
-  const returnUrl = (body.return_url as string) || 'https://finavig.ae/payment-success';
+  const returnUrl = (body.return_url as string) || 'finavig://payment-success';
   let productId = (body.product_id as string) || '';
 
   if (!productId) {

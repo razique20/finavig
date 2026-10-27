@@ -16,8 +16,9 @@ class DodoPaymentsService {
 
   static const String _checkoutFunction = 'create-dodo-checkout';
 
-  /// Default landing page after completing checkout on web.
-  static const String defaultReturnUrl = 'https://finavig.ae/payment-success';
+  /// Default deep link callback after completing checkout.
+  /// Routes directly back into the Finavig mobile app.
+  static const String defaultReturnUrl = 'finavig://payment-success';
 
   /// Request a Dodo Payments checkout session URL from the backend Edge Function.
   ///
@@ -72,10 +73,19 @@ class DodoPaymentsService {
     }
   }
 
-  /// Launch the checkout URL in an external browser or in-app custom tab.
+  /// Launch the checkout URL in an in-app browser view (Safari / Chrome Custom Tab)
+  /// so the user never leaves the app, with fallback to external browser.
   Future<bool> launchCheckoutUrl(String url) async {
     final uri = Uri.tryParse(url);
     if (uri == null) return false;
+
+    try {
+      final inAppSuccess = await launchUrl(
+        uri,
+        mode: LaunchMode.inAppBrowserView,
+      );
+      if (inAppSuccess) return true;
+    } catch (_) {}
 
     return await launchUrl(
       uri,
