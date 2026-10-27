@@ -96,9 +96,31 @@ class DodoPaymentsService {
     return await launchCheckoutUrl(checkoutUrl);
   }
 
+  static const String _verifyFunction = 'verify-dodo-payment';
+
   /// Check if active tier has changed after user completed payment.
+  /// Calls the backend verification endpoint to sync directly with Dodo Payments API
+  /// before refreshing local entitlements.
   Future<bool> verifyAndRefreshTier() async {
     final initialTier = EntitlementService.instance.tier;
+
+    final client = SupabaseService.clientOrNull;
+    if (client != null && AuthService.instance.isSignedIn) {
+      try {
+        final response = await client.functions
+            .invoke(_verifyFunction)
+            .timeout(const Duration(seconds: 15));
+        if (response.status == 200 && response.data is Map) {
+          final data = response.data as Map;
+          if (data['upgraded'] == true) {
+            debugPrint('[DodoPaymentsService] Plan verified and activated: ${data['tier']}');
+          }
+        }
+      } catch (e) {
+        debugPrint('[DodoPaymentsService] verify-dodo-payment check failed: $e');
+      }
+    }
+
     await EntitlementService.instance.refresh();
     return EntitlementService.instance.tier > initialTier;
   }

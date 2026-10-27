@@ -6,7 +6,7 @@ class AppConstants {
 
   // ── Environment Flag ──────────────────────────────────────────────────────
   /// Set to `true` to use staging credentials, or `false` for production.
-  static const bool isStaging = false;
+  static const bool isStaging = true;
 
   // ── Staging Environment ───────────────────────────────────────────────────
   static const String stagingSupabaseUrl =

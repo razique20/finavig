@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/document_collection.dart';
 import '../../models/subscription_tier.dart';
+import '../../services/dodo_payments_service.dart';
 import '../../services/entitlement_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/dialogs/upgrade_dialog.dart';
@@ -24,6 +25,37 @@ class _ProfileSubscriptionSectionState
   /// One-tick-later guard so the FutureBuilder doesn't re-fire the count on
   /// every rebuild (usage only changes when documents change).
   Future<int>? _documentCount;
+  bool _isSyncing = false;
+
+  Future<void> _syncPayment() async {
+    if (_isSyncing) return;
+    setState(() => _isSyncing = true);
+    try {
+      final upgraded =
+          await DodoPaymentsService.instance.verifyAndRefreshTier();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: upgraded ? Colors.green : FinavigColors.navyPrimary,
+          content: Text(
+            upgraded
+                ? 'Your plan has been updated to ${EntitlementService.instance.tier.id.toUpperCase()}!'
+                : 'Subscription is up to date (${EntitlementService.instance.tier.id.toUpperCase()}).',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.redAccent,
+          content: Text('Failed to check payment status: $e'),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isSyncing = false);
+    }
+  }
 
   Future<int> _countDocuments() =>
       EntitlementService.instance.documentsInUse();
@@ -186,6 +218,23 @@ class _ProfileSubscriptionSectionState
                       color: FinavigColors.safe,
                     ),
                   ),
+                const SizedBox(height: 6),
+                Center(
+                  child: TextButton.icon(
+                    onPressed: _isSyncing ? null : _syncPayment,
+                    icon: _isSyncing
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.sync_rounded, size: 15),
+                    label: Text(
+                      _isSyncing ? 'Syncing...' : 'Restore / Check Payment Status',
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),

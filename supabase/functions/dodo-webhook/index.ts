@@ -4,7 +4,6 @@
 // and updates the user's tier in `public.user_tiers` in real-time.
 //
 // Deploy:
-//   supabase secrets set DODO_WEBHOOK_SECRET=whsec_...
 //   supabase functions deploy dodo-webhook --no-verify-jwt
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
@@ -113,7 +112,7 @@ Deno.serve(async (req: Request) => {
       return json({ error: 'invalid_signature' }, 401);
     }
   } else {
-    console.warn('dodo-webhook: DODO_WEBHOOK_SECRET not set; running in unverified test mode.');
+    console.warn('dodo-webhook: DODO_WEBHOOK_SECRET not set; running in unverified mode.');
   }
 
   let event: Record<string, unknown> = {};
@@ -124,8 +123,8 @@ Deno.serve(async (req: Request) => {
   }
 
   const eventType = ((event.event_type || event.type) as string) || '';
-  const data = ((event.data || event.payload || {}) as Record<string, unknown>);
-  const metadata = ((data.metadata || {}) as Record<string, unknown>);
+  const data = ((event.data || event.payload || event) as Record<string, unknown>);
+  const metadata = ((data.metadata || event.metadata || {}) as Record<string, unknown>);
 
   console.log(`dodo-webhook: received event '${eventType}'`);
 
@@ -133,21 +132,66 @@ Deno.serve(async (req: Request) => {
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const admin = createClient(supabaseUrl, serviceRoleKey);
 
-  const userId = (metadata.user_id as string) || (data.client_reference_id as string) || '';
-  const requestedTier = (metadata.tier as string)?.toLowerCase() || '';
-  const duration = (metadata.duration as string) || '1_month';
+  // 1. Resolve User ID (from metadata, client_reference_id, or customer email lookup)
+  let userId = (metadata.user_id as string) || (metadata.userId as string) || (data.client_reference_id as string) || '';
+
+  const customerObj = (data.customer as Record<string, unknown>) || {};
+  const customerEmail = (customerObj.email as string) || (metadata.user_email as string) || (data.customer_email as string) || (data.email as string) || '';
+
+  if (!userId && customerEmail) {
+    try {
+      console.log(`dodo-webhook: resolving user by email '${customerEmail}'...`);
+      const { data: usersData, error: userLookupError } = await admin.auth.admin.listUsers();
+      if (!userLookupError && usersData?.users) {
+        const matched = usersData.users.find(
+          (u) => u.email?.trim().toLowerCase() === customerEmail.trim().toLowerCase()
+        );
+        if (matched) {
+          userId = matched.id;
+          console.log(`dodo-webhook: resolved user ${userId} for email '${customerEmail}'`);
+        }
+      }
+    } catch (lookupErr) {
+      console.warn('dodo-webhook: user lookup by email failed:', lookupErr);
+    }
+  }
+
+  // 2. Resolve Tier (from metadata or product IDs)
+  let requestedTier = ((metadata.tier as string) || (metadata.plan as string) || '').toLowerCase();
+  const duration = ((metadata.duration as string) || (metadata.plan_duration as string) || '1_month').toLowerCase();
+
+  const businessMonthlyId = Deno.env.get('DODO_PRODUCT_BUSINESS_MONTHLY');
+  const plusMonthlyId = Deno.env.get('DODO_PRODUCT_PLUS_MONTHLY');
+
+  const productCart = (data.product_cart as Array<Record<string, unknown>>) || [];
+  const primaryProductId = (data.product_id as string) || (productCart[0]?.product_id as string) || '';
+
+  if (!requestedTier) {
+    if (businessMonthlyId && primaryProductId === businessMonthlyId) {
+      requestedTier = 'business';
+    } else if (plusMonthlyId && primaryProductId === plusMonthlyId) {
+      requestedTier = 'plus';
+    } else {
+      const productName = ((data.product_name || productCart[0]?.name || '') as string).toLowerCase();
+      if (productName.includes('business')) {
+        requestedTier = 'business';
+      } else {
+        requestedTier = 'plus'; // Default fallback
+      }
+    }
+  }
 
   const paymentId = (data.payment_id || data.id || '') as string;
   const subscriptionId = (data.subscription_id || '') as string;
-  const customerId = (data.customer_id || (data.customer as Record<string, unknown>)?.customer_id || '') as string;
+  const customerId = (data.customer_id || customerObj.customer_id || '') as string;
   const totalAmount = (data.total_amount || data.amount) as number | undefined;
 
-  // Log raw event for auditability (best effort)
+  // 3. Best-effort audit log
   try {
     await admin.from('dodo_payment_logs').insert({
       event_type: eventType,
-      dodo_payment_id: paymentId,
-      dodo_subscription_id: subscriptionId,
+      dodo_payment_id: paymentId || null,
+      dodo_subscription_id: subscriptionId || null,
       user_id: userId || null,
       amount: totalAmount ? totalAmount / 100 : null,
       currency: (data.currency as string) || 'AED',
@@ -158,9 +202,10 @@ Deno.serve(async (req: Request) => {
     console.warn('dodo-webhook: could not write to dodo_payment_logs:', logErr);
   }
 
-  // Handle successful payments / active subscriptions
+  // 4. Handle activation events
   const isActivationEvent = [
     'payment.succeeded',
+    'payment.successful',
     'subscription.active',
     'subscription.renewed',
   ].includes(eventType);
@@ -170,9 +215,10 @@ Deno.serve(async (req: Request) => {
     const planStartedAt = new Date();
     const planEndsAt = calculatePlanEndsAt(duration);
 
-    console.log(`dodo-webhook: granting '${tierToGrant}' to user ${userId} until ${planEndsAt.toISOString()}`);
+    console.log(`dodo-webhook: activating '${tierToGrant}' for user ${userId} until ${planEndsAt.toISOString()}`);
 
-    const { error: upsertError } = await admin.from('user_tiers').upsert({
+    // Attempt upsert with all dodo columns
+    const fullPayload = {
       user_id: userId,
       tier: tierToGrant,
       plan_duration: duration,
@@ -184,14 +230,37 @@ Deno.serve(async (req: Request) => {
       updated_at: new Date().toISOString(),
       updated_by: 'dodo_webhook',
       note: `Provisioned by Dodo Payments (${eventType})`,
-    }, { onConflict: 'user_id' });
+    };
+
+    let { error: upsertError } = await admin
+      .from('user_tiers')
+      .upsert(fullPayload, { onConflict: 'user_id' });
+
+    // Fallback without dodo-specific columns if schema doesn't have them
+    if (upsertError) {
+      console.warn('dodo-webhook: full upsert failed, retrying with standard columns:', upsertError.message);
+      const basicPayload = {
+        user_id: userId,
+        tier: tierToGrant,
+        plan_duration: duration,
+        plan_started_at: planStartedAt.toISOString(),
+        plan_ends_at: planEndsAt.toISOString(),
+        updated_at: new Date().toISOString(),
+        updated_by: 'dodo_webhook',
+        note: `Provisioned by Dodo Payments (${eventType})`,
+      };
+      const fallbackRes = await admin
+        .from('user_tiers')
+        .upsert(basicPayload, { onConflict: 'user_id' });
+      upsertError = fallbackRes.error;
+    }
 
     if (upsertError) {
       console.error('dodo-webhook: failed to upsert user_tier:', upsertError);
       return json({ error: 'db_error', message: upsertError.message }, 500);
     }
 
-    // Record tier audit history
+    // Optional audit log entry
     try {
       await admin.from('user_tier_audit').insert({
         user_id: userId,
@@ -201,13 +270,18 @@ Deno.serve(async (req: Request) => {
         note: `Payment succeeded via Dodo Payments (${eventType})`,
       });
     } catch {
-      // audit table is optional
+      // Optional
     }
 
-    return json({ success: true, message: `Tier '${tierToGrant}' activated for user ${userId}` });
+    return json({
+      success: true,
+      message: `Tier '${tierToGrant}' activated for user ${userId}`,
+      tier: tierToGrant,
+      plan_ends_at: planEndsAt.toISOString(),
+    });
   }
 
-  // Handle cancellations / expiration
+  // 5. Handle cancellations / expiration
   const isDeactivationEvent = [
     'subscription.cancelled',
     'subscription.expired',
@@ -225,5 +299,5 @@ Deno.serve(async (req: Request) => {
     return json({ success: true, message: `Subscription cancelled for user ${userId}` });
   }
 
-  return json({ received: true });
+  return json({ received: true, event_type: eventType, userId: userId || null });
 });
