@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/subscription_tier.dart';
+import '../../services/dodo_payments_service.dart';
 import '../../services/entitlement_service.dart';
 import '../../services/upgrade_request_service.dart';
 import '../../theme/app_theme.dart';
@@ -100,6 +101,7 @@ class _TierRequestSheet extends StatefulWidget {
 class _TierRequestSheetState extends State<_TierRequestSheet> {
   PlanDuration _duration = PlanDuration.oneMonth;
   SubscriptionTier? _selected;
+  bool _isPaying = false;
 
   /// Tiers above the current one — dynamic, so a Free user sees both Plus
   /// and Business while a Plus user only sees Business.
@@ -116,6 +118,72 @@ class _TierRequestSheetState extends State<_TierRequestSheet> {
     super.initState();
     final tiers = _eligibleTiers;
     _selected = tiers.isEmpty ? null : tiers.first;
+  }
+
+  Future<void> _payWithDodo(BuildContext context) async {
+    final tier = _selected;
+    if (tier == null || _isPaying) return;
+    final info = TierInfo.all[tier]!;
+
+    setState(() => _isPaying = true);
+    try {
+      final launched = await DodoPaymentsService.instance.startCheckout(
+        tier: tier,
+        duration: _duration,
+      );
+      if (!context.mounted) return;
+      if (launched) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: FinavigColors.navyPrimary,
+            content: Text(
+              'Checkout opened for ${info.name}. Complete payment to activate your plan.',
+            ),
+            action: SnackBarAction(
+              label: 'Check status',
+              textColor: Colors.white,
+              onPressed: () async {
+                final upgraded =
+                    await DodoPaymentsService.instance.verifyAndRefreshTier();
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    backgroundColor: upgraded ? Colors.green : Colors.orange,
+                    content: Text(
+                      upgraded
+                          ? '${info.name} is now active! Enjoy your new features.'
+                          : 'Payment still processing. Please check again in a moment.',
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+        Navigator.of(context).pop();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            backgroundColor: Colors.redAccent,
+            content: Text('Could not open checkout browser. Please try again.'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.redAccent,
+          content: Text(
+            'Checkout error: ${e.toString().replaceAll("Exception: ", "")}',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isPaying = false);
+      }
+    }
   }
 
   /// Single request action for whichever plan + billing period the user
@@ -247,17 +315,28 @@ class _TierRequestSheetState extends State<_TierRequestSheet> {
                 // Live price summary for the current selection.
                 _PriceSummaryCard(info: selectedInfo, duration: _duration),
                 const SizedBox(height: 14),
-                // One request action — reflects plan + duration above.
+                // 1. Instant Online Checkout via Dodo Payments
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.icon(
-                    onPressed: () => _request(context),
-                    icon: const Icon(Icons.send_rounded, size: 18),
+                    onPressed: _isPaying ? null : () => _payWithDodo(context),
+                    icon: _isPaying
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.credit_card_rounded, size: 18),
                     label: Text(
-                      'Request ${selectedInfo.name} · ${_duration.label}',
+                      _isPaying
+                          ? 'Opening Checkout...'
+                          : 'Pay with Dodo Payments · ${selectedInfo.name}',
                     ),
                     style: FilledButton.styleFrom(
-                      backgroundColor: FinavigColors.ink,
+                      backgroundColor: FinavigColors.navyPrimary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
@@ -267,9 +346,29 @@ class _TierRequestSheetState extends State<_TierRequestSheet> {
                   ),
                 ),
                 const SizedBox(height: 8),
+                // 2. Secondary fallback action (email request)
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => _request(context),
+                    icon: const Icon(Icons.mail_outline_rounded, size: 16),
+                    label: Text(
+                      'Or request via email (${_duration.label})',
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: theme.colorScheme.onSurface,
+                      side: BorderSide(color: theme.colorScheme.outlineVariant),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
                 Text(
-                  'We reply with a payment link and activate the plan after '
-                  'payment.',
+                  'Cards, Apple Pay & Google Pay supported via Dodo Payments.',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.outline,
                   ),
@@ -505,6 +604,86 @@ class UpgradeDialog extends StatelessWidget {
     if (launched && context.mounted) Navigator.of(context).pop();
   }
 
+  Future<void> _payWithDodo(BuildContext context) async {
+    final target = requestedTier ?? feature.requiredTier;
+    final info = TierInfo.all[target]!;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        duration: Duration(seconds: 2),
+        content: Row(
+          children: [
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            ),
+            SizedBox(width: 12),
+            Text('Opening Dodo Payments checkout...'),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      final launched = await DodoPaymentsService.instance.startCheckout(
+        tier: target,
+        duration: PlanDuration.oneMonth,
+      );
+      if (!context.mounted) return;
+      if (launched) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: FinavigColors.navyPrimary,
+            content: Text(
+              'Checkout opened for ${info.name}. Complete payment to unlock.',
+            ),
+            action: SnackBarAction(
+              label: 'Check status',
+              textColor: Colors.white,
+              onPressed: () async {
+                final upgraded =
+                    await DodoPaymentsService.instance.verifyAndRefreshTier();
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    backgroundColor: upgraded ? Colors.green : Colors.orange,
+                    content: Text(
+                      upgraded
+                          ? '${info.name} is now active!'
+                          : 'Payment still processing. Please check again shortly.',
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+        Navigator.of(context).pop();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            backgroundColor: Colors.redAccent,
+            content: Text('Could not open checkout browser. Please try again.'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.redAccent,
+          content: Text(
+            'Checkout error: ${e.toString().replaceAll("Exception: ", "")}',
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -646,13 +825,17 @@ class UpgradeDialog extends StatelessWidget {
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Maybe later'),
         ),
-        // The one-button upgrade flow.
-        FilledButton.icon(
+        TextButton.icon(
           onPressed: () => _sendRequest(context),
-          icon: const Icon(Icons.upgrade_rounded, size: 18),
-          label: const Text('Request Upgrade'),
+          icon: const Icon(Icons.mail_outline_rounded, size: 16),
+          label: const Text('Email Request'),
+        ),
+        FilledButton.icon(
+          onPressed: () => _payWithDodo(context),
+          icon: const Icon(Icons.credit_card_rounded, size: 18),
+          label: const Text('Pay with Dodo'),
           style: FilledButton.styleFrom(
-            backgroundColor: FinavigColors.ink,
+            backgroundColor: FinavigColors.navyPrimary,
             foregroundColor: Colors.white,
           ),
         ),
