@@ -1,26 +1,46 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../models/expiry_item.dart';
 import '../../services/urgency_engine.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/dialogs/ask_finavig_sheet.dart';
 
-/// Header of the Documents tab, sitting directly on the light/airy canvas:
-/// the title, the Ask Finavig AI + search chip buttons, a live status line
-/// that doubles as filter feedback ("2 expired · 12 of 30 shown"), and the
-/// Filter / Sort / Add action pills.
+/// Header of the Documents tab, sitting directly on the light/airy canvas.
 ///
-/// Deliberately card-free: the Documents page reads as one flat, linear
-/// workspace — no hero band, no rounded content sheet, no white panels.
+/// Compact layout: title row with inline-expandable search, a live status line,
+/// and the Filter / Sort / Add action pills. When [isSearching] is true the
+/// title row transforms into a search text field with a cancel button.
+///
+/// The Filter pill shows a small dot indicator when [activeFilterCount] > 0
+/// so the user knows non-default filters are active even after the sheet
+/// is dismissed.
 class DocumentsHeroHeader extends StatelessWidget {
   final List<ExpiryItem> items;
   final UrgencySnapshot urgency;
   final int visibleCount;
   final bool hasActiveFilters;
+
+  /// Whether the inline search field is currently expanded.
+  final bool isSearching;
+
+  /// Current inline search query text.
+  final String query;
+
+  /// Called when the user types in the inline search field.
+  final ValueChanged<String> onQueryChanged;
+
+  /// Toggle the inline search field open or closed.
+  final VoidCallback onSearchToggle;
+
+  /// Number of non-default filters active (status ≠ All, type ≠ null).
+  final int activeFilterCount;
+
   final VoidCallback onFilterTap;
   final VoidCallback onSortTap;
   final Future<void> Function() onAddTap;
+
+  /// Called when the user taps "Clear" to reset all filters.
+  final VoidCallback? onClearFilters;
 
   const DocumentsHeroHeader({
     super.key,
@@ -28,9 +48,15 @@ class DocumentsHeroHeader extends StatelessWidget {
     required this.urgency,
     required this.visibleCount,
     required this.hasActiveFilters,
+    required this.isSearching,
+    required this.query,
+    required this.onQueryChanged,
+    required this.onSearchToggle,
+    required this.activeFilterCount,
     required this.onFilterTap,
     required this.onSortTap,
     required this.onAddTap,
+    this.onClearFilters,
   });
 
   @override
@@ -62,68 +88,77 @@ class DocumentsHeroHeader extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(
-                'Documents',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  color: fade.color(
-                    FinavigColors.textPrimaryLight,
-                    FinavigColors.textPrimary,
-                  ),
-                  fontWeight: FontWeight.w700,
-                ),
+          // ── Title Row / Inline Search ──
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            switchInCurve: Curves.easeOut,
+            switchOutCurve: Curves.easeIn,
+            transitionBuilder: (child, animation) => FadeTransition(
+              opacity: animation,
+              child: SizeTransition(
+                sizeFactor: animation,
+                child: child,
               ),
-              const Spacer(),
-              // Ask Finavig AI: universal voice/text add (money or docs).
-              _CanvasIconButton(
-                icon: Icons.auto_awesome_rounded,
-                tooltip: 'Ask Finavig AI',
-                onTap: () => AskFinavigSheet.show(context),
-              ),
-              const SizedBox(width: 8),
-              _CanvasIconButton(
-                icon: Icons.saved_search_rounded,
-                tooltip: 'Search all documents',
-                onTap: () => context.push('/search'),
-              ),
-            ],
+            ),
+            child: isSearching
+                ? _buildSearchRow(context, theme, fade)
+                : _buildTitleRow(context, theme, fade),
           ),
-          const SizedBox(height: 8),
-          // Single-line live status + scope.
-          Row(
-            children: [
-              Container(
-                width: 7,
-                height: 7,
-                decoration: BoxDecoration(
-                  color: statusColor,
-                  shape: BoxShape.circle,
+
+          if (!isSearching) ...[
+            const SizedBox(height: 6),
+            // Single-line live status + scope.
+            Row(
+              children: [
+                Container(
+                  width: 7,
+                  height: 7,
+                  decoration: BoxDecoration(
+                    color: statusColor,
+                    shape: BoxShape.circle,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 7),
-              Expanded(
-                child: Text(
-                  subtitle,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: fade.color(
-                      FinavigColors.textSecondaryLight,
-                      FinavigColors.textSecondary,
+                const SizedBox(width: 7),
+                Expanded(
+                  child: Text(
+                    subtitle,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: fade.color(
+                        FinavigColors.textSecondaryLight,
+                        FinavigColors.textSecondary,
+                      ),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (hasActiveFilters && onClearFilters != null)
+                  GestureDetector(
+                    onTap: onClearFilters,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: Text(
+                        'Clear',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: fade.color(
+                            FinavigColors.textPrimaryLight,
+                            FinavigColors.textPrimary,
+                          ),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
+              ],
+            ),
+          ],
+
+          const SizedBox(height: 10),
           // Action pills: filter + sort, then the primary Add pill.
           Row(
             children: [
-              _CanvasPill(
-                icon: Icons.filter_alt_rounded,
-                label: 'Filter',
+              _FilterPill(
+                activeCount: activeFilterCount,
                 onTap: onFilterTap,
               ),
               const SizedBox(width: 8),
@@ -142,6 +177,206 @@ class DocumentsHeroHeader extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  /// Default: title + AI + search icon.
+  Widget _buildTitleRow(
+    BuildContext context,
+    ThemeData theme,
+    FinavigTransition fade,
+  ) {
+    return Row(
+      key: const ValueKey('title'),
+      children: [
+        Text(
+          'Documents',
+          style: theme.textTheme.titleLarge?.copyWith(
+            color: fade.color(
+              FinavigColors.textPrimaryLight,
+              FinavigColors.textPrimary,
+            ),
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const Spacer(),
+        // Ask Finavig AI: universal voice/text add (money or docs).
+        _CanvasIconButton(
+          icon: Icons.auto_awesome_rounded,
+          tooltip: 'Ask Finavig AI',
+          onTap: () => AskFinavigSheet.show(context),
+        ),
+        const SizedBox(width: 8),
+        _CanvasIconButton(
+          icon: Icons.search_rounded,
+          tooltip: 'Search documents',
+          onTap: onSearchToggle,
+        ),
+      ],
+    );
+  }
+
+  /// Expanded: inline search field with cancel.
+  Widget _buildSearchRow(
+    BuildContext context,
+    ThemeData theme,
+    FinavigTransition fade,
+  ) {
+    final radius = BorderRadius.circular(20);
+    return Row(
+      key: const ValueKey('search'),
+      children: [
+        Expanded(
+          child: SizedBox(
+            height: 40,
+            child: TextField(
+              autofocus: true,
+              onChanged: onQueryChanged,
+              style: TextStyle(
+                color: fade.color(
+                  FinavigColors.textPrimaryLight,
+                  FinavigColors.textPrimary,
+                ),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+              decoration: InputDecoration(
+                isDense: true,
+                hintText: 'Search documents…',
+                hintStyle: TextStyle(
+                  color: fade.color(
+                    FinavigColors.textMutedLight,
+                    FinavigColors.textMuted,
+                  ),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                ),
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  size: 20,
+                  color: fade.color(
+                    FinavigColors.textSecondaryLight,
+                    FinavigColors.textSecondary,
+                  ),
+                ),
+                filled: true,
+                fillColor: fade.color(
+                  FinavigColors.cloud,
+                  FinavigColors.slate.withValues(alpha: 0.55),
+                ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                border: OutlineInputBorder(
+                  borderRadius: radius,
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: radius,
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: radius,
+                  borderSide: BorderSide(
+                    color: fade.color(FinavigColors.ink, Colors.white),
+                    width: 1.2,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        GestureDetector(
+          onTap: onSearchToggle,
+          child: Text(
+            'Cancel',
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: fade.color(
+                FinavigColors.textPrimaryLight,
+                FinavigColors.textPrimary,
+              ),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Filter pill with a dot indicator when filters are active.
+class _FilterPill extends StatelessWidget {
+  final int activeCount;
+  final VoidCallback onTap;
+
+  const _FilterPill({
+    required this.activeCount,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final fade = FinavigTransition.of(context);
+    final bg = fade.color(Colors.white, Colors.white.withValues(alpha: 0.06));
+    final fg = fade.color(FinavigColors.textPrimaryLight, Colors.white);
+    final side = BorderSide(
+      color: fade.color(
+        FinavigColors.fog,
+        Colors.white.withValues(alpha: 0.14),
+      ),
+    );
+
+    return Material(
+      color: bg,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(22),
+        side: side,
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        customBorder: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(22),
+        ),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 9),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.filter_alt_rounded, size: 15, color: fg),
+              const SizedBox(width: 6),
+              Text(
+                'Filter',
+                style: TextStyle(
+                  color: fg,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
+              if (activeCount > 0) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: FinavigColors.accent,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '$activeCount',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }

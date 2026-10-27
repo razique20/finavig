@@ -133,6 +133,10 @@ class ExpiryItem {
   /// Null on records created before this field existed.
   final DateTime? updatedAt;
 
+  /// Optional id of the [DocumentFolder] this document is assigned to.
+  /// Null when unassigned.
+  final String? folderId;
+
   String get label => '$displayName (${docType.displayName})';
 
   /// Guidance shown in "Renewal information" cards and urgency dialogs.
@@ -195,6 +199,7 @@ class ExpiryItem {
     this.renewalHistory,
     this.customReminderDays,
     this.updatedAt,
+    this.folderId,
   });
 
   factory ExpiryItem.fromJson(Map<String, dynamic> json) {
@@ -235,6 +240,7 @@ class ExpiryItem {
       customReminderDays: (json['customReminderDays'] as List<dynamic>?)
           ?.cast<int>(),
       updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? ''),
+      folderId: (json['folderId'] ?? json['folder_id']) as String?,
     );
   }
 
@@ -267,6 +273,8 @@ class ExpiryItem {
       'renewalHistory': renewalHistory?.map((e) => e.toJson()).toList(),
       'customReminderDays': customReminderDays,
       'updatedAt': updatedAt?.toIso8601String(),
+      'folderId': folderId,
+      'folder_id': folderId,
     };
   }
 
@@ -293,6 +301,7 @@ class ExpiryItem {
     int? fileSize,
     List<RenewalRecord>? renewalHistory,
     List<int>? customReminderDays,
+    String? folderId,
   }) {
     final daysRemaining = expiresAt.difference(DateTime.now()).inDays;
     final urgency = UrgencyLevel.fromDays(daysRemaining);
@@ -322,6 +331,7 @@ class ExpiryItem {
       fileSize: fileSize,
       renewalHistory: renewalHistory,
       customReminderDays: customReminderDays,
+      folderId: folderId,
     );
   }
 
@@ -333,6 +343,7 @@ class ExpiryItem {
     return 0;
   }
 
+  static const Object _unsetFolder = Object();
 
   static String formatDate(DateTime date) {
     final months = [
@@ -370,6 +381,7 @@ class ExpiryItem {
     List<RenewalRecord>? renewalHistory,
     List<int>? customReminderDays,
     DateTime? updatedAt,
+    Object? folderId = _unsetFolder,
   }) {
     return ExpiryItem(
       collectionId: collectionId ?? this.collectionId,
@@ -399,6 +411,9 @@ class ExpiryItem {
       renewalHistory: renewalHistory ?? this.renewalHistory,
       customReminderDays: customReminderDays ?? this.customReminderDays,
       updatedAt: updatedAt ?? this.updatedAt,
+      folderId: identical(folderId, _unsetFolder)
+          ? this.folderId
+          : folderId as String?,
     );
   }
 }

@@ -90,6 +90,10 @@ class TierLimits {
   /// Monthly quota for Groq AI Budget Planner generations.
   final int aiBudgetPlanMonthlyQuota;
 
+  /// Max custom document folders across the workspace.
+  /// 0 = none (Free), Null = unlimited (Business).
+  final int? maxFolders;
+
   const TierLimits({
     required this.maxDocuments,
     required this.maxCompanyCollections,
@@ -102,6 +106,7 @@ class TierLimits {
     required this.teamExport,
     required this.groqAiSummaryMonthlyQuota,
     required this.aiBudgetPlanMonthlyQuota,
+    required this.maxFolders,
   });
 
   static const free = TierLimits(
@@ -116,6 +121,7 @@ class TierLimits {
     teamExport: false,
     groqAiSummaryMonthlyQuota: 3,
     aiBudgetPlanMonthlyQuota: 2,
+    maxFolders: 0,
   );
 
   static const plus = TierLimits(
@@ -130,6 +136,7 @@ class TierLimits {
     teamExport: false,
     groqAiSummaryMonthlyQuota: 15,
     aiBudgetPlanMonthlyQuota: 10,
+    maxFolders: 5,
   );
 
   static const business = TierLimits(
@@ -144,6 +151,7 @@ class TierLimits {
     teamExport: true,
     groqAiSummaryMonthlyQuota: 40,
     aiBudgetPlanMonthlyQuota: 25,
+    maxFolders: null,
   );
 }
 
@@ -186,6 +194,7 @@ class TierInfo {
       benefits: [
         'Unlimited documents',
         '1 company collection',
+        'Up to 5 document folders',
         '90-day cash-flow forecast',
         'PDF / CSV report export',
         'Custom alert days per document',
@@ -201,6 +210,7 @@ class TierInfo {
       benefits: [
         'Everything in Plus',
         'Unlimited company workspaces',
+        'Unlimited document folders',
         'Document assignment to team members',
         'Renewal audit history',
         'Team data exports',
@@ -327,7 +337,8 @@ enum EntitlementFeature {
   renewalAuditHistory('renewalAuditHistory', 'Renewal audit history'),
   teamExport('teamExport', 'Team data export'),
   groqAiSummary('groqAiSummary', 'Groq AI Executive Summary'),
-  aiBudgetPlanning('aiBudgetPlanning', 'AI Budget Planning');
+  aiBudgetPlanning('aiBudgetPlanning', 'AI Budget Planning'),
+  documentFolders('documentFolders', 'Custom document folders');
 
   const EntitlementFeature(this.id, this.label);
 

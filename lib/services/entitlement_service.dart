@@ -191,6 +191,25 @@ class EntitlementService extends ChangeNotifier {
     return (max - currentCount).clamp(0, max);
   }
 
+  /// Whether the user can create custom document folders under the current tier.
+  bool get allowsCustomFolders => limits.maxFolders == null || limits.maxFolders! > 0;
+
+  /// Whether creating [currentCount + additional] folders stays within the
+  /// folder limit. Unlimited tiers return true, Free tier (max=0) returns false.
+  bool canAddFolders(int currentCount, {int additional = 1}) {
+    final max = limits.maxFolders;
+    if (max == null) return true;
+    if (max == 0) return false;
+    return currentCount + additional <= max;
+  }
+
+  /// How many more folders the user may create (null = unlimited).
+  int? remainingFolders(int currentCount) {
+    final max = limits.maxFolders;
+    if (max == null) return null;
+    return (max - currentCount).clamp(0, max);
+  }
+
   /// Number of active documents the user currently tracks across all
   /// collections. Local-only mode returns the cached count.
   Future<int> documentsInUse() async {

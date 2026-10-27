@@ -5,10 +5,11 @@ import '../../models/expiry_item.dart';
 import '../../utils/error_messages.dart';
 import '../../services/document_scanner_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/dialogs/move_to_folder_sheet.dart';
 import '../../widgets/dialogs/renew_document_dialog.dart';
 
 /// Opens the per-document action bottom sheet and dispatches the chosen
-/// action (renew / update date / assign / delete), reloading via [onChanged]
+/// action (renew / update date / assign / delete / move to folder), reloading via [onChanged]
 /// when the document data changes.
 Future<void> showDocumentActionSheet(
   BuildContext context,
@@ -18,82 +19,106 @@ Future<void> showDocumentActionSheet(
   final theme = Theme.of(context);
   final action = await showModalBottomSheet<String>(
     context: context,
+    useRootNavigator: true,
+    isScrollControlled: true,
     backgroundColor: theme.colorScheme.surface,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
     builder: (ctx) => SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: 8),
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.outline.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(2),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.outline.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    item.displayName,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      item.displayName,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                Text(
-                  '${item.daysRemaining} days left',
-                  style: TextStyle(
-                    color: FinavigColors.urgencyColor(item.daysRemaining),
-                    fontWeight: FontWeight.bold,
+                  Text(
+                    '${item.daysRemaining} days left',
+                    style: TextStyle(
+                      color: FinavigColors.urgencyColor(item.daysRemaining),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const Divider(height: 1),
-          ListTile(
-            leading: Icon(
-              Icons.event_available_rounded,
-              color: FinavigColors.safe,
+            const Divider(height: 1),
+            ListTile(
+              dense: true,
+              visualDensity: VisualDensity.compact,
+              leading: Icon(
+                Icons.event_available_rounded,
+                color: FinavigColors.safe,
+              ),
+              title: const Text('Mark as renewed'),
+              subtitle: const Text('Reset the expiry clock'),
+              onTap: () => Navigator.pop(ctx, 'renewed'),
             ),
-            title: const Text('Mark as renewed'),
-            subtitle: const Text('Reset the expiry clock'),
-            onTap: () => Navigator.pop(ctx, 'renewed'),
-          ),
-          ListTile(
-            leading: const Icon(
-              Icons.edit_calendar_rounded,
-              color: Colors.blue,
+            ListTile(
+              dense: true,
+              visualDensity: VisualDensity.compact,
+              leading: const Icon(
+                Icons.edit_calendar_rounded,
+                color: Colors.blue,
+              ),
+              title: const Text('Update expiry date'),
+              subtitle: const Text('Correct or adjust the date'),
+              onTap: () => Navigator.pop(ctx, 'date'),
             ),
-            title: const Text('Update expiry date'),
-            subtitle: const Text('Correct or adjust the date'),
-            onTap: () => Navigator.pop(ctx, 'date'),
-          ),
-          ListTile(
-            leading: const Icon(
-              Icons.person_add_alt_rounded,
-              color: Colors.indigo,
+            ListTile(
+              dense: true,
+              visualDensity: VisualDensity.compact,
+              leading: const Icon(
+                Icons.folder_open_rounded,
+                color: Colors.teal,
+              ),
+              title: const Text('Move to folder…'),
+              subtitle: const Text('Organize into custom folders'),
+              onTap: () => Navigator.pop(ctx, 'folder'),
             ),
-            title: const Text('Assign to…'),
-            subtitle: const Text('Responsible team member'),
-            onTap: () => Navigator.pop(ctx, 'assign'),
-          ),
-          ListTile(
-            leading: Icon(Icons.delete_outline, color: FinavigColors.danger),
-            title: const Text('Delete document'),
-            subtitle: const Text('Remove from tracking'),
-            onTap: () => Navigator.pop(ctx, 'delete'),
-          ),
-        ],
+            ListTile(
+              dense: true,
+              visualDensity: VisualDensity.compact,
+              leading: const Icon(
+                Icons.person_add_alt_rounded,
+                color: Colors.indigo,
+              ),
+              title: const Text('Assign to…'),
+              subtitle: const Text('Responsible team member'),
+              onTap: () => Navigator.pop(ctx, 'assign'),
+            ),
+            ListTile(
+              dense: true,
+              visualDensity: VisualDensity.compact,
+              leading: Icon(Icons.delete_outline, color: FinavigColors.danger),
+              title: const Text('Delete document'),
+              subtitle: const Text('Remove from tracking'),
+              onTap: () => Navigator.pop(ctx, 'delete'),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     ),
   );
@@ -104,6 +129,9 @@ Future<void> showDocumentActionSheet(
       await _markRenewed(context, item, onChanged);
     case 'date':
       await _updateDate(context, item, onChanged);
+    case 'folder':
+      await showMoveToFolderSheet(context, item);
+      await onChanged();
     case 'assign':
       await _assign(context, item, onChanged);
     case 'delete':

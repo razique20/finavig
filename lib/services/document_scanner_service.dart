@@ -535,6 +535,26 @@ class DocumentScannerService extends ChangeNotifier {
     }
   }
 
+  /// Assign a document to a folder (or unassign by passing null).
+  Future<void> assignDocumentToFolder(String documentId, String? folderId) async {
+    await _ensureInitialized();
+    final idx = _cache.indexWhere((i) => i.id == documentId);
+    if (idx == -1) return;
+    final updated = _cache[idx].copyWith(folderId: folderId);
+    await updateItem(updated);
+  }
+
+  /// Detach all documents currently inside [folderId] when that folder is deleted.
+  /// Preserves the documents themselves safely.
+  Future<void> unassignFolderFromDocuments(String folderId) async {
+    await _ensureInitialized();
+    final matches = _cache.where((i) => i.folderId == folderId).toList();
+    for (final doc in matches) {
+      final updated = doc.copyWith(folderId: null);
+      await updateItem(updated);
+    }
+  }
+
   /// Toggle the reminder-status badge. Writes to the `reminders` table when
   /// Supabase is configured (one row per activation, channel 'push'); the
   /// cache is always updated so the UI works offline too.
@@ -794,6 +814,7 @@ class DocumentScannerService extends ChangeNotifier {
       updatedAt: DateTime.tryParse(
         (row['updated_at_client'] ?? row['updated_at']) as String? ?? '',
       ),
+      folderId: (row['folder_id'] ?? row['folderId']) as String?,
     );
   }
 
@@ -802,7 +823,7 @@ class DocumentScannerService extends ChangeNotifier {
   /// Only persists columns that exist in the schema (see supabase/schema.sql):
   ///   id, collection_id, doc_type, display_name, expires_at, reminder_days,
   ///   status, assigned_to, renewal_fee, notes, file_name, file_path,
-  ///   file_size, location, renewal_history, custom_reminder_days
+  ///   file_size, location, renewal_history, custom_reminder_days, folder_id
   ///
   /// `owner_id` is included on insert; the DB trigger plus RLS policies scope
   /// every row to the authenticated user.
@@ -850,6 +871,7 @@ class DocumentScannerService extends ChangeNotifier {
           item.customReminderDays == null || item.customReminderDays!.isEmpty
               ? null
               : item.customReminderDays,
+      'folder_id': item.folderId,
     };
     if (ownerId != null) row['owner_id'] = ownerId;
     return row;
@@ -875,6 +897,7 @@ class DocumentScannerService extends ChangeNotifier {
     'location',
     'renewal_history',
     'custom_reminder_days',
+    'folder_id',
   };
 
   /// Decode the `renewal_history` jsonb column into [RenewalRecord]s.

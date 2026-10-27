@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/expiry_item.dart';
 import '../../services/collection_service.dart';
+import '../../services/document_folder_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/indicators/department_logo.dart';
 
@@ -164,6 +165,40 @@ class DocumentCard extends StatelessWidget {
                           Icons.person_outline_rounded,
                           'Owner: ${item.assignedTo}',
                         ),
+                      if (item.folderId != null) ...[
+                        Builder(
+                          builder: (ctx) {
+                            final folder = DocumentFolderService.instance.folderById(item.folderId!);
+                            if (folder == null) return const SizedBox.shrink();
+                            return Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: folder.color.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: folder.color.withValues(alpha: 0.3),
+                                  width: 0.8,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(folder.iconData, size: 11, color: folder.color),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    folder.name,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: folder.color,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ],
                   ),
                   // Slim urgency bar — status at a glance.

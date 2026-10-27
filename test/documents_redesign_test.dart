@@ -5,7 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:finavig/screens/documents/document_card.dart';
 import 'package:finavig/screens/documents_screen.dart';
+import 'package:finavig/services/document_folder_service.dart';
 import 'package:finavig/services/document_scanner_service.dart';
+import 'package:finavig/services/entitlement_service.dart';
 import 'package:finavig/theme/app_theme.dart';
 
 /// Seeds two locally cached documents (one soon, one far out) so the list has
@@ -14,11 +16,11 @@ import 'package:finavig/theme/app_theme.dart';
 /// [docType] defaults to a type with a short authority; pass `tradeLicence` to
 /// exercise the longest real one ("Dubai DED / Department of Economic
 /// Development"), which is what used to blow out a row's width.
-void seedDocuments(
+Future<void> seedDocuments(
   DateTime soon,
   DateTime far, {
   String docType = 'drivingLicence',
-}) {
+}) async {
   String docJson(String id, DateTime d) {
     final y = d.year;
     final m = d.month.toString().padLeft(2, '0');
@@ -30,20 +32,28 @@ void seedDocuments(
         '"isActive":true,"urgencyPriority":0,"expiresAt":"${d.toIso8601String()}"}';
   }
 
-  SharedPreferences.setMockInitialValues({
-    'local_documents_v1': jsonEncode([
+  DocumentScannerService.instance.clearCache();
+  await Future<void>.delayed(Duration.zero);
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString(
+    'local_documents_v1',
+    jsonEncode([
       jsonDecode(docJson('a', soon)),
       jsonDecode(docJson('b', far)),
     ]),
-  });
+  );
 }
 
 void main() {
-  setUp(() {
+  setUp(() async {
     SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
     // The scanner service caches documents in a singleton — clear it so
     // seeded prefs from one test don't leak into the next.
     DocumentScannerService.instance.clearCache();
+    DocumentFolderService.instance.reset();
+    EntitlementService.instance.reset();
   });
 
   Future<void> pumpDocuments(
@@ -84,11 +94,15 @@ void main() {
     expect(find.text('Sort'), findsOneWidget);
     expect(find.text('Add'), findsOneWidget);
 
-    // Sheet content: search, status chips, insight tiles.
+    // Redundant insight tiles are removed from the workspace.
+    expect(find.text('Next due'), findsNothing);
+    expect(find.text('Upcoming fees'), findsNothing);
+
+    // Inline search is expandable via header search icon instead of taking permanent vertical space.
+    expect(find.byIcon(Icons.search_rounded), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.search_rounded));
+    await tester.pumpAndSettle();
     expect(find.text('Search documents…'), findsOneWidget);
-    expect(find.text('All (0)'), findsOneWidget);
-    expect(find.text('Next due'), findsOneWidget);
-    expect(find.text('Upcoming fees'), findsOneWidget);
 
     // Section caption above the ledger of rows.
     expect(find.text('Tracked'), findsOneWidget);
@@ -101,7 +115,7 @@ void main() {
   testWidgets('the workspace is a flat canvas with divided rows, not cards', (
     tester,
   ) async {
-    seedDocuments(
+    await seedDocuments(
       DateTime.now().add(const Duration(days: 3)),
       DateTime.now().add(const Duration(days: 200)),
     );
@@ -139,7 +153,7 @@ void main() {
     tester.view.devicePixelRatio = 3.0;
     addTearDown(tester.view.reset);
 
-    seedDocuments(
+    await seedDocuments(
       DateTime.now().add(const Duration(days: 3)),
       // Already expired: exercises the overdue countdown + warning line.
       DateTime.now().subtract(const Duration(days: 12)),
@@ -167,7 +181,7 @@ void main() {
     tester.view.devicePixelRatio = 3.0;
     addTearDown(tester.view.reset);
 
-    seedDocuments(
+    await seedDocuments(
       DateTime.now().add(const Duration(days: 19)),
       DateTime.now().subtract(const Duration(days: 4)),
       docType: 'tradeLicence',
@@ -189,7 +203,7 @@ void main() {
     tester.view.devicePixelRatio = 3.0;
     addTearDown(tester.view.reset);
 
-    seedDocuments(
+    await seedDocuments(
       DateTime.now().add(const Duration(days: 19)),
       DateTime.now().subtract(const Duration(days: 4)),
       docType: 'tradeLicence',
@@ -217,8 +231,10 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('status chips filter the document list', (tester) async {
-    seedDocuments(
+  testWidgets('status filter in bottom sheet filters the document list', (
+    tester,
+  ) async {
+    await seedDocuments(
       DateTime.now().add(const Duration(days: 3)),
       DateTime.now().add(const Duration(days: 200)),
     );
@@ -230,10 +246,15 @@ void main() {
     expect(find.text('Doc b'), findsOneWidget);
     expect(find.textContaining('· 2 tracked'), findsOneWidget);
 
-    // Tap the Critical chip → only the soon document remains.
+    // Tap the Filter pill to open the filter sheet
+    await tester.tap(find.text('Filter'));
+    await tester.pumpAndSettle();
+
+    // Tap the Critical chip inside the sheet and tap Apply Filters
     await tester.tap(find.textContaining('Critical'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Apply Filters'));
+    await tester.pumpAndSettle();
 
     expect(find.text('Doc a'), findsOneWidget);
     expect(find.text('Doc b'), findsNothing);
@@ -253,12 +274,16 @@ void main() {
           '"isActive":true,"urgencyPriority":0,"expiresAt":"${d.toIso8601String()}"}';
     }
 
-    SharedPreferences.setMockInitialValues({
-      'local_documents_v1': jsonEncode([
+    DocumentScannerService.instance.clearCache();
+    await Future<void>.delayed(Duration.zero);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      'local_documents_v1',
+      jsonEncode([
         jsonDecode(docJson('a', 'Alpha', nameA)),
         jsonDecode(docJson('b', 'Beta', nameB)),
       ]),
-    });
+    );
 
     await pumpDocuments(tester);
 

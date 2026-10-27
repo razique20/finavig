@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/subscription_tier.dart';
+import '../../services/document_folder_service.dart';
 import '../../services/entitlement_service.dart';
 import '../../services/upgrade_request_service.dart';
 import '../../theme/app_theme.dart';
@@ -68,6 +69,24 @@ Future<bool> enforceCompanyCollectionLimit(
         ? EntitlementFeature.companyCollection
         : EntitlementFeature.multipleCompanyCollections;
     await showUpgradeDialog(context, feature);
+  }
+  return false;
+}
+
+/// Convenience for the document-folder gate: returns true when adding a folder
+/// is allowed; otherwise shows the paywall and returns false.
+Future<bool> enforceFolderLimit(
+  BuildContext context, {
+  int additional = 1,
+}) async {
+  final entitlements = EntitlementService.instance;
+  final used = DocumentFolderService.instance.activeCollectionFolderCount;
+  if (entitlements.canAddFolders(used, additional: additional)) {
+    return true;
+  }
+
+  if (context.mounted) {
+    await showUpgradeDialog(context, EntitlementFeature.documentFolders);
   }
   return false;
 }
