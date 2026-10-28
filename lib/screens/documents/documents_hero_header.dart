@@ -84,151 +84,87 @@ class DocumentsHeroHeader extends StatelessWidget {
         : FinavigColors.safe;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF16253D),
-              Color(0xFF0D1726),
-            ],
-          ),
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.12),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF0A121E).withValues(alpha: 0.35),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Title Row / Inline Search ──
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            switchInCurve: Curves.easeOut,
+            switchOutCurve: Curves.easeIn,
+            transitionBuilder: (child, animation) => FadeTransition(
+              opacity: animation,
+              child: SizeTransition(sizeFactor: animation, child: child),
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Title Row / Inline Search ──
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              switchInCurve: Curves.easeOut,
-              switchOutCurve: Curves.easeIn,
-              transitionBuilder: (child, animation) => FadeTransition(
-                opacity: animation,
-                child: SizeTransition(
-                  sizeFactor: animation,
-                  child: child,
-                ),
-              ),
-              child: isSearching
-                  ? _buildSearchRow(context, theme, fade)
-                  : _buildTitleRow(context, theme, fade),
-            ),
+            child: isSearching
+                ? _buildSearchRow(context, theme, fade)
+                : _buildTitleRow(context, theme, fade),
+          ),
 
-            if (!isSearching) ...[
-              const SizedBox(height: 14),
-              // Frosted live status + scope indicator.
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.10),
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: statusColor,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: statusColor.withValues(alpha: 0.5),
-                            blurRadius: 6,
-                            spreadRadius: 1,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        subtitle,
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.88),
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 0.2,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (hasActiveFilters && onClearFilters != null)
-                      GestureDetector(
-                        onTap: onClearFilters,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 9,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF2E8BC0).withValues(alpha: 0.35),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: const Color(0xFF60A5FA).withValues(alpha: 0.4),
-                              width: 0.8,
-                            ),
-                          ),
-                          child: const Text(
-                            'Clear',
-                            style: TextStyle(
-                              color: Color(0xFF93C5FD),
-                              fontWeight: FontWeight.w700,
-                              fontSize: 11,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-
+          if (!isSearching) ...[
             const SizedBox(height: 14),
-            // Action pills: filter + sort, then the primary Add pill.
             Row(
               children: [
-                _FilterPill(
-                  activeCount: activeFilterCount,
-                  onTap: onFilterTap,
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: statusColor,
+                    shape: BoxShape.circle,
+                  ),
                 ),
                 const SizedBox(width: 8),
-                _CanvasPill(
-                  icon: Icons.sort_rounded,
-                  label: 'Sort',
-                  onTap: onSortTap,
+                Expanded(
+                  child: Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: fade.color(
+                        FinavigColors.textSecondaryLight,
+                        FinavigColors.textSecondary,
+                      ),
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.2,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                const Spacer(),
-                _CanvasPill(
-                  icon: Icons.add_rounded,
-                  label: 'Add',
-                  filled: true,
-                  onTap: () => onAddTap(),
-                ),
+                if (hasActiveFilters && onClearFilters != null)
+                  TextButton(
+                    onPressed: onClearFilters,
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      minimumSize: const Size(0, 32),
+                    ),
+                    child: const Text('Clear'),
+                  ),
               ],
             ),
           ],
-        ),
+
+          const SizedBox(height: 14),
+          // Action pills: filter + sort, then the primary Add pill.
+          Row(
+            children: [
+              _FilterPill(activeCount: activeFilterCount, onTap: onFilterTap),
+              const SizedBox(width: 8),
+              _CanvasPill(
+                icon: Icons.sort_rounded,
+                label: 'Sort',
+                onTap: onSortTap,
+              ),
+              const Spacer(),
+              _CanvasPill(
+                icon: Icons.add_rounded,
+                label: 'Add',
+                filled: true,
+                onTap: () => onAddTap(),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -252,17 +188,23 @@ class DocumentsHeroHeader extends StatelessWidget {
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.6,
-                color: Colors.white.withValues(alpha: 0.55),
+                color: fade.color(
+                  FinavigColors.textMutedLight,
+                  FinavigColors.textMuted,
+                ),
               ),
             ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               'Documents',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w800,
                 letterSpacing: -0.5,
-                color: Colors.white,
+                color: fade.color(
+                  FinavigColors.textPrimaryLight,
+                  FinavigColors.textPrimary,
+                ),
               ),
             ),
           ],
@@ -300,8 +242,11 @@ class DocumentsHeroHeader extends StatelessWidget {
             child: TextField(
               autofocus: true,
               onChanged: onQueryChanged,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: fade.color(
+                  FinavigColors.textPrimaryLight,
+                  FinavigColors.textPrimary,
+                ),
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
@@ -309,34 +254,46 @@ class DocumentsHeroHeader extends StatelessWidget {
                 isDense: true,
                 hintText: 'Search documents…',
                 hintStyle: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.45),
+                  color: fade.color(
+                    FinavigColors.textMutedLight,
+                    FinavigColors.textMuted,
+                  ),
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
                 ),
                 prefixIcon: Icon(
                   Icons.search_rounded,
                   size: 20,
-                  color: Colors.white.withValues(alpha: 0.70),
+                  color: fade.color(
+                    FinavigColors.textSecondaryLight,
+                    FinavigColors.textSecondary,
+                  ),
                 ),
                 filled: true,
-                fillColor: Colors.white.withValues(alpha: 0.08),
+                fillColor: fade.color(FinavigColors.cloud, FinavigColors.slate),
                 contentPadding: const EdgeInsets.symmetric(vertical: 11),
                 border: OutlineInputBorder(
                   borderRadius: radius,
                   borderSide: BorderSide(
-                    color: Colors.white.withValues(alpha: 0.12),
+                    color: fade.color(
+                      FinavigColors.fog,
+                      FinavigColors.slateLight,
+                    ),
                   ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: radius,
                   borderSide: BorderSide(
-                    color: Colors.white.withValues(alpha: 0.12),
+                    color: fade.color(
+                      FinavigColors.fog,
+                      FinavigColors.slateLight,
+                    ),
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: radius,
-                  borderSide: const BorderSide(
-                    color: Color(0xFF60A5FA),
+                  borderSide: BorderSide(
+                    color: theme.colorScheme.secondary,
                     width: 1.2,
                   ),
                 ),
@@ -350,7 +307,10 @@ class DocumentsHeroHeader extends StatelessWidget {
           child: Text(
             'Cancel',
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.90),
+              color: fade.color(
+                FinavigColors.textPrimaryLight,
+                FinavigColors.textPrimary,
+              ),
               fontWeight: FontWeight.w600,
               fontSize: 13.5,
             ),
@@ -366,17 +326,18 @@ class _FilterPill extends StatelessWidget {
   final int activeCount;
   final VoidCallback onTap;
 
-  const _FilterPill({
-    required this.activeCount,
-    required this.onTap,
-  });
+  const _FilterPill({required this.activeCount, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final bg = Colors.white.withValues(alpha: 0.09);
-    const fg = Colors.white;
+    final fade = FinavigTransition.of(context);
+    final bg = fade.color(FinavigColors.cloud, FinavigColors.slate);
+    final fg = fade.color(
+      FinavigColors.textPrimaryLight,
+      FinavigColors.textPrimary,
+    );
     final side = BorderSide(
-      color: Colors.white.withValues(alpha: 0.15),
+      color: fade.color(FinavigColors.fog, FinavigColors.slateLight),
       width: 1,
     );
 
@@ -397,9 +358,9 @@ class _FilterPill extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.filter_alt_rounded, size: 15, color: fg),
+              Icon(Icons.filter_alt_rounded, size: 15, color: fg),
               const SizedBox(width: 6),
-              const Text(
+              Text(
                 'Filter',
                 style: TextStyle(
                   color: fg,
@@ -438,7 +399,7 @@ class _FilterPill extends StatelessWidget {
   }
 }
 
-/// Documents header action button — a soft translucent white chip on the obsidian header.
+/// Documents header action button — a subtle canvas-colored icon chip.
 class _CanvasIconButton extends StatelessWidget {
   final IconData icon;
   final String tooltip;
@@ -452,14 +413,15 @@ class _CanvasIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fade = FinavigTransition.of(context);
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: Colors.white.withValues(alpha: 0.09),
+        color: fade.color(FinavigColors.cloud, FinavigColors.slate),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
           side: BorderSide(
-            color: Colors.white.withValues(alpha: 0.12),
+            color: fade.color(FinavigColors.fog, FinavigColors.slateLight),
             width: 1,
           ),
         ),
@@ -473,7 +435,10 @@ class _CanvasIconButton extends StatelessWidget {
             child: Icon(
               icon,
               size: 18,
-              color: Colors.white,
+              color: fade.color(
+                FinavigColors.textPrimaryLight,
+                FinavigColors.textPrimary,
+              ),
             ),
           ),
         ),
@@ -499,13 +464,17 @@ class _CanvasPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fade = FinavigTransition.of(context);
+    final foreground = fade.color(
+      FinavigColors.textPrimaryLight,
+      FinavigColors.textPrimary,
+    );
+
     if (filled) {
       // Primary Action Pill ("Add"): Luxury logo-blue gradient
       return Material(
         color: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           customBorder: RoundedRectangleBorder(
@@ -553,13 +522,13 @@ class _CanvasPill extends StatelessWidget {
       );
     }
 
-    // Default Pill ("Sort"): Frosted glass
+    // Default Pill ("Sort"): subtle canvas-colored control.
     return Material(
-      color: Colors.white.withValues(alpha: 0.09),
+      color: fade.color(FinavigColors.cloud, FinavigColors.slate),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: Colors.white.withValues(alpha: 0.15),
+          color: fade.color(FinavigColors.fog, FinavigColors.slateLight),
           width: 1,
         ),
       ),
@@ -574,12 +543,12 @@ class _CanvasPill extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 15, color: Colors.white),
+              Icon(icon, size: 15, color: foreground),
               const SizedBox(width: 6),
               Text(
                 label,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: foreground,
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
                 ),
