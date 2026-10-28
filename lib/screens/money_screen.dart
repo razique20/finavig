@@ -8,11 +8,13 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../models/credit.dart';
+import '../models/document_collection.dart';
 import '../models/expiry_item.dart';
 import '../models/finance.dart';
 import '../models/subscription_tier.dart';
 import '../services/alert_preferences_service.dart';
 import '../services/budget_alert_service.dart';
+import '../services/collection_service.dart';
 import '../services/credit_service.dart';
 import '../services/document_scanner_service.dart';
 import '../services/entitlement_service.dart';
@@ -23,6 +25,7 @@ import '../widgets/dialogs/ai_budget_plan_sheet.dart';
 import '../widgets/dialogs/ask_finavig_sheet.dart';
 import '../widgets/dialogs/upgrade_dialog.dart';
 import '../widgets/cards/monthly_summary_card.dart';
+import 'home/home_collection_switcher.dart';
 import '../widgets/shimmer_skeleton.dart';
 
 // Modularized Money tab building blocks. The screen is now a slim stateful
@@ -87,10 +90,11 @@ class _MoneyScreenState extends State<MoneyScreen> {
 
   /// Section ids currently minimized on this tab. Each section in the
   /// light sheet collapses to its header; tapping the header again
-  /// expands it. High-priority sections (budgets, pace, transactions)
-  /// start expanded so actionable data is visible at a glance;
-  /// secondary analytics sections start collapsed.
+  /// expands it.
+  /// When populated with records, sections start expanded so all features
+  /// and analytics are immediately accessible at a glance.
   final Set<String> _collapsedSections = {
+    'budgets',
     'weekly',
     'categories',
     'top',
@@ -98,7 +102,42 @@ class _MoneyScreenState extends State<MoneyScreen> {
     'recurring',
     'envelopes',
     'credit',
+    'transactions',
   };
+
+  bool _appliedInitialExpansion = false;
+
+  void _applyPopulatedExpansion() {
+    if (_appliedInitialExpansion) return;
+    if (_transactions.isNotEmpty ||
+        _budgets.isNotEmpty ||
+        _recurring.isNotEmpty ||
+        _envelopes.isNotEmpty ||
+        _credits.isNotEmpty) {
+      if (_transactions.isNotEmpty) {
+        _collapsedSections.remove('transactions');
+        _collapsedSections.remove('weekly');
+        _collapsedSections.remove('categories');
+        _collapsedSections.remove('top');
+      }
+      if (_budgets.isNotEmpty || FinanceService.instance.activeOverallBudget != null) {
+        _collapsedSections.remove('budgets');
+      }
+      if (_recurring.isNotEmpty) {
+        _collapsedSections.remove('recurring');
+      }
+      if (_envelopes.isNotEmpty) {
+        _collapsedSections.remove('envelopes');
+      }
+      if (_credits.isNotEmpty) {
+        _collapsedSections.remove('credit');
+      }
+      if (_items.any((i) => i.isActive && (i.renewalFee ?? 0) > 0)) {
+        _collapsedSections.remove('renewalBreakdown');
+      }
+      _appliedInitialExpansion = true;
+    }
+  }
 
   void _toggleSection(String id) => setState(() {
     if (!_collapsedSections.remove(id)) _collapsedSections.add(id);
@@ -119,10 +158,12 @@ class _MoneyScreenState extends State<MoneyScreen> {
       if (DocumentScannerService.instance.isInitialized) {
         _items = DocumentScannerService.instance.activeItems;
       }
+      _applyPopulatedExpansion();
       _loading = false;
     }
     FinanceService.instance.addListener(_reload);
     CreditService.instance.addListener(_reload);
+    DocumentCollectionService.instance.addListener(_reload);
     _alertSub = BudgetAlertService.instance.stream.listen(_showBudgetAlert);
     _reload();
   }
@@ -133,6 +174,7 @@ class _MoneyScreenState extends State<MoneyScreen> {
     _scrollController.dispose();
     FinanceService.instance.removeListener(_reload);
     CreditService.instance.removeListener(_reload);
+    DocumentCollectionService.instance.removeListener(_reload);
     _alertSub?.cancel();
     super.dispose();
   }
@@ -169,7 +211,30 @@ class _MoneyScreenState extends State<MoneyScreen> {
       _credits = CreditService.instance.activeCredits;
       _items = items;
       _loading = false;
+      _applyPopulatedExpansion();
     });
+  }
+
+  Future<void> _showCollectionSwitcher() async {
+    final selectedId = await showHomeCollectionSwitcher(context);
+    if (!mounted || selectedId == null) return;
+    await applyHomeCollectionSelection(context, selectedId);
+    await _reload();
+  }
+
+  Future<void> _showEditTransactionSheet(FinanceTransaction existing) async {
+    final updated = await showModalBottomSheet<FinanceTransaction>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => TransactionFormSheet(existing: existing),
+    );
+    if (updated != null) {
+      await _reload();
+    }
   }
 
   @override
@@ -198,7 +263,7 @@ class _MoneyScreenState extends State<MoneyScreen> {
             slivers: [
               SliverToBoxAdapter(child: _buildHeroHeader(theme, summary)),
               SliverToBoxAdapter(
-                child: Container(
+                child: SizedBox(
                   width: double.infinity,
                   child: _loading
                       ? const SizedBox(height: 420, child: MoneySkeletonView())
@@ -232,12 +297,22 @@ class _MoneyScreenState extends State<MoneyScreen> {
                                     _toggleSection('renewalBreakdown'),
                               ),
                             ),
-                            _sheetPadding(const CashFlowTeaserCard()),
+                            _sheetPadding(
+                              CashFlowTeaserCard(
+                                forecast: FinanceMath.calculate90DayCashFlow(
+                                  transactions: _transactions,
+                                  recurringTemplates: _recurring,
+                                  expiryItems: _items,
+                                  initialBalance: summary.net,
+                                ),
+                              ),
+                            ),
                             // Credit shortcut — relocated out of the
                             // dark hero into the light sheet.
                             _sheetPadding(
                               _CreditShortcutCard(
                                 onTap: () => context.push('/credits'),
+                                credits: _credits,
                               ),
                             ),
                             const SizedBox(height: 24),
@@ -338,6 +413,8 @@ class _MoneyScreenState extends State<MoneyScreen> {
                                 ),
                                 onToggleSection: () =>
                                     _toggleSection('transactions'),
+                                onViewAll: () => context.push('/records'),
+                                onTransactionTap: _showEditTransactionSheet,
                               ),
                             ),
                             const SizedBox(height: 24),
@@ -426,6 +503,11 @@ class _MoneyScreenState extends State<MoneyScreen> {
                   ),
                   fontWeight: FontWeight.w700,
                 ),
+              ),
+              const SizedBox(width: 8),
+              _CollectionSwitcherChip(
+                collection: DocumentCollectionService.instance.activeCollection,
+                onTap: _showCollectionSwitcher,
               ),
               const Spacer(),
               _MoneyHeroIconButton(
@@ -543,11 +625,7 @@ class _MoneyScreenState extends State<MoneyScreen> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 16),
-                // 3 navigation pills in an equal-width row. Credit
-                // moved out of the dark hero into the light sheet
-                // below (see _CreditShortcutCard); three across still
-                // fits every label thanks to the pill's tightened
-                // metrics.
+                // 4 navigation pills covering all core Money modules.
                 Row(
                   children: [
                     Expanded(
@@ -557,7 +635,7 @@ class _MoneyScreenState extends State<MoneyScreen> {
                         onTap: () => context.push('/records'),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 4),
                     Expanded(
                       child: _MoneyActionPill(
                         icon: Icons.account_balance_wallet_rounded,
@@ -565,12 +643,20 @@ class _MoneyScreenState extends State<MoneyScreen> {
                         onTap: () => context.push('/budgets'),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 4),
                     Expanded(
                       child: _MoneyActionPill(
                         icon: Icons.savings_rounded,
                         label: 'Envelopes',
                         onTap: () => context.push('/envelopes'),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: _MoneyActionPill(
+                        icon: Icons.handshake_rounded,
+                        label: 'Credit',
+                        onTap: () => context.push('/credits'),
                       ),
                     ),
                   ],
@@ -987,13 +1073,15 @@ class _MoneyAddCard extends StatelessWidget {
               Icon(icon, size: 17, color: Colors.white),
               const SizedBox(width: 8),
               Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
@@ -1010,13 +1098,16 @@ class _MoneyAddCard extends StatelessWidget {
 /// lives outside the dark section, in the light content area.
 class _CreditShortcutCard extends StatelessWidget {
   final VoidCallback onTap;
+  final List<CreditEntry>? credits;
 
-  const _CreditShortcutCard({required this.onTap});
+  const _CreditShortcutCard({required this.onTap, this.credits});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final accent = theme.colorScheme.primary;
+    final totals = credits != null && credits!.isNotEmpty ? CreditMath.totals(credits!) : null;
+
     return Material(
       color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
       borderRadius: BorderRadius.circular(14),
@@ -1057,6 +1148,29 @@ class _CreditShortcutCard extends StatelessWidget {
                   ],
                 ),
               ),
+              if (totals != null) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: (totals.borrowed > 0 ? FinavigColors.danger : FinavigColors.safe)
+                        .withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    totals.borrowed > 0
+                        ? 'Owe: ${MoneyFormat.aed(totals.borrowed)}'
+                        : (totals.lent > 0
+                            ? 'Lent: ${MoneyFormat.aed(totals.lent)}'
+                            : 'Settled'),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: totals.borrowed > 0 ? FinavigColors.danger : FinavigColors.safe,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -1081,29 +1195,93 @@ class _MoneyActionPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white.withValues(alpha: 0.10),
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(10),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         onTap: onTap,
         child: Padding(
-          // Tightened so three pills side by side still fit their
-          // longest label ("Transactions") without ellipsizing.
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 9),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8.5),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 14, color: Colors.white),
-              const SizedBox(width: 5),
+              Icon(icon, size: 12, color: Colors.white),
+              const SizedBox(width: 3),
               Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    softWrap: false,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 10.5,
+                      letterSpacing: -0.2,
+                    ),
                   ),
                 ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Collection switcher pill chip in the hero header.
+class _CollectionSwitcherChip extends StatelessWidget {
+  final DocumentCollection? collection;
+  final VoidCallback onTap;
+
+  const _CollectionSwitcherChip({
+    required this.collection,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final fade = FinavigTransition.of(context);
+    final theme = Theme.of(context);
+    return Material(
+      color: fade.color(
+        FinavigColors.accent.withValues(alpha: 0.12),
+        Colors.white.withValues(alpha: 0.10),
+      ),
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                collection?.icon ?? Icons.folder_rounded,
+                size: 13,
+                color: fade.color(FinavigColors.ink, Colors.white),
+              ),
+              const SizedBox(width: 4),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 80),
+                child: Text(
+                  collection?.name ?? 'Personal',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: fade.color(FinavigColors.ink, Colors.white),
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 2),
+              Icon(
+                Icons.keyboard_arrow_down_rounded,
+                size: 14,
+                color: fade.color(FinavigColors.ink, Colors.white),
               ),
             ],
           ),

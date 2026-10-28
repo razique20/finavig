@@ -175,7 +175,9 @@ class BillSpikeAlertsCard extends StatelessWidget {
 /// detail of its own: tapping it opens the forecast, or the upgrade
 /// dialog on Free.
 class CashFlowTeaserCard extends StatelessWidget {
-  const CashFlowTeaserCard({super.key});
+  final CashFlowForecast? forecast;
+
+  const CashFlowTeaserCard({super.key, this.forecast});
 
   @override
   Widget build(BuildContext context) {
@@ -226,13 +228,32 @@ class CashFlowTeaserCard extends StatelessWidget {
               ),
               const SizedBox(width: 14),
               Expanded(
-                child: Text(
-                  'Cash-Flow Forecast',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Cash-Flow Forecast',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (forecast != null &&
+                        (forecast!.projectedEndBalance != 0 ||
+                            forecast!.totalRenewalOutflow != 0)) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        '90-day trajectory · ${MoneyFormat.aed(forecast!.projectedEndBalance)} end balance',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.outline,
+                          fontSize: 11,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ],

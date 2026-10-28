@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../models/finance.dart';
 import '../../../services/collection_service.dart';
 
 // Savings envelope form sheet, moved verbatim from money_screen.dart.

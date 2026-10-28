@@ -13,7 +13,9 @@ import '../../../services/smart_category_engine.dart';
 // money_screen.dart (it was getting too heavy). Public API unchanged.
 
 class TransactionFormSheet extends StatefulWidget {
-  const TransactionFormSheet();
+  final FinanceTransaction? existing;
+
+  const TransactionFormSheet({super.key, this.existing});
 
   @override
   State<TransactionFormSheet> createState() => _TransactionFormSheetState();
@@ -39,6 +41,19 @@ class _TransactionFormSheetState extends State<TransactionFormSheet> {
   @override
   void initState() {
     super.initState();
+    final ex = widget.existing;
+    if (ex != null) {
+      _titleController.text = ex.title;
+      _amountController.text =
+          ex.amount % 1 == 0 ? ex.amount.toInt().toString() : ex.amount.toString();
+      _kind = ex.kind;
+      _category = ex.category;
+      if (ex.documentId != null) {
+        final docs = DocumentScannerService.instance.getAllItemsSync();
+        _linkedDocument =
+            docs.where((d) => d.id == ex.documentId).firstOrNull;
+      }
+    }
     _titleController.addListener(_onTitleChanged);
   }
 
@@ -57,6 +72,35 @@ class _TransactionFormSheetState extends State<TransactionFormSheet> {
     }
   }
 
+  Future<void> _delete() async {
+    final ex = widget.existing;
+    if (ex == null) return;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete record?'),
+        content: Text('Are you sure you want to delete "${ex.title}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true || !mounted) return;
+    await FinanceService.instance.deleteTransaction(ex.id);
+    if (!mounted) return;
+    Navigator.pop(context);
+  }
+
   @override
   void dispose() {
     _titleController.dispose();
@@ -68,6 +112,21 @@ class _TransactionFormSheetState extends State<TransactionFormSheet> {
     final amount = double.tryParse(_amountController.text.trim());
     final title = _titleController.text.trim();
     if (title.isEmpty || amount == null || amount <= 0) return;
+
+    final ex = widget.existing;
+    if (ex != null) {
+      final updated = ex.copyWith(
+        kind: _kind,
+        category: _category,
+        title: title,
+        amount: amount,
+        documentId: _linkedDocument?.id,
+      );
+      await FinanceService.instance.updateTransaction(updated);
+      if (!mounted) return;
+      Navigator.pop(context, updated);
+      return;
+    }
 
     final now = DateTime.now();
     final activeCollectionId =
@@ -160,11 +219,25 @@ class _TransactionFormSheetState extends State<TransactionFormSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'Add record',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+              Row(
+                children: [
+                  Text(
+                    widget.existing != null ? 'Edit record' : 'Add record',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const Spacer(),
+                  if (widget.existing != null)
+                    IconButton(
+                      icon: Icon(
+                        Icons.delete_outline_rounded,
+                        color: theme.colorScheme.error,
+                      ),
+                      tooltip: 'Delete record',
+                      onPressed: _delete,
+                    ),
+                ],
               ),
               const SizedBox(height: 16),
               SegmentedButton<FinanceKind>(
@@ -207,10 +280,10 @@ class _TransactionFormSheetState extends State<TransactionFormSheet> {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: FinavigColors.cyanAccent.withOpacity(0.12),
+                        color: FinavigColors.cyanAccent.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: FinavigColors.cyanAccent.withOpacity(0.4),
+                          color: FinavigColors.cyanAccent.withValues(alpha: 0.4),
                         ),
                       ),
                       child: Row(
@@ -297,22 +370,28 @@ class _TransactionFormSheetState extends State<TransactionFormSheet> {
                 ),
                 const SizedBox(height: 12),
               ],
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                dense: true,
-                value: _repeatMonthly,
-                onChanged: (v) => setState(() => _repeatMonthly = v),
-                title: const Text('Repeat monthly'),
-                subtitle: Text(
-                  'Also create a monthly template — auto-logs this amount every month from now on.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.outline,
-                    fontSize: 11,
+              if (widget.existing == null) ...[
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  value: _repeatMonthly,
+                  onChanged: (v) => setState(() => _repeatMonthly = v),
+                  title: const Text('Repeat monthly'),
+                  subtitle: Text(
+                    'Also create a monthly template — auto-logs this amount every month from now on.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.outline,
+                      fontSize: 11,
+                    ),
                   ),
                 ),
+                const SizedBox(height: 8),
+              ] else
+                const SizedBox(height: 16),
+              FilledButton(
+                onPressed: _submit,
+                child: Text(widget.existing != null ? 'Save Changes' : 'Save'),
               ),
-              const SizedBox(height: 8),
-              FilledButton(onPressed: _submit, child: const Text('Save')),
             ],
           ),
         ),

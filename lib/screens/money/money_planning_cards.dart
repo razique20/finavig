@@ -355,12 +355,16 @@ class TransactionsSection extends StatefulWidget {
   final List<FinanceTransaction> transactions;
   final bool collapsed;
   final VoidCallback? onToggleSection;
+  final VoidCallback? onViewAll;
+  final void Function(FinanceTransaction)? onTransactionTap;
 
   const TransactionsSection({
     super.key,
     required this.transactions,
     this.collapsed = false,
     this.onToggleSection,
+    this.onViewAll,
+    this.onTransactionTap,
   });
 
   @override
@@ -395,6 +399,8 @@ class _TransactionsSectionState extends State<TransactionsSection> {
         SectionHeader(
           icon: Icons.receipt_long_rounded,
           title: 'Transactions',
+          actionLabel: widget.transactions.isNotEmpty ? 'View all' : null,
+          onAction: widget.onViewAll,
           collapsed: widget.collapsed,
           onToggle: widget.onToggleSection,
         ),
@@ -420,7 +426,12 @@ class _TransactionsSectionState extends State<TransactionsSection> {
                     for (var i = 0; i < recent.length; i++) ...[
                       if (i > 0) InsetDivider(indent: 56),
                       RepaintBoundary(
-                        child: TransactionTile(transaction: recent[i]),
+                        child: TransactionTile(
+                          transaction: recent[i],
+                          onTap: widget.onTransactionTap != null
+                              ? () => widget.onTransactionTap!(recent[i])
+                              : null,
+                        ),
                       ),
                     ],
                   ],

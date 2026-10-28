@@ -60,6 +60,19 @@ class _RecordsScreenState extends State<RecordsScreen> {
     });
   }
 
+  Future<void> _showEditTransactionSheet(FinanceTransaction existing) async {
+    await showModalBottomSheet<FinanceTransaction>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => TransactionFormSheet(existing: existing),
+    );
+    await _reload();
+  }
+
   Future<void> _exportCsv() async {
     // Track 1 gate: CSV/PDF report export is a Plus feature.
     if (!EntitlementService.instance.allows(EntitlementFeature.reportExport)) {
@@ -165,7 +178,10 @@ class _RecordsScreenState extends State<RecordsScreen> {
                                         indent: 56,
                                         color: theme.dividerColor,
                                       ),
-                                    TransactionTile(transaction: monthTx[i]),
+                                    TransactionTile(
+                                      transaction: monthTx[i],
+                                      onTap: () => _showEditTransactionSheet(monthTx[i]),
+                                    ),
                                   ],
                                 ],
                               ),

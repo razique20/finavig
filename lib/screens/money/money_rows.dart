@@ -215,8 +215,13 @@ class EnvelopeCard extends StatelessWidget {
 
 class TransactionTile extends StatelessWidget {
   final FinanceTransaction transaction;
+  final VoidCallback? onTap;
 
-  const TransactionTile({super.key, required this.transaction});
+  const TransactionTile({
+    super.key,
+    required this.transaction,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -224,7 +229,7 @@ class TransactionTile extends StatelessWidget {
     final isIncome = transaction.kind == FinanceKind.income;
     final amountColor = isIncome ? FinavigColors.safe : FinavigColors.danger;
 
-    return Padding(
+    final content = Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Row(
         children: [
@@ -304,6 +309,13 @@ class TransactionTile extends StatelessWidget {
           ),
         ],
       ),
+    );
+
+    if (onTap == null) return content;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: content,
     );
   }
 }

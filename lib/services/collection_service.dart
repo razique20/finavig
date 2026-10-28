@@ -74,6 +74,17 @@ class DocumentCollectionService extends ChangeNotifier {
   /// Active currency string (e.g. 'AED', 'SAR', 'KWD', 'QAR', 'BHD', 'OMR').
   String get activeCurrency => activeCountry.currency;
 
+  /// Active collection based on [activeCollectionId].
+  DocumentCollection get activeCollection {
+    final activeId = activeCollectionId;
+    return _collections.firstWhere(
+      (c) => c.id == activeId,
+      orElse: () => _collections.isEmpty
+          ? const DocumentCollection.personal()
+          : _collections.first,
+    );
+  }
+
   /// The active collection (defaults to Personal).
   Future<DocumentCollection> getActiveCollection() async {
     await _ensureInitialized();
