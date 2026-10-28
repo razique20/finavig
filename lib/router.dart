@@ -297,39 +297,34 @@ class _AppShellState extends State<_AppShell> {
           Expanded(child: widget.navigationShell),
         ],
       ),
-      extendBody: true,
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: Container(
-          margin: const EdgeInsets.only(left: 16, right: 16, bottom: 0),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            // Soft white pill on light mode, deep surface on dark — modern
-            // floating dock with a diffuse shadow instead of a hard black bar.
-            color: fade.color(
-              Colors.white,
-              FinavigColors.slate.withValues(alpha: 0.92),
-            ),
-            borderRadius: BorderRadius.circular(30),
-            boxShadow: [
-              BoxShadow(
-                color: fade.color(
-                  FinavigShadows.raised.first.color,
-                  Colors.black.withValues(alpha: 0.4),
-                ),
-                blurRadius: fade.value(
-                  FinavigShadows.raised.first.blurRadius,
-                  24,
-                ),
-                offset: Offset(
-                  0,
-                  fade.value(FinavigShadows.raised.first.offset.dy, 8),
-                ),
-              ),
-            ],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: fade.color(
+            Colors.white,
+            FinavigColors.slate.withValues(alpha: 0.96),
           ),
-          // Fixed height: the Center inside each item would otherwise
-          // expand into the loose height constraints of the nav slot.
+          border: Border(
+            top: BorderSide(
+              color: fade.color(
+                FinavigColors.ink.withValues(alpha: 0.08),
+                Colors.white.withValues(alpha: 0.08),
+              ),
+              width: 0.5,
+            ),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: fade.color(
+                Colors.black.withValues(alpha: 0.04),
+                Colors.black.withValues(alpha: 0.28),
+              ),
+              blurRadius: 8,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          top: false,
           child: SizedBox(
             height: 56,
             child: Row(

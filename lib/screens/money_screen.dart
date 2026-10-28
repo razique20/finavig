@@ -447,14 +447,8 @@ class _MoneyScreenState extends State<MoneyScreen> {
                                 onToggleSection: () => _toggleSection('top'),
                               ),
                             ),
-                            // Keep the last card scrollable clear of the
-                            // floating nav pill (height + margins ≈ 80).
-                            SizedBox(
-                              height:
-                                  24 +
-                                  MediaQuery.paddingOf(context).bottom +
-                                  84,
-                            ),
+                            // Comfortable breathing room above the fixed bottom navigation bar.
+                            const SizedBox(height: 28),
                           ],
                         ),
                 ),

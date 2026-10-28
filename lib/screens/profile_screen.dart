@@ -547,11 +547,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         )
                       else ...[
                         _buildList(),
-                        // Generous clearance above the floating nav pill dock
-                        SizedBox(
-                          height:
-                              24 + MediaQuery.paddingOf(context).bottom + 84,
-                        ),
+                        // Comfortable breathing room above the fixed bottom navigation bar.
+                        const SizedBox(height: 28),
                       ],
                     ],
                   ),

@@ -190,12 +190,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               .toList(),
                         ),
                         HomeUpcomingSection(upcomingItems: _upcomingItems()),
-                        // Keep the last tile clear of the floating nav pill
-                        // (height + margins ≈ 80).
-                        SizedBox(
-                          height:
-                              24 + MediaQuery.paddingOf(context).bottom + 84,
-                        ),
+                        // Comfortable breathing room above the fixed bottom navigation bar.
+                        const SizedBox(height: 28),
                       ],
                     ],
                   ),

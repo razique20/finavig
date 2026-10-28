@@ -350,13 +350,8 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                                 ),
                               ],
                             ],
-                            // Keep the last card scrollable clear of the
-                            // floating nav pill (height + margins ≈ 80).
-                            SizedBox(
-                              height: 8 +
-                                  MediaQuery.of(context).padding.bottom +
-                                  80,
-                            ),
+                            // Comfortable breathing room above the fixed bottom navigation bar.
+                            const SizedBox(height: 28),
                           ],
                         ),
                 ),

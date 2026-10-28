@@ -106,17 +106,17 @@ void main() {
     expect(settled.a, closeTo(0.5, 0.002));
   });
 
-  testWidgets('categories tile icon cross-fades from brand violet to white',
+  testWidgets('categories tile icon cross-fades from brand logoBlue to white',
       (tester) async {
     final flip = await mount(tester);
-    expect(tileIconColor(tester), FinavigColors.violet);
+    expect(tileIconColor(tester), FinavigColors.logoBlue);
 
     flip(() {});
     await tester.pump(const Duration(milliseconds: 50));
     await tester.pump(const Duration(milliseconds: 50));
 
     final mid = tileIconColor(tester);
-    expect(strictlyBetween(mid.r, FinavigColors.violet.r, 1.0), isTrue,
+    expect(strictlyBetween(mid.r, FinavigColors.logoBlue.r, 1.0), isTrue,
         reason: 'icon red channel must be mid-transition, was ${mid.r}');
 
     await tester.pumpAndSettle();
@@ -216,12 +216,13 @@ void main() {
       };
     }
 
-    /// The floating pill: the only 30px-radius container on screen.
+    /// The bottom nav bar container: identified by its top-border decoration.
     Container pill(WidgetTester tester) =>
         tester.widgetList<Container>(find.byType(Container)).firstWhere((c) {
           final d = c.decoration;
-          return d is BoxDecoration &&
-              d.borderRadius == BorderRadius.circular(30);
+          if (d is! BoxDecoration) return false;
+          final b = d.border;
+          return b is Border && b.top.width > 0 && b.top.width < 1;
         });
 
     Color inactiveIconColor(WidgetTester tester) {
@@ -242,13 +243,13 @@ void main() {
       final mid = (pill(tester).decoration as BoxDecoration).color!;
       expect(strictlyBetween(mid.r, 1.0, FinavigColors.slate.r), isTrue,
           reason: 'pill must be mid-transition, was ${mid.r}');
-      expect(strictlyBetween(mid.a, 1.0, 0.92), isTrue,
+      expect(strictlyBetween(mid.a, 1.0, 0.96), isTrue,
           reason: 'pill alpha must be mid-transition, was ${mid.a}');
 
       await tester.pumpAndSettle();
       final settled = (pill(tester).decoration as BoxDecoration).color!;
       expect(settled.r, FinavigColors.slate.r);
-      expect(settled.a, closeTo(0.92, 0.002));
+      expect(settled.a, closeTo(0.96, 0.002));
     });
 
     testWidgets('inactive tab icons cross-fade from grey to white',
