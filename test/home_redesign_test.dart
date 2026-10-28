@@ -148,4 +148,37 @@ void main() {
     expect(overflows, isEmpty,
         reason: 'Home must not overflow at 393px width: $overflows');
   });
+
+  testWidgets('categories section can collapse and expand via Hide/Show toggle',
+      (tester) async {
+    await pumpHome(tester);
+
+    // Initial state: expanded with all tiles visible.
+    expect(find.text('Categories'), findsOneWidget);
+    expect(find.text('Hide'), findsOneWidget);
+    expect(find.text('Documents'), findsOneWidget);
+    expect(find.text('Records'), findsOneWidget);
+    expect(find.text('Envelopes'), findsOneWidget);
+    expect(find.text('Scan'), findsOneWidget);
+
+    // Tap Hide to collapse the middle categories section.
+    await tester.tap(find.text('Hide'));
+    await tester.pumpAndSettle();
+
+    // The 6 tiles are collapsed, but header toggle and primary Scan action remain.
+    expect(find.text('Show'), findsOneWidget);
+    expect(find.text('Documents'), findsNothing);
+    expect(find.text('Records'), findsNothing);
+    expect(find.text('Envelopes'), findsNothing);
+    expect(find.text('Scan'), findsOneWidget);
+
+    // Tap Show to expand them back.
+    await tester.tap(find.text('Show'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Hide'), findsOneWidget);
+    expect(find.text('Documents'), findsOneWidget);
+    expect(find.text('Records'), findsOneWidget);
+    expect(find.text('Envelopes'), findsOneWidget);
+  });
 }

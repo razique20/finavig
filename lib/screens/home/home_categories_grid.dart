@@ -2,15 +2,18 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../theme/app_theme.dart';
 import '../../widgets/bento_icon_tile.dart';
 import '../../widgets/dialogs/upgrade_dialog.dart';
 
-/// Categories section of the Home tab — a bento grid over the light canvas:
-/// six compact tiles, three per row, each with a colourful icon chip, then a
-/// full-width AI Summary feature tile and a full-width Scan call-to-action.
-class HomeCategoriesGrid extends StatelessWidget {
+/// Categories section of the Home tab — a clean, airy shortcuts grid
+/// with an interactive collapse/expand toggle and a prominent Scan action.
+///
+/// Gives users the power to minimize the shortcuts to a simple, clean,
+/// uncluttered layout or expand them to access all sub-features at a glance.
+class HomeCategoriesGrid extends StatefulWidget {
   final int pendingActionsCount;
   final Future<void> Function() onScanTap;
 
@@ -21,9 +24,39 @@ class HomeCategoriesGrid extends StatelessWidget {
   });
 
   @override
+  State<HomeCategoriesGrid> createState() => _HomeCategoriesGridState();
+}
+
+class _HomeCategoriesGridState extends State<HomeCategoriesGrid> {
+  static const String _prefKey = 'home_categories_collapsed';
+  bool _isCollapsed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPreference();
+  }
+
+  Future<void> _loadPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _isCollapsed = prefs.getBool(_prefKey) ?? false;
+      });
+    }
+  }
+
+  Future<void> _toggleCollapse() async {
+    final next = !_isCollapsed;
+    setState(() => _isCollapsed = next);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_prefKey, next);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final pending = pendingActionsCount;
+    final pending = widget.pendingActionsCount;
     // Resolved through the theme transition factor so the tiles cross-fade
     // with the light↔dark animation instead of snapping halfway through it.
     final fade = FinavigTransition.of(context);
@@ -36,26 +69,24 @@ class HomeCategoriesGrid extends StatelessWidget {
       FinavigColors.textSecondary,
     );
 
-    /// One compact bento tile: icon chip, title, one-line subtitle. Grows to
-    /// the row's height via [IntrinsicHeight] so the row stays flush.
+    /// One compact bento tile inside the unified Inset Hub:
     Widget tile({
       required IconData icon,
       required Color accent,
       required String label,
-      required String subtitle,
       required VoidCallback onTap,
     }) =>
         Material(
           color: tileBg,
-          borderRadius: BorderRadius.circular(FinavigRadius.tile),
+          borderRadius: BorderRadius.circular(14),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: onTap,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   BentoIconTile(
                     icon: icon,
@@ -65,33 +96,17 @@ class HomeCategoriesGrid extends StatelessWidget {
                     radius: 12,
                   ),
                   const SizedBox(height: 8),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        label,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: labelColor,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12.5,
-                          height: 1.25,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.outline,
-                          fontSize: 10.5,
-                          height: 1.2,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
+                  Text(
+                    label,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: labelColor,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                      height: 1.2,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
                   ),
                 ],
               ),
@@ -104,7 +119,7 @@ class HomeCategoriesGrid extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               for (var i = 0; i < tiles.length; i++) ...[
-                if (i > 0) const SizedBox(width: 10),
+                if (i > 0) const SizedBox(width: 8),
                 Expanded(child: tiles[i]),
               ],
             ],
@@ -124,65 +139,128 @@ class HomeCategoriesGrid extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const Spacer(),
-              if (pending > 0)
-                Text(
-                  '$pending need attention',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: FinavigColors.danger,
-                    fontWeight: FontWeight.w600,
+              if (pending > 0) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: FinavigColors.danger.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '$pending need attention',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: FinavigColors.danger,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 10.5,
+                    ),
                   ),
                 ),
+              ],
+              const Spacer(),
+              // Interactive collapse/expand toggle to make the middle section
+              // simple, clean, and blank on demand.
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: _toggleCollapse,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _isCollapsed ? 'Show' : 'Hide',
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: theme.colorScheme.outline,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(width: 2),
+                        Icon(
+                          _isCollapsed
+                              ? Icons.keyboard_arrow_down_rounded
+                              : Icons.keyboard_arrow_up_rounded,
+                          size: 18,
+                          color: theme.colorScheme.outline,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 12),
-          row([
-            tile(
-              icon: Icons.description_rounded,
-              accent: FinavigColors.logoBlue,
-              label: 'Documents',
-              subtitle: 'Files',
-              onTap: () => context.go('/documents'),
+          if (!_isCollapsed) ...[
+            const SizedBox(height: 12),
+            // Unified Apple & Mercury style Inset Hub card housing all 6 shortcuts
+            Container(
+              decoration: BoxDecoration(
+                color: fade.color(
+                  Colors.white.withValues(alpha: 0.6),
+                  FinavigColors.slate.withValues(alpha: 0.25),
+                ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: fade.color(
+                    Colors.black.withValues(alpha: 0.05),
+                    Colors.white.withValues(alpha: 0.06),
+                  ),
+                  width: 1,
+                ),
+              ),
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                children: [
+                  row([
+                    tile(
+                      icon: Icons.description_rounded,
+                      accent: FinavigColors.logoBlue,
+                      label: 'Documents',
+                      onTap: () => context.go('/documents'),
+                    ),
+                    tile(
+                      icon: Icons.calendar_month_rounded,
+                      accent: FinavigColors.logoRed,
+                      label: 'Renewals',
+                      onTap: () => context.push('/expiry-list'),
+                    ),
+                    tile(
+                      icon: Icons.savings_rounded,
+                      accent: FinavigColors.logoGreen,
+                      label: 'Envelopes',
+                      onTap: () => context.push('/envelopes'),
+                    ),
+                  ]),
+                  const SizedBox(height: 8),
+                  row([
+                    tile(
+                      icon: Icons.receipt_long_rounded,
+                      accent: FinavigColors.logoGold,
+                      label: 'Records',
+                      onTap: () => context.push('/records'),
+                    ),
+                    tile(
+                      icon: Icons.trending_up_rounded,
+                      accent: FinavigColors.logoBlue,
+                      label: 'Forecast',
+                      onTap: () => context.push('/cash-flow-forecast'),
+                    ),
+                    tile(
+                      icon: Icons.flag_rounded,
+                      accent: FinavigColors.logoGreen,
+                      label: 'AI Planner',
+                      onTap: () => context.push('/ai-budget-plan'),
+                    ),
+                  ]),
+                ],
+              ),
             ),
-            tile(
-              icon: Icons.calendar_month_rounded,
-              accent: FinavigColors.logoRed,
-              label: 'Renewals',
-              subtitle: 'Expiries',
-              onTap: () => context.push('/expiry-list'),
-            ),
-            tile(
-              icon: Icons.savings_rounded,
-              accent: FinavigColors.logoGreen,
-              label: 'Envelopes',
-              subtitle: 'Savings',
-              onTap: () => context.push('/envelopes'),
-            ),
-          ]),
-          const SizedBox(height: 10),
-          row([
-            tile(
-              icon: Icons.receipt_long_rounded,
-              accent: FinavigColors.logoGold,
-              label: 'Records',
-              subtitle: 'Ledger',
-              onTap: () => context.push('/records'),
-            ),
-            tile(
-              icon: Icons.trending_up_rounded,
-              accent: FinavigColors.logoBlue,
-              label: 'Forecast',
-              subtitle: '90 days',
-              onTap: () => context.push('/cash-flow-forecast'),
-            ),
-            tile(
-              icon: Icons.flag_rounded,
-              accent: FinavigColors.logoGreen,
-              label: 'AI Planner',
-              subtitle: 'AI budget',
-              onTap: () => context.push('/ai-budget-plan'),
-            ),
-          ]),
+          ],
           const SizedBox(height: 10),
           // Full-width primary CTA: Scan.
           Material(
@@ -193,8 +271,14 @@ class HomeCategoriesGrid extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    fade.color(const Color(0xFF2E8BC0), const Color(0xFF2671A8)),
-                    fade.color(const Color(0xFF1B5A8A), const Color(0xFF0E3A5C)),
+                    fade.color(
+                      const Color(0xFF2E8BC0),
+                      const Color(0xFF2671A8),
+                    ),
+                    fade.color(
+                      const Color(0xFF1B5A8A),
+                      const Color(0xFF0E3A5C),
+                    ),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -203,7 +287,7 @@ class HomeCategoriesGrid extends StatelessWidget {
               child: InkWell(
                 onTap: () {
                   // Free plan document limit — paywall when the quota is full.
-                  unawaited(onScanTap());
+                  unawaited(widget.onScanTap());
                 },
                 child: Padding(
                   padding: const EdgeInsets.symmetric(

@@ -539,18 +539,23 @@ class _MoneyScreenState extends State<MoneyScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          // The month summary is the dark ink card — same language as Home.
+          // The month summary is the dark ink card — luxury obsidian gradient matching Home.
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: fade.color(FinavigColors.ink, FinavigColors.charcoal),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  fade.color(const Color(0xFF16253D), const Color(0xFF191D28)),
+                  fade.color(const Color(0xFF0D1726), const Color(0xFF0F1219)),
+                ],
+              ),
               borderRadius: BorderRadius.circular(FinavigRadius.card + 4),
               border: Border.all(
-                color: fade.color(
-                  Colors.transparent,
-                  Colors.white.withValues(alpha: 0.06),
-                ),
+                color: Colors.white.withValues(alpha: fade.value(0.12, 0.08)),
+                width: 1,
               ),
               boxShadow: FinavigShadows.adaptive(
                 theme.brightness == Brightness.dark,
@@ -559,46 +564,76 @@ class _MoneyScreenState extends State<MoneyScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // One-line live status: month + record count (tappable to view transactions).
-                InkWell(
-                  onTap: () => context.push('/records'),
-                  borderRadius: BorderRadius.circular(6),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '$monthName · ${_transactions.length} records',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: Colors.white.withValues(alpha: 0.85),
+                // Top row: month + record count badge on left, currency pill on right.
+                Row(
+                  children: [
+                    InkWell(
+                      onTap: () => context.push('/records'),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '$monthName · ${_transactions.length} records',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: Colors.white.withValues(alpha: 0.9),
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 10,
+                              color: Colors.white.withValues(alpha: 0.7),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        DocumentCollectionService.instance.activeCurrency,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: Colors.white.withValues(alpha: 0.9),
                           fontWeight: FontWeight.w600,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.arrow_forward_ios_rounded,
-                        size: 10,
-                        color: Colors.white.withValues(alpha: 0.7),
-                      ),
-                    ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Net this month',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.70),
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.4,
                   ),
                 ),
                 const SizedBox(height: 6),
-                Text(
-                  'Net this month',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.6),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                // FittedBox: long balances scale down instead of overflowing the
-                // hero on narrow screens (same fix as Home). No Flexible wrapper —
-                // the hero Column gets unbounded height inside the sliver, so a
-                // flex child here would crash the layout.
                 FittedBox(
                   fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
                   child: Text(
                     MoneyFormat.aed(summary.net),
                     style: theme.textTheme.displayLarge?.copyWith(
@@ -608,15 +643,37 @@ class _MoneyScreenState extends State<MoneyScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  '${MoneyFormat.aed(summary.income)} in · ${MoneyFormat.aed(summary.expense)} out',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.6),
-                    fontWeight: FontWeight.w500,
+                const SizedBox(height: 10),
+                // Sleek frosted cashflow indicator pill
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.swap_vert_rounded,
+                        size: 14,
+                        color: Color(0xFF34D399),
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        '${MoneyFormat.aed(summary.income)} in · ${MoneyFormat.aed(summary.expense)} out',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.white.withValues(alpha: 0.85),
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 16),
                 // 4 navigation pills covering all core Money modules.
@@ -655,15 +712,15 @@ class _MoneyScreenState extends State<MoneyScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
-                // AI Budget Planner + Add Record side by side (quota is enforced
-                // in-service).
+                const SizedBox(height: 12),
+                // AI Budget Planner + Add Record side by side.
                 Row(
                   children: [
                     Expanded(
                       child: _MoneyAddCard(
                         icon: Icons.auto_awesome_rounded,
                         label: 'AI Budget Plan',
+                        outlined: true,
                         onTap: () => showAiBudgetPlanSheet(context),
                       ),
                     ),
@@ -672,6 +729,7 @@ class _MoneyScreenState extends State<MoneyScreen> {
                       child: _MoneyAddCard(
                         icon: Icons.add_rounded,
                         label: 'Add Record',
+                        outlined: false,
                         onTap: _showAddTransactionSheet,
                       ),
                     ),
@@ -1038,48 +1096,109 @@ class _MoneyHeroIconButton extends StatelessWidget {
   }
 }
 
-/// Compact filled card button for the hero's primary action.
+/// Compact action card button for the Money hero actions.
 class _MoneyAddCard extends StatelessWidget {
   final IconData icon;
   final String label;
+  final bool outlined;
   final VoidCallback onTap;
 
   const _MoneyAddCard({
     required this.icon,
     required this.label,
+    this.outlined = false,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Material(
-      color: theme.colorScheme.primary,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
+    final fade = FinavigTransition.of(context);
+
+    if (outlined) {
+      return Material(
+        color: Colors.white.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 17, color: Colors.white),
-              const SizedBox(width: 8),
-              Flexible(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.22),
+                width: 1,
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 16, color: FinavigColors.accentBright),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12.5,
+                      ),
                     ),
                   ),
                 ),
-              ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Material(
+      borderRadius: BorderRadius.circular(14),
+      clipBehavior: Clip.antiAlias,
+      color: Colors.transparent,
+      child: Ink(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              fade.color(const Color(0xFF2E8BC0), const Color(0xFF2671A8)),
+              fade.color(const Color(0xFF1B5A8A), const Color(0xFF0E3A5C)),
             ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 16, color: Colors.white),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -121,13 +121,7 @@ class _HomeScreenState extends State<HomeScreen> {
       stops: const [0.0, 0.55],
     );
 
-    // Common data for quick stats and AI summary card.
-    final expense = FinanceMath.summaryForMonth(
-      FinanceService.instance.activeTransactions,
-      DateTime.now(),
-    ).expense;
     final budgetPct = _budgetUsagePct();
-    final docCount = _items.where((i) => i.isActive).length;
 
     return Scaffold(
       backgroundColor: canvas,
@@ -154,16 +148,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         onCollectionSwitcherTap: _showCollectionSwitcher,
                         onQuickAddRecord: _quickAddRecord,
                       ),
-                      const SizedBox(height: 22),
-                      // Quick stats row: Spending, Plans, Docs — above categories.
-                      if (!_loading) ...[
-                        HomeQuickStats(
-                          spending: MoneyFormat.aed(expense),
-                          budgetPct: budgetPct,
-                          docCount: docCount,
-                        ),
-                        const SizedBox(height: 16),
-                      ],
+                      const SizedBox(height: 18),
                       if (_loading)
                         const SizedBox(height: 420, child: HomeSkeletonView())
                       else ...[

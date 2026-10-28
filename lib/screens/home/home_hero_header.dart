@@ -203,13 +203,24 @@ class HomeHeroHeader extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          // Balance card — dark blue, the page's focal element.
+          // Balance card — standard, classy, modern focal element.
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: cardColor,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  fade.color(const Color(0xFF16253D), const Color(0xFF191D28)),
+                  fade.color(const Color(0xFF0D1726), const Color(0xFF0F1219)),
+                ],
+              ),
               borderRadius: BorderRadius.circular(FinavigRadius.card + 4),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: fade.value(0.12, 0.08)),
+                width: 1,
+              ),
               boxShadow: FinavigShadows.adaptive(
                 theme.brightness == Brightness.dark,
               ),
@@ -217,66 +228,145 @@ class HomeHeroHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Net this month',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.75),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Flexible(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          MoneyFormat.aed(summary.net),
-                          style: theme.textTheme.displayLarge?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -1.0,
-                          ),
+                    Text(
+                      'Net this month',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.70),
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        DocumentCollectionService.instance.activeCurrency,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
-                    if (summary.income > 0 || summary.expense > 0) ...[
-                      const SizedBox(width: 12),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 7),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.16),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            DocumentCollectionService.instance.activeCurrency,
-                            style: theme.textTheme.labelMedium?.copyWith(
-                              color: Colors.white.withValues(alpha: 0.9),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
                   ],
                 ),
                 const SizedBox(height: 6),
-                Text(
-                  '${MoneyFormat.aed(summary.income)} in · '
-                  '${MoneyFormat.aed(summary.expense)} out'
-                  '${nextRenewal == null ? '' : ' · next: $nextRenewal'}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.72),
-                    fontWeight: FontWeight.w500,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    MoneyFormat.aed(summary.net),
+                    style: theme.textTheme.displayLarge?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -1.0,
+                    ),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 10),
+                // Cashflow indicator pills: Inflow, Outflow, Next renewal
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.arrow_downward_rounded,
+                            size: 12,
+                            color: Color(0xFF34D399),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${MoneyFormat.aed(summary.income)} in',
+                            style: const TextStyle(
+                              color: Color(0xFF34D399),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEF4444).withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.arrow_upward_rounded,
+                            size: 12,
+                            color: Color(0xFFF87171),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${MoneyFormat.aed(summary.expense)} out',
+                            style: const TextStyle(
+                              color: Color(0xFFF87171),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (nextRenewal != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.calendar_today_rounded,
+                              size: 11,
+                              color: Colors.white.withValues(alpha: 0.7),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Next: $nextRenewal',
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.85),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -297,7 +387,6 @@ class HomeHeroHeader extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
-                // AI Summary text link below the balance card.
                 _AiSummaryLink(onTap: () => context.push('/ai-summary')),
               ],
             ),
