@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:finavig/models/ai_data_source.dart';
 import 'package:finavig/models/credit.dart';
 import 'package:finavig/models/finance.dart';
 import 'package:finavig/models/subscription_tier.dart';
@@ -13,16 +14,15 @@ FinanceTransaction _tx(
   double amount,
   DateTime at, {
   FinanceKind kind = FinanceKind.expense,
-}) =>
-    FinanceTransaction(
-      id: 't-$category-$amount-${at.millisecondsSinceEpoch}',
-      collectionId: 'personal',
-      kind: kind,
-      category: category,
-      title: 'Test $category',
-      amount: amount,
-      occurredAt: at,
-    );
+}) => FinanceTransaction(
+  id: 't-$category-$amount-${at.millisecondsSinceEpoch}',
+  collectionId: 'personal',
+  kind: kind,
+  category: category,
+  title: 'Test $category',
+  amount: amount,
+  occurredAt: at,
+);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -73,37 +73,61 @@ void main() {
   });
 
   group('AiBudgetPlanService Generation & Fallback', () {
-    test('generates plan from Groq override and increments monthly counter',
-        () async {
+    test('only sends optional sources selected by the user', () async {
       final service = AiBudgetPlanService.instance;
-      service.groqCallOverride = (system, user) async =>
-          '{"title": "Plan: MacBook", "summary": "Save AED 1,500 per month.", '
-          '"feasible": true, "monthsToGoal": 7, "monthlySavingTarget": 1500, '
-          '"actions": [{"title": "Trim Shopping", "detail": "Cut shopping by '
-          'AED 400.", "categoryName": "shopping", "monthlyAmount": 400, '
-          '"suggestedEnvelopeName": "MacBook Fund"}]}';
+      String? capturedUser;
+      service.groqCallOverride = (system, user) async {
+        capturedUser = user;
+        return '{"title": "T", "summary": "S", "feasible": true, '
+            '"monthlySavingTarget": 100, "actions": []}';
+      };
 
-      final now = DateTime(2026, 9, 21);
-      final result = await service.generatePlan(
-        goalDescription: 'Buy a MacBook',
-        targetAmount: 10500,
-        targetMonths: 7,
+      await service.generatePlan(
+        goalDescription: 'Save for a trip',
+        targetAmount: 1000,
+        selectedSources: const {AiDataSource.financialRecords},
         forceRegenerate: true,
-        now: now,
+        now: DateTime(2026, 9, 21),
       );
 
-      expect(result.usedGroq, isTrue);
-      expect(result.quotaExceeded, isFalse);
-      expect(result.plan.title, 'Plan: MacBook');
-      expect(result.plan.feasible, isTrue);
-      expect(result.plan.monthsToGoal, 7);
-      expect(result.plan.monthlySavingTargetAed, 1500);
-      expect(result.plan.actions, hasLength(1));
-      expect(result.plan.actions.first.category?.name, 'shopping');
-      expect(result.plan.actions.first.suggestedEnvelopeName, 'MacBook Fund');
-      expect(await service.getUsedQuotaThisMonth(now), 1);
-      expect(await service.getRemainingQuotaThisMonth(now), 1);
+      expect(capturedUser, contains('FINANCIAL SNAPSHOT'));
+      expect(capturedUser, isNot(contains('Upcoming document renewal fees')));
+      expect(capturedUser, isNot(contains('Credit obligations')));
     });
+
+    test(
+      'generates plan from Groq override and increments monthly counter',
+      () async {
+        final service = AiBudgetPlanService.instance;
+        service.groqCallOverride = (system, user) async =>
+            '{"title": "Plan: MacBook", "summary": "Save AED 1,500 per month.", '
+            '"feasible": true, "monthsToGoal": 7, "monthlySavingTarget": 1500, '
+            '"actions": [{"title": "Trim Shopping", "detail": "Cut shopping by '
+            'AED 400.", "categoryName": "shopping", "monthlyAmount": 400, '
+            '"suggestedEnvelopeName": "MacBook Fund"}]}';
+
+        final now = DateTime(2026, 9, 21);
+        final result = await service.generatePlan(
+          goalDescription: 'Buy a MacBook',
+          targetAmount: 10500,
+          targetMonths: 7,
+          forceRegenerate: true,
+          now: now,
+        );
+
+        expect(result.usedGroq, isTrue);
+        expect(result.quotaExceeded, isFalse);
+        expect(result.plan.title, 'Plan: MacBook');
+        expect(result.plan.feasible, isTrue);
+        expect(result.plan.monthsToGoal, 7);
+        expect(result.plan.monthlySavingTargetAed, 1500);
+        expect(result.plan.actions, hasLength(1));
+        expect(result.plan.actions.first.category?.name, 'shopping');
+        expect(result.plan.actions.first.suggestedEnvelopeName, 'MacBook Fund');
+        expect(await service.getUsedQuotaThisMonth(now), 1);
+        expect(await service.getRemainingQuotaThisMonth(now), 1);
+      },
+    );
 
     test('enforces quota limit when limit is reached', () async {
       final service = AiBudgetPlanService.instance;
@@ -171,18 +195,17 @@ void main() {
     CreditEntry credit({
       double amount = 3000,
       CreditDirection direction = CreditDirection.borrowed,
-    }) =>
-        CreditEntry(
-          id: 'credit-plan-${amount.toInt()}',
-          collectionId: 'personal',
-          direction: direction,
-          counterpartyName: 'Ahmed',
-          amount: amount,
-          currency: 'AED',
-          startDate: DateTime(2026, 9, 1),
-          deadline: DateTime(2026, 9, 15),
-          createdAt: DateTime(2026, 9, 1),
-        );
+    }) => CreditEntry(
+      id: 'credit-plan-${amount.toInt()}',
+      collectionId: 'personal',
+      direction: direction,
+      counterpartyName: 'Ahmed',
+      amount: amount,
+      currency: 'AED',
+      startDate: DateTime(2026, 9, 1),
+      deadline: DateTime(2026, 9, 15),
+      createdAt: DateTime(2026, 9, 1),
+    );
 
     test('feeds credit obligations into the Groq plan prompt', () async {
       await CreditService.instance.init();
@@ -208,25 +231,27 @@ void main() {
       expect(capturedUser, contains('You owe (borrowed): AED 3,000'));
     });
 
-    test('offline fallback plan prioritises clearing what the user owes',
-        () async {
-      await CreditService.instance.init();
-      await CreditService.instance.addCredit(credit(amount: 5000));
+    test(
+      'offline fallback plan prioritises clearing what the user owes',
+      () async {
+        await CreditService.instance.init();
+        await CreditService.instance.addCredit(credit(amount: 5000));
 
-      final service = AiBudgetPlanService.instance;
-      service.groqCallOverride = (system, user) async => 'not json at all';
+        final service = AiBudgetPlanService.instance;
+        service.groqCallOverride = (system, user) async => 'not json at all';
 
-      final result = await service.generatePlan(
-        goalDescription: 'Buy a MacBook',
-        targetAmount: 1000,
-        forceRegenerate: true,
-        now: DateTime(2026, 9, 21),
-      );
+        final result = await service.generatePlan(
+          goalDescription: 'Buy a MacBook',
+          targetAmount: 1000,
+          forceRegenerate: true,
+          now: DateTime(2026, 9, 21),
+        );
 
-      expect(result.usedGroq, isFalse);
-      final titles = result.plan.actions.map((a) => a.title).join(' ');
-      expect(titles, contains('you owe first'));
-    });
+        expect(result.usedGroq, isFalse);
+        final titles = result.plan.actions.map((a) => a.title).join(' ');
+        expect(titles, contains('you owe first'));
+      },
+    );
   });
 
   group('parsePlanResponse', () {
@@ -282,16 +307,18 @@ void main() {
       expect(plan.actions[2].type, AiBudgetPlanActionType.tip);
     });
 
-    test('infers envelope type from suggestedEnvelopeName (backward compat)',
-        () {
-      final plan = AiBudgetPlanService.parsePlanResponse(
-        '{"title": "T", "summary": "S", "feasible": true, '
-        '"monthlySavingTarget": 1, "actions": [{"title": "A", '
-        '"detail": "D", "suggestedEnvelopeName": "MacBook Fund"}]}',
-      );
+    test(
+      'infers envelope type from suggestedEnvelopeName (backward compat)',
+      () {
+        final plan = AiBudgetPlanService.parsePlanResponse(
+          '{"title": "T", "summary": "S", "feasible": true, '
+          '"monthlySavingTarget": 1, "actions": [{"title": "A", '
+          '"detail": "D", "suggestedEnvelopeName": "MacBook Fund"}]}',
+        );
 
-      expect(plan!.actions.single.type, AiBudgetPlanActionType.envelope);
-    });
+        expect(plan!.actions.single.type, AiBudgetPlanActionType.envelope);
+      },
+    );
 
     test('fallback plan mixes action types', () async {
       final service = AiBudgetPlanService.instance;
@@ -317,17 +344,32 @@ void main() {
       final now = DateTime(2026, 9, 21);
       final txs = [
         for (var i = 0; i < 3; i++) ...[
-          _tx(FinanceCategory.foodAndBeverages, 800,
-              now.subtract(Duration(days: 10 + i * 30))),
-          _tx(FinanceCategory.shopping, 600,
-              now.subtract(Duration(days: 15 + i * 30))),
-          _tx(FinanceCategory.entertainment, 200,
-              now.subtract(Duration(days: 20 + i * 30))),
+          _tx(
+            FinanceCategory.foodAndBeverages,
+            800,
+            now.subtract(Duration(days: 10 + i * 30)),
+          ),
+          _tx(
+            FinanceCategory.shopping,
+            600,
+            now.subtract(Duration(days: 15 + i * 30)),
+          ),
+          _tx(
+            FinanceCategory.entertainment,
+            200,
+            now.subtract(Duration(days: 20 + i * 30)),
+          ),
           // Essentials must never be trimmed by templates.
-          _tx(FinanceCategory.rent, 3000,
-              now.subtract(Duration(days: 5 + i * 30))),
-          _tx(FinanceCategory.utilities, 1000,
-              now.subtract(Duration(days: 8 + i * 30))),
+          _tx(
+            FinanceCategory.rent,
+            3000,
+            now.subtract(Duration(days: 5 + i * 30)),
+          ),
+          _tx(
+            FinanceCategory.utilities,
+            1000,
+            now.subtract(Duration(days: 8 + i * 30)),
+          ),
         ],
       ];
 
@@ -336,11 +378,15 @@ void main() {
         transactions: txs,
         now: now,
       );
-      expect(templates.map((t) => t.id),
-          containsAll(['comfortable', 'balanced', 'goal_first']));
+      expect(
+        templates.map((t) => t.id),
+        containsAll(['comfortable', 'balanced', 'goal_first']),
+      );
 
       final spend = service.averageMonthlySpendByCategory(
-          transactions: txs, now: now);
+        transactions: txs,
+        now: now,
+      );
       double freedOf(Map<FinanceCategory, double> caps) {
         var freed = 0.0;
         for (final e in caps.entries) {
@@ -369,13 +415,19 @@ void main() {
     });
 
     test('goalMood maps coverage to friendly labels', () {
-      expect(AiBudgetPlanService.goalMood(coverage: 1.3).label,
-          'On track — with room to spare');
+      expect(
+        AiBudgetPlanService.goalMood(coverage: 1.3).label,
+        'On track — with room to spare',
+      );
       expect(AiBudgetPlanService.goalMood(coverage: 1.05).emoji, '🙂');
-      expect(AiBudgetPlanService.goalMood(coverage: 0.9).label,
-          'A little tight');
-      expect(AiBudgetPlanService.goalMood(coverage: 0.6).label,
-          'Hard to reach');
+      expect(
+        AiBudgetPlanService.goalMood(coverage: 0.9).label,
+        'A little tight',
+      );
+      expect(
+        AiBudgetPlanService.goalMood(coverage: 0.6).label,
+        'Hard to reach',
+      );
       expect(AiBudgetPlanService.goalMood(coverage: 0.2).label, 'Off track');
     });
   });

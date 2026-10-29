@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../models/ai_data_source.dart';
 import '../models/finance.dart';
 import '../models/subscription_tier.dart';
 import '../services/ai_budget_plan_service.dart';
@@ -8,6 +9,7 @@ import '../services/finance_service.dart';
 import '../services/groq_api_service.dart';
 import '../theme/app_theme.dart';
 import '../services/collection_service.dart';
+import '../widgets/ai_data_source_selector.dart';
 import '../widgets/dialogs/upgrade_dialog.dart';
 
 /// AI Budget Planner page: the user states a goal (buy something, save an
@@ -34,6 +36,7 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
   bool _quotaExceeded = false;
   int _usedQuota = 0;
   int _quotaLimit = 2;
+  Set<AiDataSource> _selectedSources = {AiDataSource.financialRecords};
 
   // Applied one-tap actions (index into the current plan's action list).
   final Set<int> _appliedActionIndexes = {};
@@ -56,6 +59,7 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
     final result = await service.generatePlan(
       goalDescription: '',
       targetAmount: 0,
+      selectedSources: _selectedSources,
       forceRegenerate: false,
     );
     if (!mounted) return;
@@ -100,7 +104,9 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
       final upgrade = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: const Row(
             children: [
               Icon(Icons.warning_amber_rounded, color: FinavigColors.warning),
@@ -147,6 +153,7 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
       goalDescription: goal,
       targetAmount: amount,
       targetMonths: _showMonths ? _targetMonths : null,
+      selectedSources: _selectedSources,
       forceRegenerate: true,
     );
 
@@ -178,7 +185,10 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(
           children: [
-            Icon(Icons.auto_awesome_rounded, color: FinavigColors.cyanSecondary),
+            Icon(
+              Icons.auto_awesome_rounded,
+              color: FinavigColors.cyanSecondary,
+            ),
             SizedBox(width: 8),
             Text('Confirm AI Quota Usage'),
           ],
@@ -338,12 +348,16 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
         'cap $_cur ${amt.toStringAsFixed(0)}/mo',
         FinavigColors.navyPrimary,
       ),
-      AiBudgetPlanActionType.tip => amt >= 0
-          ? ('frees $_cur ${amt.toStringAsFixed(0)}/mo', FinavigColors.emerald)
-          : (
-            'needs $_cur ${amt.abs().toStringAsFixed(0)}/mo',
-            Colors.orangeAccent,
-          ),
+      AiBudgetPlanActionType.tip =>
+        amt >= 0
+            ? (
+                'frees $_cur ${amt.toStringAsFixed(0)}/mo',
+                FinavigColors.emerald,
+              )
+            : (
+                'needs $_cur ${amt.abs().toStringAsFixed(0)}/mo',
+                Colors.orangeAccent,
+              ),
     };
     return Text(
       label,
@@ -371,18 +385,21 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
             icon: applied
                 ? Icons.check_circle_outline_rounded
                 : Icons.add_circle_outline_rounded,
-            onTap: applied ? null : () => _createEnvelopeFromAction(action, index),
+            onTap: applied
+                ? null
+                : () => _createEnvelopeFromAction(action, index),
           ),
         ];
       case AiBudgetPlanActionType.budget:
         final category = action.category;
-        if (category == null || (action.monthlyAmountAed ?? 0) <= 0) return const [];
+        if (category == null || (action.monthlyAmountAed ?? 0) <= 0)
+          return const [];
         defs = [
           (
             label: applied
                 ? 'Budget set ✓'
                 : 'Set ${category.displayName} budget to '
-                    '$_cur ${action.monthlyAmountAed!.toStringAsFixed(0)}/mo',
+                      '$_cur ${action.monthlyAmountAed!.toStringAsFixed(0)}/mo',
             icon: applied
                 ? Icons.check_circle_outline_rounded
                 : Icons.tune_rounded,
@@ -403,16 +420,17 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
             icon: Icon(d.icon, size: 16),
             label: Text(d.label),
             style: OutlinedButton.styleFrom(
-              foregroundColor:
-                  applied ? FinavigColors.emerald : FinavigColors.navyPrimary,
+              foregroundColor: applied
+                  ? FinavigColors.emerald
+                  : FinavigColors.navyPrimary,
               side: BorderSide(
-                color: (applied ? FinavigColors.emerald : FinavigColors.navyPrimary)
-                    .withOpacity(0.4),
+                color:
+                    (applied
+                            ? FinavigColors.emerald
+                            : FinavigColors.navyPrimary)
+                        .withOpacity(0.4),
               ),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 6,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               textStyle: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -488,7 +506,9 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
     bool isDark,
     SubscriptionTier tier,
   ) {
-    final usedPct = _quotaLimit <= 0 ? 1.0 : (_usedQuota / _quotaLimit).clamp(0.0, 1.0);
+    final usedPct = _quotaLimit <= 0
+        ? 1.0
+        : (_usedQuota / _quotaLimit).clamp(0.0, 1.0);
     final tierName = tier.name[0].toUpperCase() + tier.name.substring(1);
 
     return Container(
@@ -516,7 +536,10 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: FinavigColors.violetAccent.withOpacity(0.25),
                   borderRadius: BorderRadius.circular(8),
@@ -597,8 +620,10 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () =>
-                    showUpgradeDialog(context, EntitlementFeature.aiBudgetPlanning),
+                onPressed: () => showUpgradeDialog(
+                  context,
+                  EntitlementFeature.aiBudgetPlanning,
+                ),
                 icon: const Icon(Icons.bolt_rounded, size: 16),
                 label: const Text('Upgrade Plan for More AI Plans'),
                 style: ElevatedButton.styleFrom(
@@ -665,8 +690,9 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
             const SizedBox(height: 12),
             TextField(
               controller: _amountController,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               textInputAction: TextInputAction.done,
               decoration: InputDecoration(
                 labelText: 'Target amount ($_cur)',
@@ -676,6 +702,16 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
                 ),
               ),
               onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 10),
+            const SizedBox(height: 14),
+            AiDataSourceSelector(
+              selectedSources: _selectedSources,
+              requiredSources: const {AiDataSource.financialRecords},
+              description:
+                  'Financial records stay on because the plan needs them to calculate a realistic target.',
+              onChanged: (sources) =>
+                  setState(() => _selectedSources = sources),
             ),
             const SizedBox(height: 10),
             SwitchListTile(
@@ -728,7 +764,10 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
                     ? const SizedBox(
                         width: 16,
                         height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       )
                     : const Icon(Icons.auto_awesome_rounded, size: 18),
                 label: Text(
@@ -739,8 +778,8 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: FinavigColors.ink,
                   foregroundColor: Colors.white,
-                  disabledBackgroundColor:
-                      theme.colorScheme.outlineVariant.withOpacity(0.4),
+                  disabledBackgroundColor: theme.colorScheme.outlineVariant
+                      .withOpacity(0.4),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -799,10 +838,16 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.history_rounded, size: 12, color: Colors.white70),
+                    const Icon(
+                      Icons.history_rounded,
+                      size: 12,
+                      color: Colors.white70,
+                    ),
                     const SizedBox(width: 4),
                     Text(
-                      timeStr != null ? 'Previous Plan • $timeStr' : 'Previous Response',
+                      timeStr != null
+                          ? 'Previous Plan • $timeStr'
+                          : 'Previous Response',
                       style: const TextStyle(
                         color: Colors.white70,
                         fontSize: 10,
@@ -815,8 +860,10 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
               const Spacer(),
               if (_usedGroq)
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: FinavigColors.emerald.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(4),
@@ -839,7 +886,9 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
                 plan.feasible
                     ? Icons.check_circle_rounded
                     : Icons.error_outline_rounded,
-                color: plan.feasible ? FinavigColors.emerald : FinavigColors.caution,
+                color: plan.feasible
+                    ? FinavigColors.emerald
+                    : FinavigColors.caution,
                 size: 20,
               ),
               const SizedBox(width: 8),
@@ -889,8 +938,11 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
             const SizedBox(height: 12),
             Row(
               children: [
-                const Icon(Icons.info_outline_rounded,
-                    size: 14, color: FinavigColors.warning),
+                const Icon(
+                  Icons.info_outline_rounded,
+                  size: 14,
+                  color: FinavigColors.warning,
+                ),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
@@ -1000,9 +1052,7 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
   Widget _buildBudgetAdjuster(ThemeData theme, bool isDark) {
     final service = AiBudgetPlanService.instance;
     final spend = service.averageMonthlySpendByCategory();
-    final categories = spend.entries
-        .where((e) => e.value >= 20)
-        .toList()
+    final categories = spend.entries.where((e) => e.value >= 20).toList()
       ..sort((a, b) => b.value.compareTo(a.value));
     if (categories.isEmpty) return const SizedBox.shrink();
 
@@ -1029,8 +1079,9 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
     final newSpare = fin.monthlySpare + freed;
     final coverage = required > 0 ? (newSpare / required).clamp(0.0, 2.0) : 1.0;
     final mood = AiBudgetPlanService.goalMood(coverage: coverage);
-    final monthsToGoal =
-        (newSpare > 0 && amount > 0) ? (amount / newSpare).ceil() : null;
+    final monthsToGoal = (newSpare > 0 && amount > 0)
+        ? (amount / newSpare).ceil()
+        : null;
 
     final Color moodColor;
     if (mood.score >= 80) {
@@ -1045,7 +1096,8 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
     final changed = caps.entries
         .where((e) => (spend[e.key] ?? e.value) - e.value > 0.5)
         .toList();
-    final allApplied = changed.isNotEmpty &&
+    final allApplied =
+        changed.isNotEmpty &&
         changed.every((e) => _appliedBudgetCategories.contains(e.key.name));
 
     final selectedTemplate = templates
@@ -1066,14 +1118,18 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.tune_rounded,
-                  size: 18, color: FinavigColors.navyPrimary),
+              const Icon(
+                Icons.tune_rounded,
+                size: 18,
+                color: FinavigColors.navyPrimary,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   'Adjust budgets to reach your goal',
-                  style: theme.textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.bold),
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -1107,11 +1163,7 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
                         color: moodColor.withOpacity(0.18),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(
-                        mood.icon,
-                        size: 20,
-                        color: moodColor,
-                      ),
+                      child: Icon(mood.icon, size: 20, color: moodColor),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -1145,10 +1197,15 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
                   spacing: 8,
                   runSpacing: 4,
                   children: [
-                    _miniChip(theme, 'Freed: $_cur ${freed.toStringAsFixed(0)}/mo'),
+                    _miniChip(
+                      theme,
+                      'Freed: $_cur ${freed.toStringAsFixed(0)}/mo',
+                    ),
                     if (required > 0)
                       _miniChip(
-                          theme, 'Need: $_cur ${required.toStringAsFixed(0)}/mo'),
+                        theme,
+                        'Need: $_cur ${required.toStringAsFixed(0)}/mo',
+                      ),
                     if (monthsToGoal != null)
                       _miniChip(theme, 'Goal in ~$monthsToGoal months'),
                   ],
@@ -1160,9 +1217,12 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
           // ── Quick templates ──
           if (templates.isNotEmpty) ...[
             const SizedBox(height: 14),
-            Text('Quick templates',
-                style: theme.textTheme.labelLarge
-                    ?.copyWith(fontWeight: FontWeight.bold)),
+            Text(
+              'Quick templates',
+              style: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 8),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -1176,7 +1236,10 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
                         size: 16,
                         color: _activeTemplateId == t.id
                             ? FinavigColors.navyPrimary
-                            : FinavigColors.adaptiveIcon(context, theme.colorScheme.onSurfaceVariant),
+                            : FinavigColors.adaptiveIcon(
+                                context,
+                                theme.colorScheme.onSurfaceVariant,
+                              ),
                       ),
                       label: Text(t.label),
                       selected: _activeTemplateId == t.id,
@@ -1233,8 +1296,8 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
                 allApplied
                     ? 'Budgets applied ✓'
                     : changed.isEmpty
-                        ? 'Trim a category to apply budgets'
-                        : 'Apply ${changed.length} budget${changed.length == 1 ? '' : 's'}',
+                    ? 'Trim a category to apply budgets'
+                    : 'Apply ${changed.length} budget${changed.length == 1 ? '' : 's'}',
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: FinavigColors.ink,
@@ -1268,7 +1331,11 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
                 color: FinavigColors.navyPrimary.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(entry.key.icon, size: 15, color: FinavigColors.navyPrimary),
+              child: Icon(
+                entry.key.icon,
+                size: 15,
+                color: FinavigColors.navyPrimary,
+              ),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -1277,8 +1344,9 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
                 children: [
                   Text(
                     entry.key.displayName,
-                    style: theme.textTheme.labelLarge
-                        ?.copyWith(fontWeight: FontWeight.w600),
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   Text(
                     'Now ~$_cur ${entry.value.toStringAsFixed(0)}/mo',
@@ -1378,8 +1446,9 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
       ),
       child: Text(
         label,
-        style: theme.textTheme.labelSmall
-            ?.copyWith(fontWeight: FontWeight.w600),
+        style: theme.textTheme.labelSmall?.copyWith(
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

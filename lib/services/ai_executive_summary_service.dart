@@ -3,18 +3,16 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/ai_data_source.dart';
 import '../models/credit.dart';
-import '../models/document_type.dart';
 import '../models/expiry_item.dart';
 import '../models/finance.dart';
-import '../models/subscription_tier.dart';
 
 import 'collection_service.dart';
 import 'auth_service.dart';
 import 'credit_service.dart';
 import 'document_scanner_service.dart';
 import 'entitlement_service.dart';
-import 'finance_service.dart';
 import 'groq_api_service.dart';
 import 'monthly_summary_service.dart';
 import 'supabase_service.dart';
@@ -48,6 +46,7 @@ class AiExecutiveSummaryService {
   List<AiSummaryCombinedInsight> _lastInsights = const [];
   bool _lastUsedGroq = false;
   DateTime? _lastGeneratedAt;
+  Set<AiDataSource> _lastSources = const {};
 
   String? get lastNarrative => _lastNarrative;
   List<AiSummaryCombinedInsight> get lastInsights => _lastInsights;
@@ -216,7 +215,12 @@ class AiExecutiveSummaryService {
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      final keys = prefs.getKeys().where((k) => k.startsWith(_usagePrefix) || k.contains('groqAiSummary')).toList();
+      final keys = prefs
+          .getKeys()
+          .where(
+            (k) => k.startsWith(_usagePrefix) || k.contains('groqAiSummary'),
+          )
+          .toList();
       for (final key in keys) {
         await prefs.remove(key);
       }
@@ -233,30 +237,61 @@ class AiExecutiveSummaryService {
     return 'groqAiSummary.lastGeneratedAt.$userId';
   }
 
+  String _cachedSourcesKey() {
+    final userId = AuthService.instance.currentUserId ?? 'local-user';
+    return 'groqAiSummary.lastSources.$userId';
+  }
+
   /// Generates the combined AI Executive Summary.
   ///
   /// Aggregates active document details (expiries, pending actions) and
   /// financial payment details (income, expenses, budgets).
   ///
   /// If [forceRegenerate] is true, checks plan quota before calling Groq API.
-  Future<({String narrative, List<AiSummaryCombinedInsight> insights, bool usedGroq, bool quotaExceeded})>
-      generateSummary({
+  Future<
+    ({
+      String narrative,
+      List<AiSummaryCombinedInsight> insights,
+      bool usedGroq,
+      bool quotaExceeded,
+    })
+  >
+  generateSummary({
     bool forceRegenerate = false,
+    Set<AiDataSource> selectedSources = const {
+      AiDataSource.documents,
+      AiDataSource.financialRecords,
+      AiDataSource.creditObligations,
+    },
     DateTime? now,
   }) async {
     final ref = now ?? DateTime.now();
-    final docItems = await DocumentScannerService.instance.getAllItems();
-    final finData = MonthlySummaryService.instance.generate(now: ref);
-    // Credit obligations (money borrowed from / lent to people) are part
-    // of the user's financial picture — include them in the summary.
-    await CreditService.instance.init();
-    final creditItems = CreditService.instance.activeCredits;
+    final useDocuments = selectedSources.contains(AiDataSource.documents);
+    final useFinances = selectedSources.contains(AiDataSource.financialRecords);
+    final useCredits = selectedSources.contains(AiDataSource.creditObligations);
+    final docItems = useDocuments
+        ? await DocumentScannerService.instance.getAllItems()
+        : <ExpiryItem>[];
+    final finData = useFinances
+        ? MonthlySummaryService.instance.generate(now: ref)
+        : _emptyMonthlySummary(ref);
+    final creditItems = <CreditEntry>[];
+    if (useCredits) {
+      await CreditService.instance.init();
+      creditItems.addAll(CreditService.instance.activeCredits);
+    }
 
-    final insights = _buildCombinedInsights(docItems, finData, creditItems, ref);
+    final insights = _buildCombinedInsights(
+      docItems,
+      finData,
+      creditItems,
+      ref,
+      selectedSources: selectedSources,
+    );
 
     // If cached narrative exists and forceRegenerate is false, return cached.
     if (!forceRegenerate) {
-      if (_lastNarrative != null) {
+      if (_lastNarrative != null && setEquals(_lastSources, selectedSources)) {
         return (
           narrative: _lastNarrative!,
           insights: _lastInsights,
@@ -268,10 +303,18 @@ class AiExecutiveSummaryService {
         final prefs = await SharedPreferences.getInstance();
         final stored = prefs.getString(_cachedNarrativeKey());
         final timeStr = prefs.getString(_cachedTimestampKey());
-        if (stored != null && stored.trim().isNotEmpty) {
+        final storedSources =
+            prefs.getStringList(_cachedSourcesKey()) ??
+            AiDataSource.values.map((source) => source.name).toList();
+        final sourcesMatch = setEquals(
+          storedSources.map(_sourceFromName).whereType<AiDataSource>().toSet(),
+          selectedSources,
+        );
+        if (stored != null && stored.trim().isNotEmpty && sourcesMatch) {
           _lastNarrative = stored.trim();
           _lastInsights = insights;
           _lastUsedGroq = true;
+          _lastSources = Set<AiDataSource>.of(selectedSources);
           if (timeStr != null) {
             _lastGeneratedAt = DateTime.tryParse(timeStr);
           }
@@ -296,11 +339,16 @@ class AiExecutiveSummaryService {
     // Check plan limits before making a new Groq AI call.
     final remaining = await getRemainingQuotaThisMonth(ref);
     if (remaining <= 0) {
-      final templateText =
-          _buildFallbackNarrative(docItems, finData, creditItems);
+      final templateText = _buildFallbackNarrative(
+        docItems,
+        finData,
+        creditItems,
+        selectedSources: selectedSources,
+      );
       _lastNarrative = templateText;
       _lastInsights = insights;
       _lastUsedGroq = false;
+      _lastSources = Set<AiDataSource>.of(selectedSources);
       _lastGeneratedAt = DateTime.now();
       return (
         narrative: templateText,
@@ -311,13 +359,23 @@ class AiExecutiveSummaryService {
     }
 
     // Prepare Groq API system & user prompts.
+    final includedSources = <String>[
+      if (useDocuments) 'document compliance and expiry details',
+      if (useFinances) 'financial activity and budgets',
+      if (useCredits) 'credit obligations',
+    ];
     final systemPrompt =
         'You are Finavig\'s AI Financial & Document Executive Advisor for GCC businesses. '
-        'Provide a concise 2-3 sentence executive summary combining document compliance/expiries, financial payments, and credit obligations (money borrowed from or lent to people). '
+        'Provide a concise 2-3 sentence executive summary using only the selected sources: ${includedSources.join(', ')}. '
         'Use only the factual metrics provided. Keep tone professional, encouraging, and clear. Money values in local GCC currency.';
 
-    final userPrompt =
-        _buildPromptContext(docItems, finData, creditItems, ref);
+    final userPrompt = _buildPromptContext(
+      docItems,
+      finData,
+      creditItems,
+      ref,
+      selectedSources: selectedSources,
+    );
 
     try {
       final text = groqCallOverride != null
@@ -332,13 +390,21 @@ class AiExecutiveSummaryService {
         _lastNarrative = text.trim();
         _lastInsights = insights;
         _lastUsedGroq = true;
+        _lastSources = Set<AiDataSource>.of(selectedSources);
         _lastGeneratedAt = DateTime.now();
 
         try {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString(_cachedNarrativeKey(), _lastNarrative!);
+          await prefs.setStringList(
+            _cachedSourcesKey(),
+            selectedSources.map((source) => source.name).toList(),
+          );
           if (_lastGeneratedAt != null) {
-            await prefs.setString(_cachedTimestampKey(), _lastGeneratedAt!.toIso8601String());
+            await prefs.setString(
+              _cachedTimestampKey(),
+              _lastGeneratedAt!.toIso8601String(),
+            );
           }
         } catch (_) {}
 
@@ -354,11 +420,16 @@ class AiExecutiveSummaryService {
     }
 
     // Fallback template narrative if Groq API fails or returned empty text.
-    final fallbackText =
-        _buildFallbackNarrative(docItems, finData, creditItems);
+    final fallbackText = _buildFallbackNarrative(
+      docItems,
+      finData,
+      creditItems,
+      selectedSources: selectedSources,
+    );
     _lastNarrative = fallbackText;
     _lastInsights = insights;
     _lastUsedGroq = false;
+    _lastSources = Set<AiDataSource>.of(selectedSources);
     _lastGeneratedAt = DateTime.now();
 
     return (
@@ -374,22 +445,30 @@ class AiExecutiveSummaryService {
     List<ExpiryItem> docs,
     MonthlySummaryData fin,
     List<CreditEntry> credits,
-    DateTime ref,
-  ) {
+    DateTime ref, {
+    required Set<AiDataSource> selectedSources,
+  }) {
     final expiredCount = docs.where((d) => d.isExpired).length;
-    final urgentCount = docs.where((d) => d.daysRemaining >= 0 && d.daysRemaining <= 30).length;
+    final urgentCount = docs
+        .where((d) => d.daysRemaining >= 0 && d.daysRemaining <= 30)
+        .length;
     final totalRenewalFees = docs
         .where((d) => d.daysRemaining <= 90)
         .fold<double>(0.0, (sum, d) => sum + (d.renewalFee ?? 0));
 
-    final sb = StringBuffer()
-      ..writeln('DOCUMENT COMPLIANCE SUMMARY:')
-      ..writeln('- Total tracked documents: ${docs.length}')
-      ..writeln('- Expired documents: $expiredCount')
-      ..writeln('- Documents expiring within 30 days: $urgentCount')
-      ..writeln('- Total estimated renewal fees due (next 90 days): ${_cur()} ${_fmt(totalRenewalFees)}');
+    final sb = StringBuffer();
+    if (selectedSources.contains(AiDataSource.documents)) {
+      sb
+        ..writeln('DOCUMENT COMPLIANCE SUMMARY:')
+        ..writeln('- Total tracked documents: ${docs.length}')
+        ..writeln('- Expired documents: $expiredCount')
+        ..writeln('- Documents expiring within 30 days: $urgentCount')
+        ..writeln(
+          '- Total estimated renewal fees due (next 90 days): ${_cur()} ${_fmt(totalRenewalFees)}',
+        );
+    }
 
-    if (urgentCount > 0) {
+    if (selectedSources.contains(AiDataSource.documents) && urgentCount > 0) {
       final names = docs
           .where((d) => d.daysRemaining >= 0 && d.daysRemaining <= 30)
           .map((d) => '${d.displayName} (${d.daysRemaining} days remaining)')
@@ -398,62 +477,98 @@ class AiExecutiveSummaryService {
       sb.writeln('- Urgent documents: $names');
     }
 
-    sb.writeln();
-    sb.writeln('FINANCIAL & PAYMENT SUMMARY (${fin.monthName} ${fin.year}):');
-    sb.writeln('- Income: ${_cur()} ${_fmt(fin.income)}');
-    sb.writeln('- Expenses: ${_cur()} ${_fmt(fin.expense)}');
-    sb.writeln('- Net Position: ${_cur()} ${_fmt(fin.net)}');
-
-    if (fin.expenseChangePct != null) {
-      sb.writeln('- Expense change vs last month: ${fin.expenseChangePct!.toStringAsFixed(1)}%');
+    if (selectedSources.contains(AiDataSource.financialRecords)) {
+      sb.writeln();
+      sb.writeln('FINANCIAL & PAYMENT SUMMARY (${fin.monthName} ${fin.year}):');
+      sb.writeln('- Income: ${_cur()} ${_fmt(fin.income)}');
+      sb.writeln('- Expenses: ${_cur()} ${_fmt(fin.expense)}');
+      sb.writeln('- Net Position: ${_cur()} ${_fmt(fin.net)}');
     }
 
-    for (final move in fin.topMoves.take(2)) {
-      sb.writeln('- Category move: ${move.category.displayName} ${_cur()} ${_fmt(move.current)} (prev ${_fmt(move.previous)})');
+    if (selectedSources.contains(AiDataSource.financialRecords) &&
+        fin.expenseChangePct != null) {
+      sb.writeln(
+        '- Expense change vs last month: ${fin.expenseChangePct!.toStringAsFixed(1)}%',
+      );
     }
 
-    for (final o in fin.budgetOverruns.take(2)) {
-      sb.writeln('- Budget overrun: ${o.budget.category.displayName} spent ${_cur()} ${_fmt(o.spent)} of ${_fmt(o.budget.monthlyLimit)}');
+    if (selectedSources.contains(AiDataSource.financialRecords)) {
+      for (final move in fin.topMoves.take(2)) {
+        sb.writeln(
+          '- Category move: ${move.category.displayName} ${_cur()} ${_fmt(move.current)} (prev ${_fmt(move.previous)})',
+        );
+      }
     }
 
-    sb.writeln();
-    sb.writeln('CREDIT OBLIGATIONS (money borrowed from / lent to people):');
+    if (selectedSources.contains(AiDataSource.financialRecords)) {
+      for (final o in fin.budgetOverruns.take(2)) {
+        sb.writeln(
+          '- Budget overrun: ${o.budget.category.displayName} spent ${_cur()} ${_fmt(o.spent)} of ${_fmt(o.budget.monthlyLimit)}',
+        );
+      }
+    }
+
+    if (selectedSources.contains(AiDataSource.creditObligations)) {
+      sb.writeln();
+      sb.writeln('CREDIT OBLIGATIONS (money borrowed from / lent to people):');
+    }
     // Only open obligations count — settled ones are history.
     final openCredits = CreditMath.openOnly(credits);
-    if (openCredits.isEmpty) {
+    if (selectedSources.contains(AiDataSource.creditObligations) &&
+        openCredits.isEmpty) {
       sb.writeln('- None recorded.');
-    } else {
+    } else if (selectedSources.contains(AiDataSource.creditObligations)) {
       final totals = CreditMath.totals(openCredits);
-      final overdue =
-          openCredits.where((c) => CreditMath.isOverdue(c, now: ref)).toList();
-      sb.writeln('- Total owed by the user (borrowed): ${_cur()} ${_fmt(totals.borrowed)}');
-      sb.writeln('- Total owed to the user (lent): ${_cur()} ${_fmt(totals.lent)}');
-      sb.writeln('- Net credit position (lent - borrowed): ${_cur()} ${_fmt(totals.net)}');
+      final overdue = openCredits
+          .where((c) => CreditMath.isOverdue(c, now: ref))
+          .toList();
+      sb.writeln(
+        '- Total owed by the user (borrowed): ${_cur()} ${_fmt(totals.borrowed)}',
+      );
+      sb.writeln(
+        '- Total owed to the user (lent): ${_cur()} ${_fmt(totals.lent)}',
+      );
+      sb.writeln(
+        '- Net credit position (lent - borrowed): ${_cur()} ${_fmt(totals.net)}',
+      );
       if (overdue.isNotEmpty) {
         sb.writeln('- Overdue obligations: ${overdue.length}');
         for (final c in overdue.take(3)) {
-          sb.writeln('  * ${c.counterpartyName}: ${_cur()} ${_fmt(c.amount)} '
-              '(${CreditMath.deadlineLabel(c, now: ref)})');
+          sb.writeln(
+            '  * ${c.counterpartyName}: ${_cur()} ${_fmt(c.amount)} '
+            '(${CreditMath.deadlineLabel(c, now: ref)})',
+          );
         }
       }
-      final soon = openCredits
-          .where((c) =>
-              CreditMath.daysUntil(c, now: ref) >= 0 &&
-              CreditMath.daysUntil(c, now: ref) <= 30)
-          .toList()
-        ..sort((a, b) => CreditMath.daysUntil(a, now: ref)
-            .compareTo(CreditMath.daysUntil(b, now: ref)));
+      final soon =
+          openCredits
+              .where(
+                (c) =>
+                    CreditMath.daysUntil(c, now: ref) >= 0 &&
+                    CreditMath.daysUntil(c, now: ref) <= 30,
+              )
+              .toList()
+            ..sort(
+              (a, b) => CreditMath.daysUntil(
+                a,
+                now: ref,
+              ).compareTo(CreditMath.daysUntil(b, now: ref)),
+            );
       for (final c in soon.take(3)) {
         final note = (c.description ?? '').trim();
-        sb.writeln('- Due soon: ${c.counterpartyName} '
-            '${c.direction == CreditDirection.borrowed ? 'owe' : 'owed'} '
-            '${_cur()} ${_fmt(c.amount)} '
-            '(${CreditMath.deadlineLabel(c, now: ref)})'
-            '${note.isEmpty ? '' : ' — $note'}');
+        sb.writeln(
+          '- Due soon: ${c.counterpartyName} '
+          '${c.direction == CreditDirection.borrowed ? 'owe' : 'owed'} '
+          '${_cur()} ${_fmt(c.amount)} '
+          '(${CreditMath.deadlineLabel(c, now: ref)})'
+          '${note.isEmpty ? '' : ' — $note'}',
+        );
       }
-      sb.writeln('- Note: transactions that mirror a credit obligation are '
-          'excluded from the income/expense figures above — do not add them '
-          'back in.');
+      sb.writeln(
+        '- Note: transactions that mirror a credit obligation are '
+        'excluded from the income/expense figures above — do not add them '
+        'back in.',
+      );
     }
 
     return sb.toString();
@@ -464,93 +579,130 @@ class AiExecutiveSummaryService {
     List<ExpiryItem> docs,
     MonthlySummaryData fin,
     List<CreditEntry> credits,
-    DateTime ref,
-  ) {
+    DateTime ref, {
+    required Set<AiDataSource> selectedSources,
+  }) {
     final list = <AiSummaryCombinedInsight>[];
 
     // Document alerts
-    final expired = docs.where((d) => d.isExpired).toList();
+    final expired = selectedSources.contains(AiDataSource.documents)
+        ? docs.where((d) => d.isExpired).toList()
+        : <ExpiryItem>[];
     if (expired.isNotEmpty) {
-      list.add(AiSummaryCombinedInsight(
-        kind: MonthlyInsightKind.budgetAlert,
-        categoryLabel: 'Documents',
-        sentence: '${expired.length} document${expired.length == 1 ? '' : 's'} expired and require immediate renewal (${expired.first.displayName}).',
-        metricLabel: '${expired.length} Expired',
-      ));
+      list.add(
+        AiSummaryCombinedInsight(
+          kind: MonthlyInsightKind.budgetAlert,
+          categoryLabel: 'Documents',
+          sentence:
+              '${expired.length} document${expired.length == 1 ? '' : 's'} expired and require immediate renewal (${expired.first.displayName}).',
+          metricLabel: '${expired.length} Expired',
+        ),
+      );
     }
 
-    final urgent = docs.where((d) => d.daysRemaining >= 0 && d.daysRemaining <= 30).toList();
+    final urgent = selectedSources.contains(AiDataSource.documents)
+        ? docs
+              .where((d) => d.daysRemaining >= 0 && d.daysRemaining <= 30)
+              .toList()
+        : <ExpiryItem>[];
     if (urgent.isNotEmpty) {
-      list.add(AiSummaryCombinedInsight(
-        kind: MonthlyInsightKind.spendingMove,
-        categoryLabel: 'Renewals',
-        sentence: '${urgent.length} document${urgent.length == 1 ? '' : 's'} expiring within 30 days (${urgent.first.displayName}).',
-        metricLabel: '${urgent.length} Pending',
-      ));
+      list.add(
+        AiSummaryCombinedInsight(
+          kind: MonthlyInsightKind.spendingMove,
+          categoryLabel: 'Renewals',
+          sentence:
+              '${urgent.length} document${urgent.length == 1 ? '' : 's'} expiring within 30 days (${urgent.first.displayName}).',
+          metricLabel: '${urgent.length} Pending',
+        ),
+      );
     }
 
     // Financial alerts
-    if (fin.expenseChangePct != null) {
+    if (selectedSources.contains(AiDataSource.financialRecords) &&
+        fin.expenseChangePct != null) {
       final dir = fin.expenseChangePct! >= 0 ? 'rose' : 'dropped';
       final pct = fin.expenseChangePct!.abs().toStringAsFixed(0);
-      list.add(AiSummaryCombinedInsight(
-        kind: fin.expenseChangePct! >= 0 ? MonthlyInsightKind.spendingMove : MonthlyInsightKind.positive,
-        categoryLabel: 'Monthly Spending',
-        sentence: 'Overall spending $dir by $pct% in ${fin.monthName} vs last month.',
-        metricLabel: '${_cur()} ${_fmt(fin.expense)}',
-      ));
+      list.add(
+        AiSummaryCombinedInsight(
+          kind: fin.expenseChangePct! >= 0
+              ? MonthlyInsightKind.spendingMove
+              : MonthlyInsightKind.positive,
+          categoryLabel: 'Monthly Spending',
+          sentence:
+              'Overall spending $dir by $pct% in ${fin.monthName} vs last month.',
+          metricLabel: '${_cur()} ${_fmt(fin.expense)}',
+        ),
+      );
     }
 
-    for (final o in fin.budgetOverruns.take(2)) {
-      list.add(AiSummaryCombinedInsight(
-        kind: MonthlyInsightKind.budgetAlert,
-        categoryLabel: 'Budget Overrun',
-        sentence: '${o.budget.category.displayName} budget exceeded (${_cur()} ${_fmt(o.spent)} spent of ${_fmt(o.budget.monthlyLimit)} limit).',
-        metricLabel: '${_cur()} ${_fmt(o.spent - o.budget.monthlyLimit)} over',
-      ));
+    if (selectedSources.contains(AiDataSource.financialRecords)) {
+      for (final o in fin.budgetOverruns.take(2)) {
+        list.add(
+          AiSummaryCombinedInsight(
+            kind: MonthlyInsightKind.budgetAlert,
+            categoryLabel: 'Budget Overrun',
+            sentence:
+                '${o.budget.category.displayName} budget exceeded (${_cur()} ${_fmt(o.spent)} spent of ${_fmt(o.budget.monthlyLimit)} limit).',
+            metricLabel:
+                '${_cur()} ${_fmt(o.spent - o.budget.monthlyLimit)} over',
+          ),
+        );
+      }
     }
 
     // Credit obligations (money borrowed from / lent to people).
-    if (credits.isNotEmpty) {
+    if (selectedSources.contains(AiDataSource.creditObligations) &&
+        credits.isNotEmpty) {
       final totals = CreditMath.totals(credits);
-      final overdue =
-          credits.where((c) => CreditMath.isOverdue(c, now: ref)).toList();
+      final overdue = credits
+          .where((c) => CreditMath.isOverdue(c, now: ref))
+          .toList();
 
       if (overdue.isNotEmpty) {
-        list.add(AiSummaryCombinedInsight(
-          kind: MonthlyInsightKind.budgetAlert,
-          categoryLabel: 'Credit Due',
-          sentence:
-              '${overdue.length} credit obligation${overdue.length == 1 ? '' : 's'} '
-              'past the agreed deadline (${overdue.first.counterpartyName}).',
-          metricLabel: '${overdue.length} Overdue',
-        ));
+        list.add(
+          AiSummaryCombinedInsight(
+            kind: MonthlyInsightKind.budgetAlert,
+            categoryLabel: 'Credit Due',
+            sentence:
+                '${overdue.length} credit obligation${overdue.length == 1 ? '' : 's'} '
+                'past the agreed deadline (${overdue.first.counterpartyName}).',
+            metricLabel: '${overdue.length} Overdue',
+          ),
+        );
       }
 
-      list.add(AiSummaryCombinedInsight(
-        kind: totals.net >= 0
-            ? MonthlyInsightKind.positive
-            : MonthlyInsightKind.spendingMove,
-        categoryLabel: 'Credit Position',
-        sentence: totals.net >= 0
-            ? 'You are owed ${_cur()} ${_fmt(totals.lent)} against '
-                '${_cur()} ${_fmt(totals.borrowed)} you owe — a net '
-                '${_cur()} ${_fmt(totals.net)} in your favour.'
-            : 'You owe ${_cur()} ${_fmt(totals.borrowed)} against '
-                '${_cur()} ${_fmt(totals.lent)} owed to you — a net '
-                '${_cur()} ${_fmt(totals.net.abs())} outstanding.',
-        metricLabel: '${_cur()} ${_fmt(totals.net)}',
-      ));
+      list.add(
+        AiSummaryCombinedInsight(
+          kind: totals.net >= 0
+              ? MonthlyInsightKind.positive
+              : MonthlyInsightKind.spendingMove,
+          categoryLabel: 'Credit Position',
+          sentence: totals.net >= 0
+              ? 'You are owed ${_cur()} ${_fmt(totals.lent)} against '
+                    '${_cur()} ${_fmt(totals.borrowed)} you owe — a net '
+                    '${_cur()} ${_fmt(totals.net)} in your favour.'
+              : 'You owe ${_cur()} ${_fmt(totals.borrowed)} against '
+                    '${_cur()} ${_fmt(totals.lent)} owed to you — a net '
+                    '${_cur()} ${_fmt(totals.net.abs())} outstanding.',
+          metricLabel: '${_cur()} ${_fmt(totals.net)}',
+        ),
+      );
     }
 
-    list.add(AiSummaryCombinedInsight(
-      kind: fin.net >= 0 ? MonthlyInsightKind.positive : MonthlyInsightKind.budgetAlert,
-      categoryLabel: 'Net Position',
-      sentence: fin.net >= 0
-          ? 'Net financial balance is positive at ${_cur()} ${_fmt(fin.net)} this month.'
-          : 'Expenses exceeded income by ${_cur()} ${_fmt(fin.expense - fin.income)} this month.',
-      metricLabel: '${_cur()} ${_fmt(fin.net)}',
-    ));
+    if (selectedSources.contains(AiDataSource.financialRecords)) {
+      list.add(
+        AiSummaryCombinedInsight(
+          kind: fin.net >= 0
+              ? MonthlyInsightKind.positive
+              : MonthlyInsightKind.budgetAlert,
+          categoryLabel: 'Net Position',
+          sentence: fin.net >= 0
+              ? 'Net financial balance is positive at ${_cur()} ${_fmt(fin.net)} this month.'
+              : 'Expenses exceeded income by ${_cur()} ${_fmt(fin.expense - fin.income)} this month.',
+          metricLabel: '${_cur()} ${_fmt(fin.net)}',
+        ),
+      );
+    }
 
     return list;
   }
@@ -559,19 +711,29 @@ class AiExecutiveSummaryService {
   String _buildFallbackNarrative(
     List<ExpiryItem> docs,
     MonthlySummaryData fin,
-    List<CreditEntry> credits,
-  ) {
-    final urgentCount = docs.where((d) => d.daysRemaining <= 30).length;
-    final docSentence = urgentCount > 0
-        ? '$urgentCount document${urgentCount == 1 ? '' : 's'} require renewal attention within 30 days.'
-        : 'All tracked documents are up to date and in good standing.';
-
-    final finSentence = fin.isEmpty
-        ? 'No financial records entered for ${fin.monthName} yet.'
-        : 'Total monthly spend is ${_cur()} ${_fmt(fin.expense)} against ${_cur()} ${_fmt(fin.income)} income, resulting in a net of ${_cur()} ${_fmt(fin.net)}.';
-
-    final creditSentence = _creditFallbackSentence(credits);
-    return '$docSentence $finSentence$creditSentence';
+    List<CreditEntry> credits, {
+    required Set<AiDataSource> selectedSources,
+  }) {
+    final sentences = <String>[];
+    if (selectedSources.contains(AiDataSource.documents)) {
+      final urgentCount = docs.where((d) => d.daysRemaining <= 30).length;
+      sentences.add(
+        urgentCount > 0
+            ? '$urgentCount document${urgentCount == 1 ? '' : 's'} require renewal attention within 30 days.'
+            : 'All tracked documents are up to date and in good standing.',
+      );
+    }
+    if (selectedSources.contains(AiDataSource.financialRecords)) {
+      sentences.add(
+        fin.isEmpty
+            ? 'No financial records entered for ${fin.monthName} yet.'
+            : 'Total monthly spend is ${_cur()} ${_fmt(fin.expense)} against ${_cur()} ${_fmt(fin.income)} income, resulting in a net of ${_cur()} ${_fmt(fin.net)}.',
+      );
+    }
+    if (selectedSources.contains(AiDataSource.creditObligations)) {
+      sentences.add(_creditFallbackSentence(credits));
+    }
+    return sentences.where((sentence) => sentence.isNotEmpty).join(' ');
   }
 
   /// One plain-language credit line for the offline template, or an
@@ -587,13 +749,46 @@ class AiExecutiveSummaryService {
         '${_cur()} ${_fmt(totals.lent)}.$overdueNote';
   }
 
+  static MonthlySummaryData _emptyMonthlySummary(DateTime ref) =>
+      MonthlySummaryData(
+        year: ref.year,
+        month: ref.month,
+        monthName: const [
+          'January',
+          'February',
+          'March',
+          'April',
+          'May',
+          'June',
+          'July',
+          'August',
+          'September',
+          'October',
+          'November',
+          'December',
+        ][ref.month - 1],
+        income: 0,
+        expense: 0,
+        net: 0,
+        isEmpty: true,
+      );
+
+  static AiDataSource? _sourceFromName(String name) {
+    for (final source in AiDataSource.values) {
+      if (source.name == name) return source;
+    }
+    return null;
+  }
+
   static String _cur() => DocumentCollectionService.instance.activeCurrency;
 
   static String _fmt(double v) {
     final rounded = (v * 100).round() / 100;
     if (rounded == rounded.roundToDouble()) {
       return rounded.round().toString().replaceAllMapped(
-          RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+        RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+        (m) => '${m[1]},',
+      );
     }
     return rounded.toStringAsFixed(2);
   }

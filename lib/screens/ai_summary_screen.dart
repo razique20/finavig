@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../models/ai_data_source.dart';
 import '../models/subscription_tier.dart';
 import '../services/ai_executive_summary_service.dart';
 import '../services/entitlement_service.dart';
 import '../services/groq_api_service.dart';
 import '../services/monthly_summary_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/ai_data_source_selector.dart';
 import '../widgets/dialogs/upgrade_dialog.dart';
 
 /// Standalone AI Executive Summary page opened from the Home categories grid.
@@ -28,6 +30,11 @@ class _AiSummaryScreenState extends State<AiSummaryScreen> {
   bool _quotaExceeded = false;
   int _usedQuota = 0;
   int _quotaLimit = 3;
+  Set<AiDataSource> _selectedSources = {
+    AiDataSource.documents,
+    AiDataSource.financialRecords,
+    AiDataSource.creditObligations,
+  };
 
   @override
   void initState() {
@@ -45,7 +52,9 @@ class _AiSummaryScreenState extends State<AiSummaryScreen> {
         final upgrade = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             title: const Row(
               children: [
                 Icon(Icons.warning_amber_rounded, color: FinavigColors.warning),
@@ -80,6 +89,16 @@ class _AiSummaryScreenState extends State<AiSummaryScreen> {
         return;
       }
 
+      if (!mounted) return;
+      if (_selectedSources.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Select at least one data source first.'),
+          ),
+        );
+        return;
+      }
+
       final confirmed = await _confirmQuotaUsage(remaining);
       if (!confirmed) return;
 
@@ -88,7 +107,10 @@ class _AiSummaryScreenState extends State<AiSummaryScreen> {
       setState(() => _loading = true);
     }
 
-    final result = await service.generateSummary(forceRegenerate: forceRegenerate);
+    final result = await service.generateSummary(
+      forceRegenerate: forceRegenerate,
+      selectedSources: _selectedSources,
+    );
     final used = await service.getUsedQuotaThisMonth();
     final limit = service.getMonthlyQuotaLimit();
 
@@ -117,7 +139,10 @@ class _AiSummaryScreenState extends State<AiSummaryScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(
           children: [
-            Icon(Icons.auto_awesome_rounded, color: FinavigColors.cyanSecondary),
+            Icon(
+              Icons.auto_awesome_rounded,
+              color: FinavigColors.cyanSecondary,
+            ),
             SizedBox(width: 8),
             Text('Confirm AI Quota Usage'),
           ],
@@ -235,12 +260,19 @@ class _AiSummaryScreenState extends State<AiSummaryScreen> {
               ),
             )
           : SingleChildScrollView(
+              key: const ValueKey('ai-summary-scroll'),
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Quota & Header Banner Card
                   _buildQuotaHeaderCard(theme, isDark, currentTier),
+                  const SizedBox(height: 16),
+                  AiDataSourceSelector(
+                    selectedSources: _selectedSources,
+                    onChanged: (sources) =>
+                        setState(() => _selectedSources = sources),
+                  ),
                   const SizedBox(height: 16),
 
                   // Executive Narrative Card
@@ -269,7 +301,9 @@ class _AiSummaryScreenState extends State<AiSummaryScreen> {
                       ),
                     )
                   else
-                    ..._insights.map((insight) => _buildInsightTile(theme, isDark, insight)),
+                    ..._insights.map(
+                      (insight) => _buildInsightTile(theme, isDark, insight),
+                    ),
 
                   const SizedBox(height: 32),
                 ],
@@ -311,7 +345,10 @@ class _AiSummaryScreenState extends State<AiSummaryScreen> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: FinavigColors.violetAccent.withOpacity(0.25),
                   borderRadius: BorderRadius.circular(8),
@@ -392,7 +429,10 @@ class _AiSummaryScreenState extends State<AiSummaryScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () => showUpgradeDialog(context, EntitlementFeature.groqAiSummary),
+                onPressed: () => showUpgradeDialog(
+                  context,
+                  EntitlementFeature.groqAiSummary,
+                ),
                 icon: const Icon(Icons.bolt_rounded, size: 16),
                 label: const Text('Upgrade Plan for More AI Summaries'),
                 style: ElevatedButton.styleFrom(
@@ -421,7 +461,9 @@ class _AiSummaryScreenState extends State<AiSummaryScreen> {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
-          side: BorderSide(color: theme.colorScheme.outlineVariant.withOpacity(0.4)),
+          side: BorderSide(
+            color: theme.colorScheme.outlineVariant.withOpacity(0.4),
+          ),
         ),
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -465,7 +507,10 @@ class _AiSummaryScreenState extends State<AiSummaryScreen> {
                       ? const SizedBox(
                           width: 16,
                           height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                       : const Icon(Icons.bolt_rounded, size: 18),
                   label: const Text('Generate AI Executive Summary (1 Credit)'),
@@ -489,7 +534,9 @@ class _AiSummaryScreenState extends State<AiSummaryScreen> {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: theme.colorScheme.outlineVariant.withOpacity(0.4)),
+        side: BorderSide(
+          color: theme.colorScheme.outlineVariant.withOpacity(0.4),
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -526,7 +573,10 @@ class _AiSummaryScreenState extends State<AiSummaryScreen> {
                 const Spacer(),
                 if (_usedGroq)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: FinavigColors.emerald.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(4),
@@ -554,7 +604,11 @@ class _AiSummaryScreenState extends State<AiSummaryScreen> {
               const SizedBox(height: 12),
               Row(
                 children: [
-                  const Icon(Icons.info_outline_rounded, size: 14, color: FinavigColors.warning),
+                  const Icon(
+                    Icons.info_outline_rounded,
+                    size: 14,
+                    color: FinavigColors.warning,
+                  ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
@@ -585,7 +639,9 @@ class _AiSummaryScreenState extends State<AiSummaryScreen> {
                 label: const Text('Generate Fresh AI Summary (Uses 1 Credit)'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: FinavigColors.navyPrimary,
-                  side: BorderSide(color: FinavigColors.navyPrimary.withOpacity(0.5)),
+                  side: BorderSide(
+                    color: FinavigColors.navyPrimary.withOpacity(0.5),
+                  ),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),

@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:finavig/models/ai_data_source.dart';
 import 'package:finavig/models/credit.dart';
 import 'package:finavig/models/subscription_tier.dart';
 import 'package:finavig/services/ai_executive_summary_service.dart';
@@ -19,15 +20,17 @@ void main() {
   });
 
   group('GroqApiService', () {
-    test('ships with no client-side key (calls go through the server proxy)',
-        () async {
-      final service = GroqApiService.instance;
-      await service.clearCustomApiKey();
-      expect(service.apiKey, isEmpty);
-      // Supabase isn't initialised in unit tests, so the proxy isn't
-      // reachable and no call can be made yet.
-      expect(service.isConfigured, isFalse);
-    });
+    test(
+      'ships with no client-side key (calls go through the server proxy)',
+      () async {
+        final service = GroqApiService.instance;
+        await service.clearCustomApiKey();
+        expect(service.apiKey, isEmpty);
+        // Supabase isn't initialised in unit tests, so the proxy isn't
+        // reachable and no call can be made yet.
+        expect(service.isConfigured, isFalse);
+      },
+    );
 
     test('supports setting and clearing custom API key override', () async {
       final service = GroqApiService.instance;
@@ -85,47 +88,48 @@ void main() {
       double amount = 2500,
       CreditDirection direction = CreditDirection.borrowed,
       DateTime? deadline,
-    }) =>
-        CreditEntry(
-          id: 'credit-ai-${amount.toInt()}',
-          collectionId: 'personal',
-          direction: direction,
-          counterpartyName: 'Ahmed',
-          amount: amount,
-          currency: 'AED',
-          startDate: DateTime(2026, 9, 1),
-          deadline: deadline ?? DateTime(2026, 9, 15),
-          createdAt: DateTime(2026, 9, 1),
+    }) => CreditEntry(
+      id: 'credit-ai-${amount.toInt()}',
+      collectionId: 'personal',
+      direction: direction,
+      counterpartyName: 'Ahmed',
+      amount: amount,
+      currency: 'AED',
+      startDate: DateTime(2026, 9, 1),
+      deadline: deadline ?? DateTime(2026, 9, 15),
+      createdAt: DateTime(2026, 9, 1),
+    );
+
+    test(
+      'feeds outstanding credit into the Groq prompt and insights',
+      () async {
+        await CreditService.instance.init();
+        await CreditService.instance.addCredit(credit());
+
+        final service = AiExecutiveSummaryService.instance;
+        String? capturedUser;
+        service.groqCallOverride = (system, user) async {
+          capturedUser = user;
+          return 'Executive summary incl. credit.';
+        };
+
+        final now = DateTime(2026, 9, 21);
+        final result = await service.generateSummary(
+          forceRegenerate: true,
+          now: now,
         );
 
-    test('feeds outstanding credit into the Groq prompt and insights',
-        () async {
-      await CreditService.instance.init();
-      await CreditService.instance.addCredit(credit());
-
-      final service = AiExecutiveSummaryService.instance;
-      String? capturedUser;
-      service.groqCallOverride = (system, user) async {
-        capturedUser = user;
-        return 'Executive summary incl. credit.';
-      };
-
-      final now = DateTime(2026, 9, 21);
-      final result = await service.generateSummary(
-        forceRegenerate: true,
-        now: now,
-      );
-
-      expect(capturedUser, isNotNull);
-      expect(capturedUser, contains('CREDIT OBLIGATIONS'));
-      expect(capturedUser, contains('Ahmed'));
-      expect(capturedUser, contains('2,500'));
-      // Overdue borrowed obligation should surface as an alert insight plus
-      // an overall credit-position insight.
-      final labels = result.insights.map((i) => i.categoryLabel).toList();
-      expect(labels, contains('Credit Position'));
-      expect(labels, contains('Credit Due'));
-    });
+        expect(capturedUser, isNotNull);
+        expect(capturedUser, contains('CREDIT OBLIGATIONS'));
+        expect(capturedUser, contains('Ahmed'));
+        expect(capturedUser, contains('2,500'));
+        // Overdue borrowed obligation should surface as an alert insight plus
+        // an overall credit-position insight.
+        final labels = result.insights.map((i) => i.categoryLabel).toList();
+        expect(labels, contains('Credit Position'));
+        expect(labels, contains('Credit Due'));
+      },
+    );
 
     test('offline fallback narrative mentions credit obligations', () async {
       await CreditService.instance.init();
@@ -152,20 +156,53 @@ void main() {
   });
 
   group('AiExecutiveSummaryService Generation & Fallback', () {
-    test('generates summary using Groq override and increments monthly counter', () async {
+    test('only sends selected data sources and matching insights', () async {
       final service = AiExecutiveSummaryService.instance;
-      service.groqCallOverride = (system, user) async =>
-          'Executive AI Summary: 2 documents require renewal. Monthly spending is AED 5,400.';
+      String? capturedUser;
+      service.groqCallOverride = (system, user) async {
+        capturedUser = user;
+        return 'Documents-only summary.';
+      };
 
-      final now = DateTime(2026, 9, 21);
-      final result = await service.generateSummary(forceRegenerate: true, now: now);
+      final result = await service.generateSummary(
+        forceRegenerate: true,
+        selectedSources: const {AiDataSource.documents},
+        now: DateTime(2026, 9, 21),
+      );
 
-      expect(result.usedGroq, isTrue);
-      expect(result.quotaExceeded, isFalse);
-      expect(result.narrative, contains('Executive AI Summary'));
-      expect(await service.getUsedQuotaThisMonth(now), 1);
-      expect(await service.getRemainingQuotaThisMonth(now), 2);
+      expect(capturedUser, contains('DOCUMENT COMPLIANCE SUMMARY'));
+      expect(capturedUser, isNot(contains('FINANCIAL & PAYMENT SUMMARY')));
+      expect(capturedUser, isNot(contains('CREDIT OBLIGATIONS')));
+      expect(
+        result.insights.map((i) => i.categoryLabel),
+        isNot(contains('Net Position')),
+      );
+      expect(
+        result.insights.map((i) => i.categoryLabel),
+        isNot(contains('Credit Position')),
+      );
     });
+
+    test(
+      'generates summary using Groq override and increments monthly counter',
+      () async {
+        final service = AiExecutiveSummaryService.instance;
+        service.groqCallOverride = (system, user) async =>
+            'Executive AI Summary: 2 documents require renewal. Monthly spending is AED 5,400.';
+
+        final now = DateTime(2026, 9, 21);
+        final result = await service.generateSummary(
+          forceRegenerate: true,
+          now: now,
+        );
+
+        expect(result.usedGroq, isTrue);
+        expect(result.quotaExceeded, isFalse);
+        expect(result.narrative, contains('Executive AI Summary'));
+        expect(await service.getUsedQuotaThisMonth(now), 1);
+        expect(await service.getRemainingQuotaThisMonth(now), 2);
+      },
+    );
 
     test('enforces quota limit when limit is reached', () async {
       final service = AiExecutiveSummaryService.instance;
@@ -181,7 +218,10 @@ void main() {
       expect(await service.canGenerateAiSummary(now), isFalse);
 
       // 4th generation should trigger quotaExceeded and return fallback narrative without crashing
-      final overflowResult = await service.generateSummary(forceRegenerate: true, now: now);
+      final overflowResult = await service.generateSummary(
+        forceRegenerate: true,
+        now: now,
+      );
       expect(overflowResult.quotaExceeded, isTrue);
       expect(overflowResult.usedGroq, isFalse);
     });

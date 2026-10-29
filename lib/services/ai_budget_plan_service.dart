@@ -4,8 +4,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/ai_data_source.dart';
 import '../models/credit.dart';
 import '../models/finance.dart';
+import '../models/expiry_item.dart';
 
 import 'anomaly_detection_service.dart';
 import 'auth_service.dart';
@@ -62,15 +64,16 @@ class AiBudgetPlanAction {
   });
 
   Map<String, dynamic> toJson() => {
-        'title': title,
-        'detail': detail,
-        'type': type.name,
-        'category': category?.name,
-        'monthlyAmountAed': monthlyAmountAed,
-        'suggestedEnvelopeName': suggestedEnvelopeName,
-      };
+    'title': title,
+    'detail': detail,
+    'type': type.name,
+    'category': category?.name,
+    'monthlyAmountAed': monthlyAmountAed,
+    'suggestedEnvelopeName': suggestedEnvelopeName,
+  };
 
-  factory AiBudgetPlanAction.fromJson(Map<String, dynamic> json) => AiBudgetPlanAction(
+  factory AiBudgetPlanAction.fromJson(Map<String, dynamic> json) =>
+      AiBudgetPlanAction(
         title: json['title'] as String? ?? '',
         detail: json['detail'] as String? ?? '',
         type: AiBudgetPlanActionType.values.firstWhere(
@@ -113,25 +116,27 @@ class AiBudgetPlan {
   });
 
   Map<String, dynamic> toJson() => {
-        'title': title,
-        'summary': summary,
-        'feasible': feasible,
-        'monthsToGoal': monthsToGoal,
-        'monthlySavingTargetAed': monthlySavingTargetAed,
-        'actions': actions.map((a) => a.toJson()).toList(),
-      };
+    'title': title,
+    'summary': summary,
+    'feasible': feasible,
+    'monthsToGoal': monthsToGoal,
+    'monthlySavingTargetAed': monthlySavingTargetAed,
+    'actions': actions.map((a) => a.toJson()).toList(),
+  };
 
   factory AiBudgetPlan.fromJson(Map<String, dynamic> json) => AiBudgetPlan(
-        title: json['title'] as String? ?? 'Budget Plan',
-        summary: json['summary'] as String? ?? '',
-        feasible: json['feasible'] as bool? ?? true,
-        monthsToGoal: (json['monthsToGoal'] as num?)?.toInt(),
-        monthlySavingTargetAed: (json['monthlySavingTargetAed'] as num?)?.toDouble() ?? 0,
-        actions: (json['actions'] as List<dynamic>?)
-                ?.map((a) => AiBudgetPlanAction.fromJson(a as Map<String, dynamic>))
-                .toList() ??
-            const [],
-      );
+    title: json['title'] as String? ?? 'Budget Plan',
+    summary: json['summary'] as String? ?? '',
+    feasible: json['feasible'] as bool? ?? true,
+    monthsToGoal: (json['monthsToGoal'] as num?)?.toInt(),
+    monthlySavingTargetAed:
+        (json['monthlySavingTargetAed'] as num?)?.toDouble() ?? 0,
+    actions:
+        (json['actions'] as List<dynamic>?)
+            ?.map((a) => AiBudgetPlanAction.fromJson(a as Map<String, dynamic>))
+            .toList() ??
+        const [],
+  );
 }
 
 /// A ready-made set of category budget caps (Comfortable / Balanced /
@@ -182,6 +187,7 @@ class AiBudgetPlanService {
   bool _lastUsedGroq = false;
   bool _lastQuotaExceeded = false;
   DateTime? _lastGeneratedAt;
+  Set<AiDataSource> _lastSources = const {};
 
   AiBudgetPlan? get lastPlan => _lastPlan;
   bool get lastUsedGroq => _lastUsedGroq;
@@ -232,7 +238,9 @@ class AiBudgetPlanService {
           return count;
         }
       } catch (e) {
-        debugPrint('Supabase getUsedQuotaThisMonth (AI budget plan) failed: $e');
+        debugPrint(
+          'Supabase getUsedQuotaThisMonth (AI budget plan) failed: $e',
+        );
       }
     }
 
@@ -350,7 +358,12 @@ class AiBudgetPlanService {
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      final keys = prefs.getKeys().where((k) => k.startsWith(_usagePrefix) || k.contains('groqAiBudgetPlan')).toList();
+      final keys = prefs
+          .getKeys()
+          .where(
+            (k) => k.startsWith(_usagePrefix) || k.contains('groqAiBudgetPlan'),
+          )
+          .toList();
       for (final key in keys) {
         await prefs.remove(key);
       }
@@ -367,23 +380,36 @@ class AiBudgetPlanService {
     return 'groqAiBudgetPlan.lastGeneratedAt.$userId';
   }
 
+  String _cachedSourcesKey() {
+    final userId = AuthService.instance.currentUserId ?? 'local-user';
+    return 'groqAiBudgetPlan.lastSources.$userId';
+  }
+
   /// Generates an AI budget plan toward [goalDescription] for [targetAmount]
   /// in the active collection's currency within [targetMonths] (optional).
   ///
   /// Returns the parsed plan plus flags describing how it was produced.
   Future<({AiBudgetPlan plan, bool usedGroq, bool quotaExceeded})>
-      generatePlan({
+  generatePlan({
     required String goalDescription,
     required double targetAmount,
     int? targetMonths,
+    Set<AiDataSource> selectedSources = const {
+      AiDataSource.documents,
+      AiDataSource.financialRecords,
+      AiDataSource.creditObligations,
+    },
     bool forceRegenerate = false,
     DateTime? now,
   }) async {
     final ref = now ?? DateTime.now();
 
+    // Financial records are required for the plan's feasibility calculation.
+    selectedSources = {...selectedSources, AiDataSource.financialRecords};
+
     // Cached plan shown again unless the user explicitly regenerates.
     if (!forceRegenerate) {
-      if (_lastPlan != null) {
+      if (_lastPlan != null && setEquals(_lastSources, selectedSources)) {
         return (
           plan: _lastPlan!,
           usedGroq: _lastUsedGroq,
@@ -394,18 +420,22 @@ class AiBudgetPlanService {
         final prefs = await SharedPreferences.getInstance();
         final stored = prefs.getString(_cachedPlanKey());
         final timeStr = prefs.getString(_cachedTimestampKey());
-        if (stored != null && stored.trim().isNotEmpty) {
+        final storedSources =
+            prefs.getStringList(_cachedSourcesKey()) ??
+            AiDataSource.values.map((source) => source.name).toList();
+        final sourcesMatch = setEquals(
+          storedSources.map(_sourceFromName).whereType<AiDataSource>().toSet(),
+          selectedSources,
+        );
+        if (stored != null && stored.trim().isNotEmpty && sourcesMatch) {
           final map = jsonDecode(stored) as Map<String, dynamic>;
           _lastPlan = AiBudgetPlan.fromJson(map);
           _lastUsedGroq = true;
+          _lastSources = Set<AiDataSource>.of(selectedSources);
           if (timeStr != null) {
             _lastGeneratedAt = DateTime.tryParse(timeStr);
           }
-          return (
-            plan: _lastPlan!,
-            usedGroq: true,
-            quotaExceeded: false,
-          );
+          return (plan: _lastPlan!, usedGroq: true, quotaExceeded: false);
         }
       } catch (_) {}
 
@@ -426,9 +456,15 @@ class AiBudgetPlanService {
 
     // Credit obligations are part of the user's real cash position — pull
     // them once so the prompt and the offline fallback both see them.
-    await CreditService.instance.init();
-    final credits = CreditService.instance.activeCredits;
-    final borrowedOutstanding = CreditMath.totals(credits).borrowed;
+    final useCredits = selectedSources.contains(AiDataSource.creditObligations);
+    final credits = <CreditEntry>[];
+    if (useCredits) {
+      await CreditService.instance.init();
+      credits.addAll(CreditService.instance.activeCredits);
+    }
+    final borrowedOutstanding = useCredits
+        ? CreditMath.totals(credits).borrowed
+        : 0.0;
 
     // Enforce the monthly tier quota before a new Groq call.
     final remaining = await getRemainingQuotaThisMonth(ref);
@@ -445,6 +481,7 @@ class AiBudgetPlanService {
       _lastPlan = fallback;
       _lastUsedGroq = false;
       _lastQuotaExceeded = true;
+      _lastSources = Set<AiDataSource>.of(selectedSources);
       return (plan: fallback, usedGroq: false, quotaExceeded: true);
     }
 
@@ -453,6 +490,7 @@ class AiBudgetPlanService {
       targetAmount: targetAmount,
       targetMonths: targetMonths,
       credits: credits,
+      selectedSources: selectedSources,
       now: ref,
     );
 
@@ -501,11 +539,19 @@ class AiBudgetPlanService {
         _lastPlan = plan;
         _lastUsedGroq = true;
         _lastQuotaExceeded = false;
+        _lastSources = Set<AiDataSource>.of(selectedSources);
         _lastGeneratedAt = DateTime.now();
         try {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString(_cachedPlanKey(), jsonEncode(plan.toJson()));
-          await prefs.setString(_cachedTimestampKey(), _lastGeneratedAt!.toIso8601String());
+          await prefs.setStringList(
+            _cachedSourcesKey(),
+            selectedSources.map((source) => source.name).toList(),
+          );
+          await prefs.setString(
+            _cachedTimestampKey(),
+            _lastGeneratedAt!.toIso8601String(),
+          );
         } catch (_) {}
         return (plan: plan, usedGroq: true, quotaExceeded: false);
       }
@@ -527,6 +573,8 @@ class AiBudgetPlanService {
     _lastPlan = fallback;
     _lastUsedGroq = false;
     _lastQuotaExceeded = false;
+    _lastSources = Set<AiDataSource>.of(selectedSources);
+
     return (plan: fallback, usedGroq: false, quotaExceeded: false);
   }
 
@@ -577,9 +625,7 @@ class AiBudgetPlanService {
       if (d.isBefore(ref.subtract(Duration(days: 30 * months)))) continue;
       byCategory[t.category] = (byCategory[t.category] ?? 0) + t.amount;
     }
-    return {
-      for (final e in byCategory.entries) e.key: e.value / months,
-    };
+    return {for (final e in byCategory.entries) e.key: e.value / months};
   }
 
   /// Income / expense / spare snapshot (3-month average) used by the budget
@@ -636,10 +682,11 @@ class AiBudgetPlanService {
     if (spend.isEmpty) return const [];
 
     // Only categories with meaningful spend, biggest first.
-    final flexible = spend.entries
-        .where((e) => _flexibleCategories.contains(e.key) && e.value >= 20)
-        .toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
+    final flexible =
+        spend.entries
+            .where((e) => _flexibleCategories.contains(e.key) && e.value >= 20)
+            .toList()
+          ..sort((a, b) => b.value.compareTo(a.value));
     if (flexible.isEmpty) return const [];
 
     Map<FinanceCategory, double> capsForTrim(double trimPct) {
@@ -705,9 +752,8 @@ class AiBudgetPlanService {
   /// budgets reach the goal. [coverage] = monthly spare after trims ÷ the
   /// monthly amount the goal needs. Returns a 0-100 score, an icon and a
   /// plain-language label + hint a normal user instantly understands.
-  static ({int score, String emoji, IconData icon, String label, String hint}) goalMood({
-    required double coverage,
-  }) {
+  static ({int score, String emoji, IconData icon, String label, String hint})
+  goalMood({required double coverage}) {
     assert(coverage >= 0, 'coverage must not be negative');
     if (coverage >= 1.2) {
       return (
@@ -715,7 +761,8 @@ class AiBudgetPlanService {
         emoji: '😄',
         icon: Icons.sentiment_very_satisfied_rounded,
         label: 'On track — with room to spare',
-        hint: 'Even with these budgets you still have spare cash each month. Nice!',
+        hint:
+            'Even with these budgets you still have spare cash each month. Nice!',
       );
     }
     if (coverage >= 1.0) {
@@ -733,7 +780,8 @@ class AiBudgetPlanService {
         emoji: '😐',
         icon: Icons.sentiment_neutral_rounded,
         label: 'A little tight',
-        hint: 'Almost there — trim one more category or add a few months to the deadline.',
+        hint:
+            'Almost there — trim one more category or add a few months to the deadline.',
       );
     }
     if (coverage >= 0.5) {
@@ -742,7 +790,8 @@ class AiBudgetPlanService {
         emoji: '😕',
         icon: Icons.sentiment_dissatisfied_rounded,
         label: 'Hard to reach',
-        hint: 'This saves too little for the goal — try the Goal-first template.',
+        hint:
+            'This saves too little for the goal — try the Goal-first template.',
       );
     }
     return (
@@ -750,7 +799,8 @@ class AiBudgetPlanService {
       emoji: '😟',
       icon: Icons.warning_amber_rounded,
       label: 'Off track',
-      hint: 'These budgets won\'t get you there — trim more, or move the deadline out.',
+      hint:
+          'These budgets won\'t get you there — trim more, or move the deadline out.',
     );
   }
 
@@ -760,14 +810,32 @@ class AiBudgetPlanService {
     required double targetAmount,
     required int? targetMonths,
     required List<CreditEntry> credits,
+    required Set<AiDataSource> selectedSources,
     required DateTime now,
   }) async {
-    final fin = _gatherFinances();
-    final txs = FinanceService.instance.activeTransactions;
-    final budgets = FinanceService.instance.activeBudgets;
-    final envelopes = FinanceService.instance.activeEnvelopes;
-    final recurring = FinanceService.instance.activeRecurring;
-    final docs = await DocumentScannerService.instance.getAllItems();
+    final useDocuments = selectedSources.contains(AiDataSource.documents);
+    final useCredits = selectedSources.contains(AiDataSource.creditObligations);
+    final useFinancialRecords = selectedSources.contains(
+      AiDataSource.financialRecords,
+    );
+    final fin = useFinancialRecords
+        ? _gatherFinances()
+        : (income: 0.0, expense: 0.0, monthlySpare: 0.0);
+    final txs = useFinancialRecords
+        ? FinanceService.instance.activeTransactions
+        : <FinanceTransaction>[];
+    final budgets = useFinancialRecords
+        ? FinanceService.instance.activeBudgets
+        : [];
+    final envelopes = useFinancialRecords
+        ? FinanceService.instance.activeEnvelopes
+        : [];
+    final recurring = useFinancialRecords
+        ? FinanceService.instance.activeRecurring
+        : [];
+    final docs = useDocuments
+        ? await DocumentScannerService.instance.getAllItems()
+        : <ExpiryItem>[];
 
     final sb = StringBuffer();
 
@@ -776,14 +844,17 @@ class AiBudgetPlanService {
     sb.writeln('- Goal: $goalDescription');
     sb.writeln('- Target amount: ${_cur()} ${_fmt(targetAmount)}');
     sb.writeln(
-        '- Target deadline: ${targetMonths != null ? '$targetMonths months' : 'no fixed deadline'}');
+      '- Target deadline: ${targetMonths != null ? '$targetMonths months' : 'no fixed deadline'}',
+    );
     sb.writeln();
 
     // ── Income & spending ──
     sb.writeln('FINANCIAL SNAPSHOT (3-month average):');
     sb.writeln('- Average monthly income: ${_cur()} ${_fmt(fin.income)}');
     sb.writeln('- Average monthly expenses: ${_cur()} ${_fmt(fin.expense)}');
-    sb.writeln('- Average monthly spare (income - expenses): ${_cur()} ${_fmt(fin.monthlySpare)}');
+    sb.writeln(
+      '- Average monthly spare (income - expenses): ${_cur()} ${_fmt(fin.monthlySpare)}',
+    );
 
     // Category breakdown, biggest first. The 90-day sum is normalised to a
     // monthly pace so it compares directly against budget limits.
@@ -800,10 +871,13 @@ class AiBudgetPlanService {
       ..sort((a, b) => b.value.compareTo(a.value));
     if (ranked.isNotEmpty) {
       sb.writeln(
-          '- Spending habit by category (last 90 days, shown as approx per month):');
+        '- Spending habit by category (last 90 days, shown as approx per month):',
+      );
       for (final e in ranked.take(8)) {
-        sb.writeln('  * ${e.key.displayName}: ~${_cur()} ${_fmt(e.value / 3)}/month '
-            '(total ${_cur()} ${_fmt(e.value)} over 90 days)');
+        sb.writeln(
+          '  * ${e.key.displayName}: ~${_cur()} ${_fmt(e.value / 3)}/month '
+          '(total ${_cur()} ${_fmt(e.value)} over 90 days)',
+        );
       }
     }
 
@@ -812,7 +886,8 @@ class AiBudgetPlanService {
       sb.writeln('- Category budgets (monthly limits):');
       for (final b in budgets.take(6)) {
         sb.writeln(
-            '  * ${b.category.displayName}: ${_cur()} ${_fmt(b.monthlyLimit)}/month');
+          '  * ${b.category.displayName}: ${_cur()} ${_fmt(b.monthlyLimit)}/month',
+        );
       }
     }
 
@@ -820,9 +895,11 @@ class AiBudgetPlanService {
     if (envelopes.isNotEmpty) {
       sb.writeln('- Existing savings envelopes:');
       for (final e in envelopes.take(6)) {
-        sb.writeln('  * ${e.name}: saved ${_fmt(e.savedAmount)} of '
-            '${_fmt(e.targetAmount)}, contributing '
-            '${_fmt(e.monthlyContribution)}/month');
+        sb.writeln(
+          '  * ${e.name}: saved ${_fmt(e.savedAmount)} of '
+          '${_fmt(e.targetAmount)}, contributing '
+          '${_fmt(e.monthlyContribution)}/month',
+        );
       }
     }
 
@@ -831,72 +908,100 @@ class AiBudgetPlanService {
       sb.writeln('- Recurring commitments (normalised to monthly equivalent):');
       for (final r in recurring.take(8)) {
         final perMonth = r.amount / r.frequency.approxDaysPerCycle * 30.44;
-        sb.writeln('  * ${r.title} (${r.kind.name}): ${_cur()} ${_fmt(r.amount)} '
-            '${r.frequency.label.toLowerCase()}, ~${_cur()} ${_fmt(perMonth)}/month');
+        sb.writeln(
+          '  * ${r.title} (${r.kind.name}): ${_cur()} ${_fmt(r.amount)} '
+          '${r.frequency.label.toLowerCase()}, ~${_cur()} ${_fmt(perMonth)}/month',
+        );
       }
     }
 
     // ── Upcoming document renewals: named and dated, so the plan can ──
     // ── reserve cash in the months a big fee actually lands.        ──
-    final renewal90 = FinanceMath.renewalOutlook(docs, 90);
-    if (renewal90 > 0) {
-      sb.writeln('- Upcoming document renewal fees (next 90 days, total ${_cur()} ${_fmt(renewal90)}):');
+    final renewal90 = useDocuments ? FinanceMath.renewalOutlook(docs, 90) : 0.0;
+    if (useDocuments && renewal90 > 0) {
+      sb.writeln(
+        '- Upcoming document renewal fees (next 90 days, total ${_cur()} ${_fmt(renewal90)}):',
+      );
       final cutoff = now.add(const Duration(days: 90));
-      final upcoming = docs
-          .where((d) =>
-              d.isActive &&
-              d.renewalFee != null &&
-              d.renewalFee! > 0 &&
-              !d.expiresAt.isBefore(now) &&
-              !d.expiresAt.isAfter(cutoff))
-          .toList()
-        ..sort((a, b) => a.expiresAt.compareTo(b.expiresAt));
+      final upcoming =
+          docs
+              .where(
+                (d) =>
+                    d.isActive &&
+                    d.renewalFee != null &&
+                    d.renewalFee! > 0 &&
+                    !d.expiresAt.isBefore(now) &&
+                    !d.expiresAt.isAfter(cutoff),
+              )
+              .toList()
+            ..sort((a, b) => a.expiresAt.compareTo(b.expiresAt));
       for (final d in upcoming.take(6)) {
         final daysLeft = d.expiresAt.difference(now).inDays;
-        sb.writeln('  * ${d.displayName}: ${_cur()} ${_fmt(d.renewalFee!)} '
-            'in ~$daysLeft days');
+        sb.writeln(
+          '  * ${d.displayName}: ${_cur()} ${_fmt(d.renewalFee!)} '
+          'in ~$daysLeft days',
+        );
       }
     }
 
     // ── Recent bill spikes: habits currently inflated above their own ──
     // ── average — prime candidates for the plan to trim.             ──
-    final spikes = AnomalyDetectionService.instance
-        .detectRecentAnomalies(txs, recentDays: 30);
+    final spikes = AnomalyDetectionService.instance.detectRecentAnomalies(
+      txs,
+      recentDays: 30,
+    );
     for (final a in spikes.take(3)) {
-      sb.writeln('- Recent bill spike: ${a.transaction.title} '
-          '(${a.transaction.category.displayName}) ${_cur()} ${_fmt(a.transaction.amount)} '
-          'is ${a.percentIncrease.toStringAsFixed(0)}% above the usual '
-          '${_cur()} ${_fmt(a.historicalAverage)} — worth reviewing.');
+      sb.writeln(
+        '- Recent bill spike: ${a.transaction.title} '
+        '(${a.transaction.category.displayName}) ${_cur()} ${_fmt(a.transaction.amount)} '
+        'is ${a.percentIncrease.toStringAsFixed(0)}% above the usual '
+        '${_cur()} ${_fmt(a.historicalAverage)} — worth reviewing.',
+      );
     }
 
     // ── Credit obligations: money the user owes people or is owed ──
     // Settled obligations are history and never affect the plan.
-    final openCredits = CreditMath.openOnly(credits);
-    if (openCredits.isNotEmpty) {
+    final openCredits = useCredits
+        ? CreditMath.openOnly(credits)
+        : <CreditEntry>[];
+    if (useCredits && openCredits.isNotEmpty) {
       final totals = CreditMath.totals(openCredits);
-      final overdue =
-          openCredits.where((c) => CreditMath.isOverdue(c, now: now)).toList();
-      sb.writeln('- Credit obligations (money borrowed from / lent to people):');
+      final overdue = openCredits
+          .where((c) => CreditMath.isOverdue(c, now: now))
+          .toList();
+      sb.writeln(
+        '- Credit obligations (money borrowed from / lent to people):',
+      );
       sb.writeln('  * You owe (borrowed): ${_cur()} ${_fmt(totals.borrowed)}');
       sb.writeln('  * Owed to you (lent): ${_cur()} ${_fmt(totals.lent)}');
       if (overdue.isNotEmpty) {
-        sb.writeln('  * Overdue: ${overdue.length} — clear these before new '
-            'discretionary savings');
+        sb.writeln(
+          '  * Overdue: ${overdue.length} — clear these before new '
+          'discretionary savings',
+        );
         for (final c in overdue.take(3)) {
-          sb.writeln('    - ${c.counterpartyName}: ${_cur()} ${_fmt(c.amount)} '
-              '(${CreditMath.deadlineLabel(c, now: now)})');
+          sb.writeln(
+            '    - ${c.counterpartyName}: ${_cur()} ${_fmt(c.amount)} '
+            '(${CreditMath.deadlineLabel(c, now: now)})',
+          );
         }
       }
     }
 
     sb.writeln();
-    sb.writeln('Use the monthly-normalised figures above. Account for upcoming '
-        'renewal fees when setting monthly savings so the plan stays cash-safe. '
-        'If credit obligations are listed, prioritise repaying overdue money '
-        'the user owes over new savings, and do not count money owed to the '
-        'user as available cash until it is repaid. Transactions that mirror a '
-        'credit obligation are already excluded from the spending figures — do '
-        'not add them back in.');
+    if (useFinancialRecords) {
+      sb.writeln('Use the monthly-normalised financial figures above.');
+    }
+    if (useDocuments) {
+      sb.writeln(
+        'Account for listed upcoming renewal fees when setting monthly savings so the plan stays cash-safe.',
+      );
+    }
+    if (useCredits) {
+      sb.writeln(
+        'If credit obligations are listed, prioritise repaying overdue money the user owes over new savings, and do not count money owed to the user as available cash until it is repaid. Transactions that mirror a credit obligation are already excluded from spending figures — do not add them back in.',
+      );
+    }
 
     return sb.toString();
   }
@@ -939,8 +1044,8 @@ class AiBudgetPlanService {
           final aTitle = (a['title'] as String?)?.trim();
           final aDetail = (a['detail'] as String?)?.trim();
           if (aTitle == null || aTitle.isEmpty) continue;
-          final suggestedEnvelope =
-              (a['suggestedEnvelopeName'] as String?)?.trim();
+          final suggestedEnvelope = (a['suggestedEnvelopeName'] as String?)
+              ?.trim();
           final hasEnvelope =
               suggestedEnvelope != null && suggestedEnvelope.isNotEmpty;
           final rawType = (a['type'] as String?)?.trim().toLowerCase();
@@ -948,20 +1053,23 @@ class AiBudgetPlanService {
             'envelope' => AiBudgetPlanActionType.envelope,
             'budget' => AiBudgetPlanActionType.budget,
             'tip' => AiBudgetPlanActionType.tip,
-            _ => hasEnvelope
-                ? AiBudgetPlanActionType.envelope
-                : AiBudgetPlanActionType.tip,
+            _ =>
+              hasEnvelope
+                  ? AiBudgetPlanActionType.envelope
+                  : AiBudgetPlanActionType.tip,
           };
-          actions.add(AiBudgetPlanAction(
-            type: type,
-            title: aTitle,
-            detail: aDetail == null || aDetail.isEmpty ? aTitle : aDetail,
-            category: a['categoryName'] is String
-                ? FinanceCategoryX.fromName(a['categoryName'] as String)
-                : null,
-            monthlyAmountAed: (a['monthlyAmount'] as num?)?.toDouble(),
-            suggestedEnvelopeName: hasEnvelope ? suggestedEnvelope : null,
-          ));
+          actions.add(
+            AiBudgetPlanAction(
+              type: type,
+              title: aTitle,
+              detail: aDetail == null || aDetail.isEmpty ? aTitle : aDetail,
+              category: a['categoryName'] is String
+                  ? FinanceCategoryX.fromName(a['categoryName'] as String)
+                  : null,
+              monthlyAmountAed: (a['monthlyAmount'] as num?)?.toDouble(),
+              suggestedEnvelopeName: hasEnvelope ? suggestedEnvelope : null,
+            ),
+          );
         }
       }
 
@@ -998,41 +1106,52 @@ class AiBudgetPlanService {
     final monthsAtPace = monthlySpare > 0
         ? (targetAmount / monthlySpare).ceil()
         : null;
-    final feasible = monthlySpare > 0 &&
+    final feasible =
+        monthlySpare > 0 &&
         (targetMonths == null || monthsAtPace! <= targetMonths);
 
     final summaryBuf = StringBuffer();
     if (monthlySpare > 0) {
-      summaryBuf
-          .write('With about ${_cur()} ${_fmt(monthlySpare)} spare each month, ');
+      summaryBuf.write(
+        'With about ${_cur()} ${_fmt(monthlySpare)} spare each month, ',
+      );
       if (targetMonths != null) {
         summaryBuf.write(
-            'you need to set aside ${_cur()} ${_fmt(targetAmount / targetMonths)} per month to reach $goalLabel in $targetMonths months. ');
+          'you need to set aside ${_cur()} ${_fmt(targetAmount / targetMonths)} per month to reach $goalLabel in $targetMonths months. ',
+        );
       } else if (monthsAtPace != null) {
         summaryBuf.write(
-            'you could reach $goalLabel in about $monthsAtPace months by saving ${_cur()} ${_fmt(monthlySpare)} per month. ');
+          'you could reach $goalLabel in about $monthsAtPace months by saving ${_cur()} ${_fmt(monthlySpare)} per month. ',
+        );
       }
-      summaryBuf.write(feasible
-          ? 'Your goal looks achievable at the current pace.'
-          : 'At the current pace the deadline is tight — consider trimming discretionary spending.');
+      summaryBuf.write(
+        feasible
+            ? 'Your goal looks achievable at the current pace.'
+            : 'At the current pace the deadline is tight — consider trimming discretionary spending.',
+      );
     } else {
       summaryBuf.write(
-          'There is little monthly spare cash right now, so reaching $goalLabel needs new savings room — review discretionary categories or add income.');
+        'There is little monthly spare cash right now, so reaching $goalLabel needs new savings room — review discretionary categories or add income.',
+      );
     }
 
     final actions = <AiBudgetPlanAction>[
       if (outstandingBorrowed > 0)
         AiBudgetPlanAction(
           type: AiBudgetPlanActionType.tip,
-          title: 'Clear the ${_cur()} ${_fmt(outstandingBorrowed)} you owe first',
-          detail: 'You have outstanding credit obligations. Settling what you '
+          title:
+              'Clear the ${_cur()} ${_fmt(outstandingBorrowed)} you owe first',
+          detail:
+              'You have outstanding credit obligations. Settling what you '
               'owe takes priority over new savings — then put the freed-up '
               'monthly cash toward "$goalLabel".',
         ),
       AiBudgetPlanAction(
         type: AiBudgetPlanActionType.envelope,
-        title: 'Save ${_cur()} ${(targetMonths != null ? targetAmount / targetMonths : monthlySpare).toStringAsFixed(0)} per month',
-        detail: 'Set up a dedicated envelope for "$goalLabel" and contribute '
+        title:
+            'Save ${_cur()} ${(targetMonths != null ? targetAmount / targetMonths : monthlySpare).toStringAsFixed(0)} per month',
+        detail:
+            'Set up a dedicated envelope for "$goalLabel" and contribute '
             'the same amount every month — small and steady wins.',
         suggestedEnvelopeName: goalLabel.length <= 24
             ? goalLabel
@@ -1041,7 +1160,8 @@ class AiBudgetPlanService {
       AiBudgetPlanAction(
         type: AiBudgetPlanActionType.tip,
         title: 'Cap your biggest spending category',
-        detail: 'Open Money → Budgets and set a monthly cap on the category '
+        detail:
+            'Open Money → Budgets and set a monthly cap on the category '
             'you spend the most on — about 10-15% below last month. Use the '
             'budget sliders below to try it out.',
       ),
@@ -1059,13 +1179,22 @@ class AiBudgetPlanService {
     );
   }
 
+  static AiDataSource? _sourceFromName(String name) {
+    for (final source in AiDataSource.values) {
+      if (source.name == name) return source;
+    }
+    return null;
+  }
+
   static String _cur() => DocumentCollectionService.instance.activeCurrency;
 
   static String _fmt(double v) {
     final rounded = (v * 100).round() / 100;
     if (rounded == rounded.roundToDouble()) {
       return rounded.round().toString().replaceAllMapped(
-          RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+        RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+        (m) => '${m[1]},',
+      );
     }
     return rounded.toStringAsFixed(2);
   }
