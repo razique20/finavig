@@ -70,7 +70,9 @@ class EntitlementService extends ChangeNotifier {
   /// The UI shows a warning and refresh() downgrades the tier locally.
   bool get isPlanExpired {
     final end = _planEndsAt;
-    return _tier != SubscriptionTier.free && end != null && end.isBefore(DateTime.now().toUtc());
+    return _tier != SubscriptionTier.free &&
+        end != null &&
+        end.isBefore(DateTime.now().toUtc());
   }
 
   /// Load the tier once. Safe to call multiple times.
@@ -83,7 +85,8 @@ class EntitlementService extends ChangeNotifier {
   /// that the admin has just processed).
   Future<void> refresh() async {
     final prefs = await SharedPreferences.getInstance();
-    var resolved = SubscriptionTier.tryFromId(prefs.getString(tierOverrideKey)) ??
+    var resolved =
+        SubscriptionTier.tryFromId(prefs.getString(tierOverrideKey)) ??
         SubscriptionTier.free;
 
     final client = SupabaseService.clientOrNull;
@@ -114,7 +117,9 @@ class EntitlementService extends ChangeNotifier {
         // this fallback an admin-granted expiry is invisible to the app and
         // an expired plan would keep its paid features forever.
         final endsAt = (row?['plan_ends_at'] ?? row?['expires_at']) as String?;
-        _planEndsAt = endsAt is String ? DateTime.tryParse(endsAt)?.toUtc() : null;
+        _planEndsAt = endsAt is String
+            ? DateTime.tryParse(endsAt)?.toUtc()
+            : null;
       } catch (_) {
         // Table missing or unreachable — keep the local/default tier so the
         // app never blocks the user on an infrastructure error.
@@ -192,7 +197,8 @@ class EntitlementService extends ChangeNotifier {
   }
 
   /// Whether the user can create custom document folders under the current tier.
-  bool get allowsCustomFolders => limits.maxFolders == null || limits.maxFolders! > 0;
+  bool get allowsCustomFolders =>
+      limits.maxFolders == null || limits.maxFolders! > 0;
 
   /// Whether creating [currentCount + additional] folders stays within the
   /// folder limit. Unlimited tiers return true, Free tier (max=0) returns false.
@@ -266,12 +272,15 @@ class EntitlementService extends ChangeNotifier {
         .where((c) => !c.isPersonal)
         .toList();
     final index = companyCollections.indexWhere((c) => c.id == collection.id);
-    if (index <= 0) return SubscriptionTier.plus; // 1st company collection is Plus
+    if (index <= 0)
+      return SubscriptionTier.plus; // 1st company collection is Plus
     return SubscriptionTier.business; // 2nd+ company collections are Business
   }
 
   /// The entitlement feature needed to unlock [collection].
-  EntitlementFeature requiredFeatureForCollection(DocumentCollection collection) {
+  EntitlementFeature requiredFeatureForCollection(
+    DocumentCollection collection,
+  ) {
     if (collection.isPersonal) return EntitlementFeature.companyCollection;
     final companyCollections = DocumentCollectionService.instance.collections
         .where((c) => !c.isPersonal)

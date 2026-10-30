@@ -28,21 +28,19 @@ class PendingOp {
   final Map<String, dynamic>? item; // non-null for upserts
 
   const PendingOp.upsert(this.id, Map<String, dynamic> this.item)
-      : kind = 'upsert';
+    : kind = 'upsert';
 
-  const PendingOp.delete(this.id)
-      : kind = 'delete',
-        item = null;
+  const PendingOp.delete(this.id) : kind = 'delete', item = null;
 
   bool get isDelete => kind == 'delete';
 
   factory PendingOp.fromJson(Map<String, dynamic> json) =>
       json['kind'] == 'delete'
-          ? PendingOp.delete(json['id'] as String)
-          : PendingOp.upsert(
-              json['id'] as String,
-              (json['item'] as Map<String, dynamic>).cast<String, dynamic>(),
-            );
+      ? PendingOp.delete(json['id'] as String)
+      : PendingOp.upsert(
+          json['id'] as String,
+          (json['item'] as Map<String, dynamic>).cast<String, dynamic>(),
+        );
 
   Map<String, dynamic> toJson() => kind == 'delete'
       ? {'kind': 'delete', 'id': id}

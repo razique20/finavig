@@ -3,11 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'auth_service.dart';
 import '../services/supabase_service.dart';
 
-enum VersionCheckStatus {
-  upToDate,
-  optionalUpdate,
-  forceUpdate,
-}
+enum VersionCheckStatus { upToDate, optionalUpdate, forceUpdate }
 
 class VersionCheckResult {
   final VersionCheckStatus status;
@@ -150,8 +146,10 @@ class AppVersionService {
         );
       }
 
-      final minRequired = (response['min_required_version'] as String?) ?? currentAppVersion;
-      final latest = (response['latest_version'] as String?) ?? currentAppVersion;
+      final minRequired =
+          (response['min_required_version'] as String?) ?? currentAppVersion;
+      final latest =
+          (response['latest_version'] as String?) ?? currentAppVersion;
       final isForce = (response['is_force_update'] as bool?) ?? false;
       final downloadUrl = response['download_url'] as String?;
       final notes = response['release_notes'] as String?;
@@ -208,7 +206,9 @@ class AppVersionService {
     try {
       final client = SupabaseService.clientOrNull;
       if (client == null) {
-        debugPrint('AppVersionService.trackAppUsage: Supabase client unavailable');
+        debugPrint(
+          'AppVersionService.trackAppUsage: Supabase client unavailable',
+        );
         return;
       }
 
@@ -247,10 +247,18 @@ class AppVersionService {
       final cleanV1 = v1.split('+').first.split('-').first;
       final cleanV2 = v2.split('+').first.split('-').first;
 
-      final parts1 = cleanV1.split('.').map((e) => int.tryParse(e) ?? 0).toList();
-      final parts2 = cleanV2.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+      final parts1 = cleanV1
+          .split('.')
+          .map((e) => int.tryParse(e) ?? 0)
+          .toList();
+      final parts2 = cleanV2
+          .split('.')
+          .map((e) => int.tryParse(e) ?? 0)
+          .toList();
 
-      final maxLength = parts1.length > parts2.length ? parts1.length : parts2.length;
+      final maxLength = parts1.length > parts2.length
+          ? parts1.length
+          : parts2.length;
 
       for (int i = 0; i < maxLength; i++) {
         final p1 = i < parts1.length ? parts1[i] : 0;

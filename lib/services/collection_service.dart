@@ -50,11 +50,17 @@ class DocumentCollectionService extends ChangeNotifier {
   /// If the active collection is locked due to plan expiry/downgrade, automatically
   /// falls back to the personal collection or first unlocked collection.
   String get activeCollectionId {
-    final isLocked = EntitlementService.instance.isCollectionIdLocked(_activeId);
-    if (_activeId == DocumentCollection.personalId || !_collections.any((c) => c.id == _activeId) || isLocked) {
+    final isLocked = EntitlementService.instance.isCollectionIdLocked(
+      _activeId,
+    );
+    if (_activeId == DocumentCollection.personalId ||
+        !_collections.any((c) => c.id == _activeId) ||
+        isLocked) {
       final personal = _collections.where((c) => c.isPersonal).firstOrNull;
       if (personal != null) return personal.id;
-      final firstUnlocked = _collections.where((c) => !EntitlementService.instance.isCollectionLocked(c)).firstOrNull;
+      final firstUnlocked = _collections
+          .where((c) => !EntitlementService.instance.isCollectionLocked(c))
+          .firstOrNull;
       if (firstUnlocked != null) return firstUnlocked.id;
       if (_collections.isNotEmpty) return _collections.first.id;
     }
@@ -141,10 +147,18 @@ class DocumentCollectionService extends ChangeNotifier {
   void _onEntitlementsChanged() {
     if (EntitlementService.instance.isCollectionIdLocked(_activeId)) {
       final personal = _collections.where((c) => c.isPersonal).firstOrNull;
-      final fallbackId = personal?.id ?? _collections.where((c) => !EntitlementService.instance.isCollectionLocked(c)).firstOrNull?.id ?? DocumentCollection.personalId;
+      final fallbackId =
+          personal?.id ??
+          _collections
+              .where((c) => !EntitlementService.instance.isCollectionLocked(c))
+              .firstOrNull
+              ?.id ??
+          DocumentCollection.personalId;
       if (_activeId != fallbackId) {
         _activeId = fallbackId;
-        SharedPreferences.getInstance().then((p) => p.setString(_activeIdKey, fallbackId));
+        SharedPreferences.getInstance().then(
+          (p) => p.setString(_activeIdKey, fallbackId),
+        );
         notifyListeners();
       }
     } else {
@@ -162,7 +176,8 @@ class DocumentCollectionService extends ChangeNotifier {
       if (personal != null) targetId = personal.id;
     }
     if (!_collections.any((c) => c.id == targetId)) return false;
-    if (EntitlementService.instance.isCollectionIdLocked(targetId)) return false;
+    if (EntitlementService.instance.isCollectionIdLocked(targetId))
+      return false;
     final changed = _activeId != targetId;
     _activeId = targetId;
     final prefs = await SharedPreferences.getInstance();
@@ -241,10 +256,7 @@ class DocumentCollectionService extends ChangeNotifier {
     if (client != null) {
       await client
           .from('collections')
-          .update({
-            'name': trimmed,
-            'country_code': newCountry,
-          })
+          .update({'name': trimmed, 'country_code': newCountry})
           .eq('id', id);
     }
     _collections[index] = DocumentCollection(
@@ -370,8 +382,11 @@ class DocumentCollectionService extends ChangeNotifier {
       _activeId = stored;
     } else {
       final personal = _collections.where((c) => c.isPersonal).firstOrNull;
-      final firstUnlocked = _collections.where((c) => !EntitlementService.instance.isCollectionLocked(c)).firstOrNull;
-      _activeId = personal?.id ?? firstUnlocked?.id ?? DocumentCollection.personalId;
+      final firstUnlocked = _collections
+          .where((c) => !EntitlementService.instance.isCollectionLocked(c))
+          .firstOrNull;
+      _activeId =
+          personal?.id ?? firstUnlocked?.id ?? DocumentCollection.personalId;
     }
   }
 
@@ -382,7 +397,8 @@ class DocumentCollectionService extends ChangeNotifier {
     return DocumentCollection(
       id: row['id'] as String,
       name: row['name'] as String? ?? 'Collection',
-      countryCode: (row['country_code'] ?? row['countryCode']) as String? ?? 'AE',
+      countryCode:
+          (row['country_code'] ?? row['countryCode']) as String? ?? 'AE',
       isPersonal: row['is_personal'] as bool? ?? false,
     );
   }

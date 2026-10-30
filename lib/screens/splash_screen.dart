@@ -54,7 +54,10 @@ class _SplashScreenState extends State<SplashScreen>
     // user is not signed in yet, this is intentionally a no-op.
     async_dispatcher.unawaited(AppVersionService.instance.trackAppUsage());
     if (mounted && versionResult.shouldPromptUpdate) {
-      final allowed = await AppVersionDialog.showIfNeeded(context, versionResult);
+      final allowed = await AppVersionDialog.showIfNeeded(
+        context,
+        versionResult,
+      );
       if (!allowed && versionResult.status == VersionCheckStatus.forceUpdate) {
         return; // Halt navigation if force update is required and not completed
       }
@@ -92,15 +95,9 @@ class _SplashScreenState extends State<SplashScreen>
       body: Center(
         child: AnimatedBuilder(
           animation: _controller,
-          builder: (context, child) => Opacity(
-            opacity: _markFade.value.clamp(0.0, 1.0),
-            child: child,
-          ),
-          child: Image.asset(
-            'assets/images/logo.png',
-            width: 120,
-            height: 120,
-          ),
+          builder: (context, child) =>
+              Opacity(opacity: _markFade.value.clamp(0.0, 1.0), child: child),
+          child: Image.asset('assets/images/logo.png', width: 120, height: 120),
         ),
       ),
     );

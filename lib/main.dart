@@ -63,7 +63,9 @@ void main() async {
   // Budget alerts listen to finance data changes for the whole app lifetime
   // (OS notifications + Money-tab badge + snackbars).
   await BudgetAlertService.instance.init();
-  unawaited(GeminiApiService.instance.load()); // optional LLM key for AI features
+  unawaited(
+    GeminiApiService.instance.load(),
+  ); // optional LLM key for AI features
 
   // One-time rebrand migration: move locally stored documents from the
   // legacy Wazy folder (/wazy/documents) to the Finavig folder.
@@ -90,10 +92,7 @@ void main() async {
 /// Initialise the services that don't depend on auth first, then the
 /// Supabase-backed ones (only meaningful when a session exists).
 Future<void> _prewarmServices() async {
-  await Future.wait([
-    UrgencyEngine().init(),
-    NotificationService().init(),
-  ]);
+  await Future.wait([UrgencyEngine().init(), NotificationService().init()]);
 
   if (AuthService.instance.isSignedIn) {
     // Custom types must load before documents: rows are decoded into

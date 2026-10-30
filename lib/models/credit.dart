@@ -202,10 +202,7 @@ class CreditEntry {
 
   /// Marks this obligation settled at [at], optionally linking the Money
   /// transaction that mirrors the repayment.
-  CreditEntry markSettled({
-    required DateTime at,
-    String? transactionId,
-  }) =>
+  CreditEntry markSettled({required DateTime at, String? transactionId}) =>
       copyWith(settledAt: at, settlementTransactionId: transactionId);
 
   static const Object _unset = Object();
@@ -238,8 +235,7 @@ class CreditEntry {
           DateTime.tryParse(json['createdAt'] as String? ?? '') ??
           DateTime.now(),
       settledAt: DateTime.tryParse(json['settledAt'] as String? ?? ''),
-      disbursementTransactionId:
-          json['disbursementTransactionId'] as String?,
+      disbursementTransactionId: json['disbursementTransactionId'] as String?,
       settlementTransactionId: json['settlementTransactionId'] as String?,
     );
   }

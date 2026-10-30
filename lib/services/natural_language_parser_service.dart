@@ -86,18 +86,30 @@ class NaturalLanguageParserService {
   NaturalLanguageParserService._();
 
   static const Map<String, int> _monthMap = {
-    'JAN': 1, 'JANUARY': 1,
-    'FEB': 2, 'FEBRUARY': 2,
-    'MAR': 3, 'MARCH': 3,
-    'APR': 4, 'APRIL': 4,
+    'JAN': 1,
+    'JANUARY': 1,
+    'FEB': 2,
+    'FEBRUARY': 2,
+    'MAR': 3,
+    'MARCH': 3,
+    'APR': 4,
+    'APRIL': 4,
     'MAY': 5,
-    'JUN': 6, 'JUNE': 6,
-    'JUL': 7, 'JULY': 7,
-    'AUG': 8, 'AUGUST': 8,
-    'SEP': 9, 'SEPT': 9, 'SEPTEMBER': 9,
-    'OCT': 10, 'OCTOBER': 10,
-    'NOV': 11, 'NOVEMBER': 11,
-    'DEC': 12, 'DECEMBER': 12,
+    'JUN': 6,
+    'JUNE': 6,
+    'JUL': 7,
+    'JULY': 7,
+    'AUG': 8,
+    'AUGUST': 8,
+    'SEP': 9,
+    'SEPT': 9,
+    'SEPTEMBER': 9,
+    'OCT': 10,
+    'OCTOBER': 10,
+    'NOV': 11,
+    'NOVEMBER': 11,
+    'DEC': 12,
+    'DECEMBER': 12,
   };
 
   /// Parses input string like:
@@ -112,7 +124,8 @@ class NaturalLanguageParserService {
 
     // 1. Extract Expiry Date
     final dateMatch = _extractExpiryDate(rawText);
-    final expiryDate = dateMatch?.$1 ?? DateTime.now().add(const Duration(days: 365));
+    final expiryDate =
+        dateMatch?.$1 ?? DateTime.now().add(const Duration(days: 365));
     final hasExtractedDate = dateMatch != null;
 
     // 2. Extract Document Category Type
@@ -134,7 +147,8 @@ class NaturalLanguageParserService {
     final namedAuthority = _namesExplicitAuthority(rawText)
         ? emirateMatch?.$2
         : null;
-    final authority = namedAuthority ??
+    final authority =
+        namedAuthority ??
         catalog.suggestedAuthorityFor(docType, emirate) ??
         UaeAuthorityCatalog.otherAuthorityLabel;
     final hasExtractedEmirate = emirateMatch != null;
@@ -163,14 +177,17 @@ class NaturalLanguageParserService {
   }
 
   ParsedNaturalLanguageItem _defaultItem(String raw) {
-    final docType = DocumentTypeRegistry.instance.byEnum(DocumentType.tradeLicence);
+    final docType = DocumentTypeRegistry.instance.byEnum(
+      DocumentType.tradeLicence,
+    );
     return ParsedNaturalLanguageItem(
       rawInput: raw,
       title: 'New Document',
       docType: docType,
       expiryDate: DateTime.now().add(const Duration(days: 365)),
       emirate: UaeEmirate.dubai,
-      authority: UaeAuthorityCatalog.instance.suggestedAuthorityFor(
+      authority:
+          UaeAuthorityCatalog.instance.suggestedAuthorityFor(
             docType,
             UaeEmirate.dubai,
           ) ??
@@ -182,42 +199,63 @@ class NaturalLanguageParserService {
     final now = DateTime.now();
 
     // 1. Relative dates: "in X days", "in X weeks", "in X months", "in X years", "tomorrow", "next month"
-    final inDaysMatch = RegExp(r'\bin\s+(\d+)\s+days?\b', caseSensitive: false).firstMatch(text);
+    final inDaysMatch = RegExp(
+      r'\bin\s+(\d+)\s+days?\b',
+      caseSensitive: false,
+    ).firstMatch(text);
     if (inDaysMatch != null) {
       final days = int.parse(inDaysMatch.group(1)!);
       return (now.add(Duration(days: days)), inDaysMatch.group(0)!);
     }
 
-    final inWeeksMatch = RegExp(r'\bin\s+(\d+)\s+weeks?\b', caseSensitive: false).firstMatch(text);
+    final inWeeksMatch = RegExp(
+      r'\bin\s+(\d+)\s+weeks?\b',
+      caseSensitive: false,
+    ).firstMatch(text);
     if (inWeeksMatch != null) {
       final weeks = int.parse(inWeeksMatch.group(1)!);
       return (now.add(Duration(days: weeks * 7)), inWeeksMatch.group(0)!);
     }
 
-    final inMonthsMatch = RegExp(r'\bin\s+(\d+)\s+months?\b', caseSensitive: false).firstMatch(text);
+    final inMonthsMatch = RegExp(
+      r'\bin\s+(\d+)\s+months?\b',
+      caseSensitive: false,
+    ).firstMatch(text);
     if (inMonthsMatch != null) {
       final months = int.parse(inMonthsMatch.group(1)!);
       return (now.add(Duration(days: months * 30)), inMonthsMatch.group(0)!);
     }
 
-    final inYearsMatch = RegExp(r'\bin\s+(\d+)\s+years?\b', caseSensitive: false).firstMatch(text);
+    final inYearsMatch = RegExp(
+      r'\bin\s+(\d+)\s+years?\b',
+      caseSensitive: false,
+    ).firstMatch(text);
     if (inYearsMatch != null) {
       final years = int.parse(inYearsMatch.group(1)!);
       return (now.add(Duration(days: years * 365)), inYearsMatch.group(0)!);
     }
 
     if (RegExp(r'\btomorrow\b', caseSensitive: false).hasMatch(text)) {
-      final match = RegExp(r'\btomorrow\b', caseSensitive: false).firstMatch(text)!;
+      final match = RegExp(
+        r'\btomorrow\b',
+        caseSensitive: false,
+      ).firstMatch(text)!;
       return (now.add(const Duration(days: 1)), match.group(0)!);
     }
 
     if (RegExp(r'\bnext month\b', caseSensitive: false).hasMatch(text)) {
-      final match = RegExp(r'\bnext month\b', caseSensitive: false).firstMatch(text)!;
+      final match = RegExp(
+        r'\bnext month\b',
+        caseSensitive: false,
+      ).firstMatch(text)!;
       return (now.add(const Duration(days: 30)), match.group(0)!);
     }
 
     if (RegExp(r'\bnext year\b', caseSensitive: false).hasMatch(text)) {
-      final match = RegExp(r'\bnext year\b', caseSensitive: false).firstMatch(text)!;
+      final match = RegExp(
+        r'\bnext year\b',
+        caseSensitive: false,
+      ).firstMatch(text)!;
       return (now.add(const Duration(days: 365)), match.group(0)!);
     }
 
@@ -231,7 +269,9 @@ class NaturalLanguageParserService {
       final mStr = matchMonthFirst.group(1)!.toUpperCase().substring(0, 3);
       final d = int.parse(matchMonthFirst.group(2)!);
       final yStr = matchMonthFirst.group(3);
-      final y = yStr != null ? int.parse(yStr) : (now.month > (_monthMap[mStr] ?? 1) ? now.year + 1 : now.year);
+      final y = yStr != null
+          ? int.parse(yStr)
+          : (now.month > (_monthMap[mStr] ?? 1) ? now.year + 1 : now.year);
       final m = _monthMap[mStr] ?? 1;
       try {
         return (DateTime(y, m, d), matchMonthFirst.group(0)!);
@@ -248,7 +288,9 @@ class NaturalLanguageParserService {
       final d = int.parse(matchDayFirst.group(1)!);
       final mStr = matchDayFirst.group(2)!.toUpperCase().substring(0, 3);
       final yStr = matchDayFirst.group(3);
-      final y = yStr != null ? int.parse(yStr) : (now.month > (_monthMap[mStr] ?? 1) ? now.year + 1 : now.year);
+      final y = yStr != null
+          ? int.parse(yStr)
+          : (now.month > (_monthMap[mStr] ?? 1) ? now.year + 1 : now.year);
       final m = _monthMap[mStr] ?? 1;
       try {
         return (DateTime(y, m, d), matchDayFirst.group(0)!);
@@ -271,7 +313,9 @@ class NaturalLanguageParserService {
     }
 
     // 5. ISO format: YYYY-MM-DD or YYYY/MM/DD
-    final isoRegex = RegExp(r'\b(20\d{2})[\/\.\-](0?[1-9]|1[012])[\/\.\-](0?[1-9]|[12][0-9]|3[01])\b');
+    final isoRegex = RegExp(
+      r'\b(20\d{2})[\/\.\-](0?[1-9]|1[012])[\/\.\-](0?[1-9]|[12][0-9]|3[01])\b',
+    );
     final matchIso = isoRegex.firstMatch(text);
     if (matchIso != null) {
       final y = int.parse(matchIso.group(1)!);
@@ -283,7 +327,9 @@ class NaturalLanguageParserService {
     }
 
     // 6. Standard format: DD/MM/YYYY or DD-MM-YYYY
-    final dmyRegex = RegExp(r'\b(0?[1-9]|[12][0-9]|3[01])[\/\.\-](0?[1-9]|1[012])[\/\.\-](20\d{2})\b');
+    final dmyRegex = RegExp(
+      r'\b(0?[1-9]|[12][0-9]|3[01])[\/\.\-](0?[1-9]|1[012])[\/\.\-](20\d{2})\b',
+    );
     final matchDmy = dmyRegex.firstMatch(text);
     if (matchDmy != null) {
       final d = int.parse(matchDmy.group(1)!);
@@ -409,7 +455,10 @@ class NaturalLanguageParserService {
 
   (double, String)? _extractFee(String text) {
     // Check 'k' multiplier e.g. 1.5k AED or 2k AED
-    final kRegex = RegExp(r'\b(\d+(?:\.\d{1,2})?)\s*k\s*(?:aed|dirhams|dhs|dh)?\b', caseSensitive: false);
+    final kRegex = RegExp(
+      r'\b(\d+(?:\.\d{1,2})?)\s*k\s*(?:aed|dirhams|dhs|dh)?\b',
+      caseSensitive: false,
+    );
     final kMatch = kRegex.firstMatch(text);
     if (kMatch != null) {
       final numVal = double.tryParse(kMatch.group(1)!);
@@ -459,8 +508,9 @@ class NaturalLanguageParserService {
     final upper = text.toUpperCase();
     // Acronyms need word boundaries: 'DHA' must not match inside
     // 'ABU DHABI', 'DET' inside 'DEPARTMENT', etc.
-    if (RegExp(r'\b(RTA|GDRFA|DED|DET|RERA|EJARI|TAMM|ADDED|ITC|SEDD|MOHRE|ICP|FTA|DHA|DIFC|ADGM)\b')
-        .hasMatch(upper)) {
+    if (RegExp(
+      r'\b(RTA|GDRFA|DED|DET|RERA|EJARI|TAMM|ADDED|ITC|SEDD|MOHRE|ICP|FTA|DHA|DIFC|ADGM)\b',
+    ).hasMatch(upper)) {
       return true;
     }
     const namedAuthorities = [
@@ -481,44 +531,90 @@ class NaturalLanguageParserService {
 
     // RTA (Roads & Transport Authority)
     if (upper.contains('RTA') || upper.contains('ROADS & TRANSPORT')) {
-      return (UaeEmirate.dubai, 'RTA Dubai (Roads & Transport Authority)', 'RTA');
+      return (
+        UaeEmirate.dubai,
+        'RTA Dubai (Roads & Transport Authority)',
+        'RTA',
+      );
     }
 
     // GDRFA (Residency & Foreign Affairs)
     if (upper.contains('GDRFA') || upper.contains('IMMIGRATION')) {
-      return (UaeEmirate.dubai, 'GDRFA Dubai (General Directorate of Residency)', 'GDRFA');
+      return (
+        UaeEmirate.dubai,
+        'GDRFA Dubai (General Directorate of Residency)',
+        'GDRFA',
+      );
     }
 
     // Dubai / DET / DED / RERA
-    if (upper.contains('DUBAI') || upper.contains('DET') || upper.contains('DED') || upper.contains('RERA')) {
+    if (upper.contains('DUBAI') ||
+        upper.contains('DET') ||
+        upper.contains('DED') ||
+        upper.contains('RERA')) {
       if (upper.contains('RERA') || upper.contains('EJARI')) {
-        return (UaeEmirate.dubai, 'RERA / Dubai Land Department (Ejari)', 'Dubai');
+        return (
+          UaeEmirate.dubai,
+          'RERA / Dubai Land Department (Ejari)',
+          'Dubai',
+        );
       }
-      return (UaeEmirate.dubai, 'Dubai DET / DED (Department of Economy & Tourism)', 'Dubai');
+      return (
+        UaeEmirate.dubai,
+        'Dubai DET / DED (Department of Economy & Tourism)',
+        'Dubai',
+      );
     }
 
     // Abu Dhabi / ITC / ADDED / TAMM
-    if (upper.contains('ABU DHABI') || upper.contains('ADDED') || upper.contains('TAMM') || upper.contains('ITC')) {
+    if (upper.contains('ABU DHABI') ||
+        upper.contains('ADDED') ||
+        upper.contains('TAMM') ||
+        upper.contains('ITC')) {
       if (upper.contains('ITC') || upper.contains('TRANSPORT')) {
-        return (UaeEmirate.abuDhabi, 'Integrated Transport Centre (ITC / DoT)', 'Abu Dhabi');
+        return (
+          UaeEmirate.abuDhabi,
+          'Integrated Transport Centre (ITC / DoT)',
+          'Abu Dhabi',
+        );
       }
-      return (UaeEmirate.abuDhabi, 'ADDED (Abu Dhabi Dept of Economic Development)', 'Abu Dhabi');
+      return (
+        UaeEmirate.abuDhabi,
+        'ADDED (Abu Dhabi Dept of Economic Development)',
+        'Abu Dhabi',
+      );
     }
 
     if (upper.contains('SHARJAH') || upper.contains('SEDD')) {
-      return (UaeEmirate.sharjah, 'Sharjah SEDD (Economic Development Dept)', 'Sharjah');
+      return (
+        UaeEmirate.sharjah,
+        'Sharjah SEDD (Economic Development Dept)',
+        'Sharjah',
+      );
     }
     if (upper.contains('AJMAN')) {
-      return (UaeEmirate.ajman, 'Ajman DED (Department of Economic Development)', 'Ajman');
+      return (
+        UaeEmirate.ajman,
+        'Ajman DED (Department of Economic Development)',
+        'Ajman',
+      );
     }
     if (upper.contains('RAS AL KHAIMAH') || upper.contains('RAK')) {
-      return (UaeEmirate.rak, 'RAK DED (Department of Economic Development)', 'RAK');
+      return (
+        UaeEmirate.rak,
+        'RAK DED (Department of Economic Development)',
+        'RAK',
+      );
     }
     if (upper.contains('FUJAIRAH')) {
       return (UaeEmirate.fujairah, 'Fujairah Municipality', 'Fujairah');
     }
     if (upper.contains('UMM AL QUWAIN') || upper.contains('UAQ')) {
-      return (UaeEmirate.uaq, 'UAQ DED (Department of Economic Development)', 'UAQ');
+      return (
+        UaeEmirate.uaq,
+        'UAQ DED (Department of Economic Development)',
+        'UAQ',
+      );
     }
 
     return null;
@@ -535,7 +631,10 @@ class NaturalLanguageParserService {
 
     // 1. Strip action verbs at start
     clean = clean.replaceFirst(
-      RegExp(r'^(?:add|remind\s+me\s+about|create|track|new)\s+(?:my\s+)?', caseSensitive: false),
+      RegExp(
+        r'^(?:add|remind\s+me\s+about|create|track|new)\s+(?:my\s+)?',
+        caseSensitive: false,
+      ),
       '',
     );
     clean = clean.replaceFirst(RegExp(r'^my\s+', caseSensitive: false), '');
@@ -552,24 +651,42 @@ class NaturalLanguageParserService {
 
     // 4. Strip date prefix clauses: "will expire in", "will expire on", "expires in", "expires on", "expiring on", "due in", "due on", "expires"
     clean = clean.replaceAll(
-      RegExp(r'\b(?:will\s+expire|expires|expiring|expiry|exp|valid\s+until|due)\b\s*(?:in|on|at|by)?', caseSensitive: false),
+      RegExp(
+        r'\b(?:will\s+expire|expires|expiring|expiry|exp|valid\s+until|due)\b\s*(?:in|on|at|by)?',
+        caseSensitive: false,
+      ),
       '',
     );
 
     // 5. Strip authority prefix clauses: "by dubai rta", "by rta", "from rta", "issued by"
     clean = clean.replaceAll(
-      RegExp(r'\b(?:by|from|issued\s+by|at)\b\s*(?:dubai|abu\s+dhabi|rta|ded|det|gdrfa|tamm|rera)?', caseSensitive: false),
+      RegExp(
+        r'\b(?:by|from|issued\s+by|at)\b\s*(?:dubai|abu\s+dhabi|rta|ded|det|gdrfa|tamm|rera)?',
+        caseSensitive: false,
+      ),
       '',
     );
 
     // 6. Strip emirates / authority names if matched
     if (emirateSnippet != null && emirateSnippet.isNotEmpty) {
-      clean = clean.replaceAll(RegExp(RegExp.escape(emirateSnippet), caseSensitive: false), '');
+      clean = clean.replaceAll(
+        RegExp(RegExp.escape(emirateSnippet), caseSensitive: false),
+        '',
+      );
     }
-    clean = clean.replaceAll(RegExp(r'\b(?:dubai|abu\s+dhabi|sharjah|ajman|rak|fujairah|uaq|rta|ded|det|gdrfa|mohre)\b', caseSensitive: false), '');
+    clean = clean.replaceAll(
+      RegExp(
+        r'\b(?:dubai|abu\s+dhabi|sharjah|ajman|rak|fujairah|uaq|rta|ded|det|gdrfa|mohre)\b',
+        caseSensitive: false,
+      ),
+      '',
+    );
 
     // 7. Strip isolated prepositions and punctuation
-    clean = clean.replaceAll(RegExp(r'\b(?:in|on|at|by|for|of|the|a|an)\b', caseSensitive: false), '');
+    clean = clean.replaceAll(
+      RegExp(r'\b(?:in|on|at|by|for|of|the|a|an)\b', caseSensitive: false),
+      '',
+    );
     clean = clean.replaceAll(RegExp(r'[,:;\.\-–]'), ' ');
 
     final tokens = clean
@@ -582,10 +699,12 @@ class NaturalLanguageParserService {
     }
 
     // Capitalize words
-    final result = tokens.map((t) {
-      if (t.length == 1) return t.toUpperCase();
-      return t[0].toUpperCase() + t.substring(1).toLowerCase();
-    }).join(' ');
+    final result = tokens
+        .map((t) {
+          if (t.length == 1) return t.toUpperCase();
+          return t[0].toUpperCase() + t.substring(1).toLowerCase();
+        })
+        .join(' ');
 
     return result.trim().isEmpty ? docType.displayName : result.trim();
   }
@@ -655,7 +774,10 @@ class NaturalLanguageParserService {
 
   (double, String)? _extractMoneyAmount(String text) {
     // 1. Check 'k' multiplier e.g. 1.5k AED, 12k SAR, 1.5k
-    final kRegex = RegExp(r'\b(\d+(?:\.\d{1,2})?)\s*k\s*(?:aed|sar|kwd|qar|bhd|omr|dirhams|riyal|dinar|dhs|dh|sr|kd|qr|bd|or)?\b', caseSensitive: false);
+    final kRegex = RegExp(
+      r'\b(\d+(?:\.\d{1,2})?)\s*k\s*(?:aed|sar|kwd|qar|bhd|omr|dirhams|riyal|dinar|dhs|dh|sr|kd|qr|bd|or)?\b',
+      caseSensitive: false,
+    );
     final kMatch = kRegex.firstMatch(text);
     if (kMatch != null) {
       final numVal = double.tryParse(kMatch.group(1)!);
@@ -671,7 +793,8 @@ class NaturalLanguageParserService {
     );
     final commaAedMatch = commaAedRegex.firstMatch(text);
     if (commaAedMatch != null) {
-      final valStr = (commaAedMatch.group(1) ?? commaAedMatch.group(2))?.replaceAll(',', '');
+      final valStr = (commaAedMatch.group(1) ?? commaAedMatch.group(2))
+          ?.replaceAll(',', '');
       if (valStr != null) {
         final val = double.tryParse(valStr);
         if (val != null) {
@@ -697,12 +820,19 @@ class NaturalLanguageParserService {
     }
 
     // 4. Any standalone number in text that looks like money (not part of dates)
-    final standaloneRegex = RegExp(r'\b(\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d{2,6}(?:\.\d{1,2})?)\b');
+    final standaloneRegex = RegExp(
+      r'\b(\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d{2,6}(?:\.\d{1,2})?)\b',
+    );
     for (final m in standaloneRegex.allMatches(text)) {
       final snippet = m.group(1)!;
       final valStr = snippet.replaceAll(',', '');
       final val = double.tryParse(valStr);
-      if (val != null && val > 0 && val != 2024 && val != 2025 && val != 2026 && val != 2027) {
+      if (val != null &&
+          val > 0 &&
+          val != 2024 &&
+          val != 2025 &&
+          val != 2026 &&
+          val != 2027) {
         return (val, m.group(0)!);
       }
     }
@@ -941,23 +1071,35 @@ class NaturalLanguageParserService {
     final now = DateTime.now();
 
     if (RegExp(r'\byesterday\b', caseSensitive: false).hasMatch(text)) {
-      final match = RegExp(r'\byesterday\b', caseSensitive: false).firstMatch(text)!;
+      final match = RegExp(
+        r'\byesterday\b',
+        caseSensitive: false,
+      ).firstMatch(text)!;
       return (now.subtract(const Duration(days: 1)), match.group(0)!);
     }
 
     if (RegExp(r'\btoday\b', caseSensitive: false).hasMatch(text)) {
-      final match = RegExp(r'\btoday\b', caseSensitive: false).firstMatch(text)!;
+      final match = RegExp(
+        r'\btoday\b',
+        caseSensitive: false,
+      ).firstMatch(text)!;
       return (now, match.group(0)!);
     }
 
-    final agoDaysMatch = RegExp(r'\b(\d+)\s+days?\s+ago\b', caseSensitive: false).firstMatch(text);
+    final agoDaysMatch = RegExp(
+      r'\b(\d+)\s+days?\s+ago\b',
+      caseSensitive: false,
+    ).firstMatch(text);
     if (agoDaysMatch != null) {
       final days = int.parse(agoDaysMatch.group(1)!);
       return (now.subtract(Duration(days: days)), agoDaysMatch.group(0)!);
     }
 
     if (RegExp(r'\blast\s+week\b', caseSensitive: false).hasMatch(text)) {
-      final match = RegExp(r'\blast\s+week\b', caseSensitive: false).firstMatch(text)!;
+      final match = RegExp(
+        r'\blast\s+week\b',
+        caseSensitive: false,
+      ).firstMatch(text)!;
       return (now.subtract(const Duration(days: 7)), match.group(0)!);
     }
 
@@ -978,7 +1120,9 @@ class NaturalLanguageParserService {
 
   RecurrenceFrequency _extractRecurrenceFrequency(String lower) {
     if (lower.contains('quarterly')) return RecurrenceFrequency.quarterly;
-    if (lower.contains('yearly') || lower.contains('annual') || lower.contains('every year')) {
+    if (lower.contains('yearly') ||
+        lower.contains('annual') ||
+        lower.contains('every year')) {
       return RecurrenceFrequency.yearly;
     }
     return RecurrenceFrequency.monthly;
@@ -1003,11 +1147,17 @@ class NaturalLanguageParserService {
     }
 
     // 3. Strip any leftover standalone numbers
-    clean = clean.replaceAll(RegExp(r'\b\d+(?:,\d+)*(?:\.\d+)?k?\b', caseSensitive: false), '');
+    clean = clean.replaceAll(
+      RegExp(r'\b\d+(?:,\d+)*(?:\.\d+)?k?\b', caseSensitive: false),
+      '',
+    );
 
     // 4. Strip action verbs & prepositions
     clean = clean.replaceAll(
-      RegExp(r'\b(?:add|log|record|paid|spent|bought|received|got|earned|cost|fee|amount|payment|payment\s+from|salary|salaries|client|customer|from|to|for|on|at|in|my|a|an|the)\b', caseSensitive: false),
+      RegExp(
+        r'\b(?:add|log|record|paid|spent|bought|received|got|earned|cost|fee|amount|payment|payment\s+from|salary|salaries|client|customer|from|to|for|on|at|in|my|a|an|the)\b',
+        caseSensitive: false,
+      ),
       '',
     );
 
@@ -1019,7 +1169,10 @@ class NaturalLanguageParserService {
 
     // 6. Strip date & recurrence keywords
     clean = clean.replaceAll(
-      RegExp(r'\b(?:yesterday|today|tomorrow|last\s+week|days\s+ago|recurring|monthly|every\s+month|per\s+month|quarterly|yearly|every\s+year|subscription)\b', caseSensitive: false),
+      RegExp(
+        r'\b(?:yesterday|today|tomorrow|last\s+week|days\s+ago|recurring|monthly|every\s+month|per\s+month|quarterly|yearly|every\s+year|subscription)\b',
+        caseSensitive: false,
+      ),
       '',
     );
 
@@ -1035,10 +1188,12 @@ class NaturalLanguageParserService {
       return category.displayName;
     }
 
-    final result = tokens.map((t) {
-      if (t.length == 1) return t.toUpperCase();
-      return t[0].toUpperCase() + t.substring(1).toLowerCase();
-    }).join(' ');
+    final result = tokens
+        .map((t) {
+          if (t.length == 1) return t.toUpperCase();
+          return t[0].toUpperCase() + t.substring(1).toLowerCase();
+        })
+        .join(' ');
 
     return result.trim().isEmpty ? category.displayName : result.trim();
   }

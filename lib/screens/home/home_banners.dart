@@ -24,11 +24,16 @@ class HomePlanRestrictionBanner extends StatelessWidget {
     // Resolved through the theme transition factor so the banner cross-fades
     // with the light↔dark animation instead of snapping halfway through it.
     final fade = FinavigTransition.of(context);
-    final bannerBg = fade.color(FinavigColors.amberTint, const Color(0xFF2A2110));
+    final bannerBg = fade.color(
+      FinavigColors.amberTint,
+      const Color(0xFF2A2110),
+    );
     const iconColor = FinavigColors.amber;
     final textColor = fade.color(const Color(0xFF92400E), Colors.white);
-    final subtitleColor =
-        fade.color(const Color(0xFFB45309), const Color(0xFFFDE68A));
+    final subtitleColor = fade.color(
+      const Color(0xFFB45309),
+      const Color(0xFFFDE68A),
+    );
 
     final title = isExpired
         ? 'Subscription plan expired'
@@ -95,14 +100,19 @@ class HomePlanRestrictionBanner extends StatelessWidget {
                   visualDensity: VisualDensity.compact,
                   minimumSize: const Size(0, 30),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
                 onPressed: () => showTierRequestSheet(context),
-                child: const Text('Renew',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 11)),
+                child: const Text(
+                  'Renew',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 11),
+                ),
               ),
             ],
           ),
@@ -141,15 +151,23 @@ class HomeAttentionBanner extends StatelessWidget {
     // with the light↔dark animation instead of snapping halfway through it.
     final fade = FinavigTransition.of(context);
 
-    final bannerBg = fade.color(const Color(0xFFFEF2F2), const Color(0xFF451A1A));
+    final bannerBg = fade.color(
+      const Color(0xFFFEF2F2),
+      const Color(0xFF451A1A),
+    );
     final bannerBorder = fade.color(
       const Color(0xFFFCA5A5),
       const Color(0xFFEF4444).withValues(alpha: 0.4),
     );
-    final iconColor = fade.color(const Color(0xFFDC2626), const Color(0xFFF87171));
+    final iconColor = fade.color(
+      const Color(0xFFDC2626),
+      const Color(0xFFF87171),
+    );
     final textColor = fade.color(const Color(0xFF991B1B), Colors.white);
-    final subtitleColor =
-        fade.color(const Color(0xFFB91C1C), const Color(0xFFFCA5A5));
+    final subtitleColor = fade.color(
+      const Color(0xFFB91C1C),
+      const Color(0xFFFCA5A5),
+    );
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -267,20 +285,19 @@ class _HomeConsolidatedAlertsState extends State<HomeConsolidatedAlerts> {
     final hasPlanAlert =
         entitlements.isPlanExpired || entitlements.lockedCollectionsCount > 0;
     final hasExpired = widget.expiredItems.isNotEmpty;
-    final hasAttention = widget.pendingActionNames.isNotEmpty &&
+    final hasAttention =
+        widget.pendingActionNames.isNotEmpty &&
         widget.dismissedAttentionCount != widget.pendingActionNames.length;
 
     final activeBanners = <Widget>[
-      if (hasExpired)
-        HomeExpiredAlert(expiredItems: widget.expiredItems),
+      if (hasExpired) HomeExpiredAlert(expiredItems: widget.expiredItems),
       if (hasAttention)
         HomeAttentionBanner(
           pendingActionNames: widget.pendingActionNames,
           dismissedAttentionCount: widget.dismissedAttentionCount,
           onDismiss: widget.onDismissAttention,
         ),
-      if (hasPlanAlert)
-        const HomePlanRestrictionBanner(),
+      if (hasPlanAlert) const HomePlanRestrictionBanner(),
     ];
 
     if (activeBanners.isEmpty) {
@@ -311,14 +328,18 @@ class _HomeConsolidatedAlertsState extends State<HomeConsolidatedAlerts> {
                 onTap: () => setState(() => _expanded = !_expanded),
                 borderRadius: BorderRadius.circular(12),
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 1),
+                          horizontal: 6,
+                          vertical: 1,
+                        ),
                         decoration: BoxDecoration(
                           color: fade.color(
                             FinavigColors.ink.withValues(alpha: 0.08),
@@ -374,8 +395,9 @@ class _HomeConsolidatedAlertsState extends State<HomeConsolidatedAlerts> {
               for (var i = 1; i < activeBanners.length; i++) activeBanners[i],
             ],
           ),
-          crossFadeState:
-              _expanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+          crossFadeState: _expanded
+              ? CrossFadeState.showSecond
+              : CrossFadeState.showFirst,
           duration: const Duration(milliseconds: 220),
         ),
       ],
@@ -402,8 +424,7 @@ class HomeExpiredAlert extends StatelessWidget {
     // through the theme transition factor so the swap cross-fades.
     final fade = FinavigTransition.of(context);
     final cardBg = fade.color(FinavigColors.redTint, FinavigColors.dangerBg);
-    final accentColor =
-        fade.color(FinavigColors.red, const Color(0xFFFCA5A5));
+    final accentColor = fade.color(FinavigColors.red, const Color(0xFFFCA5A5));
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),

@@ -6,10 +6,7 @@ import '../../config/app_guide_content.dart';
 import '../../theme/app_theme.dart';
 
 /// Show the comprehensive Finavig App Guide modal.
-Future<void> showAppGuideDialog(
-  BuildContext context, {
-  int initialPage = 0,
-}) {
+Future<void> showAppGuideDialog(BuildContext context, {int initialPage = 0}) {
   return showDialog<void>(
     context: context,
     useRootNavigator: true,
@@ -162,7 +159,7 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 14),
                     // Quick Chapter Selector Pills
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
@@ -187,7 +184,8 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
               Expanded(
                 child: PageView(
                   controller: _pageController,
-                  onPageChanged: (index) => setState(() => _currentPage = index),
+                  onPageChanged: (index) =>
+                      setState(() => _currentPage = index),
                   children: [
                     for (final chapter in _chapters)
                       _buildChapterSlide(chapter, isDark, theme),
@@ -224,8 +222,8 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
                             color: index == _currentPage
                                 ? FinavigColors.navyPrimary
                                 : (isDark
-                                    ? FinavigColors.slateLight
-                                    : FinavigColors.fog),
+                                      ? FinavigColors.slateLight
+                                      : FinavigColors.fog),
                             borderRadius: BorderRadius.circular(3),
                           ),
                         ),
@@ -289,8 +287,8 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
           color: active
               ? FinavigColors.navyPrimary
               : (isDark
-                  ? FinavigColors.slate.withOpacity(0.6)
-                  : FinavigColors.cloud),
+                    ? FinavigColors.slate.withOpacity(0.6)
+                    : FinavigColors.cloud),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Row(
@@ -312,8 +310,8 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
                 color: active
                     ? Colors.white
                     : (isDark
-                        ? FinavigColors.textSecondary
-                        : FinavigColors.textSecondaryLight),
+                          ? FinavigColors.textSecondary
+                          : FinavigColors.textSecondaryLight),
               ),
             ),
           ],
@@ -392,8 +390,9 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
           padding: const EdgeInsets.only(bottom: 10),
           child: Text(
             b.text,
-            style:
-                theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
           ),
         );
       case final GuideDocumentShowcaseBlock b:
@@ -444,8 +443,9 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
                     label: Text(b.label),
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(color: b.color),
-                      foregroundColor:
-                          isDark ? b.color : _darkenForLightMode(b),
+                      foregroundColor: isDark
+                          ? b.color
+                          : _darkenForLightMode(b),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -513,7 +513,7 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Text(
             b.subtitle,
             style: TextStyle(
@@ -535,7 +535,9 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isDark ? FinavigColors.slate.withOpacity(0.5) : FinavigColors.cloud,
+        color: isDark
+            ? FinavigColors.slate.withOpacity(0.5)
+            : FinavigColors.cloud,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isDark ? FinavigColors.slateLight : FinavigColors.mist,
@@ -559,12 +561,16 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
                 Text(
                   b.title,
                   style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 13),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
                 ),
                 Text(
                   b.subtitle,
-                  style:
-                      TextStyle(fontSize: 11, color: theme.colorScheme.outline),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: theme.colorScheme.outline,
+                  ),
                 ),
               ],
             ),
@@ -593,7 +599,9 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isDark ? FinavigColors.slate.withOpacity(0.5) : FinavigColors.cloud,
+        color: isDark
+            ? FinavigColors.slate.withOpacity(0.5)
+            : FinavigColors.cloud,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isDark ? FinavigColors.slateLight : FinavigColors.mist,
@@ -605,9 +613,13 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(b.title,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 13)),
+              Text(
+                b.title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
               Text(
                 b.percentLabel,
                 style: TextStyle(
@@ -627,8 +639,9 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
               value: b.fractionUsed,
               minHeight: 8,
               backgroundColor: isDark ? Colors.black26 : Colors.black12,
-              valueColor:
-                  const AlwaysStoppedAnimation<Color>(FinavigColors.emerald),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                FinavigColors.emerald,
+              ),
             ),
           ),
           const SizedBox(height: 6),
@@ -648,7 +661,9 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isDark ? FinavigColors.slate.withOpacity(0.5) : FinavigColors.cloud,
+        color: isDark
+            ? FinavigColors.slate.withOpacity(0.5)
+            : FinavigColors.cloud,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isDark ? FinavigColors.slateLight : FinavigColors.mist,
@@ -729,7 +744,9 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
                 Text(
                   b.title,
                   style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 13),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -810,11 +827,17 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(item.title,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 12)),
-              Text(item.subtitle,
-                  style: const TextStyle(fontSize: 11, color: Colors.grey)),
+              Text(
+                item.title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+              Text(
+                item.subtitle,
+                style: const TextStyle(fontSize: 11, color: Colors.grey),
+              ),
             ],
           ),
         ),
@@ -824,9 +847,10 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
             color: isDark ? FinavigColors.slate : FinavigColors.mist,
             borderRadius: BorderRadius.circular(4),
           ),
-          child: Text(item.country,
-              style:
-                  const TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
+          child: Text(
+            item.country,
+            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+          ),
         ),
       ],
     );

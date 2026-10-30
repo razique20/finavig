@@ -85,7 +85,7 @@ class HomeEmptyState extends StatelessWidget {
       child: Column(
         children: [
           EmptyStateIllustration(scene: EmptyStateScene.document, size: 104),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Text(
             'Nothing tracked yet',
             style: theme.textTheme.titleMedium?.copyWith(
@@ -100,7 +100,7 @@ class HomeEmptyState extends StatelessWidget {
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           TextButton.icon(
             onPressed: () async {
               await DemoDocumentService.instance.addDemoDocument();
@@ -126,16 +126,13 @@ class HomeUpcomingTile extends StatelessWidget {
     final theme = Theme.of(context);
     final fade = FinavigTransition.of(context);
     final isCritical = item.daysRemaining <= 7;
-    final accent =
-        isCritical ? FinavigColors.danger : FinavigColors.accent;
+    final accent = isCritical ? FinavigColors.danger : FinavigColors.accent;
 
     return Container(
       decoration: BoxDecoration(
         color: fade.color(Colors.white, FinavigColors.charcoal),
         borderRadius: BorderRadius.circular(FinavigRadius.card),
-        boxShadow: FinavigShadows.adaptive(
-          theme.brightness == Brightness.dark,
-        ),
+        boxShadow: FinavigShadows.adaptive(theme.brightness == Brightness.dark),
         border: Border.all(
           color: fade.color(
             Colors.transparent,
@@ -192,8 +189,8 @@ class HomeUpcomingTile extends StatelessWidget {
                     color: isCritical
                         ? FinavigColors.danger
                         : item.daysRemaining <= 30
-                            ? FinavigColors.warning
-                            : FinavigColors.safe,
+                        ? FinavigColors.warning
+                        : FinavigColors.safe,
                   ),
                 ),
               ],

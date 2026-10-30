@@ -78,7 +78,10 @@ class DocumentsEmptyState extends StatelessWidget {
                 style: FilledButton.styleFrom(
                   backgroundColor: fade.color(FinavigColors.ink, Colors.white),
                   foregroundColor: fade.color(Colors.white, FinavigColors.ink),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -99,7 +102,10 @@ class DocumentsEmptyState extends StatelessWidget {
                 icon: const Icon(Icons.filter_alt_off_rounded, size: 18),
                 label: const Text('Clear all filters'),
                 style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 12,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),

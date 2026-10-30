@@ -198,7 +198,7 @@ class _MonthlySummaryCardState extends State<MonthlySummaryCard> {
             ),
             // Content only when expanded.
             if (_visible) ...[
-              const SizedBox(height: 10),
+              const SizedBox(height: 14),
               if (narrative.isEmpty)
                 Text(
                   'Log your first transaction to unlock the monthly executive summary.',
@@ -213,7 +213,7 @@ class _MonthlySummaryCardState extends State<MonthlySummaryCard> {
                   style: theme.textTheme.bodyMedium?.copyWith(height: 1.45),
                 ),
               if (insights.isNotEmpty) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 ...insights
                     .take(4)
                     .map(

@@ -149,9 +149,7 @@ class UaeAuthorityCatalog {
       UaeEmirate.fujairah: 'Fujairah Municipality',
       UaeEmirate.uaq: 'UAQ Municipality',
     },
-    DocumentType.contracts: {
-      UaeEmirate.dubai: 'Dubai Courts',
-    },
+    DocumentType.contracts: {UaeEmirate.dubai: 'Dubai Courts'},
   };
 
   /// National defaults: documents issued by a federal body regardless of
@@ -192,10 +190,7 @@ class UaeAuthorityCatalog {
   /// authority first, then the emirate's list, then federal authorities
   /// (valid UAE-wide), de-duplicated. 'Other / Custom Authority...' is added
   /// by the widget as the trailing sentinel.
-  List<String> authorityOptionsFor(
-    DocumentTypeMeta meta,
-    UaeEmirate emirate,
-  ) {
+  List<String> authorityOptionsFor(DocumentTypeMeta meta, UaeEmirate emirate) {
     final options = <String>[];
     final suggested = suggestedAuthorityFor(meta, emirate);
     if (suggested != null) options.add(suggested);

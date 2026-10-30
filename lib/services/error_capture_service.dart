@@ -25,11 +25,11 @@ class CapturedError {
   });
 
   Map<String, dynamic> toJson() => {
-        'message': message,
-        'context': context,
-        'timestamp': timestamp.toIso8601String(),
-        'stackHead': stackHead,
-      };
+    'message': message,
+    'context': context,
+    'timestamp': timestamp.toIso8601String(),
+    'stackHead': stackHead,
+  };
 
   factory CapturedError.fromJson(Map<String, dynamic> json) {
     return CapturedError(
@@ -37,7 +37,7 @@ class CapturedError {
       context: json['context'] as String? ?? 'flutter',
       timestamp:
           DateTime.tryParse(json['timestamp'] as String? ?? '') ??
-              DateTime.now(),
+          DateTime.now(),
       stackHead: json['stackHead'] as String?,
     );
   }
@@ -103,11 +103,7 @@ class ErrorCaptureService {
 
   /// Record one error. Never throws, never blocks: persistence is
   /// fire-and-forget. All app error paths funnel through here.
-  void record(
-    Object error,
-    StackTrace? stack, {
-    String context = 'flutter',
-  }) {
+  void record(Object error, StackTrace? stack, {String context = 'flutter'}) {
     try {
       final entry = CapturedError(
         message: error.toString(),
@@ -205,20 +201,18 @@ class ErrorCaptureService {
         _lastSubmitted.remove(_lastSubmitted.keys.first);
       }
 
-      await client.from('error_reports').insert(
-        {
-          'user_id': userId,
-          'platform': Platform.operatingSystem,
-          'app_version': AppVersionService.currentAppVersion,
-          'device_info':
-              '${Platform.operatingSystem} ${Platform.operatingSystemVersion}',
-          'error_type': entry.context,
-          'error_message': entry.message,
-          'stack_trace': entry.stackHead,
-          'severity': 'error',
-          'created_at': entry.timestamp.toIso8601String(),
-        },
-      );
+      await client.from('error_reports').insert({
+        'user_id': userId,
+        'platform': Platform.operatingSystem,
+        'app_version': AppVersionService.currentAppVersion,
+        'device_info':
+            '${Platform.operatingSystem} ${Platform.operatingSystemVersion}',
+        'error_type': entry.context,
+        'error_message': entry.message,
+        'stack_trace': entry.stackHead,
+        'severity': 'error',
+        'created_at': entry.timestamp.toIso8601String(),
+      });
     } catch (e) {
       debugPrint('[ErrorCapture] _submitToAdmin failed: $e');
     }

@@ -35,66 +35,242 @@ class SmartCategoryEngine {
   /// Built-in GCC vendor & keyword dictionary.
   static final Map<FinanceCategory, List<String>> _dictionary = {
     FinanceCategory.foodAndBeverages: [
-      'talabat', 'deliveroo', 'zomato', 'noon food', 'carrefour', 'spinneys',
-      'lulu', 'choithrams', 'viva', 'starbucks', 'costa', 'mcdonalds', 'kfc',
-      'cafeteria', 'restaurant', 'cafe', 'lunch', 'dinner', 'breakfast',
-      'groceries', 'grocery', 'supermarket', 'snack', 'snacks', 'coffee',
-      'food', 'dining', 'meals', 'bakery', 'subway', 'hardees', 'burger',
-      'pizza', 'shawarma', 'karak', 'tea'
+      'talabat',
+      'deliveroo',
+      'zomato',
+      'noon food',
+      'carrefour',
+      'spinneys',
+      'lulu',
+      'choithrams',
+      'viva',
+      'starbucks',
+      'costa',
+      'mcdonalds',
+      'kfc',
+      'cafeteria',
+      'restaurant',
+      'cafe',
+      'lunch',
+      'dinner',
+      'breakfast',
+      'groceries',
+      'grocery',
+      'supermarket',
+      'snack',
+      'snacks',
+      'coffee',
+      'food',
+      'dining',
+      'meals',
+      'bakery',
+      'subway',
+      'hardees',
+      'burger',
+      'pizza',
+      'shawarma',
+      'karak',
+      'tea',
     ],
     FinanceCategory.transport: [
-      'salik', 'rta', 'uber', 'careem', 'taxi', 'petrol', 'enoc', 'adnoc',
-      'eppco', 'emarat', 'parking', 'mulkiya', 'moolkiya', 'transport',
-      'toll', 'fuel', 'bus', 'metro', 'gasoline', 'oil change', 'car wash'
+      'salik',
+      'rta',
+      'uber',
+      'careem',
+      'taxi',
+      'petrol',
+      'enoc',
+      'adnoc',
+      'eppco',
+      'emarat',
+      'parking',
+      'mulkiya',
+      'moolkiya',
+      'transport',
+      'toll',
+      'fuel',
+      'bus',
+      'metro',
+      'gasoline',
+      'oil change',
+      'car wash',
     ],
     FinanceCategory.utilities: [
-      'dewa', 'sewa', 'fewa', 'du', 'etisalat', 'virgin mobile', 'internet',
-      'wifi', 'phone', 'mobile', 'electricity', 'water', 'gas', 'utility',
-      'utilities', 'bill', 'cooling', 'empower', 'tabreed'
+      'dewa',
+      'sewa',
+      'fewa',
+      'du',
+      'etisalat',
+      'virgin mobile',
+      'internet',
+      'wifi',
+      'phone',
+      'mobile',
+      'electricity',
+      'water',
+      'gas',
+      'utility',
+      'utilities',
+      'bill',
+      'cooling',
+      'empower',
+      'tabreed',
     ],
     FinanceCategory.rent: [
-      'ejari', 'tenancy', 'landlord', 'rent', 'office rent', 'apartment rent',
-      'housing', 'real estate', 'lease', 'deposite'
+      'ejari',
+      'tenancy',
+      'landlord',
+      'rent',
+      'office rent',
+      'apartment rent',
+      'housing',
+      'real estate',
+      'lease',
+      'deposite',
     ],
     FinanceCategory.shopping: [
-      'amazon', 'noon', 'centerpoint', 'max', 'zara', 'h&m', 'namshi', 'mall',
-      'electronics', 'clothes', 'clothing', 'shoes', 'fashion', 'shopping',
-      'gift', 'gifts', 'store', 'boutique', 'ikea', 'sharaf dg', 'jumbo'
+      'amazon',
+      'noon',
+      'centerpoint',
+      'max',
+      'zara',
+      'h&m',
+      'namshi',
+      'mall',
+      'electronics',
+      'clothes',
+      'clothing',
+      'shoes',
+      'fashion',
+      'shopping',
+      'gift',
+      'gifts',
+      'store',
+      'boutique',
+      'ikea',
+      'sharaf dg',
+      'jumbo',
     ],
     FinanceCategory.medical: [
-      'aster', 'life pharmacy', 'boots', 'supercare', 'doctor', 'clinic',
-      'hospital', 'pharmacy', 'health', 'healthcare', 'dental', 'dentist',
-      'medicine', 'medicines', 'lab', 'checkup', 'nmc', 'mediclinic'
+      'aster',
+      'life pharmacy',
+      'boots',
+      'supercare',
+      'doctor',
+      'clinic',
+      'hospital',
+      'pharmacy',
+      'health',
+      'healthcare',
+      'dental',
+      'dentist',
+      'medicine',
+      'medicines',
+      'lab',
+      'checkup',
+      'nmc',
+      'mediclinic',
     ],
     FinanceCategory.entertainment: [
-      'vox', 'reel', 'cinema', 'netflix', 'spotify', 'playstation', 'xbox',
-      'event', 'tickets', 'movie', 'bowling', 'theme park', 'fun', 'game',
-      'gaming', 'concert', 'hbo', 'disney+'
+      'vox',
+      'reel',
+      'cinema',
+      'netflix',
+      'spotify',
+      'playstation',
+      'xbox',
+      'event',
+      'tickets',
+      'movie',
+      'bowling',
+      'theme park',
+      'fun',
+      'game',
+      'gaming',
+      'concert',
+      'hbo',
+      'disney+',
     ],
     FinanceCategory.software: [
-      'aws', 'google cloud', 'github', 'chatgpt', 'openai', 'figma', 'slack',
-      'zoom', 'adobe', 'microsoft', 'hostinger', 'software', 'saas', 'license',
-      'domain', 'godaddy', 'canva', 'jetbrains', 'vercel'
+      'aws',
+      'google cloud',
+      'github',
+      'chatgpt',
+      'openai',
+      'figma',
+      'slack',
+      'zoom',
+      'adobe',
+      'microsoft',
+      'hostinger',
+      'software',
+      'saas',
+      'license',
+      'domain',
+      'godaddy',
+      'canva',
+      'jetbrains',
+      'vercel',
     ],
     FinanceCategory.salaries: [
-      'salary', 'salaries', 'payroll', 'wage', 'wages', 'bonus', 'mohre',
-      'staff pay', 'freelancer', 'employee pay'
+      'salary',
+      'salaries',
+      'payroll',
+      'wage',
+      'wages',
+      'bonus',
+      'mohre',
+      'staff pay',
+      'freelancer',
+      'employee pay',
     ],
     FinanceCategory.marketing: [
-      'google ads', 'facebook ads', 'meta', 'tiktok ads', 'linkedin ads',
-      'marketing', 'campaign', 'promotion', 'advertising', 'flyers', 'pr'
+      'google ads',
+      'facebook ads',
+      'meta',
+      'tiktok ads',
+      'linkedin ads',
+      'marketing',
+      'campaign',
+      'promotion',
+      'advertising',
+      'flyers',
+      'pr',
     ],
     FinanceCategory.suppliers: [
-      'vendor', 'supplier', 'suppliers', 'wholesale', 'inventory', 'stock',
-      'materials', 'supply', 'packaging', 'boxes'
+      'vendor',
+      'supplier',
+      'suppliers',
+      'wholesale',
+      'inventory',
+      'stock',
+      'materials',
+      'supply',
+      'packaging',
+      'boxes',
     ],
     FinanceCategory.sales: [
-      'sales', 'client', 'customer', 'revenue', 'invoice', 'project payment',
-      'stripe', 'checkout', 'pos'
+      'sales',
+      'client',
+      'customer',
+      'revenue',
+      'invoice',
+      'project payment',
+      'stripe',
+      'checkout',
+      'pos',
     ],
     FinanceCategory.renewals: [
-      'trade licence', 'trade license', 'ded', 'det', 'gdrfa', 'visa',
-      'insurance', 'renewal', 'licence', 'license'
+      'trade licence',
+      'trade license',
+      'ded',
+      'det',
+      'gdrfa',
+      'visa',
+      'insurance',
+      'renewal',
+      'licence',
+      'license',
     ],
   };
 
@@ -165,7 +341,8 @@ class SmartCategoryEngine {
       final keywords = entry.value;
       for (final kw in keywords) {
         for (final token in rawTokens) {
-          if (token == kw || (kw.contains(' ') && title.toLowerCase().contains(kw))) {
+          if (token == kw ||
+              (kw.contains(' ') && title.toLowerCase().contains(kw))) {
             return CategoryPrediction(
               category: cat,
               confidence: 0.88,
@@ -184,7 +361,8 @@ class SmartCategoryEngine {
       final cat = entry.key;
       final keywords = entry.value;
       for (final kw in keywords) {
-        if (kw.contains(' ')) continue; // Skip multi-word phrases for fuzzy token distance
+        if (kw.contains(' '))
+          continue; // Skip multi-word phrases for fuzzy token distance
         for (final token in rawTokens) {
           if (token.length < 3 || kw.length < 3) continue;
           final dist = _levenshtein(token, kw);
@@ -258,8 +436,22 @@ class SmartCategoryEngine {
 
   bool _isStopWord(String word) {
     const stopWords = {
-      'paid', 'spent', 'bought', 'cost', 'fee', 'aed', 'dirhams', 'dhs',
-      'dhm', 'for', 'the', 'and', 'with', 'from', 'today', 'yesterday'
+      'paid',
+      'spent',
+      'bought',
+      'cost',
+      'fee',
+      'aed',
+      'dirhams',
+      'dhs',
+      'dhm',
+      'for',
+      'the',
+      'and',
+      'with',
+      'from',
+      'today',
+      'yesterday',
     };
     return stopWords.contains(word);
   }
@@ -275,8 +467,11 @@ class SmartCategoryEngine {
       v1[0] = i + 1;
       for (var j = 0; j < t.length; j++) {
         final cost = (s[i] == t[j]) ? 0 : 1;
-        v1[j + 1] = [v1[j] + 1, v0[j + 1] + 1, v0[j] + cost]
-            .reduce((a, b) => a < b ? a : b);
+        v1[j + 1] = [
+          v1[j] + 1,
+          v0[j + 1] + 1,
+          v0[j] + cost,
+        ].reduce((a, b) => a < b ? a : b);
       }
       for (var j = 0; j <= t.length; j++) {
         v0[j] = v1[j];

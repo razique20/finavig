@@ -15,10 +15,7 @@ import '../dialogs/app_guide_dialog.dart';
 class GettingStartedChecklistCard extends StatefulWidget {
   final VoidCallback? onOpenCollectionSwitcher;
 
-  const GettingStartedChecklistCard({
-    super.key,
-    this.onOpenCollectionSwitcher,
-  });
+  const GettingStartedChecklistCard({super.key, this.onOpenCollectionSwitcher});
 
   @override
   State<GettingStartedChecklistCard> createState() =>
@@ -44,8 +41,10 @@ class _GettingStartedChecklistCardState
 
   Future<void> _checkStatus() async {
     final prefs = await SharedPreferences.getInstance();
-    final isDismissed = prefs.getBool('gettingStartedChecklistDismissed') ?? false;
-    final isCollapsed = prefs.getBool('gettingStartedChecklistCollapsed') ?? false;
+    final isDismissed =
+        prefs.getBool('gettingStartedChecklistDismissed') ?? false;
+    final isCollapsed =
+        prefs.getBool('gettingStartedChecklistCollapsed') ?? false;
 
     final docs = await DocumentScannerService.instance.getAllItems();
     final hasDocs = docs.isNotEmpty;
@@ -57,7 +56,8 @@ class _GettingStartedChecklistCardState
     final collections = DocumentCollectionService.instance.collections;
     final hasMultiCol = collections.length > 1;
 
-    final aiUsed = await AiExecutiveSummaryService.instance.getUsedQuotaThisMonth();
+    final aiUsed = await AiExecutiveSummaryService.instance
+        .getUsedQuotaThisMonth();
     final hasAi = aiUsed > 0;
 
     if (mounted) {
@@ -205,18 +205,21 @@ class _GettingStartedChecklistCardState
                         ? Colors.white.withOpacity(0.08)
                         : Colors.black.withOpacity(0.06),
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      allDone ? FinavigColors.emerald : FinavigColors.navyPrimary,
+                      allDone
+                          ? FinavigColors.emerald
+                          : FinavigColors.navyPrimary,
                     ),
                   ),
                 ),
               ),
 
               if (!_collapsed) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 _checkItem(
                   context: context,
                   title: '1. Scan or add your first document',
-                  subtitle: 'Emirates ID, Trade License, Visa, Ejari or Insurance',
+                  subtitle:
+                      'Emirates ID, Trade License, Visa, Ejari or Insurance',
                   done: _hasDocuments,
                   actionLabel: 'Scan',
                   onTap: () => context.push('/scan'),
@@ -262,7 +265,10 @@ class _GettingStartedChecklistCardState
                         icon: const Icon(Icons.menu_book_rounded, size: 16),
                         label: const Text(
                           'Open Full App Guide',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         style: TextButton.styleFrom(
                           foregroundColor: FinavigColors.navyPrimary,
@@ -271,13 +277,16 @@ class _GettingStartedChecklistCardState
                       ),
                       TextButton(
                         onPressed: _dismiss,
-                        child: const Text('Hide', style: TextStyle(fontSize: 12)),
+                        child: const Text(
+                          'Hide',
+                          style: TextStyle(fontSize: 12),
+                        ),
                       ),
                     ],
                   ),
                 ),
               ] else
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
             ],
           ),
         ),
@@ -317,7 +326,9 @@ class _GettingStartedChecklistCardState
                 color: done
                     ? Colors.white
                     : FinavigColors.adaptiveIcon(
-                        context, theme.colorScheme.outline),
+                        context,
+                        theme.colorScheme.outline,
+                      ),
               ),
             ),
             const SizedBox(width: 12),
@@ -333,7 +344,9 @@ class _GettingStartedChecklistCardState
                       decoration: done ? TextDecoration.lineThrough : null,
                       color: done
                           ? theme.colorScheme.outline
-                          : (isDark ? FinavigColors.textPrimary : FinavigColors.textPrimaryLight),
+                          : (isDark
+                                ? FinavigColors.textPrimary
+                                : FinavigColors.textPrimaryLight),
                     ),
                   ),
                   Text(

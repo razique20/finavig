@@ -286,7 +286,7 @@ class _AiSummaryScreenState extends State<AiSummaryScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 14),
 
                   if (_insights.isEmpty)
                     Card(
@@ -425,7 +425,7 @@ class _AiSummaryScreenState extends State<AiSummaryScreen> {
             ),
           ),
           if (_usedQuota >= _quotaLimit) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -481,7 +481,7 @@ class _AiSummaryScreenState extends State<AiSummaryScreen> {
                   color: FinavigColors.cyanSecondary,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               Text(
                 'No Previous Summary Found',
                 style: theme.textTheme.titleMedium?.copyWith(
@@ -601,7 +601,7 @@ class _AiSummaryScreenState extends State<AiSummaryScreen> {
               ),
             ),
             if (_quotaExceeded) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               Row(
                 children: [
                   const Icon(

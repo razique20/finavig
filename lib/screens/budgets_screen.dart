@@ -122,138 +122,142 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
                   SliverToBoxAdapter(
                     child: Column(
                       children: [
-                  // Overall cap card.
-                  Card(
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(
-                        color: isOverAllocated
-                            ? theme.colorScheme.error
-                            : theme.colorScheme.outlineVariant,
-                      ),
-                    ),
-                    color: isOverAllocated
-                        ? theme.colorScheme.errorContainer.withValues(
-                            alpha: 0.15,
-                          )
-                        : theme.colorScheme.surfaceContainerLow,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
+                        // Overall cap card.
+                        Card(
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(
+                              color: isOverAllocated
+                                  ? theme.colorScheme.error
+                                  : theme.colorScheme.outlineVariant,
+                            ),
+                          ),
+                          color: isOverAllocated
+                              ? theme.colorScheme.errorContainer.withValues(
+                                  alpha: 0.15,
+                                )
+                              : theme.colorScheme.surfaceContainerLow,
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
                                   children: [
-                                    Icon(
-                                      Icons.account_balance_rounded,
-                                      size: 20,
-                                      color: isOverAllocated
-                                          ? theme.colorScheme.error
-                                          : theme.colorScheme.primary,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Flexible(
-                                      child: Text(
-                                        'Overall Monthly Budget',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: theme.textTheme.titleMedium
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.bold,
+                                    Expanded(
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.account_balance_rounded,
+                                            size: 20,
+                                            color: isOverAllocated
+                                                ? theme.colorScheme.error
+                                                : theme.colorScheme.primary,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Flexible(
+                                            child: Text(
+                                              'Overall Monthly Budget',
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: theme.textTheme.titleMedium
+                                                  ?.copyWith(
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
                                             ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    TextButton.icon(
+                                      onPressed: _showOverallBudgetSheet,
+                                      icon: Icon(
+                                        _overallBudget == null
+                                            ? Icons.add_rounded
+                                            : Icons.edit_rounded,
+                                        size: 16,
+                                      ),
+                                      label: Text(
+                                        _overallBudget == null
+                                            ? 'Set budget'
+                                            : 'Edit',
                                       ),
                                     ),
                                   ],
                                 ),
-                              ),
-                              TextButton.icon(
-                                onPressed: _showOverallBudgetSheet,
-                                icon: Icon(
-                                  _overallBudget == null
-                                      ? Icons.add_rounded
-                                      : Icons.edit_rounded,
-                                  size: 16,
-                                ),
-                                label: Text(
-                                  _overallBudget == null
-                                      ? 'Set budget'
-                                      : 'Edit',
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (_overallBudget != null) ...[
-                            const SizedBox(height: 8),
-                            Text(
-                              MoneyFormat.aed(_overallBudget!),
-                              style: theme.textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Row(
-                              mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Allocated: ${MoneyFormat.aed(totalAllocated)}',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: isOverAllocated
-                                        ? theme.colorScheme.error
-                                        : theme.colorScheme.onSurfaceVariant,
-                                    fontWeight: isOverAllocated
-                                        ? FontWeight.bold
-                                        : FontWeight.w500,
+                                if (_overallBudget != null) ...[
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    MoneyFormat.aed(_overallBudget!),
+                                    style: theme.textTheme.headlineSmall
+                                        ?.copyWith(fontWeight: FontWeight.bold),
                                   ),
-                                ),
-                                Text(
-                                  isOverAllocated
-                                      ? 'Over: ${MoneyFormat.aed(totalAllocated - _overallBudget!)}'
-                                      : 'Remaining: ${MoneyFormat.aed(_overallBudget! - totalAllocated)}',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: isOverAllocated
-                                        ? theme.colorScheme.error
-                                        : theme.colorScheme.primary,
-                                    fontWeight: FontWeight.w600,
+                                  const SizedBox(height: 6),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'Allocated: ${MoneyFormat.aed(totalAllocated)}',
+                                        style: theme.textTheme.bodyMedium
+                                            ?.copyWith(
+                                              color: isOverAllocated
+                                                  ? theme.colorScheme.error
+                                                  : theme
+                                                        .colorScheme
+                                                        .onSurfaceVariant,
+                                              fontWeight: isOverAllocated
+                                                  ? FontWeight.bold
+                                                  : FontWeight.w500,
+                                            ),
+                                      ),
+                                      Text(
+                                        isOverAllocated
+                                            ? 'Over: ${MoneyFormat.aed(totalAllocated - _overallBudget!)}'
+                                            : 'Remaining: ${MoneyFormat.aed(_overallBudget! - totalAllocated)}',
+                                        style: theme.textTheme.bodyMedium
+                                            ?.copyWith(
+                                              color: isOverAllocated
+                                                  ? theme.colorScheme.error
+                                                  : theme.colorScheme.primary,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                      ),
+                                    ],
                                   ),
-                                ),
+                                  const SizedBox(height: 14),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(4),
+                                    child: LinearProgressIndicator(
+                                      value: (totalAllocated / _overallBudget!)
+                                          .clamp(0.0, 1.0),
+                                      minHeight: 8,
+                                      backgroundColor: theme
+                                          .colorScheme
+                                          .surfaceContainerHighest,
+                                      color: isOverAllocated
+                                          ? theme.colorScheme.error
+                                          : (totalAllocated == _overallBudget
+                                                ? FinavigColors.warning
+                                                : theme.colorScheme.primary),
+                                    ),
+                                  ),
+                                ] else ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'No overall monthly budget set. Tap "Set budget" to cap your total monthly spending across all categories.',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
                               ],
                             ),
-                            const SizedBox(height: 10),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(4),
-                              child: LinearProgressIndicator(
-                                value: (totalAllocated / _overallBudget!)
-                                    .clamp(0.0, 1.0),
-                                minHeight: 8,
-                                backgroundColor:
-                                    theme.colorScheme.surfaceContainerHighest,
-                                color: isOverAllocated
-                                    ? theme.colorScheme.error
-                                    : (totalAllocated == _overallBudget
-                                          ? FinavigColors.warning
-                                          : theme.colorScheme.primary),
-                              ),
-                            ),
-                          ] else ...[
-                            const SizedBox(height: 4),
-                            Text(
-                              'No overall monthly budget set. Tap "Set budget" to cap your total monthly spending across all categories.',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
                       ],
                     ),
                   ),
@@ -279,8 +283,8 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
                             budget: budget,
                             spent: spent,
                             onEdit: () => _showBudgetSheet(existing: budget),
-                            onDelete: () => FinanceService.instance
-                                .deleteBudget(budget.id),
+                            onDelete: () =>
+                                FinanceService.instance.deleteBudget(budget.id),
                           ),
                         );
                       },
@@ -291,8 +295,11 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
     );
   }
 
-  Widget _hintCard(ThemeData theme, String text,
-      {EmptyStateScene scene = EmptyStateScene.wallet}) {
+  Widget _hintCard(
+    ThemeData theme,
+    String text, {
+    EmptyStateScene scene = EmptyStateScene.wallet,
+  }) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -303,7 +310,7 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
       child: Column(
         children: [
           EmptyStateIllustration(scene: scene, size: 88),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
           Text(
             text,
             style: theme.textTheme.bodySmall?.copyWith(

@@ -27,8 +27,9 @@ class BudgetAlertEvent {
 
   bool get isExceeded => threshold >= BudgetThresholds.exceeded;
 
-  String get title =>
-      isExceeded ? 'Budget exceeded — ${budget.category.displayName}' : 'Close to budget — ${budget.category.displayName}';
+  String get title => isExceeded
+      ? 'Budget exceeded — ${budget.category.displayName}'
+      : 'Close to budget — ${budget.category.displayName}';
 
   String get body {
     final pct = (threshold * 100).toStringAsFixed(0);
@@ -138,7 +139,10 @@ class BudgetAlertService {
     for (final r in results) {
       // 100% first so a budget that jumps straight past 80% to 100% only
       // fires the stronger alert.
-      for (final threshold in const [BudgetThresholds.exceeded, BudgetThresholds.near]) {
+      for (final threshold in const [
+        BudgetThresholds.exceeded,
+        BudgetThresholds.near,
+      ]) {
         if (!r.shouldAlertAt(threshold, _firedKeys)) continue;
         _firedKeys.add(r.alertKey(threshold));
         fired = true;

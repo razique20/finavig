@@ -10,10 +10,7 @@ import '../theme/app_theme.dart';
 class CashFlowForecastCard extends StatefulWidget {
   final CashFlowForecast forecast;
 
-  const CashFlowForecastCard({
-    super.key,
-    required this.forecast,
-  });
+  const CashFlowForecastCard({super.key, required this.forecast});
 
   @override
   State<CashFlowForecastCard> createState() => _CashFlowForecastCardState();
@@ -28,22 +25,23 @@ class _CashFlowForecastCardState extends State<CashFlowForecastCard> {
     final isDark = theme.brightness == Brightness.dark;
     final forecast = widget.forecast;
 
-    final selectedPoint = _selectedDayIndex != null &&
+    final selectedPoint =
+        _selectedDayIndex != null &&
             _selectedDayIndex! >= 0 &&
             _selectedDayIndex! < forecast.points.length
         ? forecast.points[_selectedDayIndex!]
         : null;
 
     final netPositive = forecast.netChange >= 0;
-    final primaryLineColor = netPositive ? FinavigColors.safe : FinavigColors.warning;
+    final primaryLineColor = netPositive
+        ? FinavigColors.safe
+        : FinavigColors.warning;
 
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: theme.colorScheme.outlineVariant.withAlpha(80),
-        ),
+        side: BorderSide(color: theme.colorScheme.outlineVariant.withAlpha(80)),
       ),
       color: isDark ? const Color(0xFF1E2430) : Colors.white,
       child: Padding(
@@ -97,8 +95,11 @@ class _CashFlowForecastCardState extends State<CashFlowForecastCard> {
                   child: _MetricTile(
                     label: 'Projected Balance (90D)',
                     value: MoneyFormat.aed(forecast.projectedEndBalance),
-                    badgeText: '${netPositive ? '+' : ''}${forecast.percentChange.toStringAsFixed(1)}%',
-                    badgeColor: netPositive ? FinavigColors.safe : FinavigColors.danger,
+                    badgeText:
+                        '${netPositive ? '+' : ''}${forecast.percentChange.toStringAsFixed(1)}%',
+                    badgeColor: netPositive
+                        ? FinavigColors.safe
+                        : FinavigColors.danger,
                     isPositive: netPositive,
                   ),
                 ),
@@ -107,24 +108,36 @@ class _CashFlowForecastCardState extends State<CashFlowForecastCard> {
                   child: _MetricTile(
                     label: 'Renewal Outflows',
                     value: MoneyFormat.aed(forecast.totalRenewalOutflow),
-                    badgeText: forecast.totalRenewalOutflow > 0 ? 'Document Fees' : 'No Outflows',
+                    badgeText: forecast.totalRenewalOutflow > 0
+                        ? 'Document Fees'
+                        : 'No Outflows',
                     badgeColor: FinavigColors.caution,
                   ),
                 ),
               ],
             ),
 
-            if (forecast.lowestBalance < 0 || forecast.lowestBalance < forecast.startingBalance * 0.5) ...[
-              const SizedBox(height: 12),
+            if (forecast.lowestBalance < 0 ||
+                forecast.lowestBalance < forecast.startingBalance * 0.5) ...[
+              const SizedBox(height: 16),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
-                  color: (forecast.lowestBalance < 0 ? FinavigColors.danger : FinavigColors.caution)
-                      .withAlpha(25),
+                  color:
+                      (forecast.lowestBalance < 0
+                              ? FinavigColors.danger
+                              : FinavigColors.caution)
+                          .withAlpha(25),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: (forecast.lowestBalance < 0 ? FinavigColors.danger : FinavigColors.caution)
-                        .withAlpha(80),
+                    color:
+                        (forecast.lowestBalance < 0
+                                ? FinavigColors.danger
+                                : FinavigColors.caution)
+                            .withAlpha(80),
                   ),
                 ),
                 child: Row(
@@ -133,7 +146,9 @@ class _CashFlowForecastCardState extends State<CashFlowForecastCard> {
                       forecast.lowestBalance < 0
                           ? Icons.warning_amber_rounded
                           : Icons.info_outline_rounded,
-                      color: forecast.lowestBalance < 0 ? FinavigColors.danger : FinavigColors.caution,
+                      color: forecast.lowestBalance < 0
+                          ? FinavigColors.danger
+                          : FinavigColors.caution,
                       size: 18,
                     ),
                     const SizedBox(width: 8),
@@ -143,7 +158,9 @@ class _CashFlowForecastCardState extends State<CashFlowForecastCard> {
                             ? 'Warning: Projected negative balance of ${MoneyFormat.aed(forecast.lowestBalance)} on ${DateFormat('d MMM').format(forecast.lowestBalanceDate)}'
                             : 'Lowest projected point: ${MoneyFormat.aed(forecast.lowestBalance)} on ${DateFormat('d MMM').format(forecast.lowestBalanceDate)}',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: forecast.lowestBalance < 0 ? FinavigColors.danger : theme.colorScheme.onSurface,
+                          color: forecast.lowestBalance < 0
+                              ? FinavigColors.danger
+                              : theme.colorScheme.onSurface,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -161,8 +178,16 @@ class _CashFlowForecastCardState extends State<CashFlowForecastCard> {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   return GestureDetector(
-                    onPanUpdate: (details) => _handleTouch(details.localPosition, constraints.maxWidth, forecast.points.length),
-                    onTapDown: (details) => _handleTouch(details.localPosition, constraints.maxWidth, forecast.points.length),
+                    onPanUpdate: (details) => _handleTouch(
+                      details.localPosition,
+                      constraints.maxWidth,
+                      forecast.points.length,
+                    ),
+                    onTapDown: (details) => _handleTouch(
+                      details.localPosition,
+                      constraints.maxWidth,
+                      forecast.points.length,
+                    ),
                     child: CustomPaint(
                       size: Size(constraints.maxWidth, 180),
                       painter: _CashFlowChartPainter(
@@ -186,19 +211,27 @@ class _CashFlowForecastCardState extends State<CashFlowForecastCard> {
               children: [
                 Text(
                   'Today (${DateFormat('d MMM').format(forecast.startDate)})',
-                  style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.outline),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.outline,
+                  ),
                 ),
                 Text(
                   '30D',
-                  style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.outline),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.outline,
+                  ),
                 ),
                 Text(
                   '60D',
-                  style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.outline),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.outline,
+                  ),
                 ),
                 Text(
                   '90D (${DateFormat('d MMM').format(forecast.endDate)})',
-                  style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.outline),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.outline,
+                  ),
                 ),
               ],
             ),
@@ -222,7 +255,9 @@ class _CashFlowForecastCardState extends State<CashFlowForecastCard> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          DateFormat('EEEE, d MMMM yyyy').format(selectedPoint.date),
+                          DateFormat(
+                            'EEEE, d MMMM yyyy',
+                          ).format(selectedPoint.date),
                           style: theme.textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -241,13 +276,17 @@ class _CashFlowForecastCardState extends State<CashFlowForecastCard> {
                       children: [
                         Text(
                           'Projected Balance:',
-                          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.outline,
+                          ),
                         ),
                         Text(
                           MoneyFormat.aed(selectedPoint.balance),
                           style: theme.textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: selectedPoint.balance >= 0 ? FinavigColors.safe : FinavigColors.danger,
+                            color: selectedPoint.balance >= 0
+                                ? FinavigColors.safe
+                                : FinavigColors.danger,
                           ),
                         ),
                       ],
@@ -271,12 +310,14 @@ class _CashFlowForecastCardState extends State<CashFlowForecastCard> {
                                 ev.isDocumentRenewal
                                     ? Icons.assignment_rounded
                                     : (ev.kind == FinanceKind.income
-                                        ? Icons.arrow_downward_rounded
-                                        : Icons.arrow_outward_rounded),
+                                          ? Icons.arrow_downward_rounded
+                                          : Icons.arrow_outward_rounded),
                                 size: 14,
                                 color: ev.isDocumentRenewal
                                     ? FinavigColors.caution
-                                    : (ev.kind == FinanceKind.income ? FinavigColors.safe : Colors.red),
+                                    : (ev.kind == FinanceKind.income
+                                          ? FinavigColors.safe
+                                          : Colors.red),
                               ),
                               const SizedBox(width: 6),
                               Expanded(
@@ -290,7 +331,9 @@ class _CashFlowForecastCardState extends State<CashFlowForecastCard> {
                                 '${ev.kind == FinanceKind.income ? '+' : '-'}${MoneyFormat.aed(ev.amount)}',
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   fontWeight: FontWeight.w600,
-                                  color: ev.kind == FinanceKind.income ? FinavigColors.safe : Colors.red,
+                                  color: ev.kind == FinanceKind.income
+                                      ? FinavigColors.safe
+                                      : Colors.red,
                                 ),
                               ),
                             ],
@@ -309,7 +352,10 @@ class _CashFlowForecastCardState extends State<CashFlowForecastCard> {
 
   void _handleTouch(Offset localPos, double chartWidth, int totalPoints) {
     if (chartWidth <= 0 || totalPoints <= 0) return;
-    final index = (localPos.dx / chartWidth * (totalPoints - 1)).round().clamp(0, totalPoints - 1);
+    final index = (localPos.dx / chartWidth * (totalPoints - 1)).round().clamp(
+      0,
+      totalPoints - 1,
+    );
     setState(() {
       _selectedDayIndex = index;
     });
@@ -428,7 +474,8 @@ class _CashFlowChartPainter extends CustomPainter {
     final effectiveRange = (maxY - minY) == 0 ? 1.0 : (maxY - minY);
 
     double getX(int index) => (index / (totalPoints - 1)) * size.width;
-    double getY(double val) => size.height - ((val - minY) / effectiveRange) * size.height;
+    double getY(double val) =>
+        size.height - ((val - minY) / effectiveRange) * size.height;
 
     // Draw horizontal grid lines (0 balance line if within range, plus mid line)
     final gridPaint = Paint()
@@ -447,7 +494,11 @@ class _CashFlowChartPainter extends CustomPainter {
     }
 
     // Mid grid line
-    canvas.drawLine(Offset(0, size.height / 2), Offset(size.width, size.height / 2), gridPaint);
+    canvas.drawLine(
+      Offset(0, size.height / 2),
+      Offset(size.width, size.height / 2),
+      gridPaint,
+    );
 
     // Build line path & area path
     final linePath = Path();
@@ -478,14 +529,13 @@ class _CashFlowChartPainter extends CustomPainter {
     final areaGradient = LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
-      colors: [
-        primaryColor.withAlpha(60),
-        primaryColor.withAlpha(0),
-      ],
+      colors: [primaryColor.withAlpha(60), primaryColor.withAlpha(0)],
     );
 
     final areaPaint = Paint()
-      ..shader = areaGradient.createShader(Rect.fromLTWH(0, 0, size.width, size.height))
+      ..shader = areaGradient.createShader(
+        Rect.fromLTWH(0, 0, size.width, size.height),
+      )
       ..style = PaintingStyle.fill;
     canvas.drawPath(areaPath, areaPaint);
 
@@ -517,7 +567,9 @@ class _CashFlowChartPainter extends CustomPainter {
     }
 
     // Draw Selected Indicator Line & Cursor Dot
-    if (selectedIndex != null && selectedIndex! >= 0 && selectedIndex! < totalPoints) {
+    if (selectedIndex != null &&
+        selectedIndex! >= 0 &&
+        selectedIndex! < totalPoints) {
       final sx = getX(selectedIndex!);
       final sy = getY(points[selectedIndex!].balance);
 

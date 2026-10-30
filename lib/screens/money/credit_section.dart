@@ -78,7 +78,7 @@ class CreditSection extends StatelessWidget {
           collapsed: collapsed,
           children: [
             _TotalsRow(totals: totals),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             for (final entry in sorted) ...[
               _CreditCard(
                 entry: entry,
@@ -88,7 +88,7 @@ class CreditSection extends StatelessWidget {
                 onSettle: () => onSettle(entry),
                 onWhatsApp: () => _showFollowUpSheet(context, entry),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 14),
             ],
           ],
         ),
@@ -405,7 +405,7 @@ class _CreditCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
           Row(
             children: [
               if (settled)
@@ -527,7 +527,10 @@ class _ExtensionBadge extends StatelessWidget {
           Icon(
             Icons.event_repeat_rounded,
             size: 12,
-            color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline),
+            color: FinavigColors.adaptiveIcon(
+              context,
+              theme.colorScheme.outline,
+            ),
           ),
           const SizedBox(width: 4),
           Text(
@@ -581,7 +584,7 @@ class _WhatsAppTemplateSheet extends StatelessWidget {
               message: CreditMath.followUpMessage(entry, friendly: true),
               onTap: () => Navigator.pop(context, true),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 14),
             _TemplateTile(
               icon: Icons.article_rounded,
               title: 'Standard',
@@ -622,7 +625,14 @@ class _TemplateTile extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, size: 18, color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline)),
+              Icon(
+                icon,
+                size: 18,
+                color: FinavigColors.adaptiveIcon(
+                  context,
+                  theme.colorScheme.outline,
+                ),
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -643,7 +653,10 @@ class _TemplateTile extends StatelessWidget {
               Icon(
                 Icons.open_in_new_rounded,
                 size: 16,
-                color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline),
+                color: FinavigColors.adaptiveIcon(
+                  context,
+                  theme.colorScheme.outline,
+                ),
               ),
             ],
           ),

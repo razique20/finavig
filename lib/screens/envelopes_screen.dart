@@ -119,9 +119,13 @@ class _EnvelopesScreenState extends State<EnvelopesScreen> {
                                   // Step follows the envelope's plan
                                   // (monthly contribution, or AED 50).
                                   onAdd: () => _adjustEnvelope(
-                                      envelope, envelope.adjustStep),
+                                    envelope,
+                                    envelope.adjustStep,
+                                  ),
                                   onWithdraw: () => _adjustEnvelope(
-                                      envelope, -envelope.adjustStep),
+                                    envelope,
+                                    -envelope.adjustStep,
+                                  ),
                                   onDelete: () => FinanceService.instance
                                       .deleteEnvelope(envelope.id),
                                 ),
@@ -135,8 +139,11 @@ class _EnvelopesScreenState extends State<EnvelopesScreen> {
     );
   }
 
-  Widget _hintCard(ThemeData theme, String text,
-      {EmptyStateScene scene = EmptyStateScene.wallet}) {
+  Widget _hintCard(
+    ThemeData theme,
+    String text, {
+    EmptyStateScene scene = EmptyStateScene.wallet,
+  }) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -147,7 +154,7 @@ class _EnvelopesScreenState extends State<EnvelopesScreen> {
       child: Column(
         children: [
           EmptyStateIllustration(scene: scene, size: 88),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
           Text(
             text,
             style: theme.textTheme.bodySmall?.copyWith(

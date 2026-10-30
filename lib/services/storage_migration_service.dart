@@ -46,7 +46,9 @@ class StorageMigrationService {
       if (legacyDocs.existsSync()) {
         for (final entity in legacyDocs.listSync()) {
           if (entity is! Directory) continue;
-          final target = Directory('${newDocs.path}/${entity.uri.pathSegments.reversed.skip(1).first}');
+          final target = Directory(
+            '${newDocs.path}/${entity.uri.pathSegments.reversed.skip(1).first}',
+          );
           if (target.existsSync()) continue;
           entity.renameSync(target.path);
         }

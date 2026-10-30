@@ -53,8 +53,9 @@ class _ProfileBackupNudgeState extends State<ProfileBackupNudge> {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: FinavigColors.warning
-              .withValues(alpha: fade.value(0.08, 0.12)),
+          color: FinavigColors.warning.withValues(
+            alpha: fade.value(0.08, 0.12),
+          ),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: FinavigColors.warning.withOpacity(0.35)),
         ),

@@ -168,10 +168,14 @@ class DocumentCard extends StatelessWidget {
                       if (item.folderId != null) ...[
                         Builder(
                           builder: (ctx) {
-                            final folder = DocumentFolderService.instance.folderById(item.folderId!);
+                            final folder = DocumentFolderService.instance
+                                .folderById(item.folderId!);
                             if (folder == null) return const SizedBox.shrink();
                             return Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: folder.color.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(6),
@@ -183,7 +187,11 @@ class DocumentCard extends StatelessWidget {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(folder.iconData, size: 11, color: folder.color),
+                                  Icon(
+                                    folder.iconData,
+                                    size: 11,
+                                    color: folder.color,
+                                  ),
                                   const SizedBox(width: 4),
                                   Text(
                                     folder.name,

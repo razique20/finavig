@@ -114,9 +114,9 @@ class BillSpikeAlertsCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 14),
             for (var i = 0; i < anomalies.length; i++) ...[
-              if (i > 0) const Divider(height: 12),
+              if (i > 0) const Divider(height: 14),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -304,9 +304,9 @@ class SpendingPaceCard extends StatelessWidget {
         CollapsibleSectionBody(
           collapsed: collapsed,
           children: [
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             TintedCardBox(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -319,14 +319,18 @@ class SpendingPaceCard extends StatelessWidget {
                           MoneyFormat.aed(dailyPace),
                         ),
                       ),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: _paceColumn(
                           theme,
                           'Projected month-end',
                           MoneyFormat.aed(projected),
-                          color: summary.net < 0 ? FinavigColors.danger : FinavigColors.safe,
+                          color: summary.net < 0
+                              ? FinavigColors.danger
+                              : FinavigColors.safe,
                         ),
                       ),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: _paceColumn(
                           theme,
@@ -334,14 +338,16 @@ class SpendingPaceCard extends StatelessWidget {
                           summary.net > 0
                               ? MoneyFormat.aed(affordableDaily)
                               : '—',
-                          color: summary.net > 0 ? FinavigColors.safe : FinavigColors.danger,
+                          color: summary.net > 0
+                              ? FinavigColors.safe
+                              : FinavigColors.danger,
                         ),
                       ),
                     ],
                   ),
                   if (summary.net < 0 && remainingDays > 0)
                     Padding(
-                      padding: const EdgeInsets.only(top: 8),
+                      padding: const EdgeInsets.only(top: 12),
                       child: Text(
                         'You are spending more than you earn this month — consider cutting back for the remaining $remainingDays days.',
                         style: theme.textTheme.bodySmall?.copyWith(
@@ -508,13 +514,13 @@ class _WeeklySpendChartState extends State<WeeklySpendChart> {
         CollapsibleSectionBody(
           collapsed: widget.collapsed,
           children: [
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             TintedCardBox(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
               child: Column(
                 children: [
                   SizedBox(
-                    height: 120,
+                    height: 130,
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
@@ -529,7 +535,7 @@ class _WeeklySpendChartState extends State<WeeklySpendChart> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
                       for (final b in buckets) ...[
@@ -637,7 +643,7 @@ class CategoryBreakdownCard extends StatelessWidget {
         CollapsibleSectionBody(
           collapsed: collapsed,
           children: [
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             if (entries.isEmpty)
               const HintCard(
                 'Add expenses to see a breakdown by category.',
@@ -664,6 +670,7 @@ class CategoryBreakdownCard extends StatelessWidget {
                               ),
                             ),
                           ),
+                          const SizedBox(width: 12),
                           Text(
                             '${(e.value / (totalExpense <= 0 ? 1 : totalExpense) * 100).toStringAsFixed(0)}%',
                             style: theme.textTheme.bodySmall?.copyWith(
@@ -680,7 +687,7 @@ class CategoryBreakdownCard extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
                       ClipRRect(
                         borderRadius: BorderRadius.circular(3),
                         child: LinearProgressIndicator(
@@ -695,7 +702,7 @@ class CategoryBreakdownCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 16),
                     ],
                   ],
                 ),
@@ -769,7 +776,7 @@ class _TopExpensesCardState extends State<TopExpensesCard> {
         CollapsibleSectionBody(
           collapsed: widget.collapsed,
           children: [
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             if (top.isEmpty)
               const HintCard(
                 'No expenses recorded this month yet.',
@@ -793,7 +800,9 @@ class _TopExpensesCardState extends State<TopExpensesCard> {
                           width: 32,
                           height: 32,
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.1,
+                            ),
                             shape: BoxShape.circle,
                           ),
                           child: Center(
@@ -906,7 +915,7 @@ class _RenewalBreakdownCardState extends State<RenewalBreakdownCard> {
           CollapsibleSectionBody(
             collapsed: widget.collapsed,
             children: [
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               Container(
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surfaceContainerHighest.withValues(
@@ -924,9 +933,8 @@ class _RenewalBreakdownCardState extends State<RenewalBreakdownCard> {
                           width: 36,
                           height: 36,
                           decoration: BoxDecoration(
-                            color: upcoming[idx].docType.primaryColor.withValues(
-                              alpha: 0.12,
-                            ),
+                            color: upcoming[idx].docType.primaryColor
+                                .withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Icon(

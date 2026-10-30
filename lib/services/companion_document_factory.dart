@@ -37,19 +37,19 @@ ExpiryItem buildCompanionItem({
     reminderStatus: daysOffset <= 7
         ? 4
         : daysOffset <= 30
-            ? 3
-            : daysOffset <= 60
-                ? 2
-                : daysOffset <= 90
-                    ? 1
-                    : 0,
+        ? 3
+        : daysOffset <= 60
+        ? 2
+        : daysOffset <= 90
+        ? 1
+        : 0,
     urgency: daysOffset <= 7
         ? UrgencyLevel.critical
         : daysOffset <= 30
-            ? UrgencyLevel.high
-            : daysOffset <= 60
-                ? UrgencyLevel.medium
-                : UrgencyLevel.low,
+        ? UrgencyLevel.high
+        : daysOffset <= 60
+        ? UrgencyLevel.medium
+        : UrgencyLevel.low,
     assignedTo: null,
     documentDate: ExpiryItem.formatDate(now),
     renewalSteps: [
@@ -60,8 +60,9 @@ ExpiryItem buildCompanionItem({
       'Receive renewed document',
     ],
     renewalAuthorities: [meta.renewalAuthority],
-    renewalWarning:
-        daysOffset <= 30 ? 'Expires soon — renew to avoid penalties' : null,
+    renewalWarning: daysOffset <= 30
+        ? 'Expires soon — renew to avoid penalties'
+        : null,
     expiresAt: expiresAt,
   );
 }

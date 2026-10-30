@@ -210,7 +210,7 @@ class _CreditFormSheetState extends State<CreditFormSheet> {
                   border: const OutlineInputBorder(),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               TextField(
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
@@ -220,7 +220,7 @@ class _CreditFormSheetState extends State<CreditFormSheet> {
                   border: OutlineInputBorder(),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               TextField(
                 controller: _amountController,
                 keyboardType: const TextInputType.numberWithOptions(
@@ -233,7 +233,7 @@ class _CreditFormSheetState extends State<CreditFormSheet> {
                   border: const OutlineInputBorder(),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               TextField(
                 controller: _descriptionController,
                 textCapitalization: TextCapitalization.sentences,
@@ -249,7 +249,7 @@ class _CreditFormSheetState extends State<CreditFormSheet> {
                   border: const OutlineInputBorder(),
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 8),
               InkWell(
                 onTap: _pickStartDate,
                 borderRadius: BorderRadius.circular(4),
@@ -266,7 +266,10 @@ class _CreditFormSheetState extends State<CreditFormSheet> {
                       Icon(
                         Icons.calendar_today_rounded,
                         size: 16,
-                        color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline),
+                        color: FinavigColors.adaptiveIcon(
+                          context,
+                          theme.colorScheme.outline,
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -279,7 +282,7 @@ class _CreditFormSheetState extends State<CreditFormSheet> {
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               InkWell(
                 onTap: _pickDeadline,
                 borderRadius: BorderRadius.circular(4),
@@ -293,7 +296,10 @@ class _CreditFormSheetState extends State<CreditFormSheet> {
                       Icon(
                         Icons.calendar_today_rounded,
                         size: 16,
-                        color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline),
+                        color: FinavigColors.adaptiveIcon(
+                          context,
+                          theme.colorScheme.outline,
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -309,8 +315,7 @@ class _CreditFormSheetState extends State<CreditFormSheet> {
               if (!isEdit)
                 CheckboxListTile(
                   value: _logInMoney,
-                  onChanged: (v) =>
-                      setState(() => _logInMoney = v ?? false),
+                  onChanged: (v) => setState(() => _logInMoney = v ?? false),
                   controlAffinity: ListTileControlAffinity.leading,
                   contentPadding: EdgeInsets.zero,
                   title: const Text('Also record this in Money'),
@@ -320,7 +325,7 @@ class _CreditFormSheetState extends State<CreditFormSheet> {
                         : 'Logged as expense — cash you paid out',
                   ),
                 ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               FilledButton(
                 onPressed: _isValid ? _submit : null,
                 child: Text(isEdit ? 'Save changes' : 'Save'),

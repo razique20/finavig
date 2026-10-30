@@ -43,7 +43,9 @@ class BudgetRow extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+          color: theme.colorScheme.surfaceContainerHighest.withValues(
+            alpha: 0.4,
+          ),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -63,7 +65,9 @@ class BudgetRow extends StatelessWidget {
                 Text(
                   '${MoneyFormat.aed(spent)} / ${MoneyFormat.aed(limit)}',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: over ? FinavigColors.danger : theme.colorScheme.outline,
+                    color: over
+                        ? FinavigColors.danger
+                        : theme.colorScheme.outline,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -136,7 +140,11 @@ class EnvelopeCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.savings_rounded, size: 18, color: FinavigColors.safe),
+              const Icon(
+                Icons.savings_rounded,
+                size: 18,
+                color: FinavigColors.safe,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -168,7 +176,9 @@ class EnvelopeCard extends StatelessWidget {
               value: envelope.progress,
               minHeight: 6,
               backgroundColor: theme.colorScheme.surfaceContainerHighest,
-              valueColor: const AlwaysStoppedAnimation<Color>(FinavigColors.safe),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                FinavigColors.safe,
+              ),
             ),
           ),
           const SizedBox(height: 8),
@@ -217,11 +227,7 @@ class TransactionTile extends StatelessWidget {
   final FinanceTransaction transaction;
   final VoidCallback? onTap;
 
-  const TransactionTile({
-    super.key,
-    required this.transaction,
-    this.onTap,
-  });
+  const TransactionTile({super.key, required this.transaction, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -358,7 +364,9 @@ class RecurringCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+          color: theme.colorScheme.surfaceContainerHighest.withValues(
+            alpha: 0.4,
+          ),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -370,7 +378,10 @@ class RecurringCard extends StatelessWidget {
                   size: 18,
                   color: template.isActive
                       ? amountColor
-                      : FinavigColors.adaptiveIcon(context, theme.colorScheme.outline),
+                      : FinavigColors.adaptiveIcon(
+                          context,
+                          theme.colorScheme.outline,
+                        ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -411,7 +422,10 @@ class RecurringCard extends StatelessWidget {
                       ? Icons.play_circle_outline_rounded
                       : Icons.pause_circle_outline_rounded,
                   size: 14,
-                  color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline),
+                  color: FinavigColors.adaptiveIcon(
+                    context,
+                    theme.colorScheme.outline,
+                  ),
                 ),
                 const SizedBox(width: 4),
                 Expanded(

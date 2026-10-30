@@ -106,10 +106,7 @@ Future<void> exportUserData(BuildContext context) async {
     }
     // saveFile cancelled or unsupported — fall back to the share sheet.
     await SharePlus.instance.share(
-      ShareParams(
-        title: 'Finavig data export',
-        text: json,
-      ),
+      ShareParams(title: 'Finavig data export', text: json),
     );
   } catch (_) {
     messenger.showSnackBar(
@@ -144,8 +141,7 @@ class ProfilePreferencesSection extends StatelessWidget {
           icon: Icons.battery_saver_rounded,
           iconColor: FinavigColors.emerald,
           title: 'Ensure reminders work',
-          subtitle:
-              'Some phones kill background alerts — check these settings',
+          subtitle: 'Some phones kill background alerts — check these settings',
           trailing: const Icon(Icons.open_in_new_rounded, size: 16),
           onTap: openBatteryGuidance,
         ),

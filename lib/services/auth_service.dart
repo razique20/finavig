@@ -37,10 +37,7 @@ class AuthService {
 
   /// Sign in with email + password. Throws [AuthException] on failure with a
   /// user-presentable message.
-  Future<void> signIn({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> signIn({required String email, required String password}) async {
     await SupabaseService.client.auth.signInWithPassword(
       email: email,
       password: password,
@@ -110,7 +107,8 @@ class AuthService {
   /// No-op in local-only mode (no Supabase configured).
   Future<void> deleteAccount() async {
     final client = SupabaseService.clientOrNull;
-    if (client == null) return; // local-only mode: nothing to delete server-side
+    if (client == null)
+      return; // local-only mode: nothing to delete server-side
 
     // 1. Server-side deletion (auth user + all cascaded rows).
     await client.rpc('delete_own_account');
@@ -159,6 +157,7 @@ class AuthService {
 
   /// Listen to auth changes (sign-in, sign-out, token refresh). Used by the
   /// splash screen and router to react to session changes.
-  Stream<AuthState> get onAuthStateChange =>
-      isAvailable ? SupabaseService.client.auth.onAuthStateChange : const Stream.empty();
+  Stream<AuthState> get onAuthStateChange => isAvailable
+      ? SupabaseService.client.auth.onAuthStateChange
+      : const Stream.empty();
 }

@@ -79,7 +79,8 @@ class VoiceInputService {
 
   VoiceStatus get status => _currentStatus;
 
-  bool get isListening => _currentStatus == VoiceStatus.listening ||
+  bool get isListening =>
+      _currentStatus == VoiceStatus.listening ||
       _currentStatus == VoiceStatus.detected;
 
   /// Ensure the recognizer is initialized and permission granted.
@@ -129,22 +130,18 @@ class VoiceInputService {
             if (words.isNotEmpty && _currentStatus == VoiceStatus.listening) {
               _setStatus(VoiceStatus.detected);
             }
-            _transcriptController.add(VoiceUpdate(
-              text: words,
-              partialText: '',
-              isListening: false,
-            ));
+            _transcriptController.add(
+              VoiceUpdate(text: words, partialText: '', isListening: false),
+            );
             _setStatus(VoiceStatus.stopped);
           } else if (words.isNotEmpty) {
             // Live partial; plugin semantics: recognizedWords replaces each tick.
             if (_currentStatus == VoiceStatus.listening) {
               _setStatus(VoiceStatus.detected);
             }
-            _transcriptController.add(VoiceUpdate(
-              text: '',
-              partialText: words,
-              isListening: true,
-            ));
+            _transcriptController.add(
+              VoiceUpdate(text: '', partialText: words, isListening: true),
+            );
           }
         },
         localeId: localeId,
@@ -213,19 +210,44 @@ class VoiceInputService {
 
   /// English word → digit mapping used to normalize speech transcripts.
   static const Map<String, int> _wordNumbers = {
-    'zero': 0, 'oh': 0,
-    'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6,
-    'seven': 7, 'eight': 8, 'nine': 9,
-    'ten': 10, 'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14,
-    'fifteen': 15, 'sixteen': 16, 'seventeen': 17, 'eighteen': 18,
+    'zero': 0,
+    'oh': 0,
+    'one': 1,
+    'two': 2,
+    'three': 3,
+    'four': 4,
+    'five': 5,
+    'six': 6,
+    'seven': 7,
+    'eight': 8,
+    'nine': 9,
+    'ten': 10,
+    'eleven': 11,
+    'twelve': 12,
+    'thirteen': 13,
+    'fourteen': 14,
+    'fifteen': 15,
+    'sixteen': 16,
+    'seventeen': 17,
+    'eighteen': 18,
     'nineteen': 19,
-    'twenty': 20, 'thirty': 30, 'forty': 40, 'fifty': 50, 'sixty': 60,
-    'seventy': 70, 'eighty': 80, 'ninety': 90,
+    'twenty': 20,
+    'thirty': 30,
+    'forty': 40,
+    'fifty': 50,
+    'sixty': 60,
+    'seventy': 70,
+    'eighty': 80,
+    'ninety': 90,
   };
 
   static const Map<String, int> _wordMultipliers = {
-    'hundred': 100, 'thousand': 1000, 'k': 1000, 'million': 1000000,
-    'lakh': 100000, 'crore': 10000000,
+    'hundred': 100,
+    'thousand': 1000,
+    'k': 1000,
+    'million': 1000000,
+    'lakh': 100000,
+    'crore': 10000000,
   };
 
   /// Regex covering word-numbers, multipliers and compound numerals.
@@ -273,7 +295,10 @@ class VoiceInputService {
     //    becomes "40 dirhams" then "40 SAR/AED").
     final cur = DocumentCollectionService.instance.activeCurrency;
     text = text.replaceAll(
-      RegExp(r'\b(dirhams|dirham|dhs|dhms|dhm|riyals|riyal|dinars|dinar|rupees|rupee)\b', caseSensitive: false),
+      RegExp(
+        r'\b(dirhams|dirham|dhs|dhms|dhm|riyals|riyal|dinars|dinar|rupees|rupee)\b',
+        caseSensitive: false,
+      ),
       cur,
     );
 
@@ -285,8 +310,11 @@ class VoiceInputService {
   /// Parses a word-number phrase ("four hundred fifty", "two thousand", etc.)
   /// to its integer value. Returns null when tokens are not numeric words.
   static int? parseWordNumber(String phrase) {
-    final tokens =
-        phrase.toLowerCase().split(RegExp(r'[\s-]+')).where((t) => t.isNotEmpty).toList();
+    final tokens = phrase
+        .toLowerCase()
+        .split(RegExp(r'[\s-]+'))
+        .where((t) => t.isNotEmpty)
+        .toList();
     if (tokens.isEmpty) return null;
 
     var total = 0;

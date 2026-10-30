@@ -60,8 +60,8 @@ class FolderListTile extends StatelessWidget {
     final subtitleText = items.isEmpty
         ? '0 documents · Empty folder'
         : items.length == 1
-            ? '1 document · ${items.first.displayName}'
-            : '${items.length} documents · ${items.take(2).map((i) => i.displayName).join(", ")}${items.length > 2 ? "..." : ""}';
+        ? '1 document · ${items.first.displayName}'
+        : '${items.length} documents · ${items.take(2).map((i) => i.displayName).join(", ")}${items.length > 2 ? "..." : ""}';
 
     return InkWell(
       onTap: onTap,
@@ -82,11 +82,7 @@ class FolderListTile extends StatelessWidget {
                   width: 1,
                 ),
               ),
-              child: Icon(
-                folder.iconData,
-                color: folder.color,
-                size: 22,
-              ),
+              child: Icon(folder.iconData, color: folder.color, size: 22),
             ),
             const SizedBox(width: 14),
 
@@ -151,10 +147,7 @@ class FolderListTile extends StatelessWidget {
             // Urgency Rollup Badge (if any active item)
             if (nearest != null && urgency != null) ...[
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: urgency.color.withValues(alpha: isDark ? 0.22 : 0.12),
                   borderRadius: BorderRadius.circular(8),
@@ -230,10 +223,10 @@ class AddFolderListTile extends StatelessWidget {
     final hintText = isFree
         ? 'Unlock custom folders with Plus'
         : atLimit
-            ? 'Folder limit reached ($maxFolders/$maxFolders) · Upgrade to Business'
-            : maxFolders != null
-                ? '$currentCount of $maxFolders folders used'
-                : 'Unlimited folders with Business';
+        ? 'Folder limit reached ($maxFolders/$maxFolders) · Upgrade to Business'
+        : maxFolders != null
+        ? '$currentCount of $maxFolders folders used'
+        : 'Unlimited folders with Business';
 
     return InkWell(
       onTap: () async {
@@ -291,8 +284,8 @@ class AddFolderListTile extends StatelessWidget {
                     isFree
                         ? 'Create custom folder'
                         : atLimit
-                            ? 'Create new folder'
-                            : 'New folder',
+                        ? 'Create new folder'
+                        : 'New folder',
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: (isFree || atLimit)

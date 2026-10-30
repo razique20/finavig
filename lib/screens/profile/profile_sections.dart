@@ -11,10 +11,9 @@ import '../../widgets/bento_icon_tile.dart';
 /// wash in light mode that deepens in dark mode. Interpolated through
 /// [FinavigTransition] so it cross-fades with the theme animation.
 Color profileAccentBg(BuildContext context, Color accent) =>
-    FinavigTransition.of(context).color(
-      accent.withValues(alpha: 0.07),
-      accent.withValues(alpha: 0.15),
-    );
+    FinavigTransition.of(
+      context,
+    ).color(accent.withValues(alpha: 0.07), accent.withValues(alpha: 0.15));
 
 /// Section header row inside the Profile settings list.
 class ProfileSectionHeader extends StatelessWidget {
@@ -108,7 +107,10 @@ class ProfileListRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(FinavigRadius.card),
         boxShadow: FinavigShadows.adaptive(isDark),
         border: Border.all(
-          color: fade.color(Colors.transparent, Colors.white.withValues(alpha: 0.06)),
+          color: fade.color(
+            Colors.transparent,
+            Colors.white.withValues(alpha: 0.06),
+          ),
         ),
       ),
       child: Material(
@@ -210,7 +212,7 @@ class ProfileSectionGroup extends StatelessWidget {
               if (action != null) action!,
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
@@ -271,8 +273,7 @@ class ProfileSettingsTile extends StatelessWidget {
 
     return Material(
       color: highlighted
-          ? theme.colorScheme.primary
-              .withValues(alpha: fade.value(0.05, 0.14))
+          ? theme.colorScheme.primary.withValues(alpha: fade.value(0.05, 0.14))
           : Colors.transparent,
       borderRadius: BorderRadius.circular(FinavigRadius.tile),
       child: InkWell(
@@ -316,10 +317,7 @@ class ProfileSettingsTile extends StatelessWidget {
                   ],
                 ),
               ),
-              if (trailing != null) ...[
-                const SizedBox(width: 8),
-                trailing!,
-              ],
+              if (trailing != null) ...[const SizedBox(width: 8), trailing!],
             ],
           ),
         ),
@@ -350,10 +348,10 @@ class ProfileUsageMeter extends StatelessWidget {
     final barColor = max == null
         ? FinavigColors.safe
         : ratio >= 1.0
-            ? FinavigColors.danger
-            : ratio >= 0.8
-                ? FinavigColors.warning
-                : theme.colorScheme.primary;
+        ? FinavigColors.danger
+        : ratio >= 0.8
+        ? FinavigColors.warning
+        : theme.colorScheme.primary;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -442,8 +440,18 @@ class ProfilePlanNotice extends StatelessWidget {
 /// Formats a date as "12 Sep 2026" — shared by the subscription card.
 String formatProfileDate(DateTime date) {
   const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
   final local = date.toLocal();
   return '${local.day} ${months[local.month - 1]} ${local.year}';

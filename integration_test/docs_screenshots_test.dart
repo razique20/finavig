@@ -48,6 +48,27 @@ void main() {
 
     final collectionId = DocumentCollectionService.instance.activeCollectionId;
 
+    // ── Shared tour helpers: every stop asserts its anchor before the marker
+    //    is printed, so a screenshot is never captured on a screen the tour
+    //    didn't actually reach. (Defined here so the early boot pumps can
+    //    settle before the first welcome stop uses them.)
+    Future<void> dwell() async {
+      for (var i = 0; i < 40; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      await Future<void>.delayed(const Duration(seconds: 6));
+    }
+
+    Future<void> stop(String name, String anchor) async {
+      expect(
+        find.textContaining(anchor),
+        findsWidgets,
+        reason: 'stop $name never rendered "$anchor"',
+      );
+      debugPrint('==SCREEN: $name==');
+      await dwell();
+    }
+
     Future<void> addTxn(
       FinanceKind kind,
       FinanceCategory category,
@@ -186,9 +207,12 @@ void main() {
       creditLeg: CreditLeg.settlement,
     );
 
-    // Real router + real theme, jumped straight past splash so the tour can't
-    // be hijacked by the cold-start redirect.
-    router.go('/welcome');
+    // Give any post-insertion provider/ledger rebuilds a moment to settle
+    // before the tour leaves the home tab.
+    await tester.pumpAndSettle();
+
+    // ── Boot the real router+theme past splash, then settle once before the
+    //    first stop so the entrance transition doesn't race the welcome anchor.
     await tester.pumpWidget(
       MaterialApp.router(
         theme: FinavigTheme.light(),
@@ -197,39 +221,16 @@ void main() {
         routerConfig: router,
       ),
     );
-
-    // Fixed-step pumps settle the frame; the real wall-clock pause after gives
-    // the host a wide window to capture mid-dwell without racing.
-    Future<void> dwell() async {
-      for (var i = 0; i < 40; i++) {
-        await tester.pump(const Duration(milliseconds: 100));
-      }
-      await Future<void>.delayed(const Duration(seconds: 6));
-    }
-
-    /// Asserts the anchor for this stop, announces it, then dwells.
-    Future<void> stop(String name, String anchor) async {
-      expect(
-        find.textContaining(anchor),
-        findsWidgets,
-        reason: 'stop $name never rendered "$anchor"',
-      );
-      debugPrint('==SCREEN: $name==');
-      await dwell();
-    }
-
-    Future<void> go(String route) async {
-      router.go(route);
-      for (var i = 0; i < 25; i++) {
-        await tester.pump(const Duration(milliseconds: 100));
-      }
-    }
+    router.go('/welcome');
+    await tester.pumpAndSettle();
 
     // ── Welcome + login (recoloured to the dark brand theme) ──────────────
-    await tester.pump(const Duration(milliseconds: 200));
-    await stop('02-welcome', 'Continue to Login');
-
-    await go('/login');
+    // /welcome is its own route; login is reached from the login screen's own
+    // "Sign in" option. The login anchor ("What type of user are you?") only
+    // lives on the login screen, so these are two separate stops.
+    await stop('02-welcome', 'Welcome to Finavig');
+    router.go('/login');
+    await dwell();
     await stop('04-login', 'What type of user are you?');
 
     // Sign-up path: pick "New to Finavig", then continue to the email step.
@@ -246,17 +247,11 @@ void main() {
     // ── The redesigned tabs: one light canvas per tab, ink accents, flat
     //    card-free ledgers. Anchors are the new sections' own labels, so a
     //    shot is only taken once the rebuilt layout is on screen.
-    await go('/home');
     await stop('06-home', 'Categories');
-
-    await go('/documents');
     await stop('08-documents', 'Tracked');
-
-    await go('/profile');
     await stop('09-profile', 'Manage subscription');
 
     // ── Money: the collapsible sheet index, then Credit expanded ──────────
-    await go('/money');
     await stop('07-money', 'Net this month');
 
     // Expand the Credit section in place. The page also carries a standalone
@@ -292,11 +287,9 @@ void main() {
     await stop('34-money-credit', 'For rent');
 
     // ── Records: ledger with the credit-linked row and its chip ───────────
-    await go('/records');
     await stop('13-records', 'Repaid Ahmed');
 
     // ── Credit book ──────────────────────────────────────────────────────
-    await go('/credits');
     await stop('32-credits', 'Ahmed');
 
     // ── Settle sheet: the optional Money link side of a repayment ─────────
@@ -314,7 +307,8 @@ void main() {
     //    The rebuilt Settings lists it as a "Security & App Lock" row that
     //    opens a sheet, so the tour follows that path rather than the old
     //    inline section.
-    await go('/profile');
+    router.go('/profile');
+    await dwell();
     await tester.scrollUntilVisible(
       find.text('Security & App Lock'),
       300,
@@ -334,5 +328,114 @@ void main() {
     await stop('33-app-lock', 'Create a passcode');
 
     debugPrint('==TOUR DONE==');
+
+    await tester.pumpAndSettle();
+  });
+}
+
+
+    // ── Welcome + login (recoloured to the dark brand theme) ──────────────
+    await stop('02-welcome', 'Welcome to Finavig');
+    router.go('/login');
+    await dwell();
+    await stop('04-login', 'What type of user are you?');
+
+    // Sign-up path: pick "New to Finavig", then continue to the email step.
+    await tester.tap(find.text('New to Finavig'));
+    for (var i = 0; i < 8; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await tester.tap(find.text('Continue'));
+    for (var i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await stop('05-signup-form', "What's your email?");
+
+    // ── The redesigned tabs: one light canvas per tab, ink accents, flat
+    //    card-free ledgers. Anchors are the new sections' own labels, so a
+    //    shot is only taken once the rebuilt layout is on screen.
+    await stop('06-home', 'Categories');
+    await stop('08-documents', 'Tracked');
+    await stop('09-profile', 'Manage subscription');
+
+    // ── Money: the collapsible sheet index, then Credit expanded ──────────
+    await stop('07-money', 'Net this month');
+
+    // Expand the Credit section in place. The page also carries a standalone
+    // "Credit" shortcut that pushes the full Credit page, so target the
+    // section header itself — the whole header row toggles its body.
+    final creditHeader = find.ancestor(
+      of: find.text('Credit'),
+      matching: find.byType(SectionHeader),
+    );
+    expect(
+      creditHeader,
+      findsWidgets,
+      reason: 'the Money sheet has no Credit section header',
+    );
+    await tester.ensureVisible(creditHeader.first);
+    for (var i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await tester.tap(creditHeader.first);
+    for (var i = 0; i < 25; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await tester.ensureVisible(creditHeader.first);
+    for (var i = 0; i < 15; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    // Still on Money (the header exists) with the section body expanded.
+    expect(
+      creditHeader,
+      findsWidgets,
+      reason: 'expanding Credit left the Money sheet',
+    );
+    await stop('34-money-credit', 'For rent');
+
+    // ── Records: ledger with the credit-linked row and its chip ───────────
+    await stop('13-records', 'Repaid Ahmed');
+
+    // ── Credit book ──────────────────────────────────────────────────────
+    await stop('32-credits', 'Ahmed');
+
+    // ── Settle sheet: the optional Money link side of a repayment ─────────
+    await tester.tap(find.byType(PopupMenuButton<String>).first);
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await tester.tap(find.text('Mark as repaid'));
+    for (var i = 0; i < 25; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await stop('35-credit-settle', 'Only settle the credit');
+
+    // ── App Lock: the passcode set-up screen (Profile → Security sheet) ───
+    //    The rebuilt Settings lists it as a "Security & App Lock" row that
+    //    opens a sheet, so the tour follows that path rather than the old
+    //    inline section.
+    router.go('/profile');
+    await dwell();
+    await tester.scrollUntilVisible(
+      find.text('Security & App Lock'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await tester.tap(find.text('Security & App Lock'));
+    for (var i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await tester.tap(find.text('Set up App Lock'));
+    for (var i = 0; i < 25; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await stop('33-app-lock', 'Create a passcode');
+
+    debugPrint('==TOUR DONE==');
+
+    await tester.pumpAndSettle();
   });
 }

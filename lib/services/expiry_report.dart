@@ -131,10 +131,7 @@ class ExpiryFilterSpec {
   /// Inactive non-expired records (renewed/offboarded) are never listed.
   /// Expired documents only appear per [ExpiryStatusFilter], and are exempt
   /// from the days-remaining window (theirs is negative).
-  static List<ExpiryItem> apply(
-    List<ExpiryItem> items,
-    ExpiryFilterSpec spec,
-  ) {
+  static List<ExpiryItem> apply(List<ExpiryItem> items, ExpiryFilterSpec spec) {
     Iterable<ExpiryItem> filtered = items.where((i) {
       if (!i.isActive && !i.isExpired) return false;
       if (i.isExpired) return spec.status != ExpiryStatusFilter.active;
@@ -167,9 +164,12 @@ class ExpiryFilterSpec {
     }
 
     final result = filtered
-        .where((i) =>
-            i.isExpired ||
-            (i.daysRemaining >= spec.daysMin && i.daysRemaining <= spec.daysMax))
+        .where(
+          (i) =>
+              i.isExpired ||
+              (i.daysRemaining >= spec.daysMin &&
+                  i.daysRemaining <= spec.daysMax),
+        )
         .toList();
 
     void sort(List<ExpiryItem> list) {
@@ -179,8 +179,11 @@ class ExpiryFilterSpec {
         case ExpirySortMode.dueDateDesc:
           list.sort((a, b) => b.expiresAt.compareTo(a.expiresAt));
         case ExpirySortMode.name:
-          list.sort((a, b) =>
-              a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()));
+          list.sort(
+            (a, b) => a.displayName.toLowerCase().compareTo(
+              b.displayName.toLowerCase(),
+            ),
+          );
         case ExpirySortMode.urgency:
           list.sort((a, b) {
             final byDays = a.daysRemaining.compareTo(b.daysRemaining);
@@ -246,7 +249,8 @@ class ExpiryReport {
   /// Latin-1 (WinAnsi) because the built-in PDF fonts cannot render other
   /// code points — e.g. 'AED 1,500 — renew' becomes 'AED 1,500 - renew'.
   static List<List<String>> rows(List<ExpiryItem> items) {
-    final sorted = [...items]..sort((a, b) => a.expiresAt.compareTo(b.expiresAt));
+    final sorted = [...items]
+      ..sort((a, b) => a.expiresAt.compareTo(b.expiresAt));
     String clean(String value) => value
         .replaceAll('—', '-')
         .replaceAll('–', '-')
@@ -260,10 +264,10 @@ class ExpiryReport {
       final status = i.isExpired
           ? 'Expired'
           : i.daysRemaining <= 7
-              ? 'Critical'
-              : i.daysRemaining <= 30
-                  ? 'Due soon'
-                  : 'On track';
+          ? 'Critical'
+          : i.daysRemaining <= 30
+          ? 'Due soon'
+          : 'On track';
       return [
         clean(i.displayName),
         clean(i.docType.displayName),
@@ -318,7 +322,11 @@ class ExpiryReport {
             ),
             pw.Text(
               'Generated ${ExpiryItem.formatDate(DateTime.now())} - ${data.length} documents',
-              style: pw.TextStyle(fontSize: 10, color: PdfColors.grey700, font: normal),
+              style: pw.TextStyle(
+                fontSize: 10,
+                color: PdfColors.grey700,
+                font: normal,
+              ),
             ),
             pw.SizedBox(height: 12),
             pw.TableHelper.fromTextArray(

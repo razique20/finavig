@@ -25,8 +25,7 @@ class _ProfileSubscriptionSectionState
   /// every rebuild (usage only changes when documents change).
   Future<int>? _documentCount;
 
-  Future<int> _countDocuments() =>
-      EntitlementService.instance.documentsInUse();
+  Future<int> _countDocuments() => EntitlementService.instance.documentsInUse();
 
   @override
   Widget build(BuildContext context) {
@@ -93,13 +92,14 @@ class _ProfileSubscriptionSectionState
                 ),
                 // Plan expiry countdown (fetched from user_tiers.plan_ends_at).
                 if (isPaid && !isExpired && daysLeft != null) ...[
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 14),
                   ProfilePlanNotice(
                     icon: daysLeft <= 7
                         ? Icons.notification_important_rounded
                         : Icons.event_available_rounded,
-                    color:
-                        daysLeft <= 7 ? FinavigColors.warning : FinavigColors.safe,
+                    color: daysLeft <= 7
+                        ? FinavigColors.warning
+                        : FinavigColors.safe,
                     text: daysLeft == 0
                         ? 'Your ${info.name} plan expires today'
                         : 'Your ${info.name} plan expires in $daysLeft '
@@ -109,16 +109,17 @@ class _ProfileSubscriptionSectionState
                 ],
                 // Expired plan: warn + nudge to renew.
                 if (isExpired) ...[
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 14),
                   ProfilePlanNotice(
                     icon: Icons.error_outline_rounded,
                     color: FinavigColors.danger,
-                    text: 'Your ${info.name} plan expired on '
+                    text:
+                        'Your ${info.name} plan expired on '
                         '${formatProfileDate(planEndsAt!)} — features are locked '
                         'again. Tap Renew Plan to resubscribe.',
                   ),
                 ],
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 // Usage meters: documents + company workspaces, mirrored from
                 // the free-tier limits.
                 FutureBuilder<int>(
@@ -133,7 +134,8 @@ class _ProfileSubscriptionSectionState
                     // Hide the workspaces meter on Free (cap 0, none in use) —
                     // a permanent empty bar is noise, not information.
                     final showCompanyMeter =
-                        companyUsed > 0 || (maxCompany != null && maxCompany > 0);
+                        companyUsed > 0 ||
+                        (maxCompany != null && maxCompany > 0);
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -154,18 +156,20 @@ class _ProfileSubscriptionSectionState
                     );
                   },
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 if (!isTopTier)
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton.icon(
                       onPressed: () => showTierRequestSheet(context),
                       icon: const Icon(Icons.upgrade_rounded, size: 18),
-                      label: Text(isExpired
-                          ? 'Renew Plan'
-                          : isPaid
-                              ? 'Extend Plan'
-                              : 'Upgrade Plan'),
+                      label: Text(
+                        isExpired
+                            ? 'Renew Plan'
+                            : isPaid
+                            ? 'Extend Plan'
+                            : 'Upgrade Plan',
+                      ),
                       style: FilledButton.styleFrom(
                         // Flat hero dark — matches the ink CTA on login and
                         // the app's flat button language.

@@ -26,20 +26,20 @@ void main() {
 
     // Hero header content.
     expect(find.text('Net this month'), findsOneWidget);
-    expect(find.text('Record'), findsOneWidget);
-    expect(find.text('Budget'), findsOneWidget);
+    expect(find.text('Record'), findsNothing);
+    expect(find.text('Budget'), findsNothing);
 
-    // Content sheet sections. (Budgets tile was removed from the grid —
-    // budgets are reachable via the hero pill and the Money tab.)
-    expect(find.text('Categories'), findsOneWidget);
+    // Content sheet sections. Budget actions live on the Money tab.
+    expect(find.text('Categories'), findsNothing);
     expect(find.text('Budgets'), findsNothing);
     expect(find.text('Scan'), findsOneWidget);
     // Month card was removed — its details live in the hero header.
     expect(find.text('This month'), findsNothing);
   });
 
-  testWidgets('floating nav pill stays compact at the bottom of the shell',
-      (tester) async {
+  testWidgets('floating nav pill stays compact at the bottom of the shell', (
+    tester,
+  ) async {
     // Supabase is unavailable in tests → auth gate is off → /home renders.
     await tester.pumpWidget(MaterialApp.router(routerConfig: router));
     await tester.pump(const Duration(seconds: 2)); // splash delay elapses
@@ -79,7 +79,7 @@ void main() {
   });
 
   testWidgets('category tiles navigate to their own pages', (tester) async {
-    // Device-like viewport: the whole categories grid is on screen.
+    // Device-like viewport; the category shortcuts scroll horizontally.
     tester.view.physicalSize = const Size(1179, 2556);
     tester.view.devicePixelRatio = 3.0;
     addTearDown(tester.view.reset);
@@ -94,6 +94,8 @@ void main() {
     // Budgets tile removed from the grid — start with the Records tile.
 
     // Records tile → /records (grouped transaction log).
+    await tester.ensureVisible(find.text('Records'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Records'));
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
@@ -104,28 +106,48 @@ void main() {
     await tester.pump(const Duration(milliseconds: 600));
 
     // Envelopes tile → /envelopes.
+    await tester.ensureVisible(find.text('Envelopes'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Envelopes'));
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     expect(find.text('Savings envelopes'), findsOneWidget);
+
+    // The separate AI Budget Plan link opens the planner route.
+    router.go('/home');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    // The planner has wider content than the Home shortcuts; use a tablet-sized
+    // viewport for this route assertion so it tests navigation, not its layout.
+    final originalSize = tester.view.physicalSize;
+    final originalRatio = tester.view.devicePixelRatio;
+    tester.view.physicalSize = const Size(2400, 2556);
+    tester.view.devicePixelRatio = 3.0;
+    addTearDown(() {
+      tester.view.physicalSize = originalSize;
+      tester.view.devicePixelRatio = originalRatio;
+    });
+    await tester.ensureVisible(find.text('AI Budget Plan'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('AI Budget Plan'));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('AI Budget Planner'), findsOneWidget);
   });
 
-  testWidgets('hero Record pill opens the add-record sheet on Home',
-      (tester) async {
+  testWidgets('Home balance card has no redundant Record or Budget buttons', (
+    tester,
+  ) async {
     await pumpHome(tester);
 
-    await tester.tap(find.text('Record'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
-
-    // The Money tab's add-record form sheet, opened in place.
-    expect(find.text('Add record'), findsOneWidget);
-    expect(find.text('Expense'), findsOneWidget);
-    expect(find.text('Income'), findsOneWidget);
+    expect(find.text('Record'), findsNothing);
+    expect(find.text('Budget'), findsNothing);
+    expect(find.text('AI Budget Plan'), findsOneWidget);
   });
 
-  testWidgets('home renders without overflowing a narrow phone viewport',
-      (tester) async {
+  testWidgets('home renders without overflowing a narrow phone viewport', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(1179, 2556);
     tester.view.devicePixelRatio = 3.0; // logical ≈ 393 wide
     addTearDown(tester.view.reset);
@@ -141,44 +163,37 @@ void main() {
     await pumpHome(tester);
 
     final overflows = errors
-        .map((e) =>
-            '${e.exception}\n${e.informationCollector?.call().join('\n') ?? ''}')
+        .map(
+          (e) =>
+              '${e.exception}\n${e.informationCollector?.call().join('\n') ?? ''}',
+        )
         .where((s) => s.contains('overflowed'))
         .toList();
-    expect(overflows, isEmpty,
-        reason: 'Home must not overflow at 393px width: $overflows');
+    expect(
+      overflows,
+      isEmpty,
+      reason: 'Home must not overflow at 393px width: $overflows',
+    );
   });
 
-  testWidgets('categories section can collapse and expand via Hide/Show toggle',
-      (tester) async {
+  testWidgets('categories are in one horizontal row with a separate AI link', (
+    tester,
+  ) async {
     await pumpHome(tester);
 
-    // Initial state: expanded with all tiles visible.
-    expect(find.text('Categories'), findsOneWidget);
-    expect(find.text('Hide'), findsOneWidget);
+    final scroller = tester.widget<SingleChildScrollView>(
+      find.byKey(const ValueKey('home-category-scroller')),
+    );
+    expect(scroller.scrollDirection, Axis.horizontal);
+
+    expect(find.text('Categories'), findsNothing);
     expect(find.text('Documents'), findsOneWidget);
-    expect(find.text('Records'), findsOneWidget);
+    expect(find.text('Renewals'), findsOneWidget);
     expect(find.text('Envelopes'), findsOneWidget);
-    expect(find.text('Scan'), findsOneWidget);
-
-    // Tap Hide to collapse the middle categories section.
-    await tester.tap(find.text('Hide'));
-    await tester.pumpAndSettle();
-
-    // The 6 tiles are collapsed, but header toggle and primary Scan action remain.
-    expect(find.text('Show'), findsOneWidget);
-    expect(find.text('Documents'), findsNothing);
-    expect(find.text('Records'), findsNothing);
-    expect(find.text('Envelopes'), findsNothing);
-    expect(find.text('Scan'), findsOneWidget);
-
-    // Tap Show to expand them back.
-    await tester.tap(find.text('Show'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Hide'), findsOneWidget);
-    expect(find.text('Documents'), findsOneWidget);
     expect(find.text('Records'), findsOneWidget);
-    expect(find.text('Envelopes'), findsOneWidget);
+    expect(find.text('Forecast'), findsOneWidget);
+    expect(find.text('AI Budget Plan'), findsOneWidget);
+    expect(find.text('AI Planner'), findsNothing);
+    expect(find.text('Scan'), findsOneWidget);
   });
 }

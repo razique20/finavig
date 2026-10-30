@@ -31,11 +31,7 @@ class DocumentScanScreen extends StatefulWidget {
   final ExpiryItem? initialItem;
   final String? documentId;
 
-  const DocumentScanScreen({
-    super.key,
-    this.initialItem,
-    this.documentId,
-  });
+  const DocumentScanScreen({super.key, this.initialItem, this.documentId});
 
   bool get isEditing => initialItem != null || documentId != null;
 
@@ -58,8 +54,9 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
   String? _existingFileName;
   int? _existingFileSize;
 
-  DocumentTypeMeta _docType =
-      DocumentTypeRegistry.instance.byEnum(DocumentType.tradeLicence);
+  DocumentTypeMeta _docType = DocumentTypeRegistry.instance.byEnum(
+    DocumentType.tradeLicence,
+  );
   UaeEmirate _selectedEmirate = UaeEmirate.dubai;
   String _selectedAuthority = _otherAuthority;
   bool _isCustomAuthority = false;
@@ -95,18 +92,17 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
       final country = _activeCountry;
       _selectedAuthority = country == GccCountry.uae
           ? (UaeAuthorityCatalog.instance.suggestedAuthorityFor(
-                _docType,
-                UaeEmirate.dubai,
-              ) ??
-              _otherAuthority)
+                  _docType,
+                  UaeEmirate.dubai,
+                ) ??
+                _otherAuthority)
           : (GccAuthorityCatalog.instance.suggestedAuthorityFor(
-                _docType,
-                country,
-              ) ??
-              _otherAuthority);
+                  _docType,
+                  country,
+                ) ??
+                _otherAuthority);
       _isCustomAuthority = _selectedAuthority == _otherAuthority;
-      _locationController.text =
-          _isCustomAuthority ? '' : _selectedAuthority;
+      _locationController.text = _isCustomAuthority ? '' : _selectedAuthority;
     }
   }
 
@@ -115,8 +111,8 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
     _titleController.text = item.displayName;
     _feeController.text = item.renewalFee != null
         ? (item.renewalFee! % 1 == 0
-            ? item.renewalFee!.toInt().toString()
-            : item.renewalFee!.toString())
+              ? item.renewalFee!.toInt().toString()
+              : item.renewalFee!.toString())
         : '';
     _descriptionController.text = item.description ?? '';
     _docType = item.docType;
@@ -128,12 +124,10 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
             _docType,
             _selectedEmirate,
           )
-        : GccAuthorityCatalog.instance.authorityOptionsFor(
-            _docType,
-            country,
-          );
+        : GccAuthorityCatalog.instance.authorityOptionsFor(_docType, country);
     String authorityCandidate = _otherAuthority;
-    if (item.renewalAuthorities != null && item.renewalAuthorities!.isNotEmpty) {
+    if (item.renewalAuthorities != null &&
+        item.renewalAuthorities!.isNotEmpty) {
       authorityCandidate = item.renewalAuthorities!.first;
     } else if (item.location != null && item.location!.isNotEmpty) {
       authorityCandidate = item.location!;
@@ -146,7 +140,9 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
     } else {
       _selectedAuthority = _otherAuthority;
       _isCustomAuthority = true;
-      _locationController.text = authorityCandidate == _otherAuthority ? '' : authorityCandidate;
+      _locationController.text = authorityCandidate == _otherAuthority
+          ? ''
+          : authorityCandidate;
     }
 
     if (item.filePath != null || item.fileName != null) {
@@ -178,10 +174,7 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
             _docType,
             _selectedEmirate,
           )
-        : GccAuthorityCatalog.instance.authorityOptionsFor(
-            _docType,
-            country,
-          );
+        : GccAuthorityCatalog.instance.authorityOptionsFor(_docType, country);
     if (_selectedAuthority != _otherAuthority &&
         !_isCustomAuthority &&
         !options.contains(_selectedAuthority)) {
@@ -208,7 +201,9 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('OCR extraction is optimized for image documents (PNG, JPG). For PDFs, enter details manually.'),
+          content: Text(
+            'OCR extraction is optimized for image documents (PNG, JPG). For PDFs, enter details manually.',
+          ),
         ),
       );
       return;
@@ -217,14 +212,18 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
     setState(() => _isScanningOcr = true);
 
     try {
-      final res = await UaeDocumentOcrService.instance.processImageFile(filePath);
+      final res = await UaeDocumentOcrService.instance.processImageFile(
+        filePath,
+      );
 
       if (!mounted) return;
 
       if (!res.hasAnyExtractedField) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('No clear UAE document fields recognized. You can still enter details manually.'),
+            content: Text(
+              'No clear UAE document fields recognized. You can still enter details manually.',
+            ),
             backgroundColor: FinavigColors.warning,
           ),
         );
@@ -269,13 +268,14 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
             // No authority on the scan → type+emirate suggestion, else Other.
             _selectedAuthority =
                 UaeAuthorityCatalog.instance.suggestedAuthorityFor(
-                      _docType,
-                      _selectedEmirate,
-                    ) ??
-                    _otherAuthority;
+                  _docType,
+                  _selectedEmirate,
+                ) ??
+                _otherAuthority;
             _isCustomAuthority = _selectedAuthority == _otherAuthority;
-            _locationController.text =
-                _isCustomAuthority ? '' : _selectedAuthority;
+            _locationController.text = _isCustomAuthority
+                ? ''
+                : _selectedAuthority;
           }
         }
 
@@ -285,7 +285,8 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
             final prefix = _descriptionController.text.trim().isNotEmpty
                 ? '${_descriptionController.text.trim()}\n'
                 : '';
-            _descriptionController.text = '${prefix}Doc No: ${res.documentNumber}';
+            _descriptionController.text =
+                '${prefix}Doc No: ${res.documentNumber}';
           }
         }
       });
@@ -297,7 +298,9 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
               Icon(Icons.bolt, color: Colors.amber),
               SizedBox(width: 8),
               Expanded(
-                child: Text('Form pre-filled from scan! Please review & confirm before saving.'),
+                child: Text(
+                  'Form pre-filled from scan! Please review & confirm before saving.',
+                ),
               ),
             ],
           ),
@@ -323,7 +326,15 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: [
-          'pdf', 'doc', 'docx', 'xls', 'xlsx', 'png', 'jpg', 'jpeg', 'txt',
+          'pdf',
+          'doc',
+          'docx',
+          'xls',
+          'xlsx',
+          'png',
+          'jpg',
+          'jpeg',
+          'txt',
         ],
       );
 
@@ -336,7 +347,9 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
             final nameWithoutExt = file.name.contains('.')
                 ? file.name.substring(0, file.name.lastIndexOf('.'))
                 : file.name;
-            final cleanName = nameWithoutExt.replaceAll(RegExp(r'[-_]'), ' ').trim();
+            final cleanName = nameWithoutExt
+                .replaceAll(RegExp(r'[-_]'), ' ')
+                .trim();
             if (cleanName.isNotEmpty) {
               _titleController.text = cleanName;
             }
@@ -418,7 +431,7 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
                 border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             TextField(
               controller: authorityCtrl,
               textCapitalization: TextCapitalization.words,
@@ -428,7 +441,7 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
                 border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             TextField(
               controller: daysCtrl,
               keyboardType: TextInputType.number,
@@ -453,17 +466,21 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
                     try {
                       final meta = await CustomDocumentTypeService.instance
                           .create(
-                        name: name,
-                        renewalAuthority: authorityCtrl.text.trim(),
-                        typicalRenewalDays:
-                            int.tryParse(daysCtrl.text.trim()) ?? 365,
-                      );
-                      if (sheetContext.mounted) Navigator.pop(sheetContext, meta);
+                            name: name,
+                            renewalAuthority: authorityCtrl.text.trim(),
+                            typicalRenewalDays:
+                                int.tryParse(daysCtrl.text.trim()) ?? 365,
+                          );
+                      if (sheetContext.mounted)
+                        Navigator.pop(sheetContext, meta);
                     } on ArgumentError catch (e) {
                       ScaffoldMessenger.of(sheetContext).showSnackBar(
                         SnackBar(
                           content: Text(
-                            e.message.toString().replaceFirst('Bad state: ', ''),
+                            e.message.toString().replaceFirst(
+                              'Bad state: ',
+                              '',
+                            ),
                           ),
                           backgroundColor: FinavigColors.danger,
                         ),
@@ -513,8 +530,7 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
 
     // Track 1 gate: the Free plan tracks up to 10 documents. Edits pass;
     // new documents first check the remaining quota (paywall on failure).
-    if (_editingItem == null &&
-        !await enforceDocumentLimit(context)) {
+    if (_editingItem == null && !await enforceDocumentLimit(context)) {
       return;
     }
 
@@ -534,10 +550,13 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
       String? savedFileName = _attachedFile?.name ?? _existingFileName;
       int? savedFileSize = _attachedFile?.size ?? _existingFileSize;
 
-      if (_attachedFile?.path != null && File(_attachedFile!.path!).existsSync()) {
+      if (_attachedFile?.path != null &&
+          File(_attachedFile!.path!).existsSync()) {
         try {
           final appDocDir = await getApplicationDocumentsDirectory();
-          final targetDir = Directory('${appDocDir.path}/finavig/documents/$docId');
+          final targetDir = Directory(
+            '${appDocDir.path}/finavig/documents/$docId',
+          );
           if (!targetDir.existsSync()) {
             targetDir.createSync(recursive: true);
           }
@@ -583,7 +602,9 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
                 'Receive renewed document',
               ],
         renewalAuthorities: [_selectedAuthority],
-        renewalWarning: daysOffset <= 30 ? 'Expires soon — renew to avoid penalties' : null,
+        renewalWarning: daysOffset <= 30
+            ? 'Expires soon — renew to avoid penalties'
+            : null,
         expiresAt: _expiresAt,
         fileName: savedFileName,
         filePath: localSavedPath,
@@ -601,20 +622,34 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(isEdit ? '${item.displayName} updated ✓' : '${item.displayName} added to tracking'),
+          content: Text(
+            isEdit
+                ? '${item.displayName} updated ✓'
+                : '${item.displayName} added to tracking',
+          ),
           backgroundColor: FinavigColors.safe,
         ),
       );
-      final rootNavigatorContext = Navigator.of(context, rootNavigator: true).context;
+      final rootNavigatorContext = Navigator.of(
+        context,
+        rootNavigator: true,
+      ).context;
       context.pop(true);
       if (!isEdit) {
-        unawaited(CompanionSuggestionSheet.maybeSuggestCompanions(rootNavigatorContext, item));
+        unawaited(
+          CompanionSuggestionSheet.maybeSuggestCompanions(
+            rootNavigatorContext,
+            item,
+          ),
+        );
       }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(friendlyError(e, context: 'Could not save the document')),
+          content: Text(
+            friendlyError(e, context: 'Could not save the document'),
+          ),
           backgroundColor: FinavigColors.danger,
         ),
       );
@@ -664,9 +699,14 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
                   onTap: _pickFile,
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 24,
+                      horizontal: 16,
+                    ),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
+                      color: theme.colorScheme.primaryContainer.withValues(
+                        alpha: 0.2,
+                      ),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: theme.colorScheme.primary.withValues(alpha: 0.4),
@@ -730,7 +770,9 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  _attachedFile?.name ?? _existingFileName ?? 'Attached file',
+                                  _attachedFile?.name ??
+                                      _existingFileName ??
+                                      'Attached file',
                                   style: theme.textTheme.bodyLarge?.copyWith(
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -742,8 +784,8 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
                                   _attachedFile != null
                                       ? '${(_attachedFile!.size / 1024).toStringAsFixed(0)} KB • ${_attachedFile!.extension?.toUpperCase() ?? "FILE"}'
                                       : (_existingFileSize != null
-                                          ? '${(_existingFileSize! / 1024).toStringAsFixed(0)} KB • ATTACHED FILE'
-                                          : 'Existing file attached'),
+                                            ? '${(_existingFileSize! / 1024).toStringAsFixed(0)} KB • ATTACHED FILE'
+                                            : 'Existing file attached'),
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: theme.colorScheme.outline,
                                   ),
@@ -766,7 +808,9 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
                       ),
                     ),
                     if (_attachedFile?.path != null &&
-                        ['png', 'jpg', 'jpeg'].contains(_attachedFile!.extension?.toLowerCase())) ...[
+                        ['png', 'jpg', 'jpeg'].contains(
+                          _attachedFile!.extension?.toLowerCase(),
+                        )) ...[
                       const SizedBox(height: 8),
                       Align(
                         alignment: Alignment.centerRight,
@@ -790,7 +834,9 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
                   padding: const EdgeInsets.all(16),
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                    color: theme.colorScheme.primaryContainer.withValues(
+                      alpha: 0.3,
+                    ),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: theme.colorScheme.primary),
                   ),
@@ -870,7 +916,11 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
                   suffixIcon: _ocrResult?.title != null
                       ? const Tooltip(
                           message: 'Auto-filled from OCR scan',
-                          child: Icon(Icons.bolt, color: Colors.amber, size: 20),
+                          child: Icon(
+                            Icons.bolt,
+                            color: Colors.amber,
+                            size: 20,
+                          ),
                         )
                       : null,
                 ),
@@ -891,7 +941,11 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
                   suffixIcon: _ocrResult?.documentType != null
                       ? const Tooltip(
                           message: 'Auto-filled from OCR scan',
-                          child: Icon(Icons.bolt, color: Colors.amber, size: 20),
+                          child: Icon(
+                            Icons.bolt,
+                            color: Colors.amber,
+                            size: 20,
+                          ),
                         )
                       : null,
                 ),
@@ -910,10 +964,7 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
                         Icon(t.icon, size: 20, color: t.primaryColor),
                         const SizedBox(width: 10),
                         Flexible(
-                          child: Text(
-                            label,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                          child: Text(label, overflow: TextOverflow.ellipsis),
                         ),
                       ],
                     ),
@@ -948,7 +999,11 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
                     suffixIcon: _ocrResult?.emirate != null
                         ? const Tooltip(
                             message: 'Auto-filled from OCR scan',
-                            child: Icon(Icons.bolt, color: Colors.amber, size: 20),
+                            child: Icon(
+                              Icons.bolt,
+                              color: Colors.amber,
+                              size: 20,
+                            ),
                           )
                         : null,
                   ),
@@ -964,14 +1019,15 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
                         _selectedEmirate = val;
                         _selectedAuthority =
                             UaeAuthorityCatalog.instance.suggestedAuthorityFor(
-                                  _docType,
-                                  val,
-                                ) ??
-                                _otherAuthority;
+                              _docType,
+                              val,
+                            ) ??
+                            _otherAuthority;
                         _isCustomAuthority =
                             _selectedAuthority == _otherAuthority;
-                        _locationController.text =
-                            _isCustomAuthority ? '' : _selectedAuthority;
+                        _locationController.text = _isCustomAuthority
+                            ? ''
+                            : _selectedAuthority;
                       });
                     }
                   },
@@ -985,7 +1041,9 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
                   ),
                   child: Text(
                     '${_activeCountry.code} — ${_activeCountry.displayName}',
-                    style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               const SizedBox(height: 16),
@@ -998,26 +1056,38 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
                   labelText: 'Issuing Authority',
                   border: const OutlineInputBorder(),
                   prefixIcon: const Icon(Icons.account_balance_outlined),
-                  helperText: (_activeCountry == GccCountry.uae
-                              ? UaeAuthorityCatalog.instance.suggestedAuthorityFor(_docType, _selectedEmirate)
-                              : GccAuthorityCatalog.instance.suggestedAuthorityFor(_docType, _activeCountry)) ==
+                  helperText:
+                      (_activeCountry == GccCountry.uae
+                              ? UaeAuthorityCatalog.instance
+                                    .suggestedAuthorityFor(
+                                      _docType,
+                                      _selectedEmirate,
+                                    )
+                              : GccAuthorityCatalog.instance
+                                    .suggestedAuthorityFor(
+                                      _docType,
+                                      _activeCountry,
+                                    )) ==
                           null
                       ? 'Default: Other / Custom Authority'
                       : null,
                 ),
                 items: [
                   ...(_activeCountry == GccCountry.uae
-                          ? UaeAuthorityCatalog.instance.authorityOptionsFor(_docType, _selectedEmirate)
-                          : GccAuthorityCatalog.instance.authorityOptionsFor(_docType, _activeCountry))
+                          ? UaeAuthorityCatalog.instance.authorityOptionsFor(
+                              _docType,
+                              _selectedEmirate,
+                            )
+                          : GccAuthorityCatalog.instance.authorityOptionsFor(
+                              _docType,
+                              _activeCountry,
+                            ))
                       .map((auth) {
-                    return DropdownMenuItem(
-                      value: auth,
-                      child: Text(
-                        auth,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    );
-                  }),
+                        return DropdownMenuItem(
+                          value: auth,
+                          child: Text(auth, overflow: TextOverflow.ellipsis),
+                        );
+                      }),
                   const DropdownMenuItem(
                     value: 'OTHER_CUSTOM',
                     child: Text('Other / Custom Authority...'),
@@ -1043,7 +1113,7 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
               ),
 
               if (_isCustomAuthority) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: _locationController,
                   decoration: const InputDecoration(
@@ -1053,7 +1123,8 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
                     prefixIcon: Icon(Icons.edit_location_alt_outlined),
                   ),
                   validator: (val) {
-                    if (_isCustomAuthority && (val == null || val.trim().isEmpty)) {
+                    if (_isCustomAuthority &&
+                        (val == null || val.trim().isEmpty)) {
                       return 'Please specify the authority name';
                     }
                     return null;
@@ -1073,7 +1144,11 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
                     suffixIcon: _ocrResult?.expiryDate != null
                         ? const Tooltip(
                             message: 'Auto-filled from OCR scan',
-                            child: Icon(Icons.bolt, color: Colors.amber, size: 20),
+                            child: Icon(
+                              Icons.bolt,
+                              color: Colors.amber,
+                              size: 20,
+                            ),
                           )
                         : null,
                   ),
@@ -1087,9 +1162,15 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
-                          color: FinavigColors.urgencyBg(daysRemaining, brightness: theme.brightness),
+                          color: FinavigColors.urgencyBg(
+                            daysRemaining,
+                            brightness: theme.brightness,
+                          ),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -1108,9 +1189,12 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _feeController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 decoration: InputDecoration(
-                  labelText: 'Estimated Renewal Fee (${_activeCountry.currency})',
+                  labelText:
+                      'Estimated Renewal Fee (${_activeCountry.currency})',
                   hintText: 'e.g. 1500',
                   border: const OutlineInputBorder(),
                   prefixIcon: const Icon(Icons.payments_outlined),
@@ -1127,7 +1211,11 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
                   suffixIcon: _ocrResult?.documentNumber != null
                       ? const Tooltip(
                           message: 'License/Document number detected',
-                          child: Icon(Icons.bolt, color: Colors.amber, size: 20),
+                          child: Icon(
+                            Icons.bolt,
+                            color: Colors.amber,
+                            size: 20,
+                          ),
                         )
                       : null,
                 ),
@@ -1139,29 +1227,37 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
                     ? const SizedBox(
                         width: 18,
                         height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       )
-                    : Icon(isEdit
-                        ? Icons.check_circle_rounded
-                        : _ocrResult != null
+                    : Icon(
+                        isEdit
                             ? Icons.check_circle_rounded
-                            : Icons.cloud_upload_rounded),
-                label: Text(_isSaving
-                    ? 'Saving...'
-                    : isEdit
-                        ? 'Update document'
-                        : _ocrResult != null
-                            ? 'Confirm & Save Document'
-                            : 'Save document'),
+                            : _ocrResult != null
+                            ? Icons.check_circle_rounded
+                            : Icons.cloud_upload_rounded,
+                      ),
+                label: Text(
+                  _isSaving
+                      ? 'Saving...'
+                      : isEdit
+                      ? 'Update document'
+                      : _ocrResult != null
+                      ? 'Confirm & Save Document'
+                      : 'Save document',
+                ),
                 style: FilledButton.styleFrom(
-                  backgroundColor: (isEdit || _ocrResult != null) ? FinavigColors.safe : null,
+                  backgroundColor: (isEdit || _ocrResult != null)
+                      ? FinavigColors.safe
+                      : null,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
               ),
-
             ],
           ),
         ),

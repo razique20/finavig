@@ -121,9 +121,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   /// Convert raw name to clean Title Case.
   static String _toTitleCase(String text) {
     if (text.isEmpty) return text;
-    return text.split(' ').where((w) => w.isNotEmpty).map((word) {
-      return word[0].toUpperCase() + word.substring(1).toLowerCase();
-    }).join(' ');
+    return text
+        .split(' ')
+        .where((w) => w.isNotEmpty)
+        .map((word) {
+          return word[0].toUpperCase() + word.substring(1).toLowerCase();
+        })
+        .join(' ');
   }
 
   /// Exact age in years from the ISO DOB captured at signup (null when the
@@ -203,8 +207,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Text(
                     title,
                     style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
                 child,
@@ -217,14 +221,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _openAppearance() => _showSheet(
-        title: 'Customize my experience',
-        child: const ProfileAppearanceSection(),
-      );
+    title: 'Customize my experience',
+    child: const ProfileAppearanceSection(),
+  );
 
   void _openSubscription() => _showSheet(
-        title: 'Manage subscription',
-        child: ProfileSubscriptionSection(collections: _collections),
-      );
+    title: 'Manage subscription',
+    child: ProfileSubscriptionSection(collections: _collections),
+  );
 
   void _openCollections() {
     // Live off the service so rename / delete / switch reflect immediately
@@ -262,8 +266,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final messenger = ScaffoldMessenger.of(context);
 
     try {
-      final created =
-          await DocumentCollectionService.instance.createCollection(
+      final created = await DocumentCollectionService.instance.createCollection(
         res.name,
         countryCode: res.countryCode,
       );
@@ -296,8 +299,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
       await _loadCollections();
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Renamed to "$name"')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Renamed to "$name"')));
       }
     } catch (e) {
       if (mounted) _showError('Could not rename collection: $e');
@@ -312,9 +316,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await DocumentCollectionService.instance.deleteCollection(collection.id);
       await _loadCollections();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('"${collection.name}" deleted')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('"${collection.name}" deleted')));
       }
     } catch (e) {
       if (mounted) _showError('Could not delete collection: $e');
@@ -496,24 +500,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // Canvas + wash resolve through the theme transition factor so they
-    // cross-fade with the theme animation instead of snapping.
-    final fade = FinavigTransition.of(context);
-    final canvas = fade.color(FinavigColors.snowWhite, FinavigColors.obsidian);
-    final wash = LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: [
-        fade.color(FinavigColors.accentSoft, const Color(0xFF151830)),
-        canvas,
-      ],
-      stops: const [0.0, 0.55],
-    );
+    // Match the Money tab's flat canvas, cross-fading with theme changes.
+    final canvas = FinavigTransition.of(
+      context,
+    ).color(Colors.white, FinavigColors.obsidian);
 
     return Scaffold(
       backgroundColor: canvas,
       body: Container(
-        decoration: BoxDecoration(gradient: wash),
+        color: canvas,
         child: SafeArea(
           bottom: false,
           child: RefreshIndicator(

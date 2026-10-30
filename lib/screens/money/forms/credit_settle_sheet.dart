@@ -73,15 +73,15 @@ class _CreditSettleSheetState extends State<CreditSettleSheet> {
   /// an expense; money coming back to us is income.
   FinanceKind get _repaymentKind =>
       widget.entry.direction == CreditDirection.borrowed
-          ? FinanceKind.expense
-          : FinanceKind.income;
+      ? FinanceKind.expense
+      : FinanceKind.income;
 
   /// The direction of the *original* movement: borrowing brought money in,
   /// lending sent it out.
   FinanceKind get _principalKind =>
       widget.entry.direction == CreditDirection.borrowed
-          ? FinanceKind.income
-          : FinanceKind.expense;
+      ? FinanceKind.income
+      : FinanceKind.expense;
 
   /// Already-logged transactions that could be this repayment.
   List<FinanceTransaction> get _candidates {
@@ -234,7 +234,10 @@ class _CreditSettleSheetState extends State<CreditSettleSheet> {
                       Icon(
                         Icons.calendar_today_rounded,
                         size: 16,
-                        color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline),
+                        color: FinavigColors.adaptiveIcon(
+                          context,
+                          theme.colorScheme.outline,
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -259,14 +262,14 @@ class _CreditSettleSheetState extends State<CreditSettleSheet> {
                 Text(
                   borrowed
                       ? 'The loan amount you logged in Money when you '
-                          'borrowed. Linking it keeps it out of your income.'
+                            'borrowed. Linking it keeps it out of your income.'
                       : 'The amount you logged in Money when you lent it. '
-                          'Linking it keeps it out of your spending.',
+                            'Linking it keeps it out of your spending.',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.outline,
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 14),
                 for (final t in _principalCandidates.take(8)) ...[
                   _OptionTile(
                     selected: _principalId == t.id,
@@ -292,13 +295,13 @@ class _CreditSettleSheetState extends State<CreditSettleSheet> {
               Text(
                 borrowed
                     ? 'This was money leaving your account — logged as an '
-                        'expense.'
+                          'expense.'
                     : 'This was money arriving — logged as income.',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.outline,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 14),
               _OptionTile(
                 selected: _moneyOption == _MoneyOption.create,
                 title: 'Create a new record',
@@ -312,7 +315,8 @@ class _CreditSettleSheetState extends State<CreditSettleSheet> {
                 _OptionTile(
                   selected: _moneyOption == _MoneyOption.attach,
                   title: 'Attach one I already logged',
-                  subtitle: '${_candidates.length} matching '
+                  subtitle:
+                      '${_candidates.length} matching '
                       '${_candidates.length == 1 ? 'record' : 'records'}',
                   onTap: () => setState(() {
                     _moneyOption = _MoneyOption.attach;
@@ -338,18 +342,19 @@ class _CreditSettleSheetState extends State<CreditSettleSheet> {
                     border: OutlineInputBorder(),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 TextField(
                   controller: _amountController,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
                     labelText: 'Amount (${e.currency})',
                     border: const OutlineInputBorder(),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 DropdownButtonFormField<FinanceCategory>(
                   initialValue: _category,
                   decoration: const InputDecoration(
@@ -365,7 +370,7 @@ class _CreditSettleSheetState extends State<CreditSettleSheet> {
                 ),
               ],
               if (_moneyOption == _MoneyOption.attach) ...[
-                const SizedBox(height: 10),
+                const SizedBox(height: 14),
                 for (final t in _candidates.take(8)) ...[
                   _OptionTile(
                     selected: _attachedId == t.id,
@@ -378,7 +383,7 @@ class _CreditSettleSheetState extends State<CreditSettleSheet> {
                   const SizedBox(height: 8),
                 ],
               ],
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               FilledButton(
                 onPressed: _isValid ? _submit : null,
                 child: Text(borrowed ? 'Mark as repaid' : 'Mark as received'),
@@ -417,9 +422,7 @@ class _OptionTile extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: selected
-                ? theme.colorScheme.primary
-                : theme.dividerColor,
+            color: selected ? theme.colorScheme.primary : theme.dividerColor,
             width: selected ? 1.5 : 1,
           ),
           color: selected
@@ -435,7 +438,10 @@ class _OptionTile extends StatelessWidget {
               size: 20,
               color: selected
                   ? theme.colorScheme.primary
-                  : FinavigColors.adaptiveIcon(context, theme.colorScheme.outline),
+                  : FinavigColors.adaptiveIcon(
+                      context,
+                      theme.colorScheme.outline,
+                    ),
             ),
             const SizedBox(width: 10),
             Expanded(

@@ -41,8 +41,9 @@ class FullScreenImageViewer extends StatefulWidget {
 }
 
 class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
-  final TransformationController _transform =
-      TransformationController(Matrix4.identity());
+  final TransformationController _transform = TransformationController(
+    Matrix4.identity(),
+  );
   TapDownDetails? _doubleTapDetails;
 
   @override
@@ -60,12 +61,22 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
       _transform.value = Matrix4.identity();
     } else {
       _transform.value = Matrix4(
-        tapScale, 0, 0, 0,
-        0, tapScale, 0, 0,
-        0, 0, 1, 0,
+        tapScale,
+        0,
+        0,
+        0,
+        0,
+        tapScale,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
         tapScale - tapScale * position.dx,
         tapScale - tapScale * position.dy,
-        0, 1,
+        0,
+        1,
       );
     }
   }

@@ -44,10 +44,12 @@ class ProfileCollectionsSection extends StatelessWidget {
           Builder(
             builder: (ctx) {
               final isLocked = entitlements.isCollectionLocked(collection);
-              final reqTier =
-                  entitlements.requiredTierForCollection(collection);
-              final reqFeature =
-                  entitlements.requiredFeatureForCollection(collection);
+              final reqTier = entitlements.requiredTierForCollection(
+                collection,
+              );
+              final reqFeature = entitlements.requiredFeatureForCollection(
+                collection,
+              );
 
               return ProfileSettingsTile(
                 icon: isLocked ? Icons.lock_rounded : collection.icon,
@@ -56,8 +58,8 @@ class ProfileCollectionsSection extends StatelessWidget {
                 subtitle: isLocked
                     ? 'Locked • Requires ${TierInfo.all[reqTier]!.name} Plan'
                     : (collection.isPersonal
-                        ? 'Your own documents — always here'
-                        : 'Company collection'),
+                          ? 'Your own documents — always here'
+                          : 'Company collection'),
                 highlighted: activeId == collection.id && !isLocked,
                 trailing: isLocked
                     ? Row(
@@ -98,54 +100,62 @@ class ProfileCollectionsSection extends StatelessWidget {
                           Icon(
                             Icons.chevron_right_rounded,
                             size: 20,
-                            color: FinavigColors.adaptiveIcon(context, Colors.grey),
+                            color: FinavigColors.adaptiveIcon(
+                              context,
+                              Colors.grey,
+                            ),
                           ),
                         ],
                       )
                     : (activeId == collection.id
-                        ? Tooltip(
-                            message: 'Active collection',
-                            child: Icon(
-                              Icons.check_circle,
-                              color: FinavigColors.safe,
-                              size: 20,
-                            ),
-                          )
-                        : Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Personal collection cannot be renamed/deleted.
-                              if (!collection.isPersonal) ...[
-                                IconButton(
-                                  icon: const Icon(Icons.edit_outlined,
-                                      size: 18),
-                                  tooltip: 'Rename',
-                                  visualDensity: VisualDensity.compact,
-                                  onPressed: () => onRename(collection),
-                                ),
-                                IconButton(
-                                  icon: Icon(
-                                    Icons.delete_outline,
-                                    size: 18,
-                                    color: FinavigColors.danger,
+                          ? Tooltip(
+                              message: 'Active collection',
+                              child: Icon(
+                                Icons.check_circle,
+                                color: FinavigColors.safe,
+                                size: 20,
+                              ),
+                            )
+                          : Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // Personal collection cannot be renamed/deleted.
+                                if (!collection.isPersonal) ...[
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.edit_outlined,
+                                      size: 18,
+                                    ),
+                                    tooltip: 'Rename',
+                                    visualDensity: VisualDensity.compact,
+                                    onPressed: () => onRename(collection),
                                   ),
-                                  tooltip: 'Delete',
-                                  visualDensity: VisualDensity.compact,
-                                  onPressed: () => onDelete(collection),
+                                  IconButton(
+                                    icon: Icon(
+                                      Icons.delete_outline,
+                                      size: 18,
+                                      color: FinavigColors.danger,
+                                    ),
+                                    tooltip: 'Delete',
+                                    visualDensity: VisualDensity.compact,
+                                    onPressed: () => onDelete(collection),
+                                  ),
+                                ],
+                                Icon(
+                                  Icons.chevron_right_rounded,
+                                  size: 20,
+                                  color: FinavigColors.adaptiveIcon(
+                                    context,
+                                    Colors.grey,
+                                  ),
                                 ),
                               ],
-                              Icon(
-                                Icons.chevron_right_rounded,
-                                size: 20,
-                                color: FinavigColors.adaptiveIcon(context, Colors.grey),
-                              ),
-                            ],
-                          )),
+                            )),
                 onTap: isLocked
                     ? () => showUpgradeDialog(ctx, reqFeature)
                     : (activeId == collection.id
-                        ? null
-                        : () => onSwitch(collection)),
+                          ? null
+                          : () => onSwitch(collection)),
               );
             },
           ),

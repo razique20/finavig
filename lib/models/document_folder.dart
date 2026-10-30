@@ -47,8 +47,7 @@ class DocumentFolder {
     0xFF4B5563, // Slate
   ];
 
-  IconData get iconData =>
-      availableIcons[iconKey]?.$1 ?? Icons.folder_rounded;
+  IconData get iconData => availableIcons[iconKey]?.$1 ?? Icons.folder_rounded;
 
   Color get color => Color(colorValue);
 
@@ -62,7 +61,8 @@ class DocumentFolder {
 
     return DocumentFolder(
       id: json['id'] as String,
-      collectionId: (json['collectionId'] ?? json['collection_id']) as String? ?? '',
+      collectionId:
+          (json['collectionId'] ?? json['collection_id']) as String? ?? '',
       name: json['name'] as String? ?? 'Untitled Folder',
       iconKey: json['icon'] as String? ?? 'folder',
       colorValue: (json['color'] as num?)?.toInt() ?? 0xFF2563EB,

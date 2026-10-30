@@ -35,9 +35,10 @@ class _ShimmerSkeletonState extends State<ShimmerSkeleton>
       duration: const Duration(milliseconds: 900),
     )..repeat(reverse: true);
 
-    _opacity = Tween<double>(begin: 0.3, end: 0.75).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _opacity = Tween<double>(
+      begin: 0.3,
+      end: 0.75,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -130,21 +131,39 @@ class HomeSkeletonView extends StatelessWidget {
 
           // Categories grid skeleton
           const ShimmerSkeleton(width: 160, height: 18, borderRadius: 4),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Row(
             children: const [
-              Expanded(child: ShimmerSkeleton(width: double.infinity, height: 80, borderRadius: 14)),
+              Expanded(
+                child: ShimmerSkeleton(
+                  width: double.infinity,
+                  height: 80,
+                  borderRadius: 14,
+                ),
+              ),
               SizedBox(width: 10),
-              Expanded(child: ShimmerSkeleton(width: double.infinity, height: 80, borderRadius: 14)),
+              Expanded(
+                child: ShimmerSkeleton(
+                  width: double.infinity,
+                  height: 80,
+                  borderRadius: 14,
+                ),
+              ),
               SizedBox(width: 10),
-              Expanded(child: ShimmerSkeleton(width: double.infinity, height: 80, borderRadius: 14)),
+              Expanded(
+                child: ShimmerSkeleton(
+                  width: double.infinity,
+                  height: 80,
+                  borderRadius: 14,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 24),
 
           // Tile list skeleton
           const ShimmerSkeleton(width: 180, height: 18, borderRadius: 4),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           const TileSkeletonLoader(),
           const TileSkeletonLoader(),
           const TileSkeletonLoader(),
@@ -220,16 +239,28 @@ class MoneySkeletonView extends StatelessWidget {
           // Quick Action buttons skeleton
           Row(
             children: const [
-              Expanded(child: ShimmerSkeleton(width: double.infinity, height: 44, borderRadius: 12)),
+              Expanded(
+                child: ShimmerSkeleton(
+                  width: double.infinity,
+                  height: 44,
+                  borderRadius: 12,
+                ),
+              ),
               SizedBox(width: 10),
-              Expanded(child: ShimmerSkeleton(width: double.infinity, height: 44, borderRadius: 12)),
+              Expanded(
+                child: ShimmerSkeleton(
+                  width: double.infinity,
+                  height: 44,
+                  borderRadius: 12,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 24),
 
           // Transactions list skeleton
           const ShimmerSkeleton(width: 150, height: 18, borderRadius: 4),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           const TileSkeletonLoader(),
           const TileSkeletonLoader(),
           const TileSkeletonLoader(),

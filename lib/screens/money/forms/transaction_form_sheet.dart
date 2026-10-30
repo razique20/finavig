@@ -44,14 +44,14 @@ class _TransactionFormSheetState extends State<TransactionFormSheet> {
     final ex = widget.existing;
     if (ex != null) {
       _titleController.text = ex.title;
-      _amountController.text =
-          ex.amount % 1 == 0 ? ex.amount.toInt().toString() : ex.amount.toString();
+      _amountController.text = ex.amount % 1 == 0
+          ? ex.amount.toInt().toString()
+          : ex.amount.toString();
       _kind = ex.kind;
       _category = ex.category;
       if (ex.documentId != null) {
         final docs = DocumentScannerService.instance.getAllItemsSync();
-        _linkedDocument =
-            docs.where((d) => d.id == ex.documentId).firstOrNull;
+        _linkedDocument = docs.where((d) => d.id == ex.documentId).firstOrNull;
       }
     }
     _titleController.addListener(_onTitleChanged);
@@ -283,7 +283,9 @@ class _TransactionFormSheetState extends State<TransactionFormSheet> {
                         color: FinavigColors.cyanAccent.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: FinavigColors.cyanAccent.withValues(alpha: 0.4),
+                          color: FinavigColors.cyanAccent.withValues(
+                            alpha: 0.4,
+                          ),
                         ),
                       ),
                       child: Row(
@@ -309,7 +311,7 @@ class _TransactionFormSheetState extends State<TransactionFormSheet> {
                   ),
                 ),
               ],
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               TextField(
                 controller: _amountController,
                 keyboardType: const TextInputType.numberWithOptions(
@@ -321,7 +323,7 @@ class _TransactionFormSheetState extends State<TransactionFormSheet> {
                   border: const OutlineInputBorder(),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               DropdownButtonFormField<FinanceCategory>(
                 initialValue: _category,
                 decoration: const InputDecoration(
@@ -345,7 +347,7 @@ class _TransactionFormSheetState extends State<TransactionFormSheet> {
                 onChanged: (c) =>
                     setState(() => _category = c ?? FinanceCategory.other),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               if (_kind == FinanceKind.expense) ...[
                 DropdownButtonFormField<ExpiryItem?>(
                   initialValue: _linkedDocument,
@@ -368,7 +370,7 @@ class _TransactionFormSheetState extends State<TransactionFormSheet> {
                   ],
                   onChanged: (d) => setState(() => _linkedDocument = d),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
               ],
               if (widget.existing == null) ...[
                 SwitchListTile(

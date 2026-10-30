@@ -148,8 +148,7 @@ class GroqApiService {
           .timeout(const Duration(seconds: 25));
 
       if (response.statusCode != 200) {
-        debugPrint(
-            'Groq API error ${response.statusCode}: ${response.body}');
+        debugPrint('Groq API error ${response.statusCode}: ${response.body}');
         throw GroqApiException(
           'Groq API error (${response.statusCode})',
           statusCode: response.statusCode,
@@ -205,10 +204,7 @@ class GroqApiService {
       return '';
     } on FunctionException catch (e) {
       debugPrint('Groq proxy error ${e.status}: ${e.details}');
-      throw GroqApiException(
-        _proxyErrorMessage(e),
-        statusCode: e.status,
-      );
+      throw GroqApiException(_proxyErrorMessage(e), statusCode: e.status);
     } on TimeoutException {
       throw const GroqApiException('AI request timed out. Please try again.');
     } on FormatException catch (e) {

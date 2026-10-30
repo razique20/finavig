@@ -41,7 +41,9 @@ class FolderCarousel extends StatelessWidget {
     final atLimit = folderLimit != null && folders.length >= folderLimit;
 
     // Count unorganized documents (those without a folderId)
-    final unorganizedCount = items.where((i) => i.folderId == null || i.folderId!.isEmpty).length;
+    final unorganizedCount = items
+        .where((i) => i.folderId == null || i.folderId!.isEmpty)
+        .length;
     final hasFolders = folders.isNotEmpty;
 
     return SizedBox(
@@ -66,7 +68,9 @@ class FolderCarousel extends StatelessWidget {
           for (final folder in folders) ...[
             Builder(
               builder: (ctx) {
-                final count = items.where((i) => i.folderId == folder.id).length;
+                final count = items
+                    .where((i) => i.folderId == folder.id)
+                    .length;
                 final isSelected = selectedFolderId == folder.id;
 
                 return _FilterPill(
@@ -89,10 +93,15 @@ class FolderCarousel extends StatelessWidget {
               label: 'Unassigned',
               count: unorganizedCount,
               icon: Icons.folder_open_rounded,
-              color: fade.color(FinavigColors.textMutedLight, FinavigColors.textMuted),
+              color: fade.color(
+                FinavigColors.textMutedLight,
+                FinavigColors.textMuted,
+              ),
               isSelected: selectedFolderId == unorganizedFolderId,
               onTap: () => onFolderSelected(
-                selectedFolderId == unorganizedFolderId ? null : unorganizedFolderId,
+                selectedFolderId == unorganizedFolderId
+                    ? null
+                    : unorganizedFolderId,
               ),
             ),
             const SizedBox(width: 8),
@@ -102,7 +111,10 @@ class FolderCarousel extends StatelessWidget {
           InkWell(
             onTap: () async {
               if (isFree) {
-                await showUpgradeDialog(context, EntitlementFeature.documentFolders);
+                await showUpgradeDialog(
+                  context,
+                  EntitlementFeature.documentFolders,
+                );
               } else if (atLimit) {
                 await showUpgradeDialog(
                   context,
@@ -120,9 +132,7 @@ class FolderCarousel extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: isDark
-                    ? FinavigColors.slate
-                    : FinavigColors.cloud,
+                color: isDark ? FinavigColors.slate : FinavigColors.cloud,
                 borderRadius: BorderRadius.circular(100),
                 border: Border.all(
                   color: theme.colorScheme.outline.withValues(alpha: 0.18),
@@ -133,7 +143,9 @@ class FolderCarousel extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    isFree || atLimit ? Icons.lock_outline_rounded : Icons.add_rounded,
+                    isFree || atLimit
+                        ? Icons.lock_outline_rounded
+                        : Icons.add_rounded,
                     size: 16,
                     color: (isFree || atLimit)
                         ? Colors.amber.shade700
@@ -144,8 +156,8 @@ class FolderCarousel extends StatelessWidget {
                     isFree
                         ? 'Folder'
                         : atLimit
-                            ? 'Folder ($folderLimit/$folderLimit)'
-                            : 'New folder',
+                        ? 'Folder ($folderLimit/$folderLimit)'
+                        : 'New folder',
                     style: theme.textTheme.labelMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: (isFree || atLimit)
@@ -177,7 +189,7 @@ class FolderCarousel extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const SizedBox(height: 10),
+              const SizedBox(height: 14),
               Container(
                 width: 36,
                 height: 4,
@@ -225,7 +237,7 @@ class FolderCarousel extends StatelessWidget {
                   _confirmDelete(context, folder);
                 },
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
             ],
           ),
         );
@@ -297,9 +309,7 @@ class _FilterPill extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? color.withValues(alpha: isDark ? 0.28 : 0.15)
-              : (isDark
-                  ? FinavigColors.slate
-                  : FinavigColors.cloud),
+              : (isDark ? FinavigColors.slate : FinavigColors.cloud),
           borderRadius: BorderRadius.circular(100),
           border: Border.all(
             color: isSelected

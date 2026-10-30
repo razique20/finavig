@@ -30,8 +30,10 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       vsync: this,
       duration: const Duration(milliseconds: 700),
     )..forward();
-    _fade =
-        CurvedAnimation(parent: _fadeController, curve: Curves.easeOutCubic);
+    _fade = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeOutCubic,
+    );
     _slide = Tween<Offset>(
       begin: const Offset(0, 0.06),
       end: Offset.zero,
@@ -55,8 +57,10 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     final fade = FinavigTransition.of(context);
 
     return Scaffold(
-      backgroundColor:
-          fade.color(FinavigColors.snowWhite, FinavigColors.obsidian),
+      backgroundColor: fade.color(
+        FinavigColors.snowWhite,
+        FinavigColors.obsidian,
+      ),
       body: SafeArea(
         child: FadeTransition(
           opacity: _fade,
@@ -148,13 +152,16 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                       child: ElevatedButton(
                         onPressed: _continueToLogin,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              fade.color(FinavigColors.ink, FinavigColors.accentBright),
+                          backgroundColor: fade.color(
+                            FinavigColors.ink,
+                            FinavigColors.accentBright,
+                          ),
                           foregroundColor: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(FinavigRadius.button),
+                            borderRadius: BorderRadius.circular(
+                              FinavigRadius.button,
+                            ),
                           ),
                         ),
                         child: const Text(
@@ -220,10 +227,7 @@ class _NoteRow extends StatelessWidget {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w700,
-            color: fade.color(
-              FinavigColors.accent,
-              FinavigColors.accentBright,
-            ),
+            color: fade.color(FinavigColors.accent, FinavigColors.accentBright),
           ),
         ),
         const SizedBox(width: 10),

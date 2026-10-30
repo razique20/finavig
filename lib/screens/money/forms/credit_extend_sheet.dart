@@ -102,7 +102,10 @@ class _CreditExtendSheetState extends State<CreditExtendSheet> {
                     Icon(
                       Icons.calendar_today_rounded,
                       size: 16,
-                      color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline),
+                      color: FinavigColors.adaptiveIcon(
+                        context,
+                        theme.colorScheme.outline,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -117,7 +120,7 @@ class _CreditExtendSheetState extends State<CreditExtendSheet> {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(12),
@@ -133,7 +136,10 @@ class _CreditExtendSheetState extends State<CreditExtendSheet> {
                   Icon(
                     Icons.history_rounded,
                     size: 16,
-                    color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline),
+                    color: FinavigColors.adaptiveIcon(
+                      context,
+                      theme.colorScheme.outline,
+                    ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -175,7 +181,14 @@ class _CreditExtendSheetState extends State<CreditExtendSheet> {
       ),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline)),
+          Icon(
+            icon,
+            size: 16,
+            color: FinavigColors.adaptiveIcon(
+              context,
+              theme.colorScheme.outline,
+            ),
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Column(

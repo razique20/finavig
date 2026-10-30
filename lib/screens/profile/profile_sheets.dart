@@ -67,8 +67,8 @@ Future<void> showProfileEditSheet(
                   Text(
                     'Edit Profile',
                     style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const Spacer(),
                   IconButton(
@@ -86,7 +86,7 @@ Future<void> showProfileEditSheet(
                   border: OutlineInputBorder(),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               TextField(
                 controller: phoneCtrl,
                 keyboardType: TextInputType.phone,
@@ -202,16 +202,66 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
       builder: (ctx, setSheetState) {
         /// Small value type so the const list of feature categories is valid.
         const categoryItems = <_CategoryItem>[
-          _CategoryItem(value: 'AI Features', label: 'AI Features', icon: Icons.auto_awesome_rounded, color: Colors.indigo),
-          _CategoryItem(value: 'Document Management', label: 'Document Management', icon: Icons.folder_open_rounded, color: FinavigColors.safe),
-          _CategoryItem(value: 'Finance & Payments', label: 'Finance & Payments', icon: Icons.account_balance_wallet_rounded, color: FinavigColors.safe),
-          _CategoryItem(value: 'Notifications & Reminders', label: 'Notifications & Reminders', icon: Icons.notifications_rounded, color: FinavigColors.warning),
-          _CategoryItem(value: 'User Interface', label: 'User Interface', icon: Icons.palette_rounded, color: Colors.pink),
-          _CategoryItem(value: 'Performance & Speed', label: 'Performance & Speed', icon: Icons.tune_rounded, color: Colors.amber),
-          _CategoryItem(value: 'Security & Privacy', label: 'Security & Privacy', icon: Icons.security_rounded, color: FinavigColors.danger),
-          _CategoryItem(value: 'Integration & Export', label: 'Integration & Export', icon: Icons.share_rounded, color: Colors.purple),
-          _CategoryItem(value: 'Account & Subscription', label: 'Account & Subscription', icon: Icons.business_rounded, color: Colors.blue),
-          _CategoryItem(value: 'Other', label: 'Other', icon: Icons.more_horiz_rounded, color: Colors.grey),
+          _CategoryItem(
+            value: 'AI Features',
+            label: 'AI Features',
+            icon: Icons.auto_awesome_rounded,
+            color: Colors.indigo,
+          ),
+          _CategoryItem(
+            value: 'Document Management',
+            label: 'Document Management',
+            icon: Icons.folder_open_rounded,
+            color: FinavigColors.safe,
+          ),
+          _CategoryItem(
+            value: 'Finance & Payments',
+            label: 'Finance & Payments',
+            icon: Icons.account_balance_wallet_rounded,
+            color: FinavigColors.safe,
+          ),
+          _CategoryItem(
+            value: 'Notifications & Reminders',
+            label: 'Notifications & Reminders',
+            icon: Icons.notifications_rounded,
+            color: FinavigColors.warning,
+          ),
+          _CategoryItem(
+            value: 'User Interface',
+            label: 'User Interface',
+            icon: Icons.palette_rounded,
+            color: Colors.pink,
+          ),
+          _CategoryItem(
+            value: 'Performance & Speed',
+            label: 'Performance & Speed',
+            icon: Icons.tune_rounded,
+            color: Colors.amber,
+          ),
+          _CategoryItem(
+            value: 'Security & Privacy',
+            label: 'Security & Privacy',
+            icon: Icons.security_rounded,
+            color: FinavigColors.danger,
+          ),
+          _CategoryItem(
+            value: 'Integration & Export',
+            label: 'Integration & Export',
+            icon: Icons.share_rounded,
+            color: Colors.purple,
+          ),
+          _CategoryItem(
+            value: 'Account & Subscription',
+            label: 'Account & Subscription',
+            icon: Icons.business_rounded,
+            color: Colors.blue,
+          ),
+          _CategoryItem(
+            value: 'Other',
+            label: 'Other',
+            icon: Icons.more_horiz_rounded,
+            color: Colors.grey,
+          ),
         ];
 
         DropdownMenuItem<String> buildCategoryMenuItem(_CategoryItem cat) {
@@ -221,7 +271,7 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
               children: [
                 Icon(cat.icon, size: 18, color: cat.color),
                 const SizedBox(width: 10),
-                Text(cat.label),
+                Expanded(child: Text(cat.label)),
               ],
             ),
           );
@@ -311,7 +361,11 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
                             value: 'tracking_option_request',
                             child: Row(
                               children: [
-                                Icon(Icons.track_changes_rounded, size: 18, color: FinavigColors.safe),
+                                Icon(
+                                  Icons.track_changes_rounded,
+                                  size: 18,
+                                  color: FinavigColors.safe,
+                                ),
                                 SizedBox(width: 10),
                                 Text('Tracking Option Request'),
                               ],
@@ -321,7 +375,11 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
                             value: 'feature_request',
                             child: Row(
                               children: [
-                                Icon(Icons.lightbulb_outline_rounded, size: 18, color: Colors.amber),
+                                Icon(
+                                  Icons.lightbulb_outline_rounded,
+                                  size: 18,
+                                  color: Colors.amber,
+                                ),
                                 SizedBox(width: 10),
                                 Text('Feature Request'),
                               ],
@@ -331,7 +389,11 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
                             value: 'bug_report',
                             child: Row(
                               children: [
-                                Icon(Icons.bug_report_outlined, size: 18, color: FinavigColors.danger),
+                                Icon(
+                                  Icons.bug_report_outlined,
+                                  size: 18,
+                                  color: FinavigColors.danger,
+                                ),
                                 SizedBox(width: 10),
                                 Text('Bug Report'),
                               ],
@@ -341,7 +403,11 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
                             value: 'support_request',
                             child: Row(
                               children: [
-                                Icon(Icons.help_outline_rounded, size: 18, color: Colors.blue),
+                                Icon(
+                                  Icons.help_outline_rounded,
+                                  size: 18,
+                                  color: Colors.blue,
+                                ),
                                 SizedBox(width: 10),
                                 Text('General Support'),
                               ],
@@ -362,7 +428,7 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
                   TextField(
                     controller: titleCtrl,
                     textCapitalization: TextCapitalization.sentences,
@@ -374,7 +440,7 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
                       prefixIcon: const Icon(Icons.title_rounded),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   // Description
                   Text(
                     'Description',
@@ -382,7 +448,7 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
                   TextField(
                     controller: descCtrl,
                     maxLines: 4,
@@ -395,7 +461,7 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
                       alignLabelWithHint: true,
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 28),
                   // Feature category (only shown for feature requests)
                   if (selectedType == 'feature_request') ...[
                     const SizedBox(height: 16),
@@ -412,7 +478,9 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: theme.colorScheme.outline.withValues(alpha: 0.3),
+                          color: theme.colorScheme.outline.withValues(
+                            alpha: 0.3,
+                          ),
                         ),
                       ),
                       child: DropdownButtonHideUnderline(
@@ -421,7 +489,9 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
                           hint: const Text('Select a category'),
                           isExpanded: true,
                           borderRadius: BorderRadius.circular(12),
-                          items: categoryItems.map((cat) => buildCategoryMenuItem(cat)).toList(),
+                          items: categoryItems
+                              .map((cat) => buildCategoryMenuItem(cat))
+                              .toList(),
                           onChanged: (v) {
                             setSheetState(() => selectedFeatureCategory = v);
                           },
@@ -454,13 +524,15 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
                           );
                           return;
                         }
-                        final result =
-                            await SupportService.instance.submitRequest(
-                          title: title,
-                          description: desc,
-                          requestType: selectedType,
-                          featureName: selectedType == 'feature_request' ? selectedFeatureCategory : null,
-                        );
+                        final result = await SupportService.instance
+                            .submitRequest(
+                              title: title,
+                              description: desc,
+                              requestType: selectedType,
+                              featureName: selectedType == 'feature_request'
+                                  ? selectedFeatureCategory
+                                  : null,
+                            );
                         if (ctx.mounted) {
                           ScaffoldMessenger.of(ctx).showSnackBar(
                             SnackBar(
@@ -536,7 +608,10 @@ Future<void> showProfileRequestHistorySheet(BuildContext context) async {
                       ),
                       child: Icon(
                         Icons.history_rounded,
-                        color: FinavigColors.adaptiveIcon(context, Colors.blueGrey),
+                        color: FinavigColors.adaptiveIcon(
+                          context,
+                          Colors.blueGrey,
+                        ),
                         size: 22,
                       ),
                     ),
@@ -562,9 +637,7 @@ Future<void> showProfileRequestHistorySheet(BuildContext context) async {
                   future: SupportService.instance.fetchUserRequests(),
                   builder: (ctx, snap) {
                     if (snap.connectionState == ConnectionState.waiting) {
-                      return const Center(
-                        child: CircularProgressIndicator(),
-                      );
+                      return const Center(child: CircularProgressIndicator());
                     }
                     final items = snap.data ?? [];
                     if (items.isEmpty) {
@@ -577,9 +650,14 @@ Future<void> showProfileRequestHistorySheet(BuildContext context) async {
                               Icon(
                                 Icons.inbox_rounded,
                                 size: 56,
-                                color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline.withValues(alpha: 0.4)),
+                                color: FinavigColors.adaptiveIcon(
+                                  context,
+                                  theme.colorScheme.outline.withValues(
+                                    alpha: 0.4,
+                                  ),
+                                ),
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 16),
                               Text(
                                 'No requests yet',
                                 style: theme.textTheme.titleMedium?.copyWith(
@@ -605,14 +683,13 @@ Future<void> showProfileRequestHistorySheet(BuildContext context) async {
                         vertical: 12,
                       ),
                       itemCount: items.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      separatorBuilder: (_, __) => const SizedBox(height: 14),
                       itemBuilder: (ctx, i) {
                         final item = items[i];
                         return ProfileSupportRequestCard(item: item);
                       },
                     );
                   },
-
                 ),
               ),
             ],
@@ -684,8 +761,7 @@ class ProfileSupportRequestCard extends StatelessWidget {
             children: [
               // Type pill
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: typeColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
@@ -709,8 +785,7 @@ class ProfileSupportRequestCard extends StatelessWidget {
               const Spacer(),
               // Status badge
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
@@ -733,7 +808,7 @@ class ProfileSupportRequestCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
 
           // Title
           Text(
@@ -812,8 +887,18 @@ class ProfileSupportRequestCard extends StatelessWidget {
 
   static String _formatRequestDate(DateTime date) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     final local = date.toLocal();
     final hour = local.hour % 12 == 0 ? 12 : local.hour % 12;
@@ -865,8 +950,8 @@ Future<void> showDeleteAccountSheet(BuildContext context) async {
                   child: Text(
                     'Delete account?',
                     style: Theme.of(sheetCtx).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],
@@ -879,12 +964,11 @@ Future<void> showDeleteAccountSheet(BuildContext context) async {
               '\u2022 Budgets, envelopes and AI quota history\n\n'
               'This cannot be undone once confirmed.',
               style: Theme.of(sheetCtx).textTheme.bodyMedium?.copyWith(
-                    height: 1.5,
-                    color: Theme.of(sheetCtx)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.8),
-                  ),
+                height: 1.5,
+                color: Theme.of(
+                  sheetCtx,
+                ).colorScheme.onSurface.withValues(alpha: 0.8),
+              ),
             ),
             const SizedBox(height: 18),
             Row(
@@ -898,12 +982,10 @@ Future<void> showDeleteAccountSheet(BuildContext context) async {
                 const SizedBox(width: 12),
                 Expanded(
                   child: FilledButton(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: Colors.red,
-                    ),
+                    style: FilledButton.styleFrom(backgroundColor: Colors.red),
                     onPressed: () => Navigator.pop(sheetCtx, true),
                     child: const Text('Continue'),
-                    ),
+                  ),
                 ),
               ],
             ),
@@ -939,7 +1021,7 @@ Future<void> showDeleteAccountSheet(BuildContext context) async {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('Type your email to confirm:'),
-            const SizedBox(height: 10),
+            const SizedBox(height: 14),
             TextField(
               controller: controller,
               keyboardType: TextInputType.emailAddress,
@@ -958,9 +1040,10 @@ Future<void> showDeleteAccountSheet(BuildContext context) async {
             valueListenable: controller,
             builder: (ctx, value, _) => FilledButton(
               style: FilledButton.styleFrom(backgroundColor: Colors.red),
-              onPressed: value.text.trim().toLowerCase() ==
-                      email.trim().toLowerCase() &&
-                  email.isNotEmpty
+              onPressed:
+                  value.text.trim().toLowerCase() ==
+                          email.trim().toLowerCase() &&
+                      email.isNotEmpty
                   ? () => Navigator.pop(dlgCtx, value.text.trim())
                   : null,
               child: const Text('Delete forever'),

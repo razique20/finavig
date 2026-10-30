@@ -160,8 +160,10 @@ Future<void> _markRenewed(
 
     // Persist the replacement file when the user re-uploaded one.
     if (result.replacementFile != null) {
-      final storedPath =
-          await saveRenewalReplacementFile(item, result.replacementFile!);
+      final storedPath = await saveRenewalReplacementFile(
+        item,
+        result.replacementFile!,
+      );
       final refreshed = await DocumentScannerService.instance.getItemById(
         item.id,
       );
@@ -255,8 +257,9 @@ Future<void> _assign(
   await DocumentScannerService.instance.assignTo(item.id, name);
   await onChanged();
   if (!context.mounted) return;
-  ScaffoldMessenger.of(context)
-      .showSnackBar(SnackBar(content: Text('Assigned to $name')));
+  ScaffoldMessenger.of(
+    context,
+  ).showSnackBar(SnackBar(content: Text('Assigned to $name')));
 }
 
 Future<void> _confirmDelete(
@@ -288,6 +291,7 @@ Future<void> _confirmDelete(
   await DocumentScannerService.instance.removeItem(item.id);
   await onChanged();
   if (!context.mounted) return;
-  ScaffoldMessenger.of(context)
-      .showSnackBar(SnackBar(content: Text('${item.displayName} deleted')));
+  ScaffoldMessenger.of(
+    context,
+  ).showSnackBar(SnackBar(content: Text('${item.displayName} deleted')));
 }

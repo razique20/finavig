@@ -91,9 +91,7 @@ class _OfflineBannerState extends State<OfflineBanner>
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: isDark
-                      ? FinavigColors.warning
-                      : FinavigColors.warning,
+                  color: isDark ? FinavigColors.warning : FinavigColors.warning,
                 ),
               ),
             ],

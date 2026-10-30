@@ -209,12 +209,7 @@ class AiIntentRouterService {
           ? entries.sublist(entries.length - maxMemoEntries)
           : entries;
       final encoded = jsonEncode(
-        kept
-            .map((e) => {
-                  'i': e.key,
-                  'r': _encodeRouting(e.value),
-                })
-            .toList(),
+        kept.map((e) => {'i': e.key, 'r': _encodeRouting(e.value)}).toList(),
       );
       await prefs.setString(_memoPrefsKey, encoded);
       await prefs.setString(
@@ -230,17 +225,17 @@ class AiIntentRouterService {
   }
 
   Map<String, dynamic> _encodeRouting(AskRouting r) => {
-        if (r.intent == AskIntent.logMoney)
-          'i': 'LOG_MONEY'
-        else if (r.intent == AskIntent.addDocument)
-          'i': 'ADD_DOCUMENT'
-        else
-          'i': 'UNCLEAR',
-        'c': r.confidence,
-        's': r.source.name,
-        if (r.note != null) 'n': r.note,
-        if (r.missingDate) 'd': true,
-      };
+    if (r.intent == AskIntent.logMoney)
+      'i': 'LOG_MONEY'
+    else if (r.intent == AskIntent.addDocument)
+      'i': 'ADD_DOCUMENT'
+    else
+      'i': 'UNCLEAR',
+    'c': r.confidence,
+    's': r.source.name,
+    if (r.note != null) 'n': r.note,
+    if (r.missingDate) 'd': true,
+  };
 
   AskRouting? _decodeRouting(dynamic raw) {
     if (raw is! Map<String, dynamic>) return null;
@@ -277,7 +272,10 @@ class AiIntentRouterService {
   Future<int> escalationsRemainingToday() async {
     await _ensurePrefsLoaded();
     if (_budgetDay != _todayMidnight()) return maxEscalationsPerDay;
-    return (maxEscalationsPerDay - _escalationsToday).clamp(0, maxEscalationsPerDay);
+    return (maxEscalationsPerDay - _escalationsToday).clamp(
+      0,
+      maxEscalationsPerDay,
+    );
   }
 
   // --------------------------------------------------------------------------
@@ -311,20 +309,64 @@ class AiIntentRouterService {
   /// document lexicon so "pay for my visa renewal fee" doesn't misroute —
   /// though a bare "visa renewal" with no money signal does.
   static const List<String> _moneyKeywords = [
-    'paid', 'pay', 'payment', 'spent', 'spend', 'bought', 'purchase',
-    'received', 'receive', 'got', 'income', 'salary', 'salaries', 'earned',
-    'earning', 'refund', 'refunded', 'credited', 'revenue', 'invoice',
-    'client payment', 'customer payment', 'deposit', 'bill', 'recurring',
-    'subscription', 'budget', 'transfer', 'withdraw', 'withdrew',
-    'log an expense', 'log expense', 'log income', 'log a bill',
+    'paid',
+    'pay',
+    'payment',
+    'spent',
+    'spend',
+    'bought',
+    'purchase',
+    'received',
+    'receive',
+    'got',
+    'income',
+    'salary',
+    'salaries',
+    'earned',
+    'earning',
+    'refund',
+    'refunded',
+    'credited',
+    'revenue',
+    'invoice',
+    'client payment',
+    'customer payment',
+    'deposit',
+    'bill',
+    'recurring',
+    'subscription',
+    'budget',
+    'transfer',
+    'withdraw',
+    'withdrew',
+    'log an expense',
+    'log expense',
+    'log income',
+    'log a bill',
   ];
 
   /// Known biller/utility names that scream "money" even when the sentence
   /// has no verb — "DEWA 450" is an expense, not a document.
   static const List<String> _moneyEntityHints = [
-    'dewa', 'sewa', 'fewa', 'etisalat', 'du bill', 'salik', 'uber', 'careem',
-    'talabat', 'deliveroo', 'noon', 'amazon', 'starbucks', 'mcdonalds',
-    'netflix', 'spotify', 'aws', 'google cloud', 'rent',
+    'dewa',
+    'sewa',
+    'fewa',
+    'etisalat',
+    'du bill',
+    'salik',
+    'uber',
+    'careem',
+    'talabat',
+    'deliveroo',
+    'noon',
+    'amazon',
+    'starbucks',
+    'mcdonalds',
+    'netflix',
+    'spotify',
+    'aws',
+    'google cloud',
+    'rent',
   ];
 
   static final RegExp _amountRegex = RegExp(
@@ -351,8 +393,7 @@ class AiIntentRouterService {
 
   bool _hasAmount(String text) => _amountRegex.hasMatch(text);
 
-  bool _mentionsDocument(String lower) =>
-      _documentKeywords.any(lower.contains);
+  bool _mentionsDocument(String lower) => _documentKeywords.any(lower.contains);
 
   bool _mentionsMoney(String lower) =>
       _moneyKeywords.any(lower.contains) ||

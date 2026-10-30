@@ -3,11 +3,13 @@ import 'package:go_router/go_router.dart';
 
 import '../../services/auth_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/hero_widgets.dart';
+import '../../widgets/indicators/finavig_logo.dart';
 
 /// Header of the Profile (Settings) tab — a centred page title, a circular
-/// avatar, the user's name and email. Matches the clean, airy list layout: a
-/// soft gradient wash behind, no navy hero, no plan pills (plan status lives
-/// in the "Manage subscription" row instead).
+/// avatar, the user's name and email. Matches the clean, airy list layout:
+/// no navy hero or plan pills (plan status lives in the "Manage subscription"
+/// row instead).
 class ProfileSettingsHeader extends StatelessWidget {
   final String userName;
 
@@ -32,15 +34,6 @@ class ProfileSettingsHeader extends StatelessWidget {
       FinavigColors.textPrimary,
     );
 
-    final initials = userName
-        .trim()
-        .split(' ')
-        .where((e) => e.isNotEmpty)
-        .map((e) => e[0])
-        .take(2)
-        .join('')
-        .toUpperCase();
-
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
       child: Column(
@@ -62,7 +55,7 @@ class ProfileSettingsHeader extends StatelessWidget {
               SizedBox(
                 width: 40,
                 child: signedIn
-                    ? _CircleIconButton(
+                    ? CanvasIconButton(
                         icon: Icons.logout_rounded,
                         tooltip: 'Sign out',
                         onTap: () => _signOut(context),
@@ -72,36 +65,11 @@ class ProfileSettingsHeader extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 18),
-          // NFT-style avatar — profile picture in the Settings header.
-          Container(
-            width: 84,
-            height: 84,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: FinavigShadows.adaptive(
-                theme.brightness == Brightness.dark,
-              ),
-            ),
-            child: ClipOval(
-              child: Image.asset(
-                'assets/images/nft_avatar.jpg',
-                width: 84,
-                height: 84,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  color: FinavigColors.ink,
-                  alignment: Alignment.center,
-                  child: Text(
-                    initials,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          // Replace the unrelated profile photo with Finavig's own brand mark.
+          FinavigLogo(
+            size: 84,
+            borderRadius: BorderRadius.circular(24),
+            showShadow: theme.brightness == Brightness.dark,
           ),
           const SizedBox(height: 14),
           Text(
@@ -168,47 +136,5 @@ class ProfileSettingsHeader extends StatelessWidget {
     await AuthService.instance.signOutAndClear();
 
     if (context.mounted) context.go('/login');
-  }
-}
-
-/// Round header action button that adapts to the light canvas (accent in light
-/// mode, white icon on a translucent chip in dark).
-class _CircleIconButton extends StatelessWidget {
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onTap;
-
-  const _CircleIconButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final fade = FinavigTransition.of(context);
-    return Material(
-      color: fade.color(
-        FinavigColors.accent.withValues(alpha: 0.10),
-        Colors.white.withValues(alpha: 0.08),
-      ),
-      shape: const CircleBorder(),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Tooltip(
-          message: tooltip,
-          child: SizedBox(
-            width: 40,
-            height: 40,
-            child: Icon(
-              icon,
-              size: 20,
-              color: fade.color(FinavigColors.accent, Colors.white),
-            ),
-          ),
-        ),
-      ),
-    );
   }
 }

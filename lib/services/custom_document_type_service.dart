@@ -181,12 +181,14 @@ class CustomDocumentTypeService {
       final prefs = await SharedPreferences.getInstance();
       final customs = DocumentTypeRegistry.instance.all
           .where((t) => t.isCustom)
-          .map((t) => {
-                'key': t.key,
-                'name': t.displayName,
-                'renewalAuthority': t.renewalAuthority,
-                'typicalRenewalDays': t.typicalRenewalDays,
-              })
+          .map(
+            (t) => {
+              'key': t.key,
+              'name': t.displayName,
+              'renewalAuthority': t.renewalAuthority,
+              'typicalRenewalDays': t.typicalRenewalDays,
+            },
+          )
           .toList();
       await prefs.setString(_localKey, jsonEncode(customs));
     } catch (_) {

@@ -95,8 +95,7 @@ class PerfTracingService with WidgetsBindingObserver {
   }
 
   /// Frames observed since the monitor started (bounded ring buffer).
-  List<FrameTiming> get recentFrames =>
-      List.unmodifiable(_recentFrames);
+  List<FrameTiming> get recentFrames => List.unmodifiable(_recentFrames);
 
   /// Rough jank ratio since the monitor started: slow frames / total
   /// frames. Null when nothing has been measured yet.

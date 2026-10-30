@@ -181,7 +181,7 @@ class _CompanionSuggestionSheetState extends State<CompanionSuggestionSheet> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
 
             Flexible(
               // Lazy builder over a flattened pool-header/item index: only
@@ -341,7 +341,9 @@ class _SuggestionTile extends StatelessWidget {
                 color: selected
                     ? meta.primaryColor
                     : FinavigColors.adaptiveIcon(
-                        context, theme.colorScheme.outline),
+                        context,
+                        theme.colorScheme.outline,
+                      ),
               ),
             ],
           ),

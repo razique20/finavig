@@ -33,12 +33,12 @@ class DocumentCollection {
 
   /// The built-in personal collection (local-only mode fallback).
   const DocumentCollection.personal({String countryCode = 'AE'})
-      : this(
-          id: personalId,
-          name: 'Personal',
-          countryCode: countryCode,
-          isPersonal: true,
-        );
+    : this(
+        id: personalId,
+        name: 'Personal',
+        countryCode: countryCode,
+        isPersonal: true,
+      );
 
   /// Helper to get the strongly typed GCC country enum.
   GccCountry get country => GccCountry.fromCode(countryCode);
@@ -47,7 +47,8 @@ class DocumentCollection {
     return DocumentCollection(
       id: json['id'] as String,
       name: json['name'] as String? ?? 'Collection',
-      countryCode: (json['countryCode'] ?? json['country_code']) as String? ?? 'AE',
+      countryCode:
+          (json['countryCode'] ?? json['country_code']) as String? ?? 'AE',
       isPersonal: json['isPersonal'] ?? json['is_personal'] as bool? ?? false,
     );
   }
@@ -80,4 +81,3 @@ class DocumentCollection {
   @override
   String toString() => 'DocumentCollection($id, $name, $countryCode)';
 }
-

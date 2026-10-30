@@ -23,8 +23,9 @@ class DemoDocumentService {
   /// inside the 30-day "upcoming" band so urgency visuals are interesting
   /// but not alarming).
   Future<ExpiryItem> addDemoDocument({int daysUntilExpiry = 21}) async {
-    final meta =
-        DocumentTypeRegistry.instance.byEnum(DocumentType.tradeLicence);
+    final meta = DocumentTypeRegistry.instance.byEnum(
+      DocumentType.tradeLicence,
+    );
     final expiry = DateTime.now().add(Duration(days: daysUntilExpiry));
 
     final item = ExpiryItem.create(
@@ -50,8 +51,9 @@ class DemoDocumentService {
 
   /// Remove every demo document (used when the user asks to clean up).
   Future<int> removeAll() async {
-    final items = await DocumentScannerService.instance
-        .getAllItems(includeExpired: true);
+    final items = await DocumentScannerService.instance.getAllItems(
+      includeExpired: true,
+    );
     var removed = 0;
     for (final item in items) {
       if (!item.displayName.startsWith(demoNamePrefix)) continue;

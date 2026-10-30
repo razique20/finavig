@@ -460,7 +460,10 @@ class _ExpiryListScreenState extends State<ExpiryListScreen> {
                 },
               ),
               ListTile(
-                leading: Icon(Icons.download_rounded, color: FinavigColors.safe),
+                leading: Icon(
+                  Icons.download_rounded,
+                  color: FinavigColors.safe,
+                ),
                 title: const Text('Download document'),
                 subtitle: const Text('Save a copy locally'),
                 onTap: () {
@@ -504,7 +507,7 @@ class _ExpiryListScreenState extends State<ExpiryListScreen> {
                 hintText: 'Enter team member name',
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             const Text('Quick select:'),
             const SizedBox(height: 8),
             ...team.map(
@@ -794,7 +797,9 @@ class _ExpiryListScreenState extends State<ExpiryListScreen> {
                                 _updateSpec((s) => s.copyWith(docType: type));
                                 Navigator.pop(ctx);
                               },
-                              selectedColor: type.primaryColor.withValues(alpha: 0.2),
+                              selectedColor: type.primaryColor.withValues(
+                                alpha: 0.2,
+                              ),
                             ),
                           ),
                         ],
@@ -893,15 +898,21 @@ class _ExpiryListScreenState extends State<ExpiryListScreen> {
                           ),
                           ...DocumentCollectionService.instance.collections.map(
                             (c) {
-                              final isLocked = EntitlementService.instance.isCollectionLocked(c);
-                              final reqFeature = EntitlementService.instance.requiredFeatureForCollection(c);
+                              final isLocked = EntitlementService.instance
+                                  .isCollectionLocked(c);
+                              final reqFeature = EntitlementService.instance
+                                  .requiredFeatureForCollection(c);
                               return FilterChip(
                                 avatar: Icon(
                                   isLocked ? Icons.lock_rounded : c.icon,
                                   size: 16,
-                                  color: isLocked ? FinavigColors.warning : null,
+                                  color: isLocked
+                                      ? FinavigColors.warning
+                                      : null,
                                 ),
-                                label: Text(isLocked ? '${c.name} (Locked)' : c.name),
+                                label: Text(
+                                  isLocked ? '${c.name} (Locked)' : c.name,
+                                ),
                                 selected: _spec.collectionId == c.id,
                                 onSelected: (_) {
                                   Navigator.pop(ctx);

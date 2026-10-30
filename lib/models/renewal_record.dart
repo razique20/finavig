@@ -45,6 +45,8 @@ class RenewalRecord {
   }
 
   String get formattedRenewedAt => DateFormat('dd MMM yyyy').format(renewedAt);
-  String get formattedPreviousExpiry => DateFormat('dd MMM yyyy').format(previousExpiryDate);
-  String get formattedNewExpiry => DateFormat('dd MMM yyyy').format(newExpiryDate);
+  String get formattedPreviousExpiry =>
+      DateFormat('dd MMM yyyy').format(previousExpiryDate);
+  String get formattedNewExpiry =>
+      DateFormat('dd MMM yyyy').format(newExpiryDate);
 }

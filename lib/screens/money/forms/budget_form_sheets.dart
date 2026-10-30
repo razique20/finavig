@@ -286,7 +286,7 @@ class _BudgetFormSheetState extends State<CategoryBudgetFormSheet> {
                 onChanged: (c) =>
                     setState(() => _category = c ?? FinanceCategory.other),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               TextField(
                 controller: _limitController,
                 keyboardType: const TextInputType.numberWithOptions(

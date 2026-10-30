@@ -29,15 +29,14 @@ class ProfileSecuritySection extends StatelessWidget {
               title: 'App Lock',
               subtitle: enabled
                   ? (service.biometricEnabled
-                      ? 'Passcode with biometric unlocking'
-                      : 'Passcode required when reopening Finavig')
+                        ? 'Passcode with biometric unlocking'
+                        : 'Passcode required when reopening Finavig')
                   : 'Ask for a passcode when reopening Finavig',
               trailing: Switch(
                 value: enabled,
                 activeThumbColor: FinavigColors.violet,
-                onChanged: (value) => value
-                    ? enableAppLock(context)
-                    : disableAppLock(context),
+                onChanged: (value) =>
+                    value ? enableAppLock(context) : disableAppLock(context),
               ),
               onTap: () => showAppLockSettingsSheet(context),
             ),
@@ -93,13 +92,14 @@ Future<void> showAppLockSettingsSheet(BuildContext context) async {
                       Expanded(
                         child: Text(
                           'App Lock',
-                          style: theme.textTheme.titleLarge
-                              ?.copyWith(fontWeight: FontWeight.bold),
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   Text(
                     'A local passcode that protects the app when you reopen '
                     'it. It is a quick re-entry shortcut — your account '
@@ -146,8 +146,8 @@ Future<void> showAppLockSettingsSheet(BuildContext context) async {
                           subtitle: const Text(
                             'Face ID / fingerprint, with the passcode as fallback',
                           ),
-                          onChanged: (value) =>
-                              AppLockService.instance.setBiometricEnabled(value),
+                          onChanged: (value) => AppLockService.instance
+                              .setBiometricEnabled(value),
                         );
                       },
                     ),

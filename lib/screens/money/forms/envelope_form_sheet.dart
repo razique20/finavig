@@ -64,7 +64,7 @@ class _EnvelopeFormSheetState extends State<EnvelopeFormSheet> {
                   border: OutlineInputBorder(),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               TextField(
                 controller: _targetController,
                 keyboardType: const TextInputType.numberWithOptions(
@@ -76,7 +76,7 @@ class _EnvelopeFormSheetState extends State<EnvelopeFormSheet> {
                   border: const OutlineInputBorder(),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               TextField(
                 controller: _monthlyController,
                 keyboardType: const TextInputType.numberWithOptions(

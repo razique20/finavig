@@ -81,9 +81,10 @@ class AnomalyDetectionService {
       if (tx.amount <= 0) continue;
       if (tx.occurredAt.isBefore(cutoff)) continue;
 
-      final isDocMatch = candidate.documentId != null &&
-          candidate.documentId == tx.documentId;
-      final isTitleMatch = candTitleNorm.isNotEmpty &&
+      final isDocMatch =
+          candidate.documentId != null && candidate.documentId == tx.documentId;
+      final isTitleMatch =
+          candTitleNorm.isNotEmpty &&
           _normalizeTitle(tx.title) == candTitleNorm;
 
       if (isDocMatch || isTitleMatch) {
@@ -124,7 +125,8 @@ class AnomalyDetectionService {
     // 4. Anomaly criteria: Amount > mean + 1.25 * stdDev AND at least 20% higher than mean
     final percentIncrease = ((candidate.amount - mean) / mean) * 100;
 
-    if (candidate.amount > (mean + (1.25 * stdDev)) && percentIncrease >= 20.0) {
+    if (candidate.amount > (mean + (1.25 * stdDev)) &&
+        percentIncrease >= 20.0) {
       final severity = _determineSeverity(percentIncrease);
       final title = candidate.title.trim();
       final msg =
@@ -153,8 +155,7 @@ class AnomalyDetectionService {
 
     // Loan legs are not bills — they must not be flagged as spikes, and
     // they must not skew the historical averages they are compared against.
-    final history =
-        transactions.where((t) => !t.isCreditLinked).toList();
+    final history = transactions.where((t) => !t.isCreditLinked).toList();
 
     final anomalies = <BillAnomaly>[];
     for (final tx in history) {

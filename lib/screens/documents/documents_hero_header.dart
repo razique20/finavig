@@ -4,6 +4,7 @@ import '../../models/expiry_item.dart';
 import '../../services/urgency_engine.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/dialogs/ask_finavig_sheet.dart';
+import '../../widgets/hero_widgets.dart';
 
 /// Header of the Documents tab, sitting directly on the light/airy canvas.
 ///
@@ -211,13 +212,13 @@ class DocumentsHeroHeader extends StatelessWidget {
         ),
         const Spacer(),
         // Ask Finavig AI: universal voice/text add (money or docs).
-        _CanvasIconButton(
+        CanvasIconButton(
           icon: Icons.auto_awesome_rounded,
           tooltip: 'Ask Finavig AI',
           onTap: () => AskFinavigSheet.show(context),
         ),
         const SizedBox(width: 8),
-        _CanvasIconButton(
+        CanvasIconButton(
           icon: Icons.search_rounded,
           tooltip: 'Search documents',
           onTap: onSearchToggle,
@@ -392,54 +393,6 @@ class _FilterPill extends StatelessWidget {
                 ),
               ],
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Documents header action button — a subtle canvas-colored icon chip.
-class _CanvasIconButton extends StatelessWidget {
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onTap;
-
-  const _CanvasIconButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final fade = FinavigTransition.of(context);
-    return Tooltip(
-      message: tooltip,
-      child: Material(
-        color: fade.color(FinavigColors.cloud, FinavigColors.slate),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: BorderSide(
-            color: fade.color(FinavigColors.fog, FinavigColors.slateLight),
-            width: 1,
-          ),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: onTap,
-          child: SizedBox(
-            width: 38,
-            height: 38,
-            child: Icon(
-              icon,
-              size: 18,
-              color: fade.color(
-                FinavigColors.textPrimaryLight,
-                FinavigColors.textPrimary,
-              ),
-            ),
           ),
         ),
       ),

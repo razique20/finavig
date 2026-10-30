@@ -57,8 +57,9 @@ class UaeDocumentOcrService {
 
     try {
       final inputImage = InputImage.fromFilePath(filePath);
-      final RecognizedText recognizedText =
-          await _textRecognizer.processImage(inputImage);
+      final RecognizedText recognizedText = await _textRecognizer.processImage(
+        inputImage,
+      );
 
       final String rawText = recognizedText.text;
       if (rawText.trim().isEmpty) {
@@ -127,8 +128,7 @@ class UaeDocumentOcrService {
       return registry.byEnum(DocumentType.ejari);
     }
 
-    if (upper.contains('PASSPORT') ||
-        upper.contains('جواز سفر')) {
+    if (upper.contains('PASSPORT') || upper.contains('جواز سفر')) {
       return registry.byEnum(DocumentType.passport);
     }
 
@@ -246,7 +246,8 @@ class UaeDocumentOcrService {
 
     // Pattern 1: DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY
     final dmyRegex = RegExp(
-        r'\b(0?[1-9]|[12][0-9]|3[01])[\/\.\-](0?[1-9]|1[012])[\/\.\-](20\d{2})\b');
+      r'\b(0?[1-9]|[12][0-9]|3[01])[\/\.\-](0?[1-9]|1[012])[\/\.\-](20\d{2})\b',
+    );
     for (final match in dmyRegex.allMatches(text)) {
       final d = int.tryParse(match.group(1) ?? '');
       final m = int.tryParse(match.group(2) ?? '');
@@ -260,7 +261,8 @@ class UaeDocumentOcrService {
 
     // Pattern 2: YYYY/MM/DD or YYYY-MM-DD
     final ymdRegex = RegExp(
-        r'\b(20\d{2})[\/\.\-](0?[1-9]|1[012])[\/\.\-](0?[1-9]|[12][0-9]|3[01])\b');
+      r'\b(20\d{2})[\/\.\-](0?[1-9]|1[012])[\/\.\-](0?[1-9]|[12][0-9]|3[01])\b',
+    );
     for (final match in ymdRegex.allMatches(text)) {
       final y = int.tryParse(match.group(1) ?? '');
       final m = int.tryParse(match.group(2) ?? '');
@@ -274,11 +276,22 @@ class UaeDocumentOcrService {
 
     // Pattern 3: DD MMM YYYY (e.g. 15 OCT 2026, 01-JAN-2025)
     final textDateRegex = RegExp(
-        r'\b(0?[1-9]|[12][0-9]|3[01])[\s\/\.\-](JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[a-zA-Z]*[\s\/\.\-](20\d{2})\b',
-        caseSensitive: false);
+      r'\b(0?[1-9]|[12][0-9]|3[01])[\s\/\.\-](JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[a-zA-Z]*[\s\/\.\-](20\d{2})\b',
+      caseSensitive: false,
+    );
     final monthMap = {
-      'JAN': 1, 'FEB': 2, 'MAR': 3, 'APR': 4, 'MAY': 5, 'JUN': 6,
-      'JUL': 7, 'AUG': 8, 'SEP': 9, 'OCT': 10, 'NOV': 11, 'DEC': 12
+      'JAN': 1,
+      'FEB': 2,
+      'MAR': 3,
+      'APR': 4,
+      'MAY': 5,
+      'JUN': 6,
+      'JUL': 7,
+      'AUG': 8,
+      'SEP': 9,
+      'OCT': 10,
+      'NOV': 11,
+      'DEC': 12,
     };
 
     for (final match in textDateRegex.allMatches(text)) {
@@ -301,32 +314,60 @@ class UaeDocumentOcrService {
     final upper = text.toUpperCase();
 
     // Check Abu Dhabi first to avoid 'DHA' substring match inside 'ABU DHABI'
-    if (upper.contains('ABU DHABI') || upper.contains('ADDED') || upper.contains('TAMM') || upper.contains('ADGM') || upper.contains('أبوظبي')) {
+    if (upper.contains('ABU DHABI') ||
+        upper.contains('ADDED') ||
+        upper.contains('TAMM') ||
+        upper.contains('ADGM') ||
+        upper.contains('أبوظبي')) {
       if (upper.contains('ADDED') || upper.contains('ECONOMIC DEVELOPMENT')) {
-        return (UaeEmirate.abuDhabi, 'ADDED (Abu Dhabi Dept of Economic Development)');
+        return (
+          UaeEmirate.abuDhabi,
+          'ADDED (Abu Dhabi Dept of Economic Development)',
+        );
       }
       return (UaeEmirate.abuDhabi, 'TAMM / Municipality of Abu Dhabi');
     }
 
-    if (upper.contains('DUBAI') || upper.contains('DET') || upper.contains('RERA') || upper.contains('GDRFA') || RegExp(r'\bDHA\b').hasMatch(upper) || upper.contains('DIFC') || upper.contains('دبي')) {
-      if (upper.contains('RERA') || upper.contains('EJARI') || upper.contains('LAND DEPARTMENT')) {
+    if (upper.contains('DUBAI') ||
+        upper.contains('DET') ||
+        upper.contains('RERA') ||
+        upper.contains('GDRFA') ||
+        RegExp(r'\bDHA\b').hasMatch(upper) ||
+        upper.contains('DIFC') ||
+        upper.contains('دبي')) {
+      if (upper.contains('RERA') ||
+          upper.contains('EJARI') ||
+          upper.contains('LAND DEPARTMENT')) {
         return (UaeEmirate.dubai, 'RERA / Dubai Land Department (Ejari)');
       }
       if (upper.contains('GDRFA')) {
-        return (UaeEmirate.dubai, 'GDRFA Dubai (General Directorate of Residency)');
+        return (
+          UaeEmirate.dubai,
+          'GDRFA Dubai (General Directorate of Residency)',
+        );
       }
-      return (UaeEmirate.dubai, 'Dubai DET / DED (Department of Economy & Tourism)');
+      return (
+        UaeEmirate.dubai,
+        'Dubai DET / DED (Department of Economy & Tourism)',
+      );
     }
 
-    if (upper.contains('SHARJAH') || upper.contains('SEDD') || upper.contains('الشارقة')) {
+    if (upper.contains('SHARJAH') ||
+        upper.contains('SEDD') ||
+        upper.contains('الشارقة')) {
       return (UaeEmirate.sharjah, 'Sharjah SEDD (Economic Development Dept)');
     }
 
     if (upper.contains('AJMAN') || upper.contains('عجمان')) {
-      return (UaeEmirate.ajman, 'Ajman DED (Department of Economic Development)');
+      return (
+        UaeEmirate.ajman,
+        'Ajman DED (Department of Economic Development)',
+      );
     }
 
-    if (upper.contains('RAS AL KHAIMAH') || upper.contains('RAK') || upper.contains('رأس الخيمة')) {
+    if (upper.contains('RAS AL KHAIMAH') ||
+        upper.contains('RAK') ||
+        upper.contains('رأس الخيمة')) {
       return (UaeEmirate.rak, 'RAK DED (Department of Economic Development)');
     }
 
@@ -334,27 +375,40 @@ class UaeDocumentOcrService {
       return (UaeEmirate.fujairah, 'Fujairah Municipality');
     }
 
-    if (upper.contains('UMM AL QUWAIN') || upper.contains('UAQ') || upper.contains('أم القيوين')) {
+    if (upper.contains('UMM AL QUWAIN') ||
+        upper.contains('UAQ') ||
+        upper.contains('أم القيوين')) {
       return (UaeEmirate.uaq, 'UAQ DED (Department of Economic Development)');
     }
 
-    if (upper.contains('MOHRE') || upper.contains('ICP') || upper.contains('FEDERAL TAX') || upper.contains('FTA')) {
-      return (UaeEmirate.federal, 'ICP (Federal Identity, Citizenship & Customs)');
+    if (upper.contains('MOHRE') ||
+        upper.contains('ICP') ||
+        upper.contains('FEDERAL TAX') ||
+        upper.contains('FTA')) {
+      return (
+        UaeEmirate.federal,
+        'ICP (Federal Identity, Citizenship & Customs)',
+      );
     }
 
     return null;
   }
 
   String? _extractDocumentNumber(
-      String fullText, List<String> lines, DocumentTypeMeta? docType) {
-    final visaMatch = RegExp(r'\b(201|301|101)\/\d{4}\/\d{1,2}\/\d{5,8}\b')
-        .firstMatch(fullText);
+    String fullText,
+    List<String> lines,
+    DocumentTypeMeta? docType,
+  ) {
+    final visaMatch = RegExp(
+      r'\b(201|301|101)\/\d{4}\/\d{1,2}\/\d{5,8}\b',
+    ).firstMatch(fullText);
     if (visaMatch != null) {
       return visaMatch.group(0);
     }
 
-    final eidMatch =
-        RegExp(r'\b784[-\s]?\d{4}[-\s]?\d{7}[-\s]?\d\b').firstMatch(fullText);
+    final eidMatch = RegExp(
+      r'\b784[-\s]?\d{4}[-\s]?\d{7}[-\s]?\d\b',
+    ).firstMatch(fullText);
     if (eidMatch != null) {
       return eidMatch.group(0);
     }
@@ -389,7 +443,10 @@ class UaeDocumentOcrService {
   }
 
   String? _extractTitle(
-      String fullText, List<String> lines, DocumentTypeMeta? docType) {
+    String fullText,
+    List<String> lines,
+    DocumentTypeMeta? docType,
+  ) {
     final keywords = [
       'TRADE NAME',
       'COMPANY NAME',

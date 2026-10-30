@@ -203,14 +203,16 @@ class ExpiryItem {
   });
 
   factory ExpiryItem.fromJson(Map<String, dynamic> json) {
-    final docType =
-        DocumentTypeRegistry.instance.byKey(json['docType'] as String?);
+    final docType = DocumentTypeRegistry.instance.byKey(
+      json['docType'] as String?,
+    );
 
     final urgencyPriority = json['urgencyPriority'] as int? ?? 0;
     final urgency = UrgencyLevel.values[urgencyPriority.clamp(0, 3)];
 
     return ExpiryItem(
-      collectionId: json['collectionId'] as String? ?? DocumentCollection.personalId,
+      collectionId:
+          json['collectionId'] as String? ?? DocumentCollection.personalId,
       id: json['id'] as String,
       displayName: json['displayName'] as String,
       docType: docType,
@@ -228,7 +230,8 @@ class ExpiryItem {
       documentDate: json['documentDate'] as String?,
       renewalFee: (json['renewalFee'] as num?)?.toDouble(),
       renewalSteps: (json['renewalSteps'] as List<dynamic>?)?.cast<String>(),
-      renewalAuthorities: (json['renewalAuthorities'] as List<dynamic>?)?.cast<String>(),
+      renewalAuthorities: (json['renewalAuthorities'] as List<dynamic>?)
+          ?.cast<String>(),
       renewalWarning: json['renewalWarning'] as String?,
       expiresAt: DateTime.parse(json['expiresAt'] as String),
       fileName: json['fileName'] as String?,
@@ -347,8 +350,18 @@ class ExpiryItem {
 
   static String formatDate(DateTime date) {
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }

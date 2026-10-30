@@ -56,10 +56,7 @@ class NotificationService {
       requestBadgePermission: false,
       requestSoundPermission: false,
     );
-    const settings = InitializationSettings(
-      android: androidInit,
-      iOS: iosInit,
-    );
+    const settings = InitializationSettings(android: androidInit, iOS: iosInit);
 
     try {
       // Forward notification taps (payload = document id) to the deep-link
@@ -86,18 +83,16 @@ class NotificationService {
     try {
       await _plugin
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()
+            AndroidFlutterLocalNotificationsPlugin
+          >()
           ?.requestNotificationsPermission();
       // iOS: requesting again is a no-op if already decided; on first run
       // this surfaces the system prompt at the right moment.
       await _plugin
           .resolvePlatformSpecificImplementation<
-              IOSFlutterLocalNotificationsPlugin>()
-          ?.requestPermissions(
-            alert: true,
-            badge: true,
-            sound: true,
-          );
+            IOSFlutterLocalNotificationsPlugin
+          >()
+          ?.requestPermissions(alert: true, badge: true, sound: true);
       // ignore: avoid_catches_without_on_var_annotations
     } catch (_) {
       // Plugin unavailable — nothing to request.
@@ -207,7 +202,8 @@ class NotificationService {
     List<int>? customReminderDays,
   }) async {
     final scheduled = <int>[];
-    final daysList = (customReminderDays != null && customReminderDays.isNotEmpty)
+    final daysList =
+        (customReminderDays != null && customReminderDays.isNotEmpty)
         ? customReminderDays
         : const [90, 60, 30, 7];
     for (final days in daysList) {
@@ -224,9 +220,13 @@ class NotificationService {
   }
 
   /// Cancel every pending reminder for [itemId] (all ladder tiers or custom offsets).
-  Future<void> cancelReminders(String itemId, {List<int>? customReminderDays}) async {
+  Future<void> cancelReminders(
+    String itemId, {
+    List<int>? customReminderDays,
+  }) async {
     await init();
-    final daysList = (customReminderDays != null && customReminderDays.isNotEmpty)
+    final daysList =
+        (customReminderDays != null && customReminderDays.isNotEmpty)
         ? customReminderDays
         : const [90, 60, 30, 7, 45, 15, 3, 1];
     for (final days in daysList) {
@@ -260,7 +260,10 @@ class NotificationService {
       presentList: true,
       presentSound: true,
     );
-    const details = NotificationDetails(android: androidDetails, iOS: iosDetails);
+    const details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
     try {
       await _plugin.show(
         // Fixed id so successive alerts replace rather than stack up.

@@ -120,7 +120,8 @@ const List<FaqItem> faqItems = [
   FaqItem(
     category: 'Account & Tiers',
     icon: Icons.workspace_premium_rounded,
-    question: 'What are the differences between Free, Plus, and Business tiers?',
+    question:
+        'What are the differences between Free, Plus, and Business tiers?',
     answer:
         '• Free: 1 Personal collection & up to 10 active documents.\n• Plus: 1 Company collection & up to 100 documents.\n• Business: Unlimited Company collections, team features & unlimited AI summaries.',
   ),

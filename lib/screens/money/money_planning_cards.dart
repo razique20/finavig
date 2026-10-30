@@ -58,7 +58,7 @@ class BudgetsSection extends StatelessWidget {
         CollapsibleSectionBody(
           collapsed: collapsed,
           children: [
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Card(
               elevation: 0,
               shape: RoundedRectangleBorder(
@@ -149,7 +149,7 @@ class BudgetsSection extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 14),
                       ClipRRect(
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
@@ -248,7 +248,7 @@ class RecurringSection extends StatelessWidget {
         CollapsibleSectionBody(
           collapsed: collapsed,
           children: [
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             if (recurring.isEmpty)
               const HintCard(
                 'Mark rent, salaries or software as monthly and they are auto-logged here — no manual repeats.',
@@ -317,7 +317,7 @@ class EnvelopesSection extends StatelessWidget {
         CollapsibleSectionBody(
           collapsed: collapsed,
           children: [
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             if (envelopes.isEmpty)
               const HintCard(
                 'Set aside money for big renewals — tracked only, no real money moves.',
@@ -407,7 +407,7 @@ class _TransactionsSectionState extends State<TransactionsSection> {
         CollapsibleSectionBody(
           collapsed: widget.collapsed,
           children: [
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             if (recent.isEmpty)
               const HintCard(
                 'No records yet. Add your first expense or income.',

@@ -38,11 +38,7 @@ class _LegalBody extends StatelessWidget {
   final List<_LegalSection> sections;
   final Widget? action;
 
-  const _LegalBody({
-    required this.intro,
-    required this.sections,
-    this.action,
-  });
+  const _LegalBody({required this.intro, required this.sections, this.action});
 
   @override
   Widget build(BuildContext context) {
@@ -65,10 +61,7 @@ class _LegalBody extends StatelessWidget {
           Text(s.body, style: theme.textTheme.bodySmall?.copyWith(height: 1.5)),
           const SizedBox(height: 16),
         ],
-        if (action != null) ...[
-          action!,
-          const SizedBox(height: 16),
-        ],
+        if (action != null) ...[action!, const SizedBox(height: 16)],
         Text(
           'Last updated: September 2026 · Questions? ${AppLinks.supportEmail}',
           style: theme.textTheme.labelSmall?.copyWith(
@@ -104,8 +97,8 @@ void _showLegalSheet(
                   child: Text(
                     title,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
                 IconButton(
@@ -138,52 +131,53 @@ void _showTermsSheet(BuildContext context) {
     context,
     title: 'Terms & Conditions',
     body: const _LegalBody(
-      intro: 'These terms govern your use of Finavig — the financial and '
+      intro:
+          'These terms govern your use of Finavig — the financial and '
           'document intelligence platform for GCC businesses. By creating an '
           'account you agree to them.',
       sections: [
         _LegalSection(
           '1. The service',
           'Finavig lets you upload company documents (trade licences, visas, '
-          'invoices, receipts, tenancy agreements and more), automatically '
-          'extracts dates, amounts and vendors with AI, tracks spending, '
-          'budgets and cash-flow forecasts, and sends renewal reminders.',
+              'invoices, receipts, tenancy agreements and more), automatically '
+              'extracts dates, amounts and vendors with AI, tracks spending, '
+              'budgets and cash-flow forecasts, and sends renewal reminders.',
         ),
         _LegalSection(
           '2. Your account',
           'You are responsible for the accuracy of the email you register and '
-          'for keeping your password secure. One account per person; company '
-          'data belongs to the registering organisation.',
+              'for keeping your password secure. One account per person; company '
+              'data belongs to the registering organisation.',
         ),
         _LegalSection(
           '3. Your documents & data',
           'You keep full ownership of everything you upload. We process your '
-          'documents only to provide the service — expiry extraction, '
-          'reminders, renewal tracking — and never sell your data.',
+              'documents only to provide the service — expiry extraction, '
+              'reminders, renewal tracking — and never sell your data.',
         ),
         _LegalSection(
           '4. Acceptable use',
           'Do not upload documents you are not authorised to handle, attempt '
-          'to access other users\u2019 data, or use the service to store '
-          'unlawful content.',
+              'to access other users\u2019 data, or use the service to store '
+              'unlawful content.',
         ),
         _LegalSection(
           '5. Insights are assistance, not professional advice',
           'Finavig highlights upcoming deadlines, spending patterns and cash '
-          'projections, but it does not replace professional legal, PRO, '
-          'accounting, tax or compliance advice. Always confirm deadlines '
-          'with the issuing authority and figures with your accountant.',
+              'projections, but it does not replace professional legal, PRO, '
+              'accounting, tax or compliance advice. Always confirm deadlines '
+              'with the issuing authority and figures with your accountant.',
         ),
         _LegalSection(
           '6. Availability & changes',
           'We aim for high availability but the service is provided "as is". '
-          'We may add, change, or discontinue features; material changes to '
-          'these terms will be communicated in-app.',
+              'We may add, change, or discontinue features; material changes to '
+              'these terms will be communicated in-app.',
         ),
         _LegalSection(
           '7. Termination',
           'You can delete your account at any time from the profile screen. '
-          'We may suspend accounts that violate these terms.',
+              'We may suspend accounts that violate these terms.',
         ),
       ],
     ),
@@ -199,7 +193,8 @@ void _showPrivacySheet(BuildContext context) {
     context,
     title: 'Privacy Policy',
     body: _LegalBody(
-      intro: 'Your documents and financial data are sensitive. This policy '
+      intro:
+          'Your documents and financial data are sensitive. This policy '
           'explains, in plain language, what Finavig collects, why, and how it '
           'stays protected.',
       action: SizedBox(
@@ -214,48 +209,48 @@ void _showPrivacySheet(BuildContext context) {
         _LegalSection(
           '1. What we collect',
           '• Account details: email address (and optional phone number for '
-          'renewal and cash alerts).\n'
-          '• Documents you upload: scans, photos, and PDFs of company '
-          'documents, invoices and receipts.\n'
-          '• Extracted data: dates, amounts, vendors and document types '
-          'derived from your uploads.\n'
-          '• Financial records: transactions, budgets and categories you '
-          'create or import.\n'
-          '• Technical data: app version and platform, used to keep your '
-          'installation up to date.',
+              'renewal and cash alerts).\n'
+              '• Documents you upload: scans, photos, and PDFs of company '
+              'documents, invoices and receipts.\n'
+              '• Extracted data: dates, amounts, vendors and document types '
+              'derived from your uploads.\n'
+              '• Financial records: transactions, budgets and categories you '
+              'create or import.\n'
+              '• Technical data: app version and platform, used to keep your '
+              'installation up to date.',
         ),
         _LegalSection(
           '2. What we do NOT do',
           '• We never sell your data.\n'
-          '• We never share your documents with third parties for marketing.\n'
-          '• We do not use your documents to train public AI models.\n'
-          '• No advertising trackers, no data brokers.',
+              '• We never share your documents with third parties for marketing.\n'
+              '• We do not use your documents to train public AI models.\n'
+              '• No advertising trackers, no data brokers.',
         ),
         _LegalSection(
           '3. Why we process data',
           'To provide the service you signed up for: storing your documents, '
-          'extracting expiry information, and delivering reminders you '
-          'configured. Your documents belong to you; we process them on your '
-          'instruction only.',
+              'extracting expiry information, and delivering reminders you '
+              'configured. Your documents belong to you; we process them on your '
+              'instruction only.',
         ),
         _LegalSection(
           '4. Where data lives',
           'Documents, financial records and account data are stored in '
-          'Supabase (cloud infrastructure) with encryption in transit and at '
-          'rest. AI extraction runs on document content solely to locate '
-          'dates, amounts and document attributes.',
+              'Supabase (cloud infrastructure) with encryption in transit and at '
+              'rest. AI extraction runs on document content solely to locate '
+              'dates, amounts and document attributes.',
         ),
         _LegalSection(
           '5. Retention & deletion',
           'Your data is kept while your account is active. Deleting a '
-          'document removes it from your workspace. Deleting your account '
-          'initiates removal of your personal data.',
+              'document removes it from your workspace. Deleting your account '
+              'initiates removal of your personal data.',
         ),
         _LegalSection(
           '6. Your rights',
           'You can access, correct, export, or delete your data at any time '
-          'from the app. For anything else, contact us and we will respond '
-          'promptly.',
+              'from the app. For anything else, contact us and we will respond '
+              'promptly.',
         ),
         _LegalSection(
           '7. Children',
@@ -509,7 +504,10 @@ class _AboutLink extends StatelessWidget {
                       ? Icons.chevron_right_rounded
                       : Icons.open_in_new_rounded,
                   size: 16,
-                  color: FinavigColors.adaptiveIcon(context, theme.colorScheme.onSurfaceVariant),
+                  color: FinavigColors.adaptiveIcon(
+                    context,
+                    theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),

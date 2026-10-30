@@ -61,72 +61,82 @@ Future<String?> showHomeCollectionSwitcher(BuildContext context) async {
               itemBuilder: (tileCtx, index) {
                 final collection = collections[index];
                 {
-                  final isLocked =
-                      entitlements.isCollectionLocked(collection);
-                  final reqTier =
-                      entitlements.requiredTierForCollection(collection);
-                  final reqFeature =
-                      entitlements.requiredFeatureForCollection(collection);
+                  final isLocked = entitlements.isCollectionLocked(collection);
+                  final reqTier = entitlements.requiredTierForCollection(
+                    collection,
+                  );
+                  final reqFeature = entitlements.requiredFeatureForCollection(
+                    collection,
+                  );
 
                   return ListTile(
-                        leading: isLocked
-                            ? const Icon(Icons.lock_rounded,
-                                color: FinavigColors.warning)
-                            : Icon(collection.icon),
-                        title: Row(
-                          children: [
-                            Expanded(child: Text(collection.name)),
-                            if (isLocked)
-                              Container(
-                                margin: const EdgeInsets.only(left: 6),
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: FinavigColors.warning.withAlpha(35),
-                                  borderRadius: BorderRadius.circular(4),
-                                  border: Border.all(
-                                    color:
-                                        FinavigColors.warning.withAlpha(120),
-                                    width: 0.8,
-                                  ),
-                                ),
-                                child: const Text(
-                                  'LOCKED',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: FinavigColors.warning,
-                                  ),
-                                ),
+                    leading: isLocked
+                        ? const Icon(
+                            Icons.lock_rounded,
+                            color: FinavigColors.warning,
+                          )
+                        : Icon(collection.icon),
+                    title: Row(
+                      children: [
+                        Expanded(child: Text(collection.name)),
+                        if (isLocked)
+                          Container(
+                            margin: const EdgeInsets.only(left: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: FinavigColors.warning.withAlpha(35),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(
+                                color: FinavigColors.warning.withAlpha(120),
+                                width: 0.8,
                               ),
-                          ],
-                        ),
-                        subtitle: Text(
-                          isLocked
-                              ? 'Plan limit reached • Requires ${TierInfo.all[reqTier]!.name}'
-                              : collection.subtitle,
-                          style: isLocked
-                              ? TextStyle(
-                                  color: theme.colorScheme.outline,
-                                  fontSize: 12)
-                              : null,
-                        ),
-                        trailing: isLocked
-                            ? const Icon(Icons.lock_outline_rounded,
-                                size: 18, color: FinavigColors.warning)
-                            : (collection.id == service.activeCollectionId
-                                ? const Icon(Icons.check_circle,
-                                    color: Colors.green)
-                                : null),
-                        onTap: () {
-                          if (isLocked) {
-                            Navigator.pop(ctx);
-                            showUpgradeDialog(tileCtx, reqFeature);
-                          } else {
-                            Navigator.pop(ctx, collection.id);
-                          }
-                        },
-                      );
+                            ),
+                            child: const Text(
+                              'LOCKED',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: FinavigColors.warning,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    subtitle: Text(
+                      isLocked
+                          ? 'Plan limit reached • Requires ${TierInfo.all[reqTier]!.name}'
+                          : collection.subtitle,
+                      style: isLocked
+                          ? TextStyle(
+                              color: theme.colorScheme.outline,
+                              fontSize: 12,
+                            )
+                          : null,
+                    ),
+                    trailing: isLocked
+                        ? const Icon(
+                            Icons.lock_outline_rounded,
+                            size: 18,
+                            color: FinavigColors.warning,
+                          )
+                        : (collection.id == service.activeCollectionId
+                              ? const Icon(
+                                  Icons.check_circle,
+                                  color: Colors.green,
+                                )
+                              : null),
+                    onTap: () {
+                      if (isLocked) {
+                        Navigator.pop(ctx);
+                        showUpgradeDialog(tileCtx, reqFeature);
+                      } else {
+                        Navigator.pop(ctx, collection.id);
+                      }
+                    },
+                  );
                 }
               },
             ),

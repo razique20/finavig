@@ -20,11 +20,11 @@ enum EmptyStateScene {
 
 extension _EmptyStateSceneIcon on EmptyStateScene {
   IconData get icon => switch (this) {
-        EmptyStateScene.document => Icons.description_outlined,
-        EmptyStateScene.wallet => Icons.account_balance_wallet_outlined,
-        EmptyStateScene.search => Icons.search_rounded,
-        EmptyStateScene.growth => Icons.trending_up_rounded,
-      };
+    EmptyStateScene.document => Icons.description_outlined,
+    EmptyStateScene.wallet => Icons.account_balance_wallet_outlined,
+    EmptyStateScene.search => Icons.search_rounded,
+    EmptyStateScene.growth => Icons.trending_up_rounded,
+  };
 }
 
 /// Standalone standard Material icon — the shared visual for every empty
@@ -43,8 +43,7 @@ class EmptyStateIllustration extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final tint =
-        isDark ? FinavigColors.cyanAccent : FinavigColors.navyPrimary;
+    final tint = isDark ? FinavigColors.cyanAccent : FinavigColors.navyPrimary;
 
     // The document scene uses the app logo; all other scenes use icons.
     if (scene == EmptyStateScene.document) {
@@ -68,11 +67,7 @@ class EmptyStateIllustration extends StatelessWidget {
       width: size,
       height: size,
       child: Center(
-        child: Icon(
-          scene.icon,
-          size: size * 0.5,
-          color: tint,
-        ),
+        child: Icon(scene.icon, size: size * 0.5, color: tint),
       ),
     );
   }

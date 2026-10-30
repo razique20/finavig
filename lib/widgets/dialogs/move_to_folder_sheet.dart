@@ -9,9 +9,15 @@ import '../../theme/app_theme.dart';
 import 'create_folder_dialog.dart';
 
 /// Shows a bottom sheet allowing the user to move [item] into a folder or unassign it.
-Future<void> showMoveToFolderSheet(BuildContext context, ExpiryItem item) async {
-  final activeCollectionId = DocumentCollectionService.instance.activeCollectionId;
-  final folders = DocumentFolderService.instance.foldersForCollection(activeCollectionId);
+Future<void> showMoveToFolderSheet(
+  BuildContext context,
+  ExpiryItem item,
+) async {
+  final activeCollectionId =
+      DocumentCollectionService.instance.activeCollectionId;
+  final folders = DocumentFolderService.instance.foldersForCollection(
+    activeCollectionId,
+  );
 
   await showModalBottomSheet<void>(
     context: context,
@@ -60,8 +66,11 @@ class _MoveToFolderContentState extends State<_MoveToFolderContent> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final fade = FinavigTransition.of(context);
-    final activeCollectionId = DocumentCollectionService.instance.activeCollectionId;
-    final folders = DocumentFolderService.instance.foldersForCollection(activeCollectionId);
+    final activeCollectionId =
+        DocumentCollectionService.instance.activeCollectionId;
+    final folders = DocumentFolderService.instance.foldersForCollection(
+      activeCollectionId,
+    );
 
     return SafeArea(
       child: Padding(
@@ -161,7 +170,11 @@ class _MoveToFolderContentState extends State<_MoveToFolderContent> {
                         color: folder.color.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Icon(folder.iconData, color: folder.color, size: 20),
+                      child: Icon(
+                        folder.iconData,
+                        color: folder.color,
+                        size: 20,
+                      ),
                     ),
                     title: Text(folder.name),
                     trailing: isSelected

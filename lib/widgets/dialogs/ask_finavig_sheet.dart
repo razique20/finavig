@@ -95,27 +95,29 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
   String get _currency => DocumentCollectionService.instance.activeCurrency;
 
   List<String> get _samples => [
-        'Log DEWA bill of 450 $_currency',
-        'Add Emirates ID expiring 14 Oct 2027',
-        'Received 12,000 $_currency client payment yesterday',
-        'Mulkiya expires next month, cost 800 $_currency',
-      ];
+    'Log DEWA bill of 450 $_currency',
+    'Add Emirates ID expiring 14 Oct 2027',
+    'Received 12,000 $_currency client payment yesterday',
+    'Mulkiya expires next month, cost 800 $_currency',
+  ];
 
   @override
   void initState() {
     super.initState();
     _inputController = TextEditingController();
     _inputController.addListener(_onInputChanged);
-    _voiceStatusSub =
-        VoiceInputService.instance.statusStream.listen(_onVoiceStatus);
-    _voiceTranscriptSub =
-        VoiceInputService.instance.transcriptStream.listen(_onVoiceUpdate);
+    _voiceStatusSub = VoiceInputService.instance.statusStream.listen(
+      _onVoiceStatus,
+    );
+    _voiceTranscriptSub = VoiceInputService.instance.transcriptStream.listen(
+      _onVoiceUpdate,
+    );
     _refreshAiBudget();
   }
 
   Future<void> _refreshAiBudget() async {
-    final remaining =
-        await AiIntentRouterService.instance.escalationsRemainingToday();
+    final remaining = await AiIntentRouterService.instance
+        .escalationsRemainingToday();
     if (mounted) setState(() => _aiBudgetRemaining = remaining);
   }
 
@@ -159,7 +161,9 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
       _inputFocus.requestFocus();
     } else if (update.partialText.isNotEmpty) {
       setState(() {
-        _voicePartial = VoiceInputService.normalizeTranscript(update.partialText);
+        _voicePartial = VoiceInputService.normalizeTranscript(
+          update.partialText,
+        );
       });
     }
   }
@@ -265,7 +269,8 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
     setState(() => _isSaving = true);
 
     try {
-      final collectionId = DocumentCollectionService.instance.activeCollectionId;
+      final collectionId =
+          DocumentCollectionService.instance.activeCollectionId;
       final newTransaction = FinanceTransaction(
         id: const Uuid().v4(),
         collectionId: collectionId,
@@ -379,8 +384,9 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
           'Receive renewed document',
         ],
         renewalAuthorities: [item.authority],
-        renewalWarning:
-            daysOffset <= 30 ? 'Expires soon — renew to avoid penalties' : null,
+        renewalWarning: daysOffset <= 30
+            ? 'Expires soon — renew to avoid penalties'
+            : null,
         expiresAt: item.expiryDate,
       );
 
@@ -486,15 +492,15 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
                 const SizedBox(height: 16),
                 if (_inputController.text.trim().isEmpty) ...[
                   _buildHandsFreeStrip(theme, isDark),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                 ],
                 _buildInputField(theme),
                 if (_buildBudgetChip(theme) != null) _buildBudgetChip(theme)!,
                 if (_isListening) ...[
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 14),
                   _buildListeningBanner(theme),
                 ],
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 _buildSampleChips(theme),
                 const SizedBox(height: 8),
                 AnimatedSwitcher(
@@ -519,8 +525,11 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
             gradient: FinavigGradients.primary,
             borderRadius: BorderRadius.circular(14),
           ),
-          child: const Icon(Icons.auto_awesome_rounded,
-              color: Colors.white, size: 22),
+          child: const Icon(
+            Icons.auto_awesome_rounded,
+            color: Colors.white,
+            size: 22,
+          ),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -555,59 +564,68 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
   /// field, so typing never costs a mode switch.
   Widget _buildHandsFreeStrip(ThemeData theme, bool isDark) {
     return InkWell(
-        borderRadius: BorderRadius.circular(FinavigRadius.field),
-        onTap: _toggleVoice,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-          decoration: BoxDecoration(
-            color: isDark
-                ? FinavigColors.slate.withOpacity(0.55)
-                : FinavigColors.cloud,
-            borderRadius: BorderRadius.circular(FinavigRadius.field),
-            border: Border.all(
-              color: FinavigColors.accent.withOpacity(isDark ? 0.5 : 0.35),
-            ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: FinavigColors.accent.withOpacity(isDark ? 0.22 : 0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.mic_rounded,
-                    color: FinavigColors.accent, size: 22),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Tap to speak',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '"Log DEWA bill of 450 $_currency"',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.outline,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(Icons.keyboard_rounded,
-                  size: 20, color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline)),
-            ],
+      borderRadius: BorderRadius.circular(FinavigRadius.field),
+      onTap: _toggleVoice,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+        decoration: BoxDecoration(
+          color: isDark
+              ? FinavigColors.slate.withOpacity(0.55)
+              : FinavigColors.cloud,
+          borderRadius: BorderRadius.circular(FinavigRadius.field),
+          border: Border.all(
+            color: FinavigColors.accent.withOpacity(isDark ? 0.5 : 0.35),
           ),
         ),
-      );
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: FinavigColors.accent.withOpacity(isDark ? 0.22 : 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.mic_rounded,
+                color: FinavigColors.accent,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Tap to speak',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '"Log DEWA bill of 450 $_currency"',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.outline,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.keyboard_rounded,
+              size: 20,
+              color: FinavigColors.adaptiveIcon(
+                context,
+                theme.colorScheme.outline,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildInputField(ThemeData theme) {
@@ -664,7 +682,7 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
           const SizedBox(width: 4),
           Text(
             'AI assist: $remaining of '
-                '${AiIntentRouterService.maxEscalationsPerDay} today',
+            '${AiIntentRouterService.maxEscalationsPerDay} today',
             style: theme.textTheme.labelSmall?.copyWith(
               color: isDark ? color : color,
               fontWeight: FontWeight.w600,
@@ -797,8 +815,7 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
             child: CircularProgressIndicator(strokeWidth: 2),
           ),
           const SizedBox(width: 12),
-          Text('Working out what you meant…',
-              style: theme.textTheme.bodySmall),
+          Text('Working out what you meant…', style: theme.textTheme.bodySmall),
         ],
       ),
     );
@@ -831,8 +848,9 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
               Expanded(
                 child: Text(
                   p.title,
-                  style: theme.textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w800),
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -843,8 +861,11 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
           const Divider(height: 18),
           Row(
             children: [
-              Icon(Icons.account_balance_wallet_rounded,
-                  size: 16, color: FinavigColors.accent),
+              Icon(
+                Icons.account_balance_wallet_rounded,
+                size: 16,
+                color: FinavigColors.accent,
+              ),
               const SizedBox(width: 6),
               Text(
                 MoneyFormat.aed(p.amount),
@@ -854,25 +875,40 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
                 ),
               ),
               const Spacer(),
-              _tag(theme, isDark, p.category.displayName,
-                  theme.colorScheme.outline),
+              _tag(
+                theme,
+                isDark,
+                p.category.displayName,
+                theme.colorScheme.outline,
+              ),
             ],
           ),
           const SizedBox(height: 8),
           Row(
             children: [
-              Icon(Icons.calendar_today_rounded,
-                  size: 14, color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline)),
+              Icon(
+                Icons.calendar_today_rounded,
+                size: 14,
+                color: FinavigColors.adaptiveIcon(
+                  context,
+                  theme.colorScheme.outline,
+                ),
+              ),
               const SizedBox(width: 6),
               Text(
                 DateFormat('dd MMMM yyyy').format(p.occurredAt),
-                style: theme.textTheme.bodySmall
-                    ?.copyWith(color: theme.colorScheme.outline),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.outline,
+                ),
               ),
               if (p.isRecurring) ...[
                 const Spacer(),
-                _tag(theme, isDark, 'Recurring · ${p.frequency.label}',
-                    FinavigColors.lilac),
+                _tag(
+                  theme,
+                  isDark,
+                  'Recurring · ${p.frequency.label}',
+                  FinavigColors.lilac,
+                ),
               ],
             ],
           ),
@@ -881,7 +917,9 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: _isSaving ? null : () => _forceFlow(AskIntent.addDocument),
+                  onPressed: _isSaving
+                      ? null
+                      : () => _forceFlow(AskIntent.addDocument),
                   icon: const Icon(Icons.swap_horiz_rounded, size: 18),
                   label: const Text('Document?'),
                 ),
@@ -896,7 +934,9 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
                           width: 16,
                           height: 16,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                       : const Icon(Icons.check_circle_rounded, size: 18),
                   label: Text(_isSaving ? 'Saving…' : 'Confirm & Save'),
@@ -936,25 +976,35 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
               Expanded(
                 child: Text(
                   p.title,
-                  style: theme.textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w800),
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              _tag(theme, isDark, p.docType.displayName, p.docType.primaryColor),
+              _tag(
+                theme,
+                isDark,
+                p.docType.displayName,
+                p.docType.primaryColor,
+              ),
             ],
           ),
           const Divider(height: 18),
           Row(
             children: [
-              Icon(Icons.calendar_today_rounded,
-                  size: 16, color: FinavigColors.accent),
+              Icon(
+                Icons.calendar_today_rounded,
+                size: 16,
+                color: FinavigColors.accent,
+              ),
               const SizedBox(width: 6),
               Text(
                 'Expiry: ${DateFormat('dd MMMM yyyy').format(p.expiryDate)}',
-                style: theme.textTheme.bodyMedium
-                    ?.copyWith(fontWeight: FontWeight.w600),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const Spacer(),
               Text(
@@ -981,19 +1031,23 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
               ),
               if (p.renewalFee != null) ...[
                 const SizedBox(width: 8),
-                Icon(Icons.payments_outlined,
-                    size: 16, color: FinavigColors.accent),
+                Icon(
+                  Icons.payments_outlined,
+                  size: 16,
+                  color: FinavigColors.accent,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   '${p.renewalFee!.toStringAsFixed(0)} $_currency',
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(fontWeight: FontWeight.w700),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ],
             ],
           ),
           // Expiry-alert promise: make the reminder ladder explicit.
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
@@ -1002,8 +1056,11 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
             ),
             child: Row(
               children: [
-                Icon(Icons.notifications_active_rounded,
-                    size: 16, color: urgencyColor),
+                Icon(
+                  Icons.notifications_active_rounded,
+                  size: 16,
+                  color: urgencyColor,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -1022,7 +1079,9 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: _isSaving ? null : () => _forceFlow(AskIntent.logMoney),
+                  onPressed: _isSaving
+                      ? null
+                      : () => _forceFlow(AskIntent.logMoney),
                   icon: const Icon(Icons.swap_horiz_rounded, size: 18),
                   label: const Text('Expense?'),
                 ),
@@ -1037,7 +1096,9 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
                           width: 16,
                           height: 16,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                       : const Icon(Icons.check_circle_rounded, size: 18),
                   label: Text(_isSaving ? 'Saving…' : 'Confirm & Save'),
@@ -1060,7 +1121,9 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
       key: key,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isDark ? FinavigColors.slate.withOpacity(0.5) : FinavigColors.cloud,
+        color: isDark
+            ? FinavigColors.slate.withOpacity(0.5)
+            : FinavigColors.cloud,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: theme.colorScheme.outline.withOpacity(0.25)),
       ),
@@ -1069,19 +1132,26 @@ class _AskFinavigSheetState extends State<AskFinavigSheet> {
         children: [
           Row(
             children: [
-              Icon(Icons.help_outline_rounded,
-                  size: 18, color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline)),
+              Icon(
+                Icons.help_outline_rounded,
+                size: 18,
+                color: FinavigColors.adaptiveIcon(
+                  context,
+                  theme.colorScheme.outline,
+                ),
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   note ?? 'Which one is it?',
-                  style: theme.textTheme.bodyMedium
-                      ?.copyWith(fontWeight: FontWeight.w600),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Row(
             children: [
               Expanded(

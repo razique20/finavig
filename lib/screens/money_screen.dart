@@ -27,6 +27,7 @@ import '../widgets/dialogs/upgrade_dialog.dart';
 import '../widgets/cards/monthly_summary_card.dart';
 import 'home/home_collection_switcher.dart';
 import '../widgets/shimmer_skeleton.dart';
+import '../widgets/hero_widgets.dart';
 
 // Modularized Money tab building blocks. The screen is now a slim stateful
 // shell: state, data loading and the hero header live here; every content
@@ -120,7 +121,8 @@ class _MoneyScreenState extends State<MoneyScreen> {
         _collapsedSections.remove('categories');
         _collapsedSections.remove('top');
       }
-      if (_budgets.isNotEmpty || FinanceService.instance.activeOverallBudget != null) {
+      if (_budgets.isNotEmpty ||
+          FinanceService.instance.activeOverallBudget != null) {
         _collapsedSections.remove('budgets');
       }
       if (_recurring.isNotEmpty) {
@@ -281,7 +283,7 @@ class _MoneyScreenState extends State<MoneyScreen> {
                                 }),
                               ),
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 16),
                             // 1. At a glance: the month's summary, the
                             //    upcoming renewal fees, the forecast and
                             //    the credit shortcut stack flush as one
@@ -504,13 +506,13 @@ class _MoneyScreenState extends State<MoneyScreen> {
                 onTap: _showCollectionSwitcher,
               ),
               const Spacer(),
-              _MoneyHeroIconButton(
+              CanvasIconButton(
                 icon: Icons.auto_fix_high_rounded,
                 tooltip: 'Auto-Categorize with AI',
                 onTap: _runAutoCategorizationAI,
               ),
               const SizedBox(width: 8),
-              _MoneyHeroIconButton(
+              CanvasIconButton(
                 icon: Icons.auto_awesome_rounded,
                 tooltip: 'Ask Finavig AI',
                 onTap: () async {
@@ -530,7 +532,7 @@ class _MoneyScreenState extends State<MoneyScreen> {
                 },
               ),
               const SizedBox(width: 8),
-              _MoneyHeroIconButton(
+              CanvasIconButton(
                 icon: Icons.ios_share_rounded,
                 tooltip: 'Export CSV',
                 enabled: _transactions.isNotEmpty,
@@ -621,7 +623,7 @@ class _MoneyScreenState extends State<MoneyScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 Text(
                   'Net this month',
                   style: theme.textTheme.labelMedium?.copyWith(
@@ -643,7 +645,7 @@ class _MoneyScreenState extends State<MoneyScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 14),
                 // Sleek frosted cashflow indicator pill
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -712,7 +714,7 @@ class _MoneyScreenState extends State<MoneyScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 // AI Budget Planner + Add Record side by side.
                 Row(
                   children: [
@@ -1040,62 +1042,6 @@ class _MoneyScreenState extends State<MoneyScreen> {
   }
 }
 
-/// Header icon button on the Money tab — a soft accent chip in light mode and
-/// a translucent white chip in dark, like the Home and Documents headers. The
-/// glyph is the dark ink on the light canvas; in dark mode it flips to white.
-class _MoneyHeroIconButton extends StatelessWidget {
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onTap;
-  final bool enabled;
-
-  const _MoneyHeroIconButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onTap,
-    this.enabled = true,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final fade = FinavigTransition.of(context);
-    return Tooltip(
-      message: tooltip,
-      child: Material(
-        color: enabled
-            ? fade.color(
-                FinavigColors.accent.withValues(alpha: 0.10),
-                Colors.white.withValues(alpha: 0.12),
-              )
-            : fade.color(
-                FinavigColors.mist,
-                Colors.white.withValues(alpha: 0.05),
-              ),
-        borderRadius: BorderRadius.circular(13),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(13),
-          onTap: enabled ? onTap : null,
-          child: SizedBox(
-            width: 36,
-            height: 36,
-            child: Icon(
-              icon,
-              color: enabled
-                  ? fade.color(FinavigColors.ink, Colors.white)
-                  : fade.color(
-                      FinavigColors.textMutedLight,
-                      Colors.white.withValues(alpha: 0.35),
-                    ),
-              size: 17,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// Compact action card button for the Money hero actions.
 class _MoneyAddCard extends StatelessWidget {
   final IconData icon;
@@ -1219,7 +1165,9 @@ class _CreditShortcutCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final accent = theme.colorScheme.primary;
-    final totals = credits != null && credits!.isNotEmpty ? CreditMath.totals(credits!) : null;
+    final totals = credits != null && credits!.isNotEmpty
+        ? CreditMath.totals(credits!)
+        : null;
 
     return Material(
       color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
@@ -1264,22 +1212,30 @@ class _CreditShortcutCard extends StatelessWidget {
               if (totals != null) ...[
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
-                    color: (totals.borrowed > 0 ? FinavigColors.danger : FinavigColors.safe)
-                        .withValues(alpha: 0.12),
+                    color:
+                        (totals.borrowed > 0
+                                ? FinavigColors.danger
+                                : FinavigColors.safe)
+                            .withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     totals.borrowed > 0
                         ? 'Owe: ${MoneyFormat.aed(totals.borrowed)}'
                         : (totals.lent > 0
-                            ? 'Lent: ${MoneyFormat.aed(totals.lent)}'
-                            : 'Settled'),
+                              ? 'Lent: ${MoneyFormat.aed(totals.lent)}'
+                              : 'Settled'),
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
-                      color: totals.borrowed > 0 ? FinavigColors.danger : FinavigColors.safe,
+                      color: totals.borrowed > 0
+                          ? FinavigColors.danger
+                          : FinavigColors.safe,
                     ),
                   ),
                 ),

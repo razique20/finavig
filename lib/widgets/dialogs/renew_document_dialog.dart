@@ -71,8 +71,9 @@ class _RenewDialogState extends State<_RenewDialog> {
         ? widget.item.renewalFee!.toStringAsFixed(0)
         : '',
   );
-  late final TextEditingController _byController =
-      TextEditingController(text: widget.item.assignedTo ?? '');
+  late final TextEditingController _byController = TextEditingController(
+    text: widget.item.assignedTo ?? '',
+  );
   final TextEditingController _noteController = TextEditingController();
 
   @override
@@ -89,7 +90,15 @@ class _RenewDialogState extends State<_RenewDialog> {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: [
-          'pdf', 'doc', 'docx', 'xls', 'xlsx', 'png', 'jpg', 'jpeg', 'txt',
+          'pdf',
+          'doc',
+          'docx',
+          'xls',
+          'xlsx',
+          'png',
+          'jpg',
+          'jpeg',
+          'txt',
         ],
       );
       if (result != null && result.files.isNotEmpty) {
@@ -130,7 +139,7 @@ class _RenewDialogState extends State<_RenewDialog> {
               'Current expiry: ${ExpiryItem.formatDate(item.expiresAt)}',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
 
             // New expiry date picker.
             InkWell(
@@ -146,18 +155,19 @@ class _RenewDialogState extends State<_RenewDialog> {
                 child: Text(ExpiryItem.formatDate(_newExpiry)),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
 
             TextField(
               controller: _feeController,
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
-                labelText: 'Renewal fee / cost (${DocumentCollectionService.instance.activeCurrency})',
+                labelText:
+                    'Renewal fee / cost (${DocumentCollectionService.instance.activeCurrency})',
                 border: const OutlineInputBorder(),
                 isDense: true,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
 
             TextField(
               controller: _byController,
@@ -167,7 +177,7 @@ class _RenewDialogState extends State<_RenewDialog> {
                 isDense: true,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
 
             TextField(
               controller: _noteController,
@@ -177,7 +187,7 @@ class _RenewDialogState extends State<_RenewDialog> {
                 isDense: true,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
 
             // Re-upload option: keep the existing file or replace it.
             if (hasOldFile)
@@ -199,8 +209,8 @@ class _RenewDialogState extends State<_RenewDialog> {
                 _replacementFile != null
                     ? 'Replace with: ${_replacementFile!.name}'
                     : hasOldFile
-                        ? 'Re-upload document file'
-                        : 'Attach document file',
+                    ? 'Re-upload document file'
+                    : 'Attach document file',
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -254,7 +264,9 @@ Future<String?> saveRenewalReplacementFile(
 
   try {
     final appDocDir = await getApplicationDocumentsDirectory();
-    final targetDir = Directory('${appDocDir.path}/finavig/documents/${item.id}');
+    final targetDir = Directory(
+      '${appDocDir.path}/finavig/documents/${item.id}',
+    );
     if (!targetDir.existsSync()) {
       targetDir.createSync(recursive: true);
     }

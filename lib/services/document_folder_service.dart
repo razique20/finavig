@@ -78,11 +78,16 @@ class DocumentFolderService extends ChangeNotifier {
       if (raw != null && raw.isNotEmpty) {
         final decoded = jsonDecode(raw) as List<dynamic>;
         _folders = decoded
-            .map((item) => DocumentFolder.fromJson(item as Map<String, dynamic>))
+            .map(
+              (item) => DocumentFolder.fromJson(item as Map<String, dynamic>),
+            )
             .toList();
       }
     } catch (e) {
-      dev.log('Failed to load folders from cache: $e', name: 'DocumentFolderService');
+      dev.log(
+        'Failed to load folders from cache: $e',
+        name: 'DocumentFolderService',
+      );
     }
   }
 
@@ -92,7 +97,10 @@ class DocumentFolderService extends ChangeNotifier {
       final encoded = jsonEncode(_folders.map((f) => f.toJson()).toList());
       await prefs.setString(_storageKey, encoded);
     } catch (e) {
-      dev.log('Failed to save folders to cache: $e', name: 'DocumentFolderService');
+      dev.log(
+        'Failed to save folders to cache: $e',
+        name: 'DocumentFolderService',
+      );
     }
   }
 
@@ -117,8 +125,10 @@ class DocumentFolderService extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       // Offline or table not yet migrated — keep local cache
-      dev.log('Supabase document_folders sync skipped/failed: $e',
-          name: 'DocumentFolderService');
+      dev.log(
+        'Supabase document_folders sync skipped/failed: $e',
+        name: 'DocumentFolderService',
+      );
     }
   }
 
@@ -175,8 +185,10 @@ class DocumentFolderService extends ChangeNotifier {
           'created_at': newFolder.createdAt.toIso8601String(),
         });
       } catch (e) {
-        dev.log('Failed to persist folder to Supabase: $e',
-            name: 'DocumentFolderService');
+        dev.log(
+          'Failed to persist folder to Supabase: $e',
+          name: 'DocumentFolderService',
+        );
       }
     }
 
@@ -219,8 +231,10 @@ class DocumentFolderService extends ChangeNotifier {
               .eq('id', folderId);
         }
       } catch (e) {
-        dev.log('Failed to update folder in Supabase: $e',
-            name: 'DocumentFolderService');
+        dev.log(
+          'Failed to update folder in Supabase: $e',
+          name: 'DocumentFolderService',
+        );
       }
     }
   }
@@ -246,8 +260,10 @@ class DocumentFolderService extends ChangeNotifier {
       try {
         await client.from('document_folders').delete().eq('id', folderId);
       } catch (e) {
-        dev.log('Failed to delete folder from Supabase: $e',
-            name: 'DocumentFolderService');
+        dev.log(
+          'Failed to delete folder from Supabase: $e',
+          name: 'DocumentFolderService',
+        );
       }
     }
   }

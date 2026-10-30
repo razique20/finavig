@@ -114,8 +114,7 @@ class AppLockService extends ChangeNotifier {
 
   /// A passcode must be exactly [passcodeLength] digits.
   static bool isAcceptable(String passcode) =>
-      passcode.length == passcodeLength &&
-      int.tryParse(passcode) != null;
+      passcode.length == passcodeLength && int.tryParse(passcode) != null;
 
   /// Swaps in a test store. Production never calls this.
   @visibleForTesting
@@ -134,8 +133,9 @@ class AppLockService extends ChangeNotifier {
       _offerSeen = await _store.read(_kOfferSeen) == 'true';
       _failedAttempts = int.tryParse(await _store.read(_kAttempts) ?? '') ?? 0;
       final until = int.tryParse(await _store.read(_kLockoutUntil) ?? '');
-      _lockoutUntil =
-          until == null ? null : DateTime.fromMillisecondsSinceEpoch(until);
+      _lockoutUntil = until == null
+          ? null
+          : DateTime.fromMillisecondsSinceEpoch(until);
     } catch (_) {
       // Secure storage unavailable — fail safe to "no lock" rather than
       // trapping the user behind a door we can't open.

@@ -40,7 +40,11 @@ class SectionHeader extends StatelessWidget {
     final theme = Theme.of(context);
     final row = Row(
       children: [
-        Icon(icon, size: 20, color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline)),
+        Icon(
+          icon,
+          size: 20,
+          color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline),
+        ),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
@@ -87,7 +91,10 @@ class SectionCollapseChevron extends StatelessWidget {
         child: Icon(
           Icons.expand_more_rounded,
           size: 22,
-          color: FinavigColors.adaptiveIcon(context, Theme.of(context).colorScheme.outline),
+          color: FinavigColors.adaptiveIcon(
+            context,
+            Theme.of(context).colorScheme.outline,
+          ),
         ),
       ),
     );
@@ -106,7 +113,7 @@ class CollapsibleSectionBody extends StatelessWidget {
   const CollapsibleSectionBody({
     super.key,
     required this.collapsed,
-    this.spacing = 12,
+    this.spacing = 16,
     required this.children,
   });
 
@@ -160,7 +167,7 @@ class HintCard extends StatelessWidget {
       child: Column(
         children: [
           EmptyStateIllustration(scene: scene, size: 88),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
           Text(
             text,
             style: theme.textTheme.bodySmall?.copyWith(

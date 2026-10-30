@@ -142,11 +142,9 @@ class CompanionSuggestionService {
     // --- Digital assets -----------------------------------------------------
     CompanionPool(
       name: 'Digital Assets',
-      description: 'Online assets that lapse quietly and take the business down',
-      members: [
-        DocumentType.domainNames,
-        DocumentType.softwareSubscriptions,
-      ],
+      description:
+          'Online assets that lapse quietly and take the business down',
+      members: [DocumentType.domainNames, DocumentType.softwareSubscriptions],
       reasons: {
         DocumentType.domainNames:
             'Domains host the website and email — expiry takes everything offline',
@@ -197,9 +195,7 @@ class CompanionSuggestionService {
   /// so the user knows the bundle is fully covered.
   List<CompanionPool> completedPools(Set<String> trackedTypeKeys) {
     return pools
-        .where(
-          (p) => p.members.every((m) => trackedTypeKeys.contains(m.name)),
-        )
+        .where((p) => p.members.every((m) => trackedTypeKeys.contains(m.name)))
         .toList(growable: false);
   }
 

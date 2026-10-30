@@ -8,10 +8,7 @@ class CollectionDialogData {
   final String name;
   final String countryCode;
 
-  const CollectionDialogData({
-    required this.name,
-    this.countryCode = 'AE',
-  });
+  const CollectionDialogData({required this.name, this.countryCode = 'AE'});
 }
 
 /// Show a dialog to create a new company collection. Returns the chosen
@@ -27,7 +24,8 @@ class _CreateCollectionDialog extends StatefulWidget {
   const _CreateCollectionDialog();
 
   @override
-  State<_CreateCollectionDialog> createState() => _CreateCollectionDialogState();
+  State<_CreateCollectionDialog> createState() =>
+      _CreateCollectionDialogState();
 }
 
 class _CreateCollectionDialogState extends State<_CreateCollectionDialog> {
@@ -149,10 +147,7 @@ class _CreateCollectionDialogState extends State<_CreateCollectionDialog> {
           onPressed: () => Navigator.pop(context, null),
           child: const Text('Cancel'),
         ),
-        FilledButton(
-          onPressed: _submit,
-          child: const Text('Create'),
-        ),
+        FilledButton(onPressed: _submit, child: const Text('Create')),
       ],
     );
   }
@@ -185,8 +180,10 @@ Future<bool> showDeleteCollectionDialog(
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
-      icon: Icon(Icons.delete_forever_rounded,
-          color: Theme.of(ctx).colorScheme.error),
+      icon: Icon(
+        Icons.delete_forever_rounded,
+        color: Theme.of(ctx).colorScheme.error,
+      ),
       title: const Text('Delete collection?'),
       content: Text(
         '"${collection.name}" and all documents inside it will be '
@@ -265,8 +262,9 @@ class _NameDialog extends StatefulWidget {
 }
 
 class _NameDialogState extends State<_NameDialog> {
-  late final TextEditingController _controller =
-      TextEditingController(text: widget.initialText);
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.initialText,
+  );
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -294,7 +292,7 @@ class _NameDialogState extends State<_NameDialog> {
                   height: 1.4,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
             ],
             TextFormField(
               controller: _controller,
@@ -334,4 +332,3 @@ class _NameDialogState extends State<_NameDialog> {
     );
   }
 }
-

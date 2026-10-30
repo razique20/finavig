@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../models/document_collection.dart';
 import '../models/expiry_item.dart';
-import '../models/finance.dart';
 import '../services/collection_service.dart';
 import '../services/document_scanner_service.dart';
 import '../services/finance_service.dart';
@@ -15,7 +14,6 @@ import 'home/home_categories_grid.dart';
 import 'home/home_collection_switcher.dart';
 import 'home/home_hero_header.dart';
 import 'home/home_upcoming_section.dart';
-import 'money/forms/transaction_form_sheet.dart';
 
 /// Home tab: cross-tier dashboard on the light, airy canvas.
 ///
@@ -107,26 +105,15 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final urgency = UrgencyEngine().compute(_items);
-    // Canvas + wash resolve through the theme transition factor so they
-    // cross-fade with the theme animation instead of snapping.
-    final fade = FinavigTransition.of(context);
-    final canvas = fade.color(FinavigColors.snowWhite, FinavigColors.obsidian);
-    final wash = LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: [
-        fade.color(FinavigColors.accentSoft, const Color(0xFF151830)),
-        canvas,
-      ],
-      stops: const [0.0, 0.55],
-    );
-
-    final budgetPct = _budgetUsagePct();
+    // Match the Money tab's flat canvas, cross-fading with theme changes.
+    final canvas = FinavigTransition.of(
+      context,
+    ).color(Colors.white, FinavigColors.obsidian);
 
     return Scaffold(
       backgroundColor: canvas,
       body: Container(
-        decoration: BoxDecoration(gradient: wash),
+        color: canvas,
         child: SafeArea(
           bottom: false,
           child: RefreshIndicator(
@@ -144,9 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         activeCollection: _activeCollection,
                         items: _items,
                         dismissedAttentionCount: _dismissedAttentionCount,
-                        budgetUsagePct: budgetPct,
                         onCollectionSwitcherTap: _showCollectionSwitcher,
-                        onQuickAddRecord: _quickAddRecord,
                       ),
                       const SizedBox(height: 18),
                       if (_loading)
@@ -196,22 +181,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Monthly budget usage percentage (0-100), or 0 if no budgets exist.
-  int _budgetUsagePct() {
-    final budgets = FinanceService.instance.activeBudgets;
-    if (budgets.isEmpty) return 0;
-    final spend = FinanceMath.spendByCategory(
-      FinanceService.instance.activeTransactions,
-      DateTime.now(),
-      collectionId: FinanceService.instance.activeCollectionIdSafe,
-    );
-    final statuses = FinanceMath.budgetStatuses(budgets, spend);
-    return (statuses.fold<double>(
-      0.0,
-      (prev, s) => prev + (s.ratio * 100),
-    )).round();
-  }
-
   /// Upcoming (active, not yet expired) documents sorted by expiry.
   List<ExpiryItem> _upcomingItems() {
     final now = DateTime.now();
@@ -232,20 +201,4 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Open the scan flow after enforcing the free-tier document limit.
   Future<void> _openScanner() => openGatedScanner(context);
-
-  /// Quick-add a money record without leaving Home: the same form sheet the
-  /// Money tab uses; FinanceService notifies and the balance card refreshes.
-  Future<void> _quickAddRecord() async {
-    final created = await showModalBottomSheet<FinanceTransaction>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => const TransactionFormSheet(),
-    );
-    if (created == null) return;
-    await FinanceService.instance.addTransaction(created);
-  }
 }

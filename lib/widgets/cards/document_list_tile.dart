@@ -18,7 +18,10 @@ class DocumentListTile extends StatelessWidget {
   });
 
   Color _color() {
-    return FinavigColors.urgencyColor(item.daysRemaining, isActive: item.isActive);
+    return FinavigColors.urgencyColor(
+      item.daysRemaining,
+      isActive: item.isActive,
+    );
   }
 
   String _label() {
@@ -40,10 +43,7 @@ class DocumentListTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(
             children: [
-              DepartmentLogo(
-                item: item,
-                size: 44,
-              ),
+              DepartmentLogo(item: item, size: 44),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -52,8 +52,8 @@ class DocumentListTile extends StatelessWidget {
                     Text(
                       item.displayName,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+                        fontWeight: FontWeight.w600,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -63,8 +63,8 @@ class DocumentListTile extends StatelessWidget {
                           ? '${item.docType.displayName} • ${item.location}'
                           : item.docType.displayName,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.outline,
-                          ),
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -78,9 +78,9 @@ class DocumentListTile extends StatelessWidget {
                   Text(
                     '${item.daysRemaining}d',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: _color(),
-                        ),
+                      fontWeight: FontWeight.bold,
+                      color: _color(),
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Container(

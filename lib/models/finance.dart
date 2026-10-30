@@ -9,8 +9,9 @@ enum FinanceKind { expense, income }
 extension FinanceKindX on FinanceKind {
   String get label => this == FinanceKind.expense ? 'Expense' : 'Income';
 
-  IconData get icon =>
-      this == FinanceKind.expense ? Icons.north_east_rounded : Icons.south_west_rounded;
+  IconData get icon => this == FinanceKind.expense
+      ? Icons.north_east_rounded
+      : Icons.south_west_rounded;
 
   Color get color => this == FinanceKind.expense ? Colors.red : Colors.green;
 }
@@ -21,9 +22,8 @@ extension FinanceKindX on FinanceKind {
 enum CreditLeg { disbursement, settlement }
 
 extension CreditLegX on CreditLeg {
-  String get label => this == CreditLeg.disbursement
-      ? 'Loan paid out'
-      : 'Loan repayment';
+  String get label =>
+      this == CreditLeg.disbursement ? 'Loan paid out' : 'Loan repayment';
 
   static CreditLeg? fromName(String? name) {
     for (final leg in CreditLeg.values) {
@@ -119,11 +119,8 @@ extension FinanceCategoryX on FinanceCategory {
     }
   }
 
-  static FinanceCategory fromName(String? name) =>
-      FinanceCategory.values.firstWhere(
-        (c) => c.name == name,
-        orElse: () => FinanceCategory.other,
-      );
+  static FinanceCategory fromName(String? name) => FinanceCategory.values
+      .firstWhere((c) => c.name == name, orElse: () => FinanceCategory.other);
 }
 
 /// A single money movement (expense or income) inside a collection.
@@ -210,7 +207,8 @@ class FinanceTransaction {
       title: json['title'] as String? ?? 'Transaction',
       amount: (json['amount'] as num?)?.toDouble() ?? 0,
       currency: json['currency'] as String? ?? 'AED',
-      occurredAt: DateTime.tryParse(json['occurredAt'] as String? ?? '') ??
+      occurredAt:
+          DateTime.tryParse(json['occurredAt'] as String? ?? '') ??
           DateTime.now(),
       note: json['note'] as String?,
       documentId: json['documentId'] as String?,
@@ -220,19 +218,19 @@ class FinanceTransaction {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'collectionId': collectionId,
-        'kind': kind.name,
-        'category': category.name,
-        'title': title,
-        'amount': amount,
-        'currency': currency,
-        'occurredAt': occurredAt.toIso8601String(),
-        'note': note,
-        'documentId': documentId,
-        'creditId': creditId,
-        'creditLeg': creditLeg?.name,
-      };
+    'id': id,
+    'collectionId': collectionId,
+    'kind': kind.name,
+    'category': category.name,
+    'title': title,
+    'amount': amount,
+    'currency': currency,
+    'occurredAt': occurredAt.toIso8601String(),
+    'note': note,
+    'documentId': documentId,
+    'creditId': creditId,
+    'creditLeg': creditLeg?.name,
+  };
 }
 
 /// How often a recurring transaction repeats.
@@ -364,7 +362,8 @@ class RecurringTransaction {
       frequency: RecurrenceFrequencyX.fromName(json['frequency'] as String?),
       dayOfMonth: (json['dayOfMonth'] as num?)?.toInt() ?? 1,
       startDate:
-          DateTime.tryParse(json['startDate'] as String? ?? '') ?? DateTime.now(),
+          DateTime.tryParse(json['startDate'] as String? ?? '') ??
+          DateTime.now(),
       endDate: json['endDate'] == null
           ? null
           : DateTime.tryParse(json['endDate'] as String),
@@ -376,20 +375,20 @@ class RecurringTransaction {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'collectionId': collectionId,
-        'kind': kind.name,
-        'category': category.name,
-        'title': title,
-        'amount': amount,
-        'currency': currency,
-        'frequency': frequency.name,
-        'dayOfMonth': dayOfMonth,
-        'startDate': startDate.toIso8601String(),
-        'endDate': endDate?.toIso8601String(),
-        'isActive': isActive,
-        'lastLoggedAt': lastLoggedAt?.toIso8601String(),
-      };
+    'id': id,
+    'collectionId': collectionId,
+    'kind': kind.name,
+    'category': category.name,
+    'title': title,
+    'amount': amount,
+    'currency': currency,
+    'frequency': frequency.name,
+    'dayOfMonth': dayOfMonth,
+    'startDate': startDate.toIso8601String(),
+    'endDate': endDate?.toIso8601String(),
+    'isActive': isActive,
+    'lastLoggedAt': lastLoggedAt?.toIso8601String(),
+  };
 }
 
 /// Pure (UI-free, I/O-free) rules for computing when a
@@ -429,7 +428,11 @@ class RecurrenceMath {
   ) {
     if (r.endDate != null && after.isAfter(r.endDate!)) return null;
 
-    var candidate = occurrenceInMonth(r.startDate.year, r.startDate.month, r.dayOfMonth);
+    var candidate = occurrenceInMonth(
+      r.startDate.year,
+      r.startDate.month,
+      r.dayOfMonth,
+    );
     // Guard against pathological loops (max ~50 years of monthly steps).
     var guard = 0;
     while (!candidate.isAfter(after) && guard < 600) {
@@ -437,7 +440,11 @@ class RecurrenceMath {
         DateTime(candidate.year, candidate.month, 1),
         frequency,
       );
-      candidate = occurrenceInMonth(candidate.year, candidate.month, r.dayOfMonth);
+      candidate = occurrenceInMonth(
+        candidate.year,
+        candidate.month,
+        r.dayOfMonth,
+      );
       guard++;
     }
     if (guard >= 600) return null;
@@ -459,8 +466,11 @@ class RecurrenceMath {
     if (!r.isActive) return [];
     final loggedUpTo = lastLoggedAt ?? r.lastLoggedAt;
     final results = <DateTime>[];
-    DateTime? next =
-        nextOccurrence(r, frequency, from.subtract(const Duration(microseconds: 1)));
+    DateTime? next = nextOccurrence(
+      r,
+      frequency,
+      from.subtract(const Duration(microseconds: 1)),
+    );
     var guard = 0;
     while (next != null && !next.isAfter(until) && guard < 600) {
       if (loggedUpTo == null || next.isAfter(loggedUpTo)) {
@@ -489,11 +499,11 @@ class CategoryBudget {
   });
 
   CategoryBudget copyWith({double? monthlyLimit}) => CategoryBudget(
-        id: id,
-        collectionId: collectionId,
-        category: category,
-        monthlyLimit: monthlyLimit ?? this.monthlyLimit,
-      );
+    id: id,
+    collectionId: collectionId,
+    category: category,
+    monthlyLimit: monthlyLimit ?? this.monthlyLimit,
+  );
 
   factory CategoryBudget.fromJson(Map<String, dynamic> json) {
     return CategoryBudget(
@@ -505,11 +515,11 @@ class CategoryBudget {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'collectionId': collectionId,
-        'category': category.name,
-        'monthlyLimit': monthlyLimit,
-      };
+    'id': id,
+    'collectionId': collectionId,
+    'category': category.name,
+    'monthlyLimit': monthlyLimit,
+  };
 }
 
 /// Alert thresholds as a fraction of a budget's monthly limit. At ≥80% the
@@ -629,14 +639,14 @@ class SavingsEnvelope {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'collectionId': collectionId,
-        'name': name,
-        'targetAmount': targetAmount,
-        'savedAmount': savedAmount,
-        'monthlyContribution': monthlyContribution,
-        'documentId': documentId,
-      };
+    'id': id,
+    'collectionId': collectionId,
+    'name': name,
+    'targetAmount': targetAmount,
+    'savedAmount': savedAmount,
+    'monthlyContribution': monthlyContribution,
+    'documentId': documentId,
+  };
 }
 
 /// Shared money helpers.
@@ -662,7 +672,8 @@ class MoneyFormat {
   }
 
   /// Alias for format to maintain backwards compatibility across the app.
-  static String aed(double value, {String? symbol}) => format(value, symbol: symbol);
+  static String aed(double value, {String? symbol}) =>
+      format(value, symbol: symbol);
 }
 
 /// Pure computation helpers for the finance module — unit-tested in
@@ -763,7 +774,8 @@ class FinanceMath {
       if (t.kind != FinanceKind.expense) continue;
       if (t.title.trim().toLowerCase() != title) continue;
 
-      final sameDay = t.occurredAt.year == candidate.occurredAt.year &&
+      final sameDay =
+          t.occurredAt.year == candidate.occurredAt.year &&
           t.occurredAt.month == candidate.occurredAt.month &&
           t.occurredAt.day == candidate.occurredAt.day;
       final sameAmount = t.amount == candidate.amount;
@@ -786,10 +798,7 @@ class FinanceMath {
   ) {
     return [
       for (final b in budgets)
-        BudgetStatusResult(
-          budget: b,
-          spent: spendByCategory[b.category] ?? 0,
-        ),
+        BudgetStatusResult(budget: b, spent: spendByCategory[b.category] ?? 0),
     ];
   }
 
@@ -799,15 +808,13 @@ class FinanceMath {
   static BudgetStatusResult? worstBudgetStatus(
     List<BudgetStatusResult> results,
   ) {
-    final hit = results
-        .where((r) => r.status == BudgetAlertLevel.exceeded)
-        .toList()
-      ..sort((a, b) => b.ratio.compareTo(a.ratio));
+    final hit =
+        results.where((r) => r.status == BudgetAlertLevel.exceeded).toList()
+          ..sort((a, b) => b.ratio.compareTo(a.ratio));
     if (hit.isNotEmpty) return hit.first;
-    final near = results
-        .where((r) => r.status == BudgetAlertLevel.near)
-        .toList()
-      ..sort((a, b) => b.ratio.compareTo(a.ratio));
+    final near =
+        results.where((r) => r.status == BudgetAlertLevel.near).toList()
+          ..sort((a, b) => b.ratio.compareTo(a.ratio));
     if (near.isNotEmpty) return near.first;
     return null;
   }
@@ -847,7 +854,11 @@ class FinanceMath {
     double startBal = initialBalance ?? 0.0;
     if (initialBalance == null) {
       for (final t in transactions) {
-        final tDate = DateTime(t.occurredAt.year, t.occurredAt.month, t.occurredAt.day);
+        final tDate = DateTime(
+          t.occurredAt.year,
+          t.occurredAt.month,
+          t.occurredAt.day,
+        );
         if (!tDate.isAfter(startDate)) {
           if (t.kind == FinanceKind.income) {
             startBal += t.amount;
@@ -876,7 +887,9 @@ class FinanceMath {
       );
       for (final occ in occurrences) {
         final occKey = dayKey(occ);
-        eventsByDay.putIfAbsent(occKey, () => []).add(
+        eventsByDay
+            .putIfAbsent(occKey, () => [])
+            .add(
               CashFlowEvent(
                 title: r.title,
                 amount: r.amount,
@@ -891,10 +904,16 @@ class FinanceMath {
     for (final doc in expiryItems) {
       if (!doc.isActive) continue;
       if (doc.renewalFee == null || doc.renewalFee! <= 0) continue;
-      final docExpiry = DateTime(doc.expiresAt.year, doc.expiresAt.month, doc.expiresAt.day);
+      final docExpiry = DateTime(
+        doc.expiresAt.year,
+        doc.expiresAt.month,
+        doc.expiresAt.day,
+      );
       if (docExpiry.isAfter(startDate) && !docExpiry.isAfter(endDate)) {
         final docKey = dayKey(docExpiry);
-        eventsByDay.putIfAbsent(docKey, () => []).add(
+        eventsByDay
+            .putIfAbsent(docKey, () => [])
+            .add(
               CashFlowEvent(
                 title: '${doc.displayName} Renewal',
                 amount: doc.renewalFee!,
@@ -980,18 +999,23 @@ class FinanceMath {
 
   /// RFC-4180-ish CSV export of transactions.
   static String toCsv(List<FinanceTransaction> transactions) {
-    final buffer = StringBuffer('date,kind,category,title,amount,currency,note\n');
-    final sorted = [...transactions]..sort((a, b) => a.occurredAt.compareTo(b.occurredAt));
+    final buffer = StringBuffer(
+      'date,kind,category,title,amount,currency,note\n',
+    );
+    final sorted = [...transactions]
+      ..sort((a, b) => a.occurredAt.compareTo(b.occurredAt));
     for (final t in sorted) {
-      buffer.write([
-        t.occurredAt.toIso8601String().split('T').first,
-        t.kind.name,
-        t.category.name,
-        _csvEscape(t.title),
-        t.amount.toStringAsFixed(2),
-        t.currency,
-        _csvEscape(t.note ?? ''),
-      ].join(','));
+      buffer.write(
+        [
+          t.occurredAt.toIso8601String().split('T').first,
+          t.kind.name,
+          t.category.name,
+          _csvEscape(t.title),
+          t.amount.toStringAsFixed(2),
+          t.currency,
+          _csvEscape(t.note ?? ''),
+        ].join(','),
+      );
       buffer.write('\n');
     }
     return buffer.toString();
@@ -1064,8 +1088,6 @@ class CashFlowForecast {
   double get netChange => projectedEndBalance - startingBalance;
 
   /// Percentage change relative to starting balance (0 if starting balance is 0).
-  double get percentChange => startingBalance == 0
-      ? 0
-      : (netChange / startingBalance.abs()) * 100;
+  double get percentChange =>
+      startingBalance == 0 ? 0 : (netChange / startingBalance.abs()) * 100;
 }
-

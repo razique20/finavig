@@ -19,19 +19,26 @@ class ExpiryCard extends StatelessWidget {
 
   Color _cardColor(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    if (!item.isActive) return Theme.of(context).colorScheme.surfaceContainerHighest;
+    if (!item.isActive)
+      return Theme.of(context).colorScheme.surfaceContainerHighest;
     return FinavigColors.urgencyBg(item.daysRemaining, brightness: brightness);
   }
 
   Color _accentColor() {
-    return FinavigColors.urgencyColor(item.daysRemaining, isActive: item.isActive);
+    return FinavigColors.urgencyColor(
+      item.daysRemaining,
+      isActive: item.isActive,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final accent = _accentColor();
-    final locationText = item.location != null && item.location!.isNotEmpty && item.location != 'UAE'
+    final locationText =
+        item.location != null &&
+            item.location!.isNotEmpty &&
+            item.location != 'UAE'
         ? item.location!
         : item.docType.displayName;
 
@@ -45,9 +52,7 @@ class ExpiryCard extends StatelessWidget {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: accent.withOpacity(0.15),
-            ),
+            border: Border.all(color: accent.withOpacity(0.15)),
           ),
           child: Row(
             children: [
@@ -101,7 +106,10 @@ class ExpiryCard extends StatelessWidget {
                     child: Text(
                       item.urgency.title,
                       style: TextStyle(
-                        color: (accent == FinavigColors.caution || item.daysRemaining > 30 && item.daysRemaining <= 60)
+                        color:
+                            (accent == FinavigColors.caution ||
+                                item.daysRemaining > 30 &&
+                                    item.daysRemaining <= 60)
                             ? const Color(0xFF0A0E1A)
                             : Colors.white,
                         fontSize: 10,

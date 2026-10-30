@@ -21,7 +21,7 @@ class RatingPromptUi {
         await _review.requestReview();
       }
     };
-    RatingPromptService.instance.canPromptOverride =
-        () => _review.isAvailable();
+    RatingPromptService.instance.canPromptOverride = () =>
+        _review.isAvailable();
   }
 }

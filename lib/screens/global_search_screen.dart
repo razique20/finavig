@@ -105,8 +105,8 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
       body: _loading && _results.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : _results.isEmpty
-              ? _buildEmpty(theme)
-              : _buildResults(theme),
+          ? _buildEmpty(theme)
+          : _buildResults(theme),
     );
   }
 

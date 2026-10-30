@@ -20,7 +20,8 @@ Future<void> showFaqSheet(
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
-    builder: (ctx) => _FaqSheetContent(onOpenSupportTicket: onOpenSupportTicket),
+    builder: (ctx) =>
+        _FaqSheetContent(onOpenSupportTicket: onOpenSupportTicket),
   );
 }
 
@@ -52,7 +53,8 @@ class _FaqSheetContentState extends State<_FaqSheetContent> {
       final matchesCategory =
           _selectedCategory == 'All' || faq.category == _selectedCategory;
       final q = _searchQuery.toLowerCase().trim();
-      final matchesQuery = q.isEmpty ||
+      final matchesQuery =
+          q.isEmpty ||
           faq.question.toLowerCase().contains(q) ||
           faq.answer.toLowerCase().contains(q) ||
           faq.category.toLowerCase().contains(q);
@@ -76,7 +78,7 @@ class _FaqSheetContentState extends State<_FaqSheetContent> {
         child: Column(
           children: [
             // Drag handle
-            const SizedBox(height: 10),
+            const SizedBox(height: 14),
             Center(
               child: Container(
                 width: 40,
@@ -87,7 +89,7 @@ class _FaqSheetContentState extends State<_FaqSheetContent> {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
 
             // Header Title
             Padding(
@@ -174,7 +176,7 @@ class _FaqSheetContentState extends State<_FaqSheetContent> {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
 
             // Category Filter Chips
             SizedBox(
@@ -199,10 +201,13 @@ class _FaqSheetContentState extends State<_FaqSheetContent> {
                         : Colors.black.withOpacity(0.04),
                     labelStyle: TextStyle(
                       color: selected
-                          ? (isDark ? const Color(0xFFD97706) : FinavigColors.ink)
+                          ? (isDark
+                                ? const Color(0xFFD97706)
+                                : FinavigColors.ink)
                           : theme.colorScheme.onSurface.withOpacity(0.7),
-                      fontWeight:
-                          selected ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: selected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                       fontSize: 13,
                     ),
                     shape: RoundedRectangleBorder(
@@ -218,7 +223,7 @@ class _FaqSheetContentState extends State<_FaqSheetContent> {
                 },
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             const Divider(height: 1),
 
             // FAQ Accordion List
@@ -233,9 +238,12 @@ class _FaqSheetContentState extends State<_FaqSheetContent> {
                             Icon(
                               Icons.search_off_rounded,
                               size: 48,
-                              color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline.withOpacity(0.4)),
+                              color: FinavigColors.adaptiveIcon(
+                                context,
+                                theme.colorScheme.outline.withOpacity(0.4),
+                              ),
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 16),
                             Text(
                               'No matching questions found',
                               style: theme.textTheme.titleSmall?.copyWith(
@@ -246,7 +254,9 @@ class _FaqSheetContentState extends State<_FaqSheetContent> {
                             Text(
                               'Try searching for another keyword or category',
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.outline.withOpacity(0.7),
+                                color: theme.colorScheme.outline.withOpacity(
+                                  0.7,
+                                ),
                               ),
                             ),
                           ],
@@ -370,9 +380,7 @@ class _FaqAccordionCardState extends State<_FaqAccordionCard> {
             ? Colors.white.withOpacity(0.04)
             : Colors.grey.withOpacity(0.06),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.colorScheme.outline.withOpacity(0.1),
-        ),
+        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.1)),
       ),
       child: Material(
         color: Colors.transparent,
@@ -428,7 +436,10 @@ class _FaqAccordionCardState extends State<_FaqAccordionCard> {
                       _expanded
                           ? Icons.keyboard_arrow_up_rounded
                           : Icons.keyboard_arrow_down_rounded,
-                      color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline),
+                      color: FinavigColors.adaptiveIcon(
+                        context,
+                        theme.colorScheme.outline,
+                      ),
                     ),
                   ],
                 ),
@@ -437,9 +448,9 @@ class _FaqAccordionCardState extends State<_FaqAccordionCard> {
                   secondChild: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
                       const Divider(height: 1),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
                       SelectableText(
                         item.answer,
                         style: theme.textTheme.bodyMedium?.copyWith(

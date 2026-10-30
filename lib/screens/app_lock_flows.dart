@@ -50,10 +50,7 @@ Future<void> changeAppLockPasscode(BuildContext context) async {
   );
   if (!ok || !context.mounted) return;
 
-  final pin = await PasscodeSetupScreen.push(
-    context,
-    title: 'New passcode',
-  );
+  final pin = await PasscodeSetupScreen.push(context, title: 'New passcode');
   if (pin == null) return;
 
   await AppLockService.instance.changePasscode(pin);
@@ -103,13 +100,14 @@ Future<void> maybeOfferAppLockSetup(BuildContext context) async {
                   Expanded(
                     child: Text(
                       'Turn on App Lock?',
-                      style: theme.textTheme.titleLarge
-                          ?.copyWith(fontWeight: FontWeight.bold),
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               Text(
                 'Add a 6-digit passcode so you can reopen Finavig quickly '
                 'without retyping your password. It only locks this device — '

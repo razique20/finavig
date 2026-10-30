@@ -29,8 +29,9 @@ class UserDataExportService {
   /// Build the export payload. Pure data — the caller decides how to save
   /// or share it. Never throws on partial data: sections degrade to empty.
   Future<Map<String, dynamic>> buildExport() async {
-    final documents = await DocumentScannerService.instance
-        .getAllItems(includeExpired: true);
+    final documents = await DocumentScannerService.instance.getAllItems(
+      includeExpired: true,
+    );
 
     final finance = FinanceService.instance;
 
@@ -47,8 +48,7 @@ class UserDataExportService {
       'exportedAt': DateTime.now().toIso8601String(),
       'documents': documents.map((d) => d.toJson()).toList(),
       'finance': {
-        'transactions':
-            finance.transactions.map((t) => t.toJson()).toList(),
+        'transactions': finance.transactions.map((t) => t.toJson()).toList(),
         'budgets': finance.budgets.map((b) => b.toJson()).toList(),
         'envelopes': finance.envelopes.map((e) => e.toJson()).toList(),
         'recurring': finance.recurring.map((r) => r.toJson()).toList(),

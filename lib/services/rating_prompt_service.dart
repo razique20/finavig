@@ -77,8 +77,7 @@ class RatingPromptService {
       final lastAskedAt = prefs.getInt(_keyLastAsked);
       final askCount = prefs.getInt(_keyAskCount) ?? 0;
 
-      final canPrompt =
-          await (canPromptOverride?.call() ?? Future.value(true));
+      final canPrompt = await (canPromptOverride?.call() ?? Future.value(true));
 
       final should = RatingPromptPolicy.shouldAsk(
         renewalCount: renewalCount,

@@ -53,7 +53,9 @@ class _CashFlowForecastScreenState extends State<CashFlowForecastScreen> {
     );
 
     // Filter points with events
-    final pointsWithEvents = forecast.points.where((p) => p.events.isNotEmpty).toList();
+    final pointsWithEvents = forecast.points
+        .where((p) => p.events.isNotEmpty)
+        .toList();
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
@@ -81,56 +83,56 @@ class _CashFlowForecastScreenState extends State<CashFlowForecastScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                // Chart Card
-                CashFlowForecastCard(forecast: forecast),
-                const SizedBox(height: 24),
+                        // Chart Card
+                        CashFlowForecastCard(forecast: forecast),
+                        const SizedBox(height: 24),
 
-                // Events Section Header
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Upcoming Scheduled Events',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      '${pointsWithEvents.length} active days',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.outline,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
+                        // Events Section Header
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Upcoming Scheduled Events',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              '${pointsWithEvents.length} active days',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.outline,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
 
-                // Filter Segmented Buttons
-                SegmentedButton<String>(
-                  segments: const [
-                    ButtonSegment(
-                      value: 'all',
-                      label: Text('All Events'),
-                      icon: Icon(Icons.list_rounded, size: 16),
-                    ),
-                    ButtonSegment(
-                      value: 'renewals',
-                      label: Text('Renewals Only'),
-                      icon: Icon(Icons.assignment_rounded, size: 16),
-                    ),
-                    ButtonSegment(
-                      value: 'recurring',
-                      label: Text('Recurring'),
-                      icon: Icon(Icons.repeat_rounded, size: 16),
-                    ),
-                  ],
-                  selected: {_filter},
-                  onSelectionChanged: (selected) {
-                    setState(() {
-                      _filter = selected.first;
-                    });
-                  },
-                ),
+                        // Filter Segmented Buttons
+                        SegmentedButton<String>(
+                          segments: const [
+                            ButtonSegment(
+                              value: 'all',
+                              label: Text('All Events'),
+                              icon: Icon(Icons.list_rounded, size: 16),
+                            ),
+                            ButtonSegment(
+                              value: 'renewals',
+                              label: Text('Renewals Only'),
+                              icon: Icon(Icons.assignment_rounded, size: 16),
+                            ),
+                            ButtonSegment(
+                              value: 'recurring',
+                              label: Text('Recurring'),
+                              icon: Icon(Icons.repeat_rounded, size: 16),
+                            ),
+                          ],
+                          selected: {_filter},
+                          onSelectionChanged: (selected) {
+                            setState(() {
+                              _filter = selected.first;
+                            });
+                          },
+                        ),
                       ],
                     ),
                   ),
@@ -144,7 +146,9 @@ class _CashFlowForecastScreenState extends State<CashFlowForecastScreen> {
                         padding: const EdgeInsets.all(24),
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1E2430) : Colors.grey.shade50,
+                          color: isDark
+                              ? const Color(0xFF1E2430)
+                              : Colors.grey.shade50,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -205,7 +209,10 @@ class _CashFlowForecastScreenState extends State<CashFlowForecastScreen> {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: FinavigColors.violetAccent.withAlpha(25),
                         borderRadius: BorderRadius.circular(6),
@@ -232,7 +239,9 @@ class _CashFlowForecastScreenState extends State<CashFlowForecastScreen> {
                   'Balance: ${MoneyFormat.aed(point.balance)}',
                   style: theme.textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: point.balance >= 0 ? FinavigColors.safe : FinavigColors.danger,
+                    color: point.balance >= 0
+                        ? FinavigColors.safe
+                        : FinavigColors.danger,
                   ),
                 ),
               ],
@@ -248,22 +257,27 @@ class _CashFlowForecastScreenState extends State<CashFlowForecastScreen> {
                     Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: (ev.isDocumentRenewal
-                                ? FinavigColors.caution
-                                : (ev.kind == FinanceKind.income ? FinavigColors.safe : FinavigColors.danger))
-                            .withAlpha(25),
+                        color:
+                            (ev.isDocumentRenewal
+                                    ? FinavigColors.caution
+                                    : (ev.kind == FinanceKind.income
+                                          ? FinavigColors.safe
+                                          : FinavigColors.danger))
+                                .withAlpha(25),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
                         ev.isDocumentRenewal
                             ? Icons.assignment_rounded
                             : (ev.kind == FinanceKind.income
-                                ? Icons.arrow_downward_rounded
-                                : Icons.arrow_outward_rounded),
+                                  ? Icons.arrow_downward_rounded
+                                  : Icons.arrow_outward_rounded),
                         size: 14,
                         color: ev.isDocumentRenewal
                             ? FinavigColors.caution
-                            : (ev.kind == FinanceKind.income ? FinavigColors.safe : FinavigColors.danger),
+                            : (ev.kind == FinanceKind.income
+                                  ? FinavigColors.safe
+                                  : FinavigColors.danger),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -292,7 +306,9 @@ class _CashFlowForecastScreenState extends State<CashFlowForecastScreen> {
                       '${ev.kind == FinanceKind.income ? '+' : '-'}${MoneyFormat.aed(ev.amount)}',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: ev.kind == FinanceKind.income ? FinavigColors.safe : FinavigColors.danger,
+                        color: ev.kind == FinanceKind.income
+                            ? FinavigColors.safe
+                            : FinavigColors.danger,
                       ),
                     ),
                   ],

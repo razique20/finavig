@@ -20,14 +20,18 @@ class FinavigColors {
   // ── Logo quadrant colours ───────────────────────────────────────────────
   // Extracted from the four-quadrant cross/plus logo.
   static const Color logoGreen = Color(0xFF00B140); // top-left quadrant
-  static const Color logoRed   = Color(0xFFE02020); // top-right quadrant
-  static const Color logoBlue  = Color(0xFF2E8BC0); // bottom-left quadrant
-  static const Color logoGold  = Color(0xFFF0A830); // bottom-right quadrant
+  static const Color logoRed = Color(0xFFE02020); // top-right quadrant
+  static const Color logoBlue = Color(0xFF2E8BC0); // bottom-left quadrant
+  static const Color logoGold = Color(0xFFF0A830); // bottom-right quadrant
 
   // ── Brand accents — derived from logo blue ─────────────────────────────
-  static const Color accent = Color(0xFF2671A8); // slightly deeper logo blue — icons/links/active
+  static const Color accent = Color(
+    0xFF2671A8,
+  ); // slightly deeper logo blue — icons/links/active
   static const Color accentDeep = Color(0xFF1B5A8A); // dark step
-  static const Color accentBright = Color(0xFF2E8BC0); // logo blue — dark-mode primary
+  static const Color accentBright = Color(
+    0xFF2E8BC0,
+  ); // logo blue — dark-mode primary
   static const Color accentSoft = Color(0xFFE8F4FA); // logo-blue-50
 
   // Legacy aliases — map old names onto the new accent so the whole app
@@ -85,7 +89,9 @@ class FinavigColors {
   static const Color redTint = Color(0xFFFCE0E0);
   static const Color pink = Color(0xFFEC4899);
   static const Color pinkTint = Color(0xFFFCE7F3);
-  static const Color lilac = Color(0xFF4F46E5); // AI accents — brighter indigo step
+  static const Color lilac = Color(
+    0xFF4F46E5,
+  ); // AI accents — brighter indigo step
   static const Color lilacTint = Color(0xFFEDE9FE);
 
   // ── Semantic: urgency ───────────────────────────────────────────────────
@@ -213,10 +219,9 @@ class FinavigTransition extends ThemeExtension<FinavigTransition> {
   FinavigTransition lerp(
     covariant ThemeExtension<FinavigTransition>? other,
     double t,
-  ) =>
-      other is FinavigTransition
-          ? FinavigTransition(this.t + (other.t - this.t) * t)
-          : this;
+  ) => other is FinavigTransition
+      ? FinavigTransition(this.t + (other.t - this.t) * t)
+      : this;
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -244,19 +249,11 @@ class FinavigShadows {
   FinavigShadows._();
 
   static const List<BoxShadow> soft = [
-    BoxShadow(
-      color: Color(0x12101828),
-      blurRadius: 20,
-      offset: Offset(0, 6),
-    ),
+    BoxShadow(color: Color(0x12101828), blurRadius: 20, offset: Offset(0, 6)),
   ];
 
   static const List<BoxShadow> raised = [
-    BoxShadow(
-      color: Color(0x1F101828),
-      blurRadius: 28,
-      offset: Offset(0, 10),
-    ),
+    BoxShadow(color: Color(0x1F101828), blurRadius: 28, offset: Offset(0, 10)),
   ];
 
   static const List<BoxShadow> none = [];
@@ -333,8 +330,11 @@ class FinavigGlass extends StatelessWidget {
     final bg = isDark
         ? Colors.white.withOpacity(opacity)
         : Colors.white.withOpacity(0.72);
-    final border = borderColor ??
-        (isDark ? FinavigColors.glassBorderWhite : FinavigColors.glassBorderBlack);
+    final border =
+        borderColor ??
+        (isDark
+            ? FinavigColors.glassBorderWhite
+            : FinavigColors.glassBorderBlack);
 
     return ClipRRect(
       borderRadius: borderRadius,
@@ -388,76 +388,78 @@ class FinavigTheme {
         ? Typography.material2021().white
         : Typography.material2021().black;
 
-    return GoogleFonts.interTextTheme(base).copyWith(
-      displayLarge: GoogleFonts.inter(
-        fontSize: 22,
-        fontWeight: FontWeight.w700,
-        letterSpacing: -1.0,
-      ),
-      displayMedium: GoogleFonts.inter(
-        fontSize: 18,
-        fontWeight: FontWeight.w700,
-        letterSpacing: -0.5,
-      ),
-      displaySmall: GoogleFonts.inter(
-        fontSize: 16,
-        fontWeight: FontWeight.w700,
-        letterSpacing: -0.3,
-      ),
-      headlineLarge: GoogleFonts.inter(
-        fontSize: 16,
-        fontWeight: FontWeight.w700,
-        letterSpacing: -0.3,
-      ),
-      headlineMedium: GoogleFonts.inter(
-        fontSize: 14,
-        fontWeight: FontWeight.w700,
-        letterSpacing: -0.2,
-      ),
-      headlineSmall: GoogleFonts.inter(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-        letterSpacing: -0.1,
-      ),
-      titleLarge: GoogleFonts.inter(
-        fontSize: 13,
-        fontWeight: FontWeight.w700,
-        letterSpacing: -0.1,
-      ),
-      titleMedium: GoogleFonts.inter(
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
-        letterSpacing: -0.1,
-      ),
-      titleSmall: GoogleFonts.inter(
-        fontSize: 11,
-        fontWeight: FontWeight.w600,
-      ),
-      bodyLarge: GoogleFonts.inter(
-        fontSize: 12,
-        fontWeight: FontWeight.w400,
-      ),
-      bodyMedium: GoogleFonts.inter(
-        fontSize: 11,
-        fontWeight: FontWeight.w400,
-      ),
-      bodySmall: GoogleFonts.inter(
-        fontSize: 10,
-        fontWeight: FontWeight.w400,
-      ),
-      labelLarge: GoogleFonts.inter(
-        fontSize: 11,
-        fontWeight: FontWeight.w600,
-      ),
-      labelMedium: GoogleFonts.inter(
-        fontSize: 10,
-        fontWeight: FontWeight.w500,
-      ),
-      labelSmall: GoogleFonts.inter(
-        fontSize: 9,
-        fontWeight: FontWeight.w500,
-      ),
-    ).apply(fontFamilyFallback: _emojiFallback);
+    return GoogleFonts.interTextTheme(base)
+        .copyWith(
+          displayLarge: GoogleFonts.inter(
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -1.0,
+          ),
+          displayMedium: GoogleFonts.inter(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.5,
+          ),
+          displaySmall: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.3,
+          ),
+          headlineLarge: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.3,
+          ),
+          headlineMedium: GoogleFonts.inter(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.2,
+          ),
+          headlineSmall: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.1,
+          ),
+          titleLarge: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.1,
+          ),
+          titleMedium: GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.1,
+          ),
+          titleSmall: GoogleFonts.inter(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+          ),
+          bodyLarge: GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
+          ),
+          bodyMedium: GoogleFonts.inter(
+            fontSize: 11,
+            fontWeight: FontWeight.w400,
+          ),
+          bodySmall: GoogleFonts.inter(
+            fontSize: 10,
+            fontWeight: FontWeight.w400,
+          ),
+          labelLarge: GoogleFonts.inter(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+          ),
+          labelMedium: GoogleFonts.inter(
+            fontSize: 10,
+            fontWeight: FontWeight.w500,
+          ),
+          labelSmall: GoogleFonts.inter(
+            fontSize: 9,
+            fontWeight: FontWeight.w500,
+          ),
+        )
+        .apply(fontFamilyFallback: _emojiFallback);
   }
 
   // ── Dark Theme ──────────────────────────────────────────────────────────
@@ -513,21 +515,22 @@ class FinavigTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        titleTextStyle: _withEmojiFallback(GoogleFonts.inter(
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-          color: FinavigColors.textPrimary,
-          letterSpacing: -0.3,
-        )),
+        titleTextStyle: _withEmojiFallback(
+          GoogleFonts.inter(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: FinavigColors.textPrimary,
+            letterSpacing: -0.3,
+          ),
+        ),
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: FinavigColors.obsidian.withOpacity(0.85),
         indicatorColor: FinavigColors.accentBright.withOpacity(0.16),
         labelTextStyle: WidgetStatePropertyAll(
-          _withEmojiFallback(GoogleFonts.inter(
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-          )),
+          _withEmojiFallback(
+            GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w500),
+          ),
         ),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
@@ -552,42 +555,48 @@ class FinavigTheme {
       ),
       listTileTheme: ListTileThemeData(
         iconColor: Colors.white,
-        titleTextStyle: _withEmojiFallback(GoogleFonts.inter(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: FinavigColors.textPrimary,
-        )),
-        subtitleTextStyle: _withEmojiFallback(GoogleFonts.inter(
-          fontSize: 11,
-          fontWeight: FontWeight.w400,
-          color: FinavigColors.textSecondary,
-        )),
+        titleTextStyle: _withEmojiFallback(
+          GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: FinavigColors.textPrimary,
+          ),
+        ),
+        subtitleTextStyle: _withEmojiFallback(
+          GoogleFonts.inter(
+            fontSize: 11,
+            fontWeight: FontWeight.w400,
+            color: FinavigColors.textSecondary,
+          ),
+        ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: FinavigColors.slate.withOpacity(0.55),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: BorderSide(
-            color: Colors.white.withOpacity(0.14),
-          ),
+          borderSide: BorderSide(color: Colors.white.withOpacity(0.14)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: BorderSide(
-            color: Colors.white.withOpacity(0.14),
-          ),
+          borderSide: BorderSide(color: Colors.white.withOpacity(0.14)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: BorderSide(
-            color: Colors.white.withOpacity(0.22),
-          ),
+          borderSide: BorderSide(color: Colors.white.withOpacity(0.22)),
         ),
-        labelStyle: const TextStyle(color: FinavigColors.textSecondary, fontSize: 11),
-        hintStyle: const TextStyle(color: FinavigColors.textMuted, fontSize: 11),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        labelStyle: const TextStyle(
+          color: FinavigColors.textSecondary,
+          fontSize: 11,
+        ),
+        hintStyle: const TextStyle(
+          color: FinavigColors.textMuted,
+          fontSize: 11,
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 12,
+        ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
@@ -599,10 +608,9 @@ class FinavigTheme {
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(22)),
           ),
-          textStyle: _withEmojiFallback(GoogleFonts.inter(
-            fontWeight: FontWeight.w700,
-            fontSize: 12,
-          )),
+          textStyle: _withEmojiFallback(
+            GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 12),
+          ),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -615,19 +623,17 @@ class FinavigTheme {
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(22)),
           ),
-          textStyle: _withEmojiFallback(GoogleFonts.inter(
-            fontWeight: FontWeight.w700,
-            fontSize: 12,
-          )),
+          textStyle: _withEmojiFallback(
+            GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 12),
+          ),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: scheme.secondary,
-          textStyle: _withEmojiFallback(GoogleFonts.inter(
-            fontWeight: FontWeight.w600,
-            fontSize: 11,
-          )),
+          textStyle: _withEmojiFallback(
+            GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 11),
+          ),
         ),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
@@ -643,7 +649,9 @@ class FinavigTheme {
         backgroundColor: FinavigColors.charcoal,
         modalBackgroundColor: FinavigColors.charcoal,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(FinavigRadius.sheet)),
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(FinavigRadius.sheet),
+          ),
         ),
         dragHandleColor: Colors.white.withOpacity(0.2),
         dragHandleSize: const Size(40, 4),
@@ -654,27 +662,27 @@ class FinavigTheme {
           borderRadius: BorderRadius.circular(FinavigRadius.dialog),
         ),
         elevation: 0,
-        titleTextStyle: _withEmojiFallback(GoogleFonts.inter(
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-          color: FinavigColors.textPrimary,
-        )),
-        contentTextStyle: _withEmojiFallback(GoogleFonts.inter(
-          fontSize: 11,
-          height: 1.4,
-          color: FinavigColors.textSecondary,
-        )),
+        titleTextStyle: _withEmojiFallback(
+          GoogleFonts.inter(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: FinavigColors.textPrimary,
+          ),
+        ),
+        contentTextStyle: _withEmojiFallback(
+          GoogleFonts.inter(
+            fontSize: 11,
+            height: 1.4,
+            color: FinavigColors.textSecondary,
+          ),
+        ),
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: FinavigColors.slateLight,
-        contentTextStyle:
-            _withEmojiFallback(GoogleFonts.inter(
-          color: FinavigColors.textPrimary,
-          fontSize: 11,
-        )),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+        contentTextStyle: _withEmojiFallback(
+          GoogleFonts.inter(color: FinavigColors.textPrimary, fontSize: 11),
         ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         behavior: SnackBarBehavior.floating,
       ),
       chipTheme: ChipThemeData(
@@ -682,12 +690,20 @@ class FinavigTheme {
         selectedColor: FinavigColors.accentBright.withOpacity(0.18),
         checkmarkColor: scheme.secondary,
         labelStyle: _withEmojiFallback(
-            GoogleFonts.inter(fontSize: 10, color: FinavigColors.textPrimary, fontWeight: FontWeight.w500)),
-        secondaryLabelStyle: _withEmojiFallback(GoogleFonts.inter(
-            fontSize: 10, color: scheme.secondary, fontWeight: FontWeight.w600)),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
+          GoogleFonts.inter(
+            fontSize: 10,
+            color: FinavigColors.textPrimary,
+            fontWeight: FontWeight.w500,
+          ),
         ),
+        secondaryLabelStyle: _withEmojiFallback(
+          GoogleFonts.inter(
+            fontSize: 10,
+            color: scheme.secondary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         side: BorderSide(color: Colors.white.withOpacity(0.06)),
       ),
       progressIndicatorTheme: const ProgressIndicatorThemeData(
@@ -753,27 +769,31 @@ class FinavigTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        titleTextStyle: _withEmojiFallback(GoogleFonts.inter(
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-          color: FinavigColors.textPrimaryLight,
-          letterSpacing: -0.3,
-        )),
+        titleTextStyle: _withEmojiFallback(
+          GoogleFonts.inter(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: FinavigColors.textPrimaryLight,
+            letterSpacing: -0.3,
+          ),
+        ),
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: Colors.white.withOpacity(0.92),
         indicatorColor: FinavigColors.accentSoft,
         labelTextStyle: WidgetStatePropertyAll(
-          _withEmojiFallback(GoogleFonts.inter(
-            fontSize: 10,
-            fontWeight: FontWeight.w500,
-          )),
+          _withEmojiFallback(
+            GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w500),
+          ),
         ),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return IconThemeData(color: scheme.primary, size: 20);
           }
-          return const IconThemeData(color: FinavigColors.textMutedLight, size: 20);
+          return const IconThemeData(
+            color: FinavigColors.textMutedLight,
+            size: 20,
+          );
         }),
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         elevation: 0,
@@ -788,42 +808,48 @@ class FinavigTheme {
       ),
       listTileTheme: ListTileThemeData(
         iconColor: FinavigColors.textSecondaryLight,
-        titleTextStyle: _withEmojiFallback(GoogleFonts.inter(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: FinavigColors.textPrimaryLight,
-        )),
-        subtitleTextStyle: _withEmojiFallback(GoogleFonts.inter(
-          fontSize: 11,
-          fontWeight: FontWeight.w400,
-          color: FinavigColors.textSecondaryLight,
-        )),
+        titleTextStyle: _withEmojiFallback(
+          GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: FinavigColors.textPrimaryLight,
+          ),
+        ),
+        subtitleTextStyle: _withEmojiFallback(
+          GoogleFonts.inter(
+            fontSize: 11,
+            fontWeight: FontWeight.w400,
+            color: FinavigColors.textSecondaryLight,
+          ),
+        ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: FinavigColors.cloud,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: BorderSide(
-            color: Colors.black.withOpacity(0.08),
-          ),
+          borderSide: BorderSide(color: Colors.black.withOpacity(0.08)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: BorderSide(
-            color: Colors.black.withOpacity(0.08),
-          ),
+          borderSide: BorderSide(color: Colors.black.withOpacity(0.08)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: BorderSide(
-            color: Colors.black.withOpacity(0.16),
-          ),
+          borderSide: BorderSide(color: Colors.black.withOpacity(0.16)),
         ),
-        labelStyle: const TextStyle(color: FinavigColors.textSecondaryLight, fontSize: 11),
-        hintStyle: const TextStyle(color: FinavigColors.textMutedLight, fontSize: 11),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        labelStyle: const TextStyle(
+          color: FinavigColors.textSecondaryLight,
+          fontSize: 11,
+        ),
+        hintStyle: const TextStyle(
+          color: FinavigColors.textMutedLight,
+          fontSize: 11,
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 12,
+        ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
@@ -835,10 +861,9 @@ class FinavigTheme {
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(22)),
           ),
-          textStyle: _withEmojiFallback(GoogleFonts.inter(
-            fontWeight: FontWeight.w700,
-            fontSize: 12,
-          )),
+          textStyle: _withEmojiFallback(
+            GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 12),
+          ),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -851,19 +876,17 @@ class FinavigTheme {
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(22)),
           ),
-          textStyle: _withEmojiFallback(GoogleFonts.inter(
-            fontWeight: FontWeight.w700,
-            fontSize: 12,
-          )),
+          textStyle: _withEmojiFallback(
+            GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 12),
+          ),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: scheme.primary,
-          textStyle: _withEmojiFallback(GoogleFonts.inter(
-            fontWeight: FontWeight.w600,
-            fontSize: 11,
-          )),
+          textStyle: _withEmojiFallback(
+            GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 11),
+          ),
         ),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
@@ -879,7 +902,9 @@ class FinavigTheme {
         backgroundColor: Colors.white,
         modalBackgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(FinavigRadius.sheet)),
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(FinavigRadius.sheet),
+          ),
         ),
         dragHandleColor: Color(0xFFE2E5EC),
         dragHandleSize: Size(40, 4),
@@ -890,45 +915,51 @@ class FinavigTheme {
           borderRadius: BorderRadius.circular(FinavigRadius.dialog),
         ),
         elevation: 0,
-        titleTextStyle: _withEmojiFallback(GoogleFonts.inter(
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-          color: FinavigColors.textPrimaryLight,
-        )),
-        contentTextStyle: _withEmojiFallback(GoogleFonts.inter(
-          fontSize: 11,
-          height: 1.4,
-          color: FinavigColors.textSecondaryLight,
-        )),
+        titleTextStyle: _withEmojiFallback(
+          GoogleFonts.inter(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: FinavigColors.textPrimaryLight,
+          ),
+        ),
+        contentTextStyle: _withEmojiFallback(
+          GoogleFonts.inter(
+            fontSize: 11,
+            height: 1.4,
+            color: FinavigColors.textSecondaryLight,
+          ),
+        ),
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: FinavigColors.ink,
-        contentTextStyle:
-            _withEmojiFallback(GoogleFonts.inter(
-          color: Colors.white,
-          fontSize: 11,
-        )),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+        contentTextStyle: _withEmojiFallback(
+          GoogleFonts.inter(color: Colors.white, fontSize: 11),
         ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         behavior: SnackBarBehavior.floating,
       ),
       chipTheme: ChipThemeData(
         backgroundColor: FinavigColors.cloud,
         selectedColor: FinavigColors.accentSoft,
         checkmarkColor: scheme.primary,
-        labelStyle: _withEmojiFallback(GoogleFonts.inter(
-            fontSize: 10, color: FinavigColors.textPrimaryLight, fontWeight: FontWeight.w500)),
-        secondaryLabelStyle: _withEmojiFallback(GoogleFonts.inter(
-            fontSize: 10, color: scheme.primary, fontWeight: FontWeight.w600)),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
+        labelStyle: _withEmojiFallback(
+          GoogleFonts.inter(
+            fontSize: 10,
+            color: FinavigColors.textPrimaryLight,
+            fontWeight: FontWeight.w500,
+          ),
         ),
+        secondaryLabelStyle: _withEmojiFallback(
+          GoogleFonts.inter(
+            fontSize: 10,
+            color: scheme.primary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         side: const BorderSide(color: Color(0xFFEAECF2)),
       ),
-      progressIndicatorTheme: ProgressIndicatorThemeData(
-        color: scheme.primary,
-      ),
+      progressIndicatorTheme: ProgressIndicatorThemeData(color: scheme.primary),
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
           TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),

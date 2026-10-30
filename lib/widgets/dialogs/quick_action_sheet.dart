@@ -48,10 +48,7 @@ Future<void> showQuickActionSheet(BuildContext context) {
 class _QuickActionSheet extends StatelessWidget {
   const _QuickActionSheet();
 
-  Future<void> _handleTap(
-    BuildContext context,
-    _QuickAction action,
-  ) async {
+  Future<void> _handleTap(BuildContext context, _QuickAction action) async {
     final navigator = Navigator.of(context, rootNavigator: true);
 
     switch (action) {
@@ -145,7 +142,8 @@ class _QuickActionSheet extends StatelessWidget {
                   IconButton(
                     tooltip: 'Close',
                     icon: const Icon(Icons.close_rounded, size: 20),
-                    onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+                    onPressed: () =>
+                        Navigator.of(context, rootNavigator: true).pop(),
                   ),
                 ],
               ),
@@ -164,11 +162,7 @@ class _QuickActionSheet extends StatelessWidget {
   }
 }
 
-enum _QuickAction {
-  scanDocument,
-  logMoney,
-  voiceAiLog,
-}
+enum _QuickAction { scanDocument, logMoney, voiceAiLog }
 
 extension _QuickActionX on _QuickAction {
   IconData get icon {
@@ -280,7 +274,10 @@ class _QuickActionTile extends StatelessWidget {
               Icon(
                 Icons.chevron_right_rounded,
                 size: 20,
-                color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline),
+                color: FinavigColors.adaptiveIcon(
+                  context,
+                  theme.colorScheme.outline,
+                ),
               ),
             ],
           ),

@@ -7,11 +7,7 @@ class UrgencyDialog extends StatelessWidget {
   final ExpiryItem item;
   final VoidCallback? onAction;
 
-  const UrgencyDialog({
-    super.key,
-    required this.item,
-    this.onAction,
-  });
+  const UrgencyDialog({super.key, required this.item, this.onAction});
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +20,9 @@ class UrgencyDialog extends StatelessWidget {
       title: Row(
         children: [
           Icon(
-            isCritical ? Icons.warning_amber_rounded : Icons.notifications_active_rounded,
+            isCritical
+                ? Icons.warning_amber_rounded
+                : Icons.notifications_active_rounded,
             color: isCritical ? Colors.red : theme.colorScheme.primary,
             size: 28,
           ),
@@ -55,18 +53,22 @@ class UrgencyDialog extends StatelessWidget {
               color: theme.colorScheme.outline,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: isCritical ? Colors.red.shade50 : theme.colorScheme.primaryContainer,
+              color: isCritical
+                  ? Colors.red.shade50
+                  : theme.colorScheme.primaryContainer,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  isCritical ? Icons.warning_amber_rounded : Icons.calendar_today_rounded,
+                  isCritical
+                      ? Icons.warning_amber_rounded
+                      : Icons.calendar_today_rounded,
                   color: isCritical ? Colors.red : theme.colorScheme.primary,
                   size: 16,
                 ),
@@ -77,13 +79,15 @@ class UrgencyDialog extends StatelessWidget {
                       : '${item.daysRemaining} days until expiry',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w500,
-                    color: isCritical ? Colors.red : theme.colorScheme.onPrimaryContainer,
+                    color: isCritical
+                        ? Colors.red
+                        : theme.colorScheme.onPrimaryContainer,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Text(
             // Same fallback as the detail screen's renewal card.
             item.effectiveRenewalWarning,
@@ -93,7 +97,7 @@ class UrgencyDialog extends StatelessWidget {
             ),
           ),
           if (item.renewalSteps != null && item.renewalSteps!.isNotEmpty) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Text(
               'Renewal steps:',
               style: theme.textTheme.bodySmall?.copyWith(
@@ -141,13 +145,13 @@ class UrgencyDialog extends StatelessWidget {
             onAction?.call();
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: isCritical ? Colors.red : theme.colorScheme.primary,
+            backgroundColor: isCritical
+                ? Colors.red
+                : theme.colorScheme.primary,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
           ),
-          child: Text(
-            isCritical ? 'Take action now' : 'Start renewal',
-          ),
+          child: Text(isCritical ? 'Take action now' : 'Start renewal'),
         ),
       ],
     );

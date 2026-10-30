@@ -80,16 +80,16 @@ class DocumentScannerService extends ChangeNotifier {
           .eq('owner_id', userId)
           .order('expires_at', ascending: true);
 
-      final remote = response
-          .map(_documentRowToExpiryItem)
-          .toList();
+      final remote = response.map(_documentRowToExpiryItem).toList();
       await _mergeRemote(remote);
       await _saveLocal();
     } catch (e, st) {
       // Supabase unreachable — stay on the local cache (already loaded above);
       // queued mutations will be flushed on a later refresh.
-      dev.log('Document fetch failed, staying on local cache: $e\n$st',
-          name: 'DocumentScannerService');
+      dev.log(
+        'Document fetch failed, staying on local cache: $e\n$st',
+        name: 'DocumentScannerService',
+      );
     }
     notifyListeners();
   }
@@ -147,8 +147,9 @@ class DocumentScannerService extends ChangeNotifier {
     // Prefer the real (DB-backed) personal collection; the service falls
     // back to the pseudo personal row when Supabase is unreachable, which is
     // fine — there are no DB writes in that mode anyway.
-    final personal =
-        DocumentCollectionService.instance.collections.where((c) => c.isPersonal).firstOrNull;
+    final personal = DocumentCollectionService.instance.collections
+        .where((c) => c.isPersonal)
+        .firstOrNull;
     final resolved =
         personal?.id ?? DocumentCollectionService.instance.activeCollectionId;
     if (resolved != collectionId) {
@@ -173,8 +174,11 @@ class DocumentScannerService extends ChangeNotifier {
 
   /// Documents in the active collection.
   List<ExpiryItem> get activeItems => _cache
-      .where((item) =>
-          item.collectionId == DocumentCollectionService.instance.activeCollectionId)
+      .where(
+        (item) =>
+            item.collectionId ==
+            DocumentCollectionService.instance.activeCollectionId,
+      )
       .toList();
 
   /// Re-fetch from Supabase (pull-to-refresh, after sign-in, etc.).
@@ -187,7 +191,9 @@ class DocumentScannerService extends ChangeNotifier {
   void clearCache() {
     _cache.clear();
     _initialized = false;
-    SharedPreferences.getInstance().then((prefs) => prefs.remove(_localDocsKey));
+    SharedPreferences.getInstance().then(
+      (prefs) => prefs.remove(_localDocsKey),
+    );
     notifyListeners();
   }
 
@@ -222,9 +228,11 @@ class DocumentScannerService extends ChangeNotifier {
     await _ensureInitialized();
     return List.unmodifiable(
       _cache
-          .where((item) =>
-              item.collectionId == collectionId &&
-              (item.isActive || (includeExpired && item.isExpired)))
+          .where(
+            (item) =>
+                item.collectionId == collectionId &&
+                (item.isActive || (includeExpired && item.isExpired)),
+          )
           .toList(),
     );
   }
@@ -277,7 +285,10 @@ class DocumentScannerService extends ChangeNotifier {
       collectionId: DocumentCollectionService.instance.activeCollectionId,
       updatedAt: DateTime.now().toUtc(),
     );
-    final row = _expiryItemToDocumentRow(scoped, ownerId: AuthService.instance.currentUserId);
+    final row = _expiryItemToDocumentRow(
+      scoped,
+      ownerId: AuthService.instance.currentUserId,
+    );
 
     // Offline-first: cache immediately, then try the server; on failure the
     // mutation is queued and replayed on the next sync.
@@ -291,8 +302,10 @@ class DocumentScannerService extends ChangeNotifier {
         await _saveOutbox();
       } catch (e) {
         // stays queued
-        dev.log('insert failed for "${scoped.displayName}" (${scoped.id}): $e',
-            name: 'DocumentScannerService');
+        dev.log(
+          'insert failed for "${scoped.displayName}" (${scoped.id}): $e',
+          name: 'DocumentScannerService',
+        );
       }
     }
 
@@ -311,8 +324,7 @@ class DocumentScannerService extends ChangeNotifier {
     // Always re-stamp the mutation time: the caller passes a copy of a cached
     // item, and LWW conflict resolution (DocSync.merge) compares updatedAt —
     // an unstamped update would tie with (or lose to) its own remote copy.
-    final stamped =
-        updatedItem.copyWith(updatedAt: DateTime.now().toUtc());
+    final stamped = updatedItem.copyWith(updatedAt: DateTime.now().toUtc());
     final row = _expiryItemToDocumentRow(stamped);
 
     _replaceInCache(stamped);
@@ -325,8 +337,10 @@ class DocumentScannerService extends ChangeNotifier {
         await _saveOutbox();
       } catch (e) {
         // stays queued
-        dev.log('update failed for ${stamped.id}: $e',
-            name: 'DocumentScannerService');
+        dev.log(
+          'update failed for ${stamped.id}: $e',
+          name: 'DocumentScannerService',
+        );
       }
     }
     _replaceInCache(stamped);
@@ -388,14 +402,19 @@ class DocumentScannerService extends ChangeNotifier {
     if (index == -1) return;
 
     final oldItem = _cache[index];
-    final bool renewInPlace = newExpiryDate != null || fee != null || renewedBy != null || note != null;
+    final bool renewInPlace =
+        newExpiryDate != null ||
+        fee != null ||
+        renewedBy != null ||
+        note != null;
 
     if (!renewInPlace) {
       if (client != null) {
         try {
           await client
               .from('documents')
-              .update({'status': 'renewed'}).eq('id', id);
+              .update({'status': 'renewed'})
+              .eq('id', id);
         } catch (_) {
           _enqueueDelete(id);
         }
@@ -407,7 +426,8 @@ class DocumentScannerService extends ChangeNotifier {
       return;
     }
 
-    final targetExpiry = newExpiryDate ??
+    final targetExpiry =
+        newExpiryDate ??
         DateTime(
           oldItem.expiresAt.year + 1,
           oldItem.expiresAt.month,
@@ -441,20 +461,27 @@ class DocumentScannerService extends ChangeNotifier {
 
     if (client != null) {
       try {
-        await client.from('documents').update({
-          'expires_at': _dateOnly(targetExpiry),
-          'status': 'active',
-          // Renewal audit trail now syncs cross-device (see
-          // migrate_documents_local_only_fields.sql).
-          'renewal_history':
-              jsonEncode(history.map((r) => r.toJson()).toList()),
-        }).eq('id', id);
+        await client
+            .from('documents')
+            .update({
+              'expires_at': _dateOnly(targetExpiry),
+              'status': 'active',
+              // Renewal audit trail now syncs cross-device (see
+              // migrate_documents_local_only_fields.sql).
+              'renewal_history': jsonEncode(
+                history.map((r) => r.toJson()).toList(),
+              ),
+            })
+            .eq('id', id);
         _outbox.removeWhere((op) => op.id == id);
         await _saveOutbox();
       } catch (_) {}
     }
 
-    await NotificationService.instance.cancelReminders(id, customReminderDays: updated.customReminderDays);
+    await NotificationService.instance.cancelReminders(
+      id,
+      customReminderDays: updated.customReminderDays,
+    );
     if (!updated.isExpired) {
       await NotificationService.instance.scheduleEscalationLadder(
         id,
@@ -480,7 +507,10 @@ class DocumentScannerService extends ChangeNotifier {
       final client = _client;
       if (client != null) {
         try {
-          await client.from('documents').update({'assigned_to': assignee}).eq('id', id);
+          await client
+              .from('documents')
+              .update({'assigned_to': assignee})
+              .eq('id', id);
           _outbox.removeWhere((op) => op.id == id);
           await _saveOutbox();
         } catch (_) {
@@ -511,9 +541,10 @@ class DocumentScannerService extends ChangeNotifier {
       _enqueueUpsert(updated);
       if (client != null) {
         try {
-          await client.from('documents').update({
-            'expires_at': _dateOnly(newExpiryDate),
-          }).eq('id', id);
+          await client
+              .from('documents')
+              .update({'expires_at': _dateOnly(newExpiryDate)})
+              .eq('id', id);
           _outbox.removeWhere((op) => op.id == id);
           await _saveOutbox();
         } catch (_) {
@@ -536,7 +567,10 @@ class DocumentScannerService extends ChangeNotifier {
   }
 
   /// Assign a document to a folder (or unassign by passing null).
-  Future<void> assignDocumentToFolder(String documentId, String? folderId) async {
+  Future<void> assignDocumentToFolder(
+    String documentId,
+    String? folderId,
+  ) async {
     await _ensureInitialized();
     final idx = _cache.indexWhere((i) => i.id == documentId);
     if (idx == -1) return;
@@ -640,7 +674,10 @@ class DocumentScannerService extends ChangeNotifier {
     //    resurrect the row on the next push.
     final remoteIds = remoteById.keys.toSet();
     final staleLocal = _cache
-        .where((i) => !remoteIds.contains(i.id) && !_outbox.any((op) => op.id == i.id))
+        .where(
+          (i) =>
+              !remoteIds.contains(i.id) && !_outbox.any((op) => op.id == i.id),
+        )
         .map((i) => i.id)
         .toList();
     _cache.removeWhere((i) => staleLocal.contains(i.id));
@@ -677,8 +714,10 @@ class DocumentScannerService extends ChangeNotifier {
         }
       } catch (e) {
         remaining.add(op); // network/permission failure — retry later
-        dev.log('Outbox replay failed for ${op.id}: $e',
-            name: 'DocumentScannerService');
+        dev.log(
+          'Outbox replay failed for ${op.id}: $e',
+          name: 'DocumentScannerService',
+        );
       }
     }
     _outbox
@@ -707,7 +746,9 @@ class DocumentScannerService extends ChangeNotifier {
         final list = jsonDecode(jsonStr) as List<dynamic>;
         _outbox
           ..clear()
-          ..addAll(list.map((e) => PendingOp.fromJson(e as Map<String, dynamic>)));
+          ..addAll(
+            list.map((e) => PendingOp.fromJson(e as Map<String, dynamic>)),
+          );
       }
     } catch (_) {
       _outbox.clear();
@@ -762,8 +803,9 @@ class DocumentScannerService extends ChangeNotifier {
   /// NOTE: reads the legacy `company_id` key as a fallback until every
   /// project has run the migration to `collection_id`.
   static ExpiryItem _documentRowToExpiryItem(Map<String, dynamic> row) {
-    final docType =
-        DocumentTypeRegistry.instance.byKey(row['doc_type'] as String?);
+    final docType = DocumentTypeRegistry.instance.byKey(
+      row['doc_type'] as String?,
+    );
 
     final expiresAt =
         DateTime.tryParse(row['expires_at'] as String? ?? '') ?? DateTime.now();
@@ -771,7 +813,8 @@ class DocumentScannerService extends ChangeNotifier {
     final assignedTo = row['assigned_to'] as String?;
     final renewalFee = (row['renewal_fee'] as num?)?.toDouble();
     final notes = row['notes'] as String?;
-    final collectionId = (row['collection_id'] ?? row['company_id']) as String? ??
+    final collectionId =
+        (row['collection_id'] ?? row['company_id']) as String? ??
         DocumentCollection.personalId;
 
     final days = expiresAt.difference(DateTime.now()).inDays;
@@ -852,7 +895,8 @@ class DocumentScannerService extends ChangeNotifier {
       'renewal_fee': item.renewalFee,
       'notes': (item.description != null && item.description!.trim().isNotEmpty)
           ? item.description!.trim()
-          : item.renewalWarning,      'file_name': item.fileName,
+          : item.renewalWarning,
+      'file_name': item.fileName,
       'file_path': item.filePath,
       'file_size': item.fileSize,
       // Cross-device fields (added by migrate_documents_local_only_fields.sql):
@@ -862,15 +906,15 @@ class DocumentScannerService extends ChangeNotifier {
       'location': item.location,
       'renewal_history':
           item.renewalHistory == null || item.renewalHistory!.isEmpty
-              ? null
-              : jsonEncode(item.renewalHistory!.map((r) => r.toJson()).toList()),
+          ? null
+          : jsonEncode(item.renewalHistory!.map((r) => r.toJson()).toList()),
       // Cross-device field: user-chosen reminder offsets override the
       // default escalation ladder. Empty list → NULL so the column stays
       // clean instead of storing '{}'.
       'custom_reminder_days':
           item.customReminderDays == null || item.customReminderDays!.isEmpty
-              ? null
-              : item.customReminderDays,
+          ? null
+          : item.customReminderDays,
       'folder_id': item.folderId,
     };
     if (ownerId != null) row['owner_id'] = ownerId;

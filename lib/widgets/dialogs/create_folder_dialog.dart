@@ -52,9 +52,12 @@ class _FolderFormDialogState extends State<_FolderFormDialog> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.existingFolder?.name ?? '');
+    _nameController = TextEditingController(
+      text: widget.existingFolder?.name ?? '',
+    );
     _selectedIconKey = widget.existingFolder?.iconKey ?? 'folder';
-    _selectedColor = widget.existingFolder?.colorValue ?? DocumentFolder.presetColors.first;
+    _selectedColor =
+        widget.existingFolder?.colorValue ?? DocumentFolder.presetColors.first;
   }
 
   @override
@@ -91,9 +94,9 @@ class _FolderFormDialogState extends State<_FolderFormDialog> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save folder: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to save folder: $e')));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -173,7 +176,9 @@ class _FolderFormDialogState extends State<_FolderFormDialog> {
                   decoration: InputDecoration(
                     labelText: 'Folder name',
                     hintText: 'e.g. Family Passports, Vehicles, Leases',
-                    prefixIcon: const Icon(Icons.drive_file_rename_outline_rounded),
+                    prefixIcon: const Icon(
+                      Icons.drive_file_rename_outline_rounded,
+                    ),
                     filled: true,
                     fillColor: isDark
                         ? FinavigColors.slate
@@ -201,7 +206,8 @@ class _FolderFormDialogState extends State<_FolderFormDialog> {
                   validator: (v) {
                     final trimmed = v?.trim() ?? '';
                     if (trimmed.isEmpty) return 'Please enter a folder name';
-                    if (trimmed.length > 30) return 'Name cannot exceed 30 characters';
+                    if (trimmed.length > 30)
+                      return 'Name cannot exceed 30 characters';
                     return null;
                   },
                 ),
@@ -218,7 +224,7 @@ class _FolderFormDialogState extends State<_FolderFormDialog> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 14),
                 Wrap(
                   spacing: 10,
                   runSpacing: 10,
@@ -235,13 +241,15 @@ class _FolderFormDialogState extends State<_FolderFormDialog> {
                           color: isSelected
                               ? Color(_selectedColor).withValues(alpha: 0.18)
                               : (isDark
-                                  ? FinavigColors.slate
-                                  : FinavigColors.cloud),
+                                    ? FinavigColors.slate
+                                    : FinavigColors.cloud),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
                             color: isSelected
                                 ? Color(_selectedColor)
-                                : theme.colorScheme.outline.withValues(alpha: 0.15),
+                                : theme.colorScheme.outline.withValues(
+                                    alpha: 0.15,
+                                  ),
                             width: isSelected ? 2 : 1,
                           ),
                         ),
@@ -250,7 +258,9 @@ class _FolderFormDialogState extends State<_FolderFormDialog> {
                           size: 22,
                           color: isSelected
                               ? Color(_selectedColor)
-                              : theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                              : theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.7,
+                                ),
                         ),
                       ),
                     );
@@ -269,7 +279,7 @@ class _FolderFormDialogState extends State<_FolderFormDialog> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 14),
                 Wrap(
                   spacing: 10,
                   runSpacing: 10,
@@ -286,13 +296,17 @@ class _FolderFormDialogState extends State<_FolderFormDialog> {
                           color: Color(colorHex),
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: isSelected ? Colors.white : Colors.transparent,
+                            color: isSelected
+                                ? Colors.white
+                                : Colors.transparent,
                             width: 2.5,
                           ),
                           boxShadow: isSelected
                               ? [
                                   BoxShadow(
-                                    color: Color(colorHex).withValues(alpha: 0.45),
+                                    color: Color(
+                                      colorHex,
+                                    ).withValues(alpha: 0.45),
                                     blurRadius: 8,
                                     spreadRadius: 1,
                                   ),
@@ -300,7 +314,11 @@ class _FolderFormDialogState extends State<_FolderFormDialog> {
                               : null,
                         ),
                         child: isSelected
-                            ? const Icon(Icons.check, size: 16, color: Colors.white)
+                            ? const Icon(
+                                Icons.check,
+                                size: 16,
+                                color: Colors.white,
+                              )
                             : null,
                       ),
                     );
@@ -313,7 +331,9 @@ class _FolderFormDialogState extends State<_FolderFormDialog> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
-                      onPressed: _saving ? null : () => Navigator.of(context).pop(),
+                      onPressed: _saving
+                          ? null
+                          : () => Navigator.of(context).pop(),
                       child: Text(
                         'Cancel',
                         style: TextStyle(

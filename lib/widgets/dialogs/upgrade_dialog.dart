@@ -243,8 +243,7 @@ class _TierRequestSheetState extends State<_TierRequestSheet> {
                         ),
                         selected: _duration == d,
                         onSelected: (_) => setState(() => _duration = d),
-                        selectedColor:
-                            FinavigColors.navyPrimary.withAlpha(46),
+                        selectedColor: FinavigColors.navyPrimary.withAlpha(46),
                         labelStyle: TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 12,
@@ -303,8 +302,18 @@ class _TierRequestSheetState extends State<_TierRequestSheet> {
 
   static String _formatDate(DateTime date) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     final local = date.toLocal();
     return '${local.day} ${months[local.month - 1]} ${local.year}';
@@ -344,9 +353,7 @@ class _PlanTile extends StatelessWidget {
         isBusiness
             ? Icons.business_center_rounded
             : Icons.workspace_premium_rounded,
-        color: isBusiness
-            ? (isDark ? FinavigColors.ink : Colors.white)
-            : gold,
+        color: isBusiness ? (isDark ? FinavigColors.ink : Colors.white) : gold,
         size: 20,
       ),
     );
@@ -402,7 +409,9 @@ class _PlanTile extends StatelessWidget {
               color: selected
                   ? FinavigColors.accent
                   : FinavigColors.adaptiveIcon(
-                      context, theme.colorScheme.outlineVariant),
+                      context,
+                      theme.colorScheme.outlineVariant,
+                    ),
               size: 20,
             ),
           ],
@@ -464,7 +473,9 @@ class _PriceSummaryCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           // Top benefits only — the full list stays on the paywall dialog.
-          ...info.benefits.take(3).map(
+          ...info.benefits
+              .take(3)
+              .map(
                 (b) => Padding(
                   padding: const EdgeInsets.only(bottom: 4),
                   child: Row(
@@ -568,7 +579,10 @@ class UpgradeDialog extends StatelessWidget {
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [FinavigColors.navyPrimary, FinavigColors.navyPrimaryDark],
+                  colors: [
+                    FinavigColors.navyPrimary,
+                    FinavigColors.navyPrimaryDark,
+                  ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -618,7 +632,7 @@ class UpgradeDialog extends StatelessWidget {
                       fontSize: 12,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 14),
                   ...info.benefits.map(
                     (b) => Padding(
                       padding: const EdgeInsets.only(bottom: 4),

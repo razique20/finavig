@@ -2,6 +2,57 @@ import 'package:flutter/material.dart';
 
 import '../../theme/app_theme.dart';
 
+/// Compact, canvas-colored icon button shared by the main tab headers.
+class CanvasIconButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+  final bool enabled;
+
+  const CanvasIconButton({
+    super.key,
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+    this.enabled = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final fade = FinavigTransition.of(context);
+    final radius = BorderRadius.circular(14);
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: radius,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          borderRadius: radius,
+          onTap: enabled ? onTap : null,
+          child: SizedBox(
+            width: 38,
+            height: 38,
+            child: Icon(
+              icon,
+              size: 18,
+              color: enabled
+                  ? fade.color(
+                      FinavigColors.textPrimaryLight,
+                      FinavigColors.textPrimary,
+                    )
+                  : fade.color(
+                      FinavigColors.textMutedLight,
+                      FinavigColors.textMuted,
+                    ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Frosted glass icon button used inside the navy hero headers (dark-mode
 /// toggle on Home, Ask Finavig AI / search on Documents, sign out on
 /// Profile) — one implementation shared by all tabs.
@@ -20,7 +71,7 @@ class HeroIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final button = Material(
-      color: Colors.white.withOpacity(0.12),
+      color: Colors.white.withValues(alpha: 0.12),
       borderRadius: BorderRadius.circular(13),
       child: InkWell(
         borderRadius: BorderRadius.circular(13),
@@ -72,9 +123,9 @@ class HeroActionPill extends StatelessWidget {
       fg = FinavigColors.ink;
       side = BorderSide.none;
     } else {
-      bg = Colors.white.withOpacity(0.10);
+      bg = Colors.white.withValues(alpha: 0.10);
       fg = Colors.white;
-      side = BorderSide(color: Colors.white.withOpacity(0.22));
+      side = BorderSide(color: Colors.white.withValues(alpha: 0.22));
     }
 
     final pill = Material(

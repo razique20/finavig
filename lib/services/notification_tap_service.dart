@@ -38,9 +38,8 @@ class NotificationTapService {
 
     // Cold start: the app was launched by tapping a notification.
     try {
-      final launchDetails =
-          await FlutterLocalNotificationsPlugin()
-              .getNotificationAppLaunchDetails();
+      final launchDetails = await FlutterLocalNotificationsPlugin()
+          .getNotificationAppLaunchDetails();
       if (launchDetails?.didNotificationLaunchApp ?? false) {
         _handlePayload(launchDetails!.notificationResponse?.payload);
       }

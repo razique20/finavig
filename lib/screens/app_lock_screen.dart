@@ -124,7 +124,10 @@ class _AppLockScreenState extends State<AppLockScreen> {
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 24,
+                ),
                 child: _showForgotConfirm
                     ? _forgotCard()
                     : _lockCard(lockedOut),
@@ -164,8 +167,8 @@ class _AppLockScreenState extends State<AppLockScreen> {
             title: lockedOut ? 'Locked for now' : 'Enter your passcode',
             subtitle: lockedOut
                 ? 'Too many incorrect attempts. Try again in '
-                    '${AppLockService.instance.lockoutSecondsRemaining}s, or use '
-                    '"Forgot passcode" to sign in with your password.'
+                      '${AppLockService.instance.lockoutSecondsRemaining}s, or use '
+                      '"Forgot passcode" to sign in with your password.'
                 : 'Unlock Finavig to see your documents and money data.',
             enabled: !lockedOut,
             onSubmit: _verify,
@@ -234,7 +237,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Text(
               'App Lock is only a quick re-entry shortcut — your account '
               'password is the real credential. Continuing signs you out so '
@@ -297,10 +300,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
 class PasscodeSetupScreen extends StatefulWidget {
   final String title;
 
-  const PasscodeSetupScreen({
-    super.key,
-    this.title = 'Create a passcode',
-  });
+  const PasscodeSetupScreen({super.key, this.title = 'Create a passcode'});
 
   /// Pushes the setup flow and resolves to the chosen passcode, or null when
   /// the user backs out.
@@ -309,9 +309,7 @@ class PasscodeSetupScreen extends StatefulWidget {
     String title = 'Create a passcode',
   }) {
     return Navigator.of(context, rootNavigator: true).push<String?>(
-      MaterialPageRoute(
-        builder: (_) => PasscodeSetupScreen(title: title),
-      ),
+      MaterialPageRoute(builder: (_) => PasscodeSetupScreen(title: title)),
     );
   }
 
@@ -366,7 +364,7 @@ class _PasscodeSetupScreenState extends State<PasscodeSetupScreen> {
                 subtitle: _confirming
                     ? 'Enter the same 6 digits once more.'
                     : 'Choose a 6-digit passcode to unlock Finavig quickly. '
-                        'Your account password always works as a backup.',
+                          'Your account password always works as a backup.',
                 onSubmit: _handle,
               ),
             ),
@@ -460,7 +458,7 @@ class _VerifyPasscodeScreenState extends State<_VerifyPasscodeScreen> {
                 title: widget.title,
                 subtitle: lockedOut
                     ? 'Too many incorrect attempts. Try again in '
-                        '${AppLockService.instance.lockoutSecondsRemaining}s.'
+                          '${AppLockService.instance.lockoutSecondsRemaining}s.'
                     : widget.subtitle,
                 onSubmit: _handle,
               ),

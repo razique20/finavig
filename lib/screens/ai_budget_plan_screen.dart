@@ -484,7 +484,7 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 14),
               for (final entry in _plan!.actions.asMap().entries)
                 _buildActionTile(theme, isDark, entry.value, entry.key),
               const SizedBox(height: 28),
@@ -616,7 +616,7 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
             ),
           ),
           if (_usedQuota >= _quotaLimit) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -687,7 +687,7 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             TextField(
               controller: _amountController,
               keyboardType: const TextInputType.numberWithOptions(
@@ -703,7 +703,7 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
               ),
               onChanged: (_) => setState(() {}),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 14),
             const SizedBox(height: 14),
             AiDataSourceSelector(
               selectedSources: _selectedSources,
@@ -713,7 +713,7 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
               onChanged: (sources) =>
                   setState(() => _selectedSources = sources),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 14),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               dense: true,
@@ -879,7 +879,7 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
                 ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Row(
             children: [
               Icon(
@@ -904,7 +904,7 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
           Text(
             plan.summary,
             style: const TextStyle(
@@ -913,7 +913,7 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
               fontSize: 13,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Wrap(
             spacing: 8,
             runSpacing: 6,
@@ -935,7 +935,7 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
             ],
           ),
           if (_quotaExceeded) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Row(
               children: [
                 const Icon(
@@ -1177,7 +1177,7 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 14),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(6),
                   child: LinearProgressIndicator(
@@ -1274,7 +1274,7 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
           ],
 
           // ── Per-category sliders ──
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
           for (final e in categories)
             _capSlider(theme, e, (e.value * 1.5).ceilToDouble()),
 

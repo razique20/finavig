@@ -86,14 +86,16 @@ class GccAuthorityCatalog {
   };
 
   /// Country specific overrides for suggested issuing authority.
-  static final Map<DocumentType, Map<GccCountry, String>> _countryAuthorityDefaults = {
+  static final Map<DocumentType, Map<GccCountry, String>>
+  _countryAuthorityDefaults = {
     DocumentType.tradeLicence: {
       GccCountry.uae: 'Dubai DET / DED (Department of Economy & Tourism)',
       GccCountry.ksa: 'MOCI / Ministry of Commerce (Commercial Registration)',
       GccCountry.kuwait: 'MOCI (Ministry of Commerce & Industry)',
       GccCountry.qatar: 'MOCI (Ministry of Commerce and Industry)',
       GccCountry.bahrain: 'MOIC / Sijilat (Ministry of Industry & Commerce)',
-      GccCountry.oman: 'MOCIIP / Invest Easy (Ministry of Commerce, Industry & Investment)',
+      GccCountry.oman:
+          'MOCIIP / Invest Easy (Ministry of Commerce, Industry & Investment)',
     },
     DocumentType.ejari: {
       GccCountry.uae: 'RERA / Dubai Land Department (Ejari)',
@@ -107,7 +109,8 @@ class GccAuthorityCatalog {
       GccCountry.uae: 'GDRFA Dubai / ICP UAE',
       GccCountry.ksa: 'General Directorate of Passports (Jawazat)',
       GccCountry.kuwait: 'Ministry of Interior (Residency & Passports)',
-      GccCountry.qatar: 'Ministry of Interior (General Directorate of Passports / QID)',
+      GccCountry.qatar:
+          'Ministry of Interior (General Directorate of Passports / QID)',
       GccCountry.bahrain: 'iGA (Information & eGovernment Authority - CPR)',
       GccCountry.oman: 'Royal Oman Police (ROP - Passports & Civil Status)',
     },
@@ -130,7 +133,8 @@ class GccAuthorityCatalog {
     DocumentType.drivingLicence: {
       GccCountry.uae: 'RTA Dubai / Transport Authorities',
       GccCountry.ksa: 'General Directorate of Traffic (Muroor)',
-      GccCountry.kuwait: 'Ministry of Interior (General Directorate of Traffic)',
+      GccCountry.kuwait:
+          'Ministry of Interior (General Directorate of Traffic)',
       GccCountry.qatar: 'General Directorate of Traffic (MOI Qatar)',
       GccCountry.bahrain: 'General Directorate of Traffic (MOI Bahrain)',
       GccCountry.oman: 'Royal Oman Police (Traffic Department)',
@@ -138,7 +142,8 @@ class GccAuthorityCatalog {
     DocumentType.vehicleRegistration: {
       GccCountry.uae: 'RTA Dubai / Traffic Departments',
       GccCountry.ksa: 'General Directorate of Traffic (Muroor / Istimara)',
-      GccCountry.kuwait: 'Ministry of Interior (General Directorate of Traffic)',
+      GccCountry.kuwait:
+          'Ministry of Interior (General Directorate of Traffic)',
       GccCountry.qatar: 'General Directorate of Traffic (MOI Qatar)',
       GccCountry.bahrain: 'General Directorate of Traffic (MOI Bahrain)',
       GccCountry.oman: 'Royal Oman Police (Traffic Department)',
@@ -152,7 +157,10 @@ class GccAuthorityCatalog {
 
     // For UAE, defer to UAE authority catalog for emirate specificity if needed
     if (country == GccCountry.uae) {
-      final uaeResult = UaeAuthorityCatalog.instance.suggestedAuthorityFor(meta, UaeEmirate.dubai);
+      final uaeResult = UaeAuthorityCatalog.instance.suggestedAuthorityFor(
+        meta,
+        UaeEmirate.dubai,
+      );
       if (uaeResult != null) return uaeResult;
     }
 
@@ -193,7 +201,10 @@ class GccAuthorityCatalog {
   }
 
   /// Get localized picker alias for a document type.
-  static String? getLocalizedPickerAlias(DocumentType type, GccCountry country) {
+  static String? getLocalizedPickerAlias(
+    DocumentType type,
+    GccCountry country,
+  ) {
     if (country == GccCountry.uae) {
       return type.pickerAlias;
     }

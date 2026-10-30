@@ -305,10 +305,7 @@ class DocumentsFilterResult {
   final DocFilter status;
   final DocumentTypeMeta? type;
 
-  const DocumentsFilterResult({
-    required this.status,
-    this.type,
-  });
+  const DocumentsFilterResult({required this.status, this.type});
 }
 
 Widget _sheetStatusChip(
@@ -582,11 +579,14 @@ Future<DocumentsFilterResult?> showDocumentsFilterSheet({
                           in DocumentTypeRegistry.instance.typesForPicker)
                         Builder(
                           builder: (ctx) {
-                            final localizedName =
-                                t.localizedDisplayName(activeCountry);
-                            final alias = t.builtinEnum
-                                ?.localizedPickerAlias(activeCountry);
-                            final subtitle = (alias != null &&
+                            final localizedName = t.localizedDisplayName(
+                              activeCountry,
+                            );
+                            final alias = t.builtinEnum?.localizedPickerAlias(
+                              activeCountry,
+                            );
+                            final subtitle =
+                                (alias != null &&
                                     alias != localizedName &&
                                     alias != t.displayName)
                                 ? alias
@@ -598,14 +598,14 @@ Future<DocumentsFilterResult?> showDocumentsFilterSheet({
                               subtitle: subtitle != null
                                   ? Text(
                                       subtitle,
-                                      style:
-                                          theme.textTheme.bodySmall?.copyWith(
-                                        fontSize: 11,
-                                        color: fade.color(
-                                          FinavigColors.textMutedLight,
-                                          FinavigColors.textMuted,
-                                        ),
-                                      ),
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            fontSize: 11,
+                                            color: fade.color(
+                                              FinavigColors.textMutedLight,
+                                              FinavigColors.textMuted,
+                                            ),
+                                          ),
                                     )
                                   : null,
                               trailing: selectedType?.key == t.key
@@ -635,10 +635,14 @@ Future<DocumentsFilterResult?> showDocumentsFilterSheet({
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          fade.color(FinavigColors.ink, Colors.white),
-                      foregroundColor:
-                          fade.color(Colors.white, FinavigColors.ink),
+                      backgroundColor: fade.color(
+                        FinavigColors.ink,
+                        Colors.white,
+                      ),
+                      foregroundColor: fade.color(
+                        Colors.white,
+                        FinavigColors.ink,
+                      ),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),

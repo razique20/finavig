@@ -280,20 +280,22 @@ const List<GuideChapter> guideChapters = [
     subtitle:
         'Keep personal documents separate from your business or client entities.',
     blocks: [
-      GuideWorkspacesShowcaseBlock(items: [
-        GuideWorkspaceItem(
-          icon: Icons.person_rounded,
-          title: 'Personal Workspace',
-          subtitle: 'Your family passports, visas & driving licenses',
-          country: 'UAE (AED)',
-        ),
-        GuideWorkspaceItem(
-          icon: Icons.business_rounded,
-          title: 'Al Mansoori Trading LLC',
-          subtitle: 'Trade license, Ejari, corporate tax & PRO docs',
-          country: 'UAE (AED)',
-        ),
-      ]),
+      GuideWorkspacesShowcaseBlock(
+        items: [
+          GuideWorkspaceItem(
+            icon: Icons.person_rounded,
+            title: 'Personal Workspace',
+            subtitle: 'Your family passports, visas & driving licenses',
+            country: 'UAE (AED)',
+          ),
+          GuideWorkspaceItem(
+            icon: Icons.business_rounded,
+            title: 'Al Mansoori Trading LLC',
+            subtitle: 'Trade license, Ejari, corporate tax & PRO docs',
+            country: 'UAE (AED)',
+          ),
+        ],
+      ),
       GuideBulletBlock(
         title: 'One-Tap Switching',
         description:

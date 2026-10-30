@@ -75,8 +75,8 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
     return ListenableBuilder(
       listenable: AppLockService.instance,
       builder: (context, _) {
-        final signedIn = widget.isSignedIn?.call() ??
-            AuthService.instance.isSignedIn;
+        final signedIn =
+            widget.isSignedIn?.call() ?? AuthService.instance.isSignedIn;
         final locked = AppLockService.instance.shouldBlock && signedIn;
         return Stack(
           fit: StackFit.expand,

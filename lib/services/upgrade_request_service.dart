@@ -64,9 +64,8 @@ class UpgradeRequestService {
     PlanDuration duration = PlanDuration.oneMonth,
   }) {
     final currentTier = EntitlementService.instance.tier;
-    final target = requestedTier ??
-        feature?.requiredTier ??
-        SubscriptionTier.plus;
+    final target =
+        requestedTier ?? feature?.requiredTier ?? SubscriptionTier.plus;
     final featureLabel = feature?.label ?? 'General tier upgrade';
     final currentEndsAt = EntitlementService.instance.planEndsAt;
 
@@ -106,10 +105,7 @@ class UpgradeRequestService {
     final uri = Uri(
       scheme: 'mailto',
       path: supportEmail,
-      queryParameters: {
-        'subject': subject,
-        'body': body.toString(),
-      },
+      queryParameters: {'subject': subject, 'body': body.toString()},
     );
 
     return (mailto: uri, body: body.toString(), subject: subject);
@@ -176,8 +172,18 @@ class UpgradeRequestService {
 
   static String _formatDate(DateTime date) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     final local = date.toLocal();
     return '${local.day} ${months[local.month - 1]} ${local.year}';

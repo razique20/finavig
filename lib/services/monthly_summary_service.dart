@@ -60,8 +60,15 @@ class MonthlySummaryData {
   final double? expenseChangePct;
 
   /// Top spending moves vs last month, biggest absolute increase first.
-  final List<({FinanceCategory category, double current, double previous, double changePct})>
-      topMoves;
+  final List<
+    ({
+      FinanceCategory category,
+      double current,
+      double previous,
+      double changePct,
+    })
+  >
+  topMoves;
 
   /// Biggest single expense transaction of the month (if any).
   final FinanceTransaction? topTransaction;
@@ -71,8 +78,10 @@ class MonthlySummaryData {
 
   /// Envelope projections: months remaining to hit target at the current
   /// monthly contribution pace.
-  final List<({SavingsEnvelope envelope, int? monthsRemaining, double projectedSaving})>
-      envelopeProjections;
+  final List<
+    ({SavingsEnvelope envelope, int? monthsRemaining, double projectedSaving})
+  >
+  envelopeProjections;
 
   /// True when there is no meaningful data to summarize.
   final bool isEmpty;
@@ -111,8 +120,18 @@ class MonthlySummaryAggregator {
     final ref = now ?? DateTime.now();
     final prevMonth = DateTime(ref.year, ref.month - 1);
     const monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June', 'July',
-      'August', 'September', 'October', 'November', 'December',
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     final monthName = monthNames[ref.month - 1];
 
@@ -138,23 +157,34 @@ class MonthlySummaryAggregator {
           expense += t.amount;
           if (topTx == null || t.amount > topTx.amount) topTx = t;
         }
-        thisByCategory[t.category] = (thisByCategory[t.category] ?? 0) + t.amount;
+        thisByCategory[t.category] =
+            (thisByCategory[t.category] ?? 0) + t.amount;
       } else if (d.year == prevMonth.year && d.month == prevMonth.month) {
         if (t.kind == FinanceKind.income) {
           prevIncome += t.amount;
         } else {
           prevExpense += t.amount;
         }
-        prevByCategory[t.category] = (prevByCategory[t.category] ?? 0) + t.amount;
+        prevByCategory[t.category] =
+            (prevByCategory[t.category] ?? 0) + t.amount;
       }
     }
 
     final hasPrev = prevIncome > 0 || prevExpense > 0;
-    final expenseChangePct =
-        (hasPrev && prevExpense > 0) ? ((expense - prevExpense) / prevExpense) * 100 : null;
+    final expenseChangePct = (hasPrev && prevExpense > 0)
+        ? ((expense - prevExpense) / prevExpense) * 100
+        : null;
 
     // ── Top category moves (increase or decrease, biggest |delta| first) ──
-    final moves = <({FinanceCategory category, double current, double previous, double changePct})>[];
+    final moves =
+        <
+          ({
+            FinanceCategory category,
+            double current,
+            double previous,
+            double changePct,
+          })
+        >[];
     for (final entry in thisByCategory.entries) {
       final prev = prevByCategory[entry.key] ?? 0;
       final delta = entry.value - prev;
@@ -168,7 +198,9 @@ class MonthlySummaryAggregator {
         changePct: pct ?? 100.0,
       ));
     }
-    moves.sort((a, b) => (b.current - b.previous).compareTo(a.current - a.previous));
+    moves.sort(
+      (a, b) => (b.current - b.previous).compareTo(a.current - a.previous),
+    );
     final topMoves = moves.take(3).toList();
 
     // ── Budget overruns ──
@@ -180,11 +212,21 @@ class MonthlySummaryAggregator {
         overruns.add((budget: b, spent: spent));
       }
     }
-    overruns.sort((a, b) => (b.spent - b.budget.monthlyLimit)
-        .compareTo(a.spent - a.budget.monthlyLimit));
+    overruns.sort(
+      (a, b) => (b.spent - b.budget.monthlyLimit).compareTo(
+        a.spent - a.budget.monthlyLimit,
+      ),
+    );
 
     // ── Envelope projections ──
-    final projections = <({SavingsEnvelope envelope, int? monthsRemaining, double projectedSaving})>[];
+    final projections =
+        <
+          ({
+            SavingsEnvelope envelope,
+            int? monthsRemaining,
+            double projectedSaving,
+          })
+        >[];
     for (final e in envelopes) {
       if (collectionId != null && e.collectionId != collectionId) continue;
       if (e.monthlyContribution <= 0 || e.isComplete) continue;
@@ -231,8 +273,18 @@ class MonthlySummaryNarrator {
   const MonthlySummaryNarrator();
 
   static const _monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June', 'July',
-    'August', 'September', 'October', 'November', 'December',
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
 
   /// Name of the month preceding [data]'s month, e.g. "July" for August.
@@ -254,16 +306,17 @@ class MonthlySummaryNarrator {
       final driver = data.topMoves.isNotEmpty
           ? ' driven by ${data.topMoves.first.category.displayName}'
           : '';
-      insights.add(MonthlySummaryInsight(
-        kind: data.expenseChangePct! >= 0
-            ? MonthlyInsightKind.spendingMove
-            : MonthlyInsightKind.positive,
-        sentence:
-            'In ${data.monthName}, spending $dir by $pct% vs $prevName$driver.',
-        amountLabel: '${_cur()} ${_fmt(data.expense)}',
-        detailLabel:
-            '$pct% vs ${_fmt(data.prevExpense!)} in $prevName',
-      ));
+      insights.add(
+        MonthlySummaryInsight(
+          kind: data.expenseChangePct! >= 0
+              ? MonthlyInsightKind.spendingMove
+              : MonthlyInsightKind.positive,
+          sentence:
+              'In ${data.monthName}, spending $dir by $pct% vs $prevName$driver.',
+          amountLabel: '${_cur()} ${_fmt(data.expense)}',
+          detailLabel: '$pct% vs ${_fmt(data.prevExpense!)} in $prevName',
+        ),
+      );
     }
 
     // 2. Top category moves.
@@ -272,27 +325,35 @@ class MonthlySummaryNarrator {
       final pct = move.changePct.toStringAsFixed(0);
       final sentence = move.previous > 0
           ? '${move.category.displayName} ${up ? 'up' : 'down'} $pct% vs $prevName '
-              '(${_cur()} ${_fmt(move.current)} vs ${_fmt(move.previous)}).'
+                '(${_cur()} ${_fmt(move.current)} vs ${_fmt(move.previous)}).'
           : '${move.category.displayName} is a new spend area this month '
-              '(${_cur()} ${_fmt(move.current)}).';
-      insights.add(MonthlySummaryInsight(
-        kind: up ? MonthlyInsightKind.spendingMove : MonthlyInsightKind.positive,
-        sentence: sentence,
-        amountLabel: '${_cur()} ${_fmt(move.current)}',
-        detailLabel: move.previous > 0 ? '$pct% vs ${_fmt(move.previous)}' : 'New',
-      ));
+                '(${_cur()} ${_fmt(move.current)}).';
+      insights.add(
+        MonthlySummaryInsight(
+          kind: up
+              ? MonthlyInsightKind.spendingMove
+              : MonthlyInsightKind.positive,
+          sentence: sentence,
+          amountLabel: '${_cur()} ${_fmt(move.current)}',
+          detailLabel: move.previous > 0
+              ? '$pct% vs ${_fmt(move.previous)}'
+              : 'New',
+        ),
+      );
     }
 
     // 3. Biggest single expense.
     final topTx = data.topTransaction;
     if (topTx != null && topTx.amount >= 100) {
-      insights.add(MonthlySummaryInsight(
-        kind: MonthlyInsightKind.spendingMove,
-        sentence:
-            'Largest single expense: "${topTx.title}" at ${_cur()} ${_fmt(topTx.amount)}.',
-        amountLabel: '${_cur()} ${_fmt(topTx.amount)}',
-        detailLabel: topTx.category.displayName,
-      ));
+      insights.add(
+        MonthlySummaryInsight(
+          kind: MonthlyInsightKind.spendingMove,
+          sentence:
+              'Largest single expense: "${topTx.title}" at ${_cur()} ${_fmt(topTx.amount)}.',
+          amountLabel: '${_cur()} ${_fmt(topTx.amount)}',
+          detailLabel: topTx.category.displayName,
+        ),
+      );
     }
 
     // 4. Budget overruns.
@@ -300,14 +361,17 @@ class MonthlySummaryNarrator {
       final overPct =
           (((o.spent - o.budget.monthlyLimit) / o.budget.monthlyLimit) * 100)
               .toStringAsFixed(0);
-      insights.add(MonthlySummaryInsight(
-        kind: MonthlyInsightKind.budgetAlert,
-        sentence:
-            '${o.budget.category.displayName} budget exceeded by $overPct% '
-            '(${_cur()} ${_fmt(o.spent)} of ${_fmt(o.budget.monthlyLimit)}).',
-        amountLabel: '${_cur()} ${_fmt(o.spent - o.budget.monthlyLimit)} over',
-        detailLabel: 'Limit ${_fmt(o.budget.monthlyLimit)}',
-      ));
+      insights.add(
+        MonthlySummaryInsight(
+          kind: MonthlyInsightKind.budgetAlert,
+          sentence:
+              '${o.budget.category.displayName} budget exceeded by $overPct% '
+              '(${_cur()} ${_fmt(o.spent)} of ${_fmt(o.budget.monthlyLimit)}).',
+          amountLabel:
+              '${_cur()} ${_fmt(o.spent - o.budget.monthlyLimit)} over',
+          detailLabel: 'Limit ${_fmt(o.budget.monthlyLimit)}',
+        ),
+      );
     }
 
     // 5. Savings-envelope projection — the "on track to save" line.
@@ -316,29 +380,35 @@ class MonthlySummaryNarrator {
       final eta = months == null
           ? ''
           : months == 1
-              ? ' next month'
-              : ' in $months months';
-      insights.add(MonthlySummaryInsight(
-        kind: MonthlyInsightKind.savings,
-        sentence:
-            'You are on track to save ${_cur()} ${_fmt(p.projectedSaving)} in your '
-            '${p.envelope.name} envelope$eta at the current pace.',
-        amountLabel: '${_cur()} ${_fmt(p.projectedSaving)}',
-        detailLabel: months == null ? null : '$months months left',
-      ));
+          ? ' next month'
+          : ' in $months months';
+      insights.add(
+        MonthlySummaryInsight(
+          kind: MonthlyInsightKind.savings,
+          sentence:
+              'You are on track to save ${_cur()} ${_fmt(p.projectedSaving)} in your '
+              '${p.envelope.name} envelope$eta at the current pace.',
+          amountLabel: '${_cur()} ${_fmt(p.projectedSaving)}',
+          detailLabel: months == null ? null : '$months months left',
+        ),
+      );
     }
 
     // 6. Net position close.
-    insights.add(MonthlySummaryInsight(
-      kind: data.net >= 0 ? MonthlyInsightKind.positive : MonthlyInsightKind.budgetAlert,
-      sentence: data.net >= 0
-          ? 'Net position is positive: income ${_cur()} ${_fmt(data.income)} '
-              'against ${_cur()} ${_fmt(data.expense)} spent.'
-          : 'You spent ${_cur()} ${_fmt(data.expense - data.income)} more than you '
-              'earned this month.',
-      amountLabel: '${_cur()} ${_fmt(data.net)}',
-      detailLabel: 'Net',
-    ));
+    insights.add(
+      MonthlySummaryInsight(
+        kind: data.net >= 0
+            ? MonthlyInsightKind.positive
+            : MonthlyInsightKind.budgetAlert,
+        sentence: data.net >= 0
+            ? 'Net position is positive: income ${_cur()} ${_fmt(data.income)} '
+                  'against ${_cur()} ${_fmt(data.expense)} spent.'
+            : 'You spent ${_cur()} ${_fmt(data.expense - data.income)} more than you '
+                  'earned this month.',
+        amountLabel: '${_cur()} ${_fmt(data.net)}',
+        detailLabel: 'Net',
+      ),
+    );
 
     return insights;
   }
@@ -354,9 +424,12 @@ class MonthlySummaryNarrator {
     if (data.expenseChangePct != null) {
       final pct = data.expenseChangePct!.abs().toStringAsFixed(0);
       buf.write(
-          'spending ${data.expenseChangePct! >= 0 ? 'rose' : 'dropped'} by $pct%');
+        'spending ${data.expenseChangePct! >= 0 ? 'rose' : 'dropped'} by $pct%',
+      );
       if (data.topMoves.isNotEmpty) {
-        buf.write(' due to ${data.topMoves.first.category.displayName.toLowerCase()}');
+        buf.write(
+          ' due to ${data.topMoves.first.category.displayName.toLowerCase()}',
+        );
       }
       buf.write('. ');
     } else {
@@ -385,7 +458,8 @@ class MonthlySummaryNarrator {
     final sb = StringBuffer()
       ..writeln('You are a concise CFO assistant for a GCC small business.')
       ..writeln(
-          'Write a 2-3 sentence executive summary for ${data.monthName} ${data.year}.')
+        'Write a 2-3 sentence executive summary for ${data.monthName} ${data.year}.',
+      )
       ..writeln('Use only the facts below; do not invent numbers.')
       ..writeln('Mention the biggest spending driver and savings progress.')
       ..writeln('Currency is local GCC currency.')
@@ -397,28 +471,38 @@ class MonthlySummaryNarrator {
     if (data.prevExpense != null) {
       sb.writeln('- $prevName expenses: ${_cur()} ${_fmt(data.prevExpense!)}');
       if (data.expenseChangePct != null) {
-        sb.writeln('- Expense change vs $prevName: '
-            '${data.expenseChangePct!.toStringAsFixed(1)}%');
+        sb.writeln(
+          '- Expense change vs $prevName: '
+          '${data.expenseChangePct!.toStringAsFixed(1)}%',
+        );
       }
     }
     for (final move in data.topMoves) {
-      sb.writeln('- ${move.category.displayName}: ${_cur()} ${_fmt(move.current)} '
-          '(prev ${_fmt(move.previous)})');
+      sb.writeln(
+        '- ${move.category.displayName}: ${_cur()} ${_fmt(move.current)} '
+        '(prev ${_fmt(move.previous)})',
+      );
     }
     final topTx = data.topTransaction;
     if (topTx != null) {
-      sb.writeln('- Largest expense: "${topTx.title}" ${_cur()} ${_fmt(topTx.amount)}');
+      sb.writeln(
+        '- Largest expense: "${topTx.title}" ${_cur()} ${_fmt(topTx.amount)}',
+      );
     }
     for (final o in data.budgetOverruns) {
-      sb.writeln('- Budget overrun: ${o.budget.category.displayName} '
-          'spent ${_fmt(o.spent)} of ${_fmt(o.budget.monthlyLimit)}');
+      sb.writeln(
+        '- Budget overrun: ${o.budget.category.displayName} '
+        'spent ${_fmt(o.spent)} of ${_fmt(o.budget.monthlyLimit)}',
+      );
     }
     for (final p in data.envelopeProjections) {
-      sb.writeln('- Savings envelope "${p.envelope.name}": saved '
-          '${_fmt(p.envelope.savedAmount)} of ${_fmt(p.envelope.targetAmount)}, '
-          'contributing ${_fmt(p.envelope.monthlyContribution)}/month, '
-          'projected ${_fmt(p.projectedSaving)}'
-          '${p.monthsRemaining != null ? ' in ${p.monthsRemaining} months' : ''}');
+      sb.writeln(
+        '- Savings envelope "${p.envelope.name}": saved '
+        '${_fmt(p.envelope.savedAmount)} of ${_fmt(p.envelope.targetAmount)}, '
+        'contributing ${_fmt(p.envelope.monthlyContribution)}/month, '
+        'projected ${_fmt(p.projectedSaving)}'
+        '${p.monthsRemaining != null ? ' in ${p.monthsRemaining} months' : ''}',
+      );
     }
     return sb.toString();
   }
@@ -429,7 +513,9 @@ class MonthlySummaryNarrator {
     final rounded = (v * 100).round() / 100;
     if (rounded == rounded.roundToDouble()) {
       return rounded.round().toString().replaceAllMapped(
-          RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+        RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+        (m) => '${m[1]},',
+      );
     }
     return rounded.toStringAsFixed(2);
   }
@@ -476,8 +562,8 @@ class MonthlySummaryService {
   /// kicks off an optional async LLM polish. Returns the template narrative
   /// immediately; callers listening to [narrativeStream] receive the polished
   /// version when it arrives.
-  final StreamController<({String narrative, bool usedLlm})> _narrativeController =
-      StreamController.broadcast();
+  final StreamController<({String narrative, bool usedLlm})>
+  _narrativeController = StreamController.broadcast();
 
   Stream<({String narrative, bool usedLlm})> get narrativeStream =>
       _narrativeController.stream;
@@ -526,7 +612,9 @@ class MonthlySummaryService {
       _memoryCache[key] = text.trim();
       _narrativeController.add((narrative: text.trim(), usedLlm: true));
     } catch (e) {
-      debugPrint('MonthlySummary LLM polish failed (template fallback kept): $e');
+      debugPrint(
+        'MonthlySummary LLM polish failed (template fallback kept): $e',
+      );
     }
   }
 

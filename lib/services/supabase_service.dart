@@ -80,7 +80,8 @@ class SupabaseService {
     } catch (_) {
       // Some SDK versions do not expose a public auth.url getter.
     }
-    return AppCredentials.supabaseUrl.isNotEmpty && !AppCredentials.supabaseUrl.contains('YOUR-PROJECT')
+    return AppCredentials.supabaseUrl.isNotEmpty &&
+            !AppCredentials.supabaseUrl.contains('YOUR-PROJECT')
         ? AppCredentials.supabaseUrl
         : null;
   }

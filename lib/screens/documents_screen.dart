@@ -281,7 +281,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                                 folder,
                                 filtered.length,
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 16),
                               _buildDocumentList(theme, filtered),
                             ] else ...[
                               // ── Root View ──
@@ -293,10 +293,11 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                                   filter: _filter,
                                   folderName: _currentFolder?.name,
                                   country: DocumentCollectionService
-                                      .instance.activeCountry,
+                                      .instance
+                                      .activeCountry,
                                   onClear: _clearFilters,
                                 ),
-                                const SizedBox(height: 10),
+                                const SizedBox(height: 14),
                               ] else ...[
                                 const SizedBox(height: 6),
                               ],
@@ -311,7 +312,9 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                                 _buildDocumentList(theme, filtered),
                               ] else ...[
                                 // Normal root state: Folders first (if plan supports or folders exist)
-                                if (EntitlementService.instance.allowsCustomFolders ||
+                                if (EntitlementService
+                                        .instance
+                                        .allowsCustomFolders ||
                                     activeFolders.isNotEmpty) ...[
                                   _buildFoldersSection(theme, activeFolders),
                                   const SizedBox(height: 18),
@@ -319,10 +322,12 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                                 Builder(
                                   builder: (ctx) {
                                     final unassigned = _items
-                                        .where((i) =>
-                                            (i.folderId == null ||
-                                                i.folderId!.isEmpty) &&
-                                            (i.isActive || i.isExpired))
+                                        .where(
+                                          (i) =>
+                                              (i.folderId == null ||
+                                                  i.folderId!.isEmpty) &&
+                                              (i.isActive || i.isExpired),
+                                        )
                                         .toList();
 
                                     return Column(
@@ -489,10 +494,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     }
   }
 
-  Widget _buildFoldersSection(
-    ThemeData theme,
-    List<DocumentFolder> folders,
-  ) {
+  Widget _buildFoldersSection(ThemeData theme, List<DocumentFolder> folders) {
     final fade = FinavigTransition.of(context);
     final dividerColor = fade.color(
       FinavigColors.fog,
@@ -556,8 +558,9 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
           FolderListTile(
             folder: folder,
             items: _items
-                .where((i) =>
-                    i.folderId == folder.id && (i.isActive || i.isExpired))
+                .where(
+                  (i) => i.folderId == folder.id && (i.isActive || i.isExpired),
+                )
                 .toList(),
             onTap: () => setState(() => _openFolder = folder),
             onAction: () => _showFolderOptions(context, folder),
@@ -627,7 +630,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const SizedBox(height: 10),
+              const SizedBox(height: 14),
               Container(
                 width: 36,
                 height: 4,
@@ -675,7 +678,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                   _confirmDeleteFolder(context, folder);
                 },
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
             ],
           ),
         );
@@ -730,7 +733,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                   size: 48,
                   color: theme.colorScheme.outline.withValues(alpha: 0.35),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 Text(
                   'This folder is empty',
                   style: theme.textTheme.titleMedium?.copyWith(

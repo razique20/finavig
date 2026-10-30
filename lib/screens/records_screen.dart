@@ -97,7 +97,8 @@ class _RecordsScreenState extends State<RecordsScreen> {
     // Group by month, newest first.
     final groups = <String, List<FinanceTransaction>>{};
     for (final t in sorted) {
-      final key = '${t.occurredAt.year}-${t.occurredAt.month.toString().padLeft(2, '0')}';
+      final key =
+          '${t.occurredAt.year}-${t.occurredAt.month.toString().padLeft(2, '0')}';
       groups.putIfAbsent(key, () => []).add(t);
     }
 
@@ -139,7 +140,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
                           scene: EmptyStateScene.wallet,
                         ),
                       ],
-                    )  // static two-child list: nothing to lazify
+                    ) // static two-child list: nothing to lazify
                   : ListView.builder(
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 180),
@@ -180,7 +181,8 @@ class _RecordsScreenState extends State<RecordsScreen> {
                                       ),
                                     TransactionTile(
                                       transaction: monthTx[i],
-                                      onTap: () => _showEditTransactionSheet(monthTx[i]),
+                                      onTap: () =>
+                                          _showEditTransactionSheet(monthTx[i]),
                                     ),
                                   ],
                                 ],
@@ -195,12 +197,25 @@ class _RecordsScreenState extends State<RecordsScreen> {
   }
 
   static String _monthName(int month) => const [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December',
-      ][month - 1];
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ][month - 1];
 
-  Widget _hintCard(ThemeData theme, String text,
-      {EmptyStateScene scene = EmptyStateScene.wallet}) {
+  Widget _hintCard(
+    ThemeData theme,
+    String text, {
+    EmptyStateScene scene = EmptyStateScene.wallet,
+  }) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -211,7 +226,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
       child: Column(
         children: [
           EmptyStateIllustration(scene: scene, size: 88),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
           Text(
             text,
             style: theme.textTheme.bodySmall?.copyWith(

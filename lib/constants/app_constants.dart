@@ -22,12 +22,14 @@ class AppConstants {
 
   // ── Active Supabase Configuration ─────────────────────────────────────────
   /// Active Supabase project URL based on [isStaging].
-  static const String supabaseUrl =
-      isStaging ? stagingSupabaseUrl : prodSupabaseUrl;
+  static const String supabaseUrl = isStaging
+      ? stagingSupabaseUrl
+      : prodSupabaseUrl;
 
   /// Active Supabase anon (publishable) key based on [isStaging].
-  static const String supabaseAnonKey =
-      isStaging ? stagingSupabaseAnonKey : prodSupabaseAnonKey;
+  static const String supabaseAnonKey = isStaging
+      ? stagingSupabaseAnonKey
+      : prodSupabaseAnonKey;
 }
 
 /// Top-level constant aliases for convenience.

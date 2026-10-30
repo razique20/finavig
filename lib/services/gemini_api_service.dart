@@ -69,22 +69,17 @@ class GeminiApiService {
     final body = jsonEncode({
       'contents': [
         {
-          'parts': [{'text': prompt}]
-        }
+          'parts': [
+            {'text': prompt},
+          ],
+        },
       ],
-      'generationConfig': {
-        'temperature': 0.4,
-        'maxOutputTokens': 300,
-      },
+      'generationConfig': {'temperature': 0.4, 'maxOutputTokens': 300},
     });
 
     try {
       final response = await http
-          .post(
-            uri,
-            headers: {'Content-Type': 'application/json'},
-            body: body,
-          )
+          .post(uri, headers: {'Content-Type': 'application/json'}, body: body)
           .timeout(const Duration(seconds: 30));
 
       if (response.statusCode != 200) {

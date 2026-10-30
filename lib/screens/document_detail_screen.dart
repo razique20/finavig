@@ -90,7 +90,11 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.error_outline, size: 64, color: FinavigColors.adaptiveIcon(context, Colors.grey)),
+              Icon(
+                Icons.error_outline,
+                size: 64,
+                color: FinavigColors.adaptiveIcon(context, Colors.grey),
+              ),
               const SizedBox(height: 16),
               Text('Document not found', style: theme.textTheme.titleLarge),
               const SizedBox(height: 8),
@@ -147,14 +151,21 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                 ),
                 PopupMenuButton<String>(
                   icon: const Icon(Icons.more_vert),
-                  onSelected: (value) => _handleMenuAction(context, value, item),
+                  onSelected: (value) =>
+                      _handleMenuAction(context, value, item),
                   itemBuilder: (context) => [
-                    const PopupMenuItem(value: 'edit', child: Text('Edit document')),
+                    const PopupMenuItem(
+                      value: 'edit',
+                      child: Text('Edit document'),
+                    ),
                     const PopupMenuItem(
                       value: 'renew',
                       child: Text('Mark as renewed'),
                     ),
-                    const PopupMenuItem(value: 'share', child: Text('Share details')),
+                    const PopupMenuItem(
+                      value: 'share',
+                      child: Text('Share details'),
+                    ),
                     const PopupMenuItem(
                       value: 'export',
                       child: Text('Export report'),
@@ -280,7 +291,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
           ),
           const SizedBox(height: 16),
           const Divider(height: 1),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Row(
             children: [
               const Icon(Icons.calendar_today_rounded, size: 16),
@@ -359,8 +370,12 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
 
     if (!exists) {
       final isDark = theme.brightness == Brightness.dark;
-      final warnColor = isDark ? FinavigColors.warning : FinavigColors.warningDark;
-      final warnBg = isDark ? FinavigColors.warningBg : FinavigColors.warningBgLight;
+      final warnColor = isDark
+          ? FinavigColors.warning
+          : FinavigColors.warningDark;
+      final warnBg = isDark
+          ? FinavigColors.warningBg
+          : FinavigColors.warningBgLight;
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(16),
@@ -413,14 +428,12 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 14),
             Text(
               'This document attachment was stored locally on a different device. You can re-upload the file on this device to view it here in the future.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: warnColor,
-              ),
+              style: theme.textTheme.bodySmall?.copyWith(color: warnColor),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Row(
               children: [
                 ElevatedButton.icon(
@@ -833,9 +846,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       );
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             friendlyError(e, context: 'Could not re-upload the file'),
@@ -949,7 +960,9 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
             _InfoTile(
               icon: Icons.location_on_outlined,
               label: 'Location',
-              value: item.location ?? DocumentCollectionService.instance.activeCountry.name,
+              value:
+                  item.location ??
+                  DocumentCollectionService.instance.activeCountry.name,
             ),
             _InfoTile(
               icon: Icons.attach_money,
@@ -1002,8 +1015,6 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     return UrgencyTimelineCard.withIndicator(daysRemaining: item.daysRemaining);
   }
 
-
-
   Widget _buildRenewalProcess(ThemeData theme, ExpiryItem item) {
     final steps =
         item.renewalSteps ??
@@ -1024,7 +1035,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         ...steps.asMap().entries.map((entry) {
           final index = entry.key;
           final step = entry.value;
@@ -1161,7 +1172,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
               color: theme.colorScheme.outline,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Align(
             alignment: Alignment.centerLeft,
             child: OutlinedButton.icon(
@@ -1213,7 +1224,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                   'Select notification alert days before expiry date:',
                   style: TextStyle(fontSize: 13),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -1234,7 +1245,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                     );
                   }).toList(),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 Text(
                   selected.isEmpty
                       ? 'No days selected (resets to standard 90/60/30/7 ladder).'
@@ -1314,13 +1325,15 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         if (history.isEmpty)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+              color: theme.colorScheme.surfaceContainerHighest.withValues(
+                alpha: 0.4,
+              ),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
@@ -1330,7 +1343,10 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
               children: [
                 Icon(
                   Icons.history_rounded,
-                  color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline),
+                  color: FinavigColors.adaptiveIcon(
+                    context,
+                    theme.colorScheme.outline,
+                  ),
                   size: 22,
                 ),
                 const SizedBox(width: 12),
@@ -1451,7 +1467,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
             ),
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 14),
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
@@ -1588,7 +1604,9 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(friendlyError(e, context: 'Could not save the renewal')),
+          content: Text(
+            friendlyError(e, context: 'Could not save the renewal'),
+          ),
           backgroundColor: FinavigColors.danger,
         ),
       );
@@ -1664,10 +1682,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
   /// Shares the attached document file via the platform share sheet
   /// (WhatsApp, Mail, etc.). Falls back to a helpful message when the file
   /// lives on another device or can't be reached.
-  Future<void> _shareDocumentFile(
-    BuildContext context,
-    ExpiryItem item,
-  ) async {
+  Future<void> _shareDocumentFile(BuildContext context, ExpiryItem item) async {
     final path = item.filePath;
     if (path == null || path.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1678,8 +1693,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       return;
     }
 
-    final isNetwork =
-        path.startsWith('http://') || path.startsWith('https://');
+    final isNetwork = path.startsWith('http://') || path.startsWith('https://');
     final file = isNetwork ? null : File(path);
     if (!isNetwork && (file == null || !file.existsSync())) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1737,7 +1751,9 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
               Navigator.pop(ctx);
               _removeDocument(context, item);
             },
-            style: ElevatedButton.styleFrom(backgroundColor: FinavigColors.danger),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: FinavigColors.danger,
+            ),
             child: const Text('Remove'),
           ),
         ],
@@ -1770,7 +1786,14 @@ class _InfoTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, size: 15, color: FinavigColors.adaptiveIcon(context, theme.colorScheme.outline)),
+          Icon(
+            icon,
+            size: 15,
+            color: FinavigColors.adaptiveIcon(
+              context,
+              theme.colorScheme.outline,
+            ),
+          ),
           const SizedBox(width: 6),
           Expanded(
             child: Column(

@@ -5,10 +5,7 @@ import '../../services/app_version_service.dart';
 class AppVersionDialog extends StatelessWidget {
   final VersionCheckResult result;
 
-  const AppVersionDialog({
-    super.key,
-    required this.result,
-  });
+  const AppVersionDialog({super.key, required this.result});
 
   /// Displays the version update dialog if an update is available or required.
   /// Returns `true` if the user chose to update or skipped an optional update,
@@ -34,7 +31,8 @@ class AppVersionDialog extends StatelessWidget {
   }
 
   Future<void> _launchUpdateUrl(BuildContext context) async {
-    final urlStr = (result.downloadUrl != null && result.downloadUrl!.isNotEmpty)
+    final urlStr =
+        (result.downloadUrl != null && result.downloadUrl!.isNotEmpty)
         ? result.downloadUrl!
         : AppVersionService.dummyStoreUrl;
     final uri = Uri.parse(urlStr);
@@ -51,9 +49,9 @@ class AppVersionDialog extends StatelessWidget {
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Opening store link: $urlStr')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Opening store link: $urlStr')));
       }
     }
   }
@@ -73,12 +71,18 @@ class AppVersionDialog extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: isForce ? Colors.red.shade100 : theme.colorScheme.primaryContainer,
+              color: isForce
+                  ? Colors.red.shade100
+                  : theme.colorScheme.primaryContainer,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
-              isForce ? Icons.system_update_rounded : Icons.rocket_launch_rounded,
-              color: isForce ? Colors.red.shade900 : theme.colorScheme.onPrimaryContainer,
+              isForce
+                  ? Icons.system_update_rounded
+                  : Icons.rocket_launch_rounded,
+              color: isForce
+                  ? Colors.red.shade900
+                  : theme.colorScheme.onPrimaryContainer,
               size: 28,
             ),
           ),
@@ -114,7 +118,8 @@ class AppVersionDialog extends StatelessWidget {
                 : 'A new version of Finavig (v${result.latestVersion}) is available. Your installed version is v${result.currentVersion}.',
             style: theme.textTheme.bodyMedium,
           ),
-          if (result.releaseNotes != null && result.releaseNotes!.isNotEmpty) ...[
+          if (result.releaseNotes != null &&
+              result.releaseNotes!.isNotEmpty) ...[
             const SizedBox(height: 14),
             Container(
               padding: const EdgeInsets.all(12),
@@ -134,10 +139,7 @@ class AppVersionDialog extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    result.releaseNotes!,
-                    style: theme.textTheme.bodySmall,
-                  ),
+                  Text(result.releaseNotes!, style: theme.textTheme.bodySmall),
                 ],
               ),
             ),
@@ -153,12 +155,16 @@ class AppVersionDialog extends StatelessWidget {
         FilledButton.icon(
           onPressed: () => _launchUpdateUrl(context),
           icon: const Icon(Icons.open_in_new_rounded, size: 18),
-          label: Text(isForce
-              ? 'Open ${AppVersionService.storeName}'
-              : 'Update on ${AppVersionService.storeName}'),
+          label: Text(
+            isForce
+                ? 'Open ${AppVersionService.storeName}'
+                : 'Update on ${AppVersionService.storeName}',
+          ),
           style: FilledButton.styleFrom(
             backgroundColor: isForce ? Colors.red.shade700 : null,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         ),
       ],

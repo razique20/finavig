@@ -87,7 +87,9 @@ class UrgencyTimelineStep extends StatelessWidget {
               Text(
                 description,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: isActive ? color : Theme.of(context).colorScheme.outline,
+                  color: isActive
+                      ? color
+                      : Theme.of(context).colorScheme.outline,
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 2,
@@ -114,7 +116,7 @@ class UrgencyTimelineCard extends StatelessWidget {
   final bool showCurrentStep;
 
   const UrgencyTimelineCard({super.key, required this.daysRemaining})
-      : showCurrentStep = false;
+    : showCurrentStep = false;
 
   /// Full variant with the current-step indicator, used by the detail screen.
   const UrgencyTimelineCard.withIndicator({
@@ -130,11 +132,11 @@ class UrgencyTimelineCard extends StatelessWidget {
       children: [
         Text(
           'Urgency timeline',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         // Timeline
         Row(
           children: [
@@ -189,7 +191,7 @@ class UrgencyTimelineCard extends StatelessWidget {
           ],
         ),
         if (showCurrentStep) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           _buildCurrentStepIndicator(context, _currentStep(days)),
         ],
       ],
@@ -258,7 +260,10 @@ class UrgencyCurrentStep {
   });
 }
 
-Widget _buildCurrentStepIndicator(BuildContext context, UrgencyCurrentStep step) {
+Widget _buildCurrentStepIndicator(
+  BuildContext context,
+  UrgencyCurrentStep step,
+) {
   final theme = Theme.of(context);
   final color = step.color;
   return Container(

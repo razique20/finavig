@@ -325,8 +325,7 @@ class CreditService extends ChangeNotifier {
           DateTime.tryParse(row['created_at'] as String? ?? '') ??
           DateTime.now(),
       settledAt: DateTime.tryParse(row['settled_at'] as String? ?? ''),
-      disbursementTransactionId:
-          row['disbursement_transaction_id'] as String?,
+      disbursementTransactionId: row['disbursement_transaction_id'] as String?,
       settlementTransactionId: row['settlement_transaction_id'] as String?,
     );
   }

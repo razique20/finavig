@@ -191,15 +191,20 @@ class FinanceService extends ChangeNotifier {
   ) async {
     final scoped = template.collectionId.isEmpty
         ? template.copyWith(
-            collectionId: DocumentCollectionService.instance.activeCollectionId)
+            collectionId: DocumentCollectionService.instance.activeCollectionId,
+          )
         : template;
 
     final client = _client;
     if (client != null && AuthService.instance.currentUserId != null) {
       try {
-        await client.from('recurring_transactions').insert(
-              _recurringModelToRow(scoped,
-                  ownerId: AuthService.instance.currentUserId!),
+        await client
+            .from('recurring_transactions')
+            .insert(
+              _recurringModelToRow(
+                scoped,
+                ownerId: AuthService.instance.currentUserId!,
+              ),
             );
       } catch (_) {
         // Non-fatal: keep the template locally.
@@ -269,8 +274,8 @@ class FinanceService extends ChangeNotifier {
       if (!template.isActive) continue;
       final effectiveUntil =
           template.endDate != null && template.endDate!.isBefore(untilDate)
-              ? template.endDate!
-              : untilDate;
+          ? template.endDate!
+          : untilDate;
       final occurrences = RecurrenceMath.dueOccurrences(
         template,
         template.frequency,
@@ -323,8 +328,13 @@ class FinanceService extends ChangeNotifier {
     final client = _client;
     if (client != null && AuthService.instance.currentUserId != null) {
       try {
-        await client.from('finance_transactions').insert(
-              _txModelToRow(scoped, ownerId: AuthService.instance.currentUserId),
+        await client
+            .from('finance_transactions')
+            .insert(
+              _txModelToRow(
+                scoped,
+                ownerId: AuthService.instance.currentUserId,
+              ),
             );
       } catch (_) {
         // Non-fatal: keep the record locally so nothing is lost.
@@ -332,7 +342,10 @@ class FinanceService extends ChangeNotifier {
     }
 
     _transactions.insert(0, scoped);
-    await SmartCategoryEngine.instance.learnUserChoice(scoped.title, scoped.category);
+    await SmartCategoryEngine.instance.learnUserChoice(
+      scoped.title,
+      scoped.category,
+    );
     await _persistLocal();
     notifyListeners();
   }
@@ -435,9 +448,13 @@ class FinanceService extends ChangeNotifier {
     final client = _client;
     if (client != null && AuthService.instance.currentUserId != null) {
       try {
-        await client.from('category_budgets').insert(
-              _budgetModelToRow(budget,
-                  ownerId: AuthService.instance.currentUserId!),
+        await client
+            .from('category_budgets')
+            .insert(
+              _budgetModelToRow(
+                budget,
+                ownerId: AuthService.instance.currentUserId!,
+              ),
             );
       } catch (_) {
         // Non-fatal.
@@ -496,9 +513,13 @@ class FinanceService extends ChangeNotifier {
     final client = _client;
     if (client != null && AuthService.instance.currentUserId != null) {
       try {
-        await client.from('savings_envelopes').insert(
-              _envelopeModelToRow(envelope,
-                  ownerId: AuthService.instance.currentUserId!),
+        await client
+            .from('savings_envelopes')
+            .insert(
+              _envelopeModelToRow(
+                envelope,
+                ownerId: AuthService.instance.currentUserId!,
+              ),
             );
       } catch (_) {
         // Non-fatal.
@@ -517,8 +538,7 @@ class FinanceService extends ChangeNotifier {
     if (index == -1) return;
 
     final current = _envelopes[index];
-    final newSaved =
-        (current.savedAmount + delta).clamp(0.0, double.infinity);
+    final newSaved = (current.savedAmount + delta).clamp(0.0, double.infinity);
     final updated = current.copyWith(savedAmount: newSaved);
 
     final client = _client;
@@ -555,10 +575,9 @@ class FinanceService extends ChangeNotifier {
   // Helpers
   // ------------------------------------------------------------------
 
-  FinanceTransaction _withActiveCollection(FinanceTransaction t) =>
-      t.copyWith(
-        collectionId: DocumentCollectionService.instance.activeCollectionId,
-      );
+  FinanceTransaction _withActiveCollection(FinanceTransaction t) => t.copyWith(
+    collectionId: DocumentCollectionService.instance.activeCollectionId,
+  );
 
   Future<void> _persistLocal() async {
     if (_client != null && AuthService.instance.currentUserId != null) {
@@ -586,20 +605,23 @@ class FinanceService extends ChangeNotifier {
       _transactions
         ..clear()
         ..addAll(
-          (decoded['transactions'] as List<dynamic>? ?? const [])
-              .map((json) => FinanceTransaction.fromJson(json as Map<String, dynamic>)),
+          (decoded['transactions'] as List<dynamic>? ?? const []).map(
+            (json) => FinanceTransaction.fromJson(json as Map<String, dynamic>),
+          ),
         );
       _budgets
         ..clear()
         ..addAll(
-          (decoded['budgets'] as List<dynamic>? ?? const [])
-              .map((json) => CategoryBudget.fromJson(json as Map<String, dynamic>)),
+          (decoded['budgets'] as List<dynamic>? ?? const []).map(
+            (json) => CategoryBudget.fromJson(json as Map<String, dynamic>),
+          ),
         );
       _envelopes
         ..clear()
         ..addAll(
-          (decoded['envelopes'] as List<dynamic>? ?? const [])
-              .map((json) => SavingsEnvelope.fromJson(json as Map<String, dynamic>)),
+          (decoded['envelopes'] as List<dynamic>? ?? const []).map(
+            (json) => SavingsEnvelope.fromJson(json as Map<String, dynamic>),
+          ),
         );
       _overallBudgets.clear();
       if (decoded['overallBudgets'] is Map<String, dynamic>) {
@@ -610,8 +632,10 @@ class FinanceService extends ChangeNotifier {
       _recurring
         ..clear()
         ..addAll(
-          (decoded['recurring'] as List<dynamic>? ?? const [])
-              .map((json) => RecurringTransaction.fromJson(json as Map<String, dynamic>)),
+          (decoded['recurring'] as List<dynamic>? ?? const []).map(
+            (json) =>
+                RecurringTransaction.fromJson(json as Map<String, dynamic>),
+          ),
         );
     } catch (_) {
       // Ignore malformed cache — start empty rather than crash.
@@ -625,16 +649,17 @@ class FinanceService extends ChangeNotifier {
   static FinanceTransaction _txRowToModel(Map<String, dynamic> row) {
     return FinanceTransaction(
       id: row['id'] as String,
-      collectionId:
-          row['collection_id'] as String? ?? 'personal',
+      collectionId: row['collection_id'] as String? ?? 'personal',
       kind: row['kind'] == 'income' ? FinanceKind.income : FinanceKind.expense,
       category: FinanceCategoryX.fromName(row['category'] as String?),
       title: row['title'] as String? ?? 'Transaction',
       amount: (row['amount'] as num?)?.toDouble() ?? 0,
-      currency: row['currency'] as String? ?? DocumentCollectionService.instance.activeCurrency,
+      currency:
+          row['currency'] as String? ??
+          DocumentCollectionService.instance.activeCurrency,
       occurredAt:
           DateTime.tryParse(row['occurred_at'] as String? ?? '') ??
-              DateTime.now(),
+          DateTime.now(),
       note: row['note'] as String?,
       documentId: row['document_id'] as String?,
       creditId: row['credit_id'] as String?,
@@ -715,9 +740,7 @@ class FinanceService extends ChangeNotifier {
     };
   }
 
-  static RecurringTransaction _recurringRowToModel(
-    Map<String, dynamic> row,
-  ) {
+  static RecurringTransaction _recurringRowToModel(Map<String, dynamic> row) {
     return RecurringTransaction(
       id: row['id'] as String,
       collectionId: row['collection_id'] as String? ?? 'personal',
@@ -725,10 +748,13 @@ class FinanceService extends ChangeNotifier {
       category: FinanceCategoryX.fromName(row['category'] as String?),
       title: row['title'] as String? ?? 'Recurring',
       amount: (row['amount'] as num?)?.toDouble() ?? 0,
-      currency: row['currency'] as String? ?? DocumentCollectionService.instance.activeCurrency,
+      currency:
+          row['currency'] as String? ??
+          DocumentCollectionService.instance.activeCurrency,
       frequency: RecurrenceFrequencyX.fromName(row['frequency'] as String?),
       dayOfMonth: (row['day_of_month'] as num?)?.toInt() ?? 1,
-      startDate: DateTime.tryParse(row['start_date'] as String? ?? '') ??
+      startDate:
+          DateTime.tryParse(row['start_date'] as String? ?? '') ??
           DateTime.now(),
       endDate: row['end_date'] == null
           ? null

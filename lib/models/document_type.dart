@@ -324,7 +324,8 @@ class DocumentTypeMeta {
   /// fresh instances per call, so value equality must not rely on object
   /// identity (e.g. DropdownButtonFormField matching initialValue to items).
   @override
-  bool operator ==(Object other) => other is DocumentTypeMeta && other.key == key;
+  bool operator ==(Object other) =>
+      other is DocumentTypeMeta && other.key == key;
 
   @override
   int get hashCode => key.hashCode;
@@ -441,13 +442,13 @@ class DocumentTypeRegistry {
 
   /// Metadata for a built-in enum value.
   DocumentTypeMeta byEnum(DocumentType type) => DocumentTypeMeta(
-        key: type.name,
-        displayName: type.displayName,
-        icon: type.icon,
-        primaryColor: type.primaryColor,
-        renewalAuthority: type.renewalAuthority,
-        typicalRenewalDays: type.typicalRenewalDays,
-      );
+    key: type.name,
+    displayName: type.displayName,
+    icon: type.icon,
+    primaryColor: type.primaryColor,
+    renewalAuthority: type.renewalAuthority,
+    typicalRenewalDays: type.typicalRenewalDays,
+  );
 
   /// Register a user-defined type and return the stored metadata.
   ///
@@ -475,11 +476,11 @@ class DocumentTypeRegistry {
         key: key,
         displayName: trimmed,
         icon: icon ?? Icons.description_rounded,
-        primaryColor: color ?? _customPalette[_custom.length % _customPalette.length],
-        renewalAuthority:
-            (renewalAuthority?.trim().isNotEmpty ?? false)
-                ? renewalAuthority!.trim()
-                : 'Per document terms',
+        primaryColor:
+            color ?? _customPalette[_custom.length % _customPalette.length],
+        renewalAuthority: (renewalAuthority?.trim().isNotEmpty ?? false)
+            ? renewalAuthority!.trim()
+            : 'Per document terms',
         typicalRenewalDays: typicalRenewalDays <= 0 ? 365 : typicalRenewalDays,
         isCustom: true,
       );
@@ -504,10 +505,9 @@ class DocumentTypeRegistry {
       displayName: trimmed,
       icon: icon ?? _customIcons[index % _customIcons.length],
       primaryColor: color ?? _customPalette[index % _customPalette.length],
-      renewalAuthority:
-          (renewalAuthority?.trim().isNotEmpty ?? false)
-              ? renewalAuthority!.trim()
-              : 'Per document terms',
+      renewalAuthority: (renewalAuthority?.trim().isNotEmpty ?? false)
+          ? renewalAuthority!.trim()
+          : 'Per document terms',
       typicalRenewalDays: typicalRenewalDays <= 0 ? 365 : typicalRenewalDays,
       isCustom: true,
     );

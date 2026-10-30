@@ -10,7 +10,8 @@ class SupportRequestItem {
   final String id;
   final String? userId;
   final String? userEmail;
-  final String requestType; // 'tracking_option_request', 'support_request', 'feature_request', 'bug_report'
+  final String
+  requestType; // 'tracking_option_request', 'support_request', 'feature_request', 'bug_report'
   final String title;
   final String description;
   final String status; // 'open', 'in_progress', 'resolved'
@@ -44,16 +45,16 @@ class SupportRequestItem {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'user_id': userId,
-        'user_email': userEmail,
-        'request_type': requestType,
-        'title': title,
-        'description': description,
-        'status': status,
-        'admin_notes': adminNotes,
-        'created_at': createdAt.toIso8601String(),
-      };
+    'id': id,
+    'user_id': userId,
+    'user_email': userEmail,
+    'request_type': requestType,
+    'title': title,
+    'description': description,
+    'status': status,
+    'admin_notes': adminNotes,
+    'created_at': createdAt.toIso8601String(),
+  };
 
   factory SupportRequestItem.fromJson(Map<String, dynamic> json) {
     return SupportRequestItem(
@@ -120,16 +121,24 @@ class SupportService {
           'description': description.trim(),
           'status': 'open',
         };
-        if (requestType == 'feature_request' && featureName != null && featureName.trim().isNotEmpty) {
+        if (requestType == 'feature_request' &&
+            featureName != null &&
+            featureName.trim().isNotEmpty) {
           insertData['feature_name'] = featureName.trim();
         }
-        final inserted = await client.from('support_requests').insert(insertData).select().maybeSingle();
+        final inserted = await client
+            .from('support_requests')
+            .insert(insertData)
+            .select()
+            .maybeSingle();
 
         if (inserted != null) {
           syncedToSupabase = true;
         }
       } catch (e) {
-        debugPrint('Supabase support request insert failed (using local save): $e');
+        debugPrint(
+          'Supabase support request insert failed (using local save): $e',
+        );
       }
     }
 
@@ -170,7 +179,9 @@ class SupportService {
 
         if (rows is List) {
           final items = rows
-              .map((r) => SupportRequestItem.fromJson(r as Map<String, dynamic>))
+              .map(
+                (r) => SupportRequestItem.fromJson(r as Map<String, dynamic>),
+              )
               .toList();
           _cachedRequests = items;
 
@@ -184,7 +195,9 @@ class SupportService {
           return items;
         }
       } catch (e) {
-        debugPrint('Supabase fetchUserRequests failed (using local fallback): $e');
+        debugPrint(
+          'Supabase fetchUserRequests failed (using local fallback): $e',
+        );
       }
     }
 

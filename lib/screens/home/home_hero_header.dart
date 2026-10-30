@@ -23,18 +23,14 @@ class HomeHeroHeader extends StatelessWidget {
   /// The "renewals need attention" count the user dismissed this session —
   /// excluded from the bell badge so it matches the banner.
   final int? dismissedAttentionCount;
-  final int budgetUsagePct;
   final VoidCallback onCollectionSwitcherTap;
-  final VoidCallback onQuickAddRecord;
 
   const HomeHeroHeader({
     super.key,
     required this.activeCollection,
     required this.items,
     required this.dismissedAttentionCount,
-    required this.budgetUsagePct,
     required this.onCollectionSwitcherTap,
-    required this.onQuickAddRecord,
   });
 
   /// "12 Mar" of the nearest upcoming renewal, or null when none tracked.
@@ -83,9 +79,6 @@ class HomeHeroHeader extends StatelessWidget {
       now,
     );
     final nextRenewal = _nextRenewalLabel();
-
-    // Balance card — same brand ink as the Money tab's hero band.
-    final cardColor = fade.color(FinavigColors.ink, FinavigColors.obsidian);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
@@ -168,8 +161,8 @@ class HomeHeroHeader extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
-              _CanvasIconButton(
+              const SizedBox(width: 12),
+              CanvasIconButton(
                 icon: theme.brightness == Brightness.dark
                     ? Icons.light_mode_rounded
                     : Icons.dark_mode_outlined,
@@ -183,14 +176,14 @@ class HomeHeroHeader extends StatelessWidget {
                   );
                 },
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               HomeNotificationBell(
                 items: items,
                 dismissedAttentionCount: dismissedAttentionCount,
               ),
               // Refresh button - top right corner of the header
-              const SizedBox(width: 4),
-              _CanvasIconButton(
+              const SizedBox(width: 6),
+              CanvasIconButton(
                 icon: Icons.refresh_rounded,
                 tooltip: 'Refresh data from cloud',
                 onTap: () async {
@@ -202,7 +195,7 @@ class HomeHeroHeader extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           // Balance card — standard, classy, modern focal element.
           Container(
             width: double.infinity,
@@ -258,7 +251,7 @@ class HomeHeroHeader extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
@@ -271,11 +264,11 @@ class HomeHeroHeader extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 18),
                 // Cashflow indicator pills: Inflow, Outflow, Next renewal
                 Wrap(
-                  spacing: 8,
-                  runSpacing: 6,
+                  spacing: 12,
+                  runSpacing: 10,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Container(
@@ -368,25 +361,7 @@ class HomeHeroHeader extends StatelessWidget {
                       ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    HeroActionPill(
-                      icon: Icons.edit_note_rounded,
-                      label: 'Record',
-                      outlined: true,
-                      onTap: onQuickAddRecord,
-                    ),
-                    const SizedBox(width: 10),
-                    HeroActionPill(
-                      icon: Icons.account_balance_wallet_outlined,
-                      label: 'Budget',
-                      filled: true,
-                      onTap: () => context.push('/budgets'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 22),
                 _AiSummaryLink(onTap: () => context.push('/ai-summary')),
               ],
             ),
@@ -499,7 +474,7 @@ class HomeQuickStats extends StatelessWidget {
             child: _QuickStatTile(
               icon: Icons.flag_outlined,
               label: 'Plans',
-              value: '${budgetPct}%',
+              value: '$budgetPct%',
               accent: FinavigColors.logoGold,
               bg: tileBg,
             ),
@@ -667,10 +642,10 @@ class AiSummaryCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               // Divider line.
               Container(height: 1, color: Colors.white.withValues(alpha: 0.12)),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               // Quick insights grid: 3 small stat tiles.
               Row(
                 children: [
@@ -687,7 +662,7 @@ class AiSummaryCard extends StatelessWidget {
                     child: _AiSummaryStat(
                       icon: Icons.flag_outlined,
                       label: 'Plans',
-                      value: '${budgetPct}%',
+                      value: '$budgetPct%',
                       acclColor: FinavigColors.logoGold,
                     ),
                   ),
@@ -749,49 +724,6 @@ class _AiSummaryStat extends StatelessWidget {
   }
 }
 
-/// Home header action button — a soft accent chip in light mode and a
-/// translucent white chip in dark, like the Settings header buttons.
-class _CanvasIconButton extends StatelessWidget {
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onTap;
-
-  const _CanvasIconButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final fade = FinavigTransition.of(context);
-    return Tooltip(
-      message: tooltip,
-      child: Material(
-        color: fade.color(
-          FinavigColors.accent.withValues(alpha: 0.10),
-          Colors.white.withValues(alpha: 0.12),
-        ),
-        borderRadius: BorderRadius.circular(13),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(13),
-          onTap: onTap,
-          child: SizedBox(
-            width: 36,
-            height: 36,
-            child: Icon(
-              icon,
-              size: 17,
-              color: fade.color(FinavigColors.ink, Colors.white),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// Notification bell with live alert count (expired documents, upcoming
 /// renewals, bill spikes, budget alerts). Opens the alert list sheet on tap.
 class HomeNotificationBell extends StatelessWidget {
@@ -834,29 +766,10 @@ class HomeNotificationBell extends StatelessWidget {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        Tooltip(
-          message: 'Alerts & notifications',
-          child: Material(
-            color: fade.color(
-              FinavigColors.accent.withValues(alpha: 0.10),
-              Colors.white.withValues(alpha: 0.12),
-            ),
-            borderRadius: BorderRadius.circular(13),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(13),
-              onTap: () => _showNotificationsSheet(context),
-              child: SizedBox(
-                width: 36,
-                height: 36,
-                child: Icon(
-                  Icons.notifications_outlined,
-                  color: fade.color(FinavigColors.ink, Colors.white),
-                  size: 17,
-                ),
-              ),
-            ),
-          ),
+        CanvasIconButton(
+          icon: Icons.notifications_outlined,
+          tooltip: 'Alerts & notifications',
+          onTap: () => _showNotificationsSheet(context),
         ),
         if (count > 0)
           Positioned(
@@ -1030,7 +943,7 @@ class HomeNotificationBell extends StatelessWidget {
                           theme.colorScheme.outline,
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
                       Text(
                         'You are all caught up',
                         style: theme.textTheme.titleSmall,

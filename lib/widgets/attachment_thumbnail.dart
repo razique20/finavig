@@ -50,9 +50,8 @@ class AttachmentImage extends StatelessWidget {
         fit: fit,
         memCacheWidth: _memCacheWidth(context),
         placeholder: (_, __) => const _AttachmentPlaceholder(),
-        errorWidget: (_, __, ___) => const _AttachmentError(
-          message: 'Error loading cloud image.',
-        ),
+        errorWidget: (_, __, ___) =>
+            const _AttachmentError(message: 'Error loading cloud image.'),
       );
     }
 
@@ -61,9 +60,8 @@ class AttachmentImage extends StatelessWidget {
       file,
       fit: fit,
       cacheWidth: _memCacheWidth(context),
-      errorBuilder: (_, __, ___) => const _AttachmentError(
-        message: 'Error loading local image file.',
-      ),
+      errorBuilder: (_, __, ___) =>
+          const _AttachmentError(message: 'Error loading local image file.'),
       frameBuilder: (context, child, frame, wasSyncLoaded) {
         if (wasSyncLoaded) return child;
         return AnimatedOpacity(
@@ -131,16 +129,14 @@ class _PulseDotState extends State<_PulseDot>
   @override
   Widget build(BuildContext context) {
     return FadeTransition(
-      opacity: Tween<double>(begin: 0.3, end: 0.9).animate(
-        CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-      ),
+      opacity: Tween<double>(
+        begin: 0.3,
+        end: 0.9,
+      ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut)),
       child: Container(
         width: 26,
         height: 26,
-        decoration: BoxDecoration(
-          color: widget.base,
-          shape: BoxShape.circle,
-        ),
+        decoration: BoxDecoration(color: widget.base, shape: BoxShape.circle),
       ),
     );
   }
@@ -163,15 +159,18 @@ class _AttachmentError extends StatelessWidget {
           Icon(
             Icons.image_not_supported_outlined,
             size: 32,
-            color: FinavigColors.adaptiveIcon(context, Theme.of(context).colorScheme.outline),
+            color: FinavigColors.adaptiveIcon(
+              context,
+              Theme.of(context).colorScheme.outline,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             message,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
-                ),
+              color: Theme.of(context).colorScheme.outline,
+            ),
           ),
         ],
       ),

@@ -321,7 +321,9 @@ class _LoginScreenState extends State<LoginScreen> {
         // start — so a fresh sign-up never saw it.
         final prefs = await SharedPreferences.getInstance();
         final hasOnboarded = prefs.getBool('hasOnboarded') ?? false;
-        final destination = (_isSignUp && !hasOnboarded) ? '/onboarding' : '/home';
+        final destination = (_isSignUp && !hasOnboarded)
+            ? '/onboarding'
+            : '/home';
 
         // Brief, quiet logo loader so the auth → app transition feels
         // smoother than an instant pop into the home screen.
@@ -446,7 +448,10 @@ class _LoginScreenState extends State<LoginScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: fade.color(FinavigColors.snowWhite, FinavigColors.obsidian),
+      backgroundColor: fade.color(
+        FinavigColors.snowWhite,
+        FinavigColors.obsidian,
+      ),
       body: SafeArea(bottom: false, child: _glassSheet(theme, isDark)),
     );
   }
@@ -565,10 +570,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ).animate(animation);
                     return FadeTransition(
                       opacity: animation,
-                      child: SlideTransition(
-                        position: slide,
-                        child: child,
-                      ),
+                      child: SlideTransition(position: slide, child: child),
                     );
                   },
                   // Only the incoming step sizes the box. The outgoing
@@ -602,12 +604,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               if (_error != null) ...[
-                const SizedBox(height: 10),
+                const SizedBox(height: 14),
                 _errorBanner(isDark),
               ],
               const SizedBox(height: 16),
               _actionRow(isDark),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               _TrustRow(isDark: isDark),
             ],
           ),
@@ -729,7 +731,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 14),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -865,7 +867,7 @@ class _LoginScreenState extends State<LoginScreen> {
           selected: _modePicked && _isSignUp,
           onTap: () => _onOptionTap(true),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 14),
         _ModeOption(
           isDark: isDark,
           icon: Icons.login_rounded,
@@ -875,7 +877,7 @@ class _LoginScreenState extends State<LoginScreen> {
           onTap: () => _onOptionTap(false),
         ),
         if (_stepError != null) ...[
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
           Text(
             _stepError!,
             style: const TextStyle(
@@ -1256,7 +1258,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         : FinavigColors.textPrimaryLight,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 ...GccCountry.values.map((option) {
                   final selected = option == _selectedCountry;
                   return Padding(
@@ -1701,7 +1703,8 @@ class _ModeOption extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
-        curve: Curves.easeOut,            padding: const EdgeInsets.all(12),
+        curve: Curves.easeOut,
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: selected
               ? FinavigColors.ink.withOpacity(0.06)

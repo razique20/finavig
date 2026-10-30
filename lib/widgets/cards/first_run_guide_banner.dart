@@ -118,10 +118,15 @@ class _FirstRunGuideBannerState extends State<FirstRunGuideBanner> {
                 visualDensity: VisualDensity.compact,
                 minimumSize: const Size(0, 30),
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
               ),
-              child: const Text('Take the tour',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+              child: const Text(
+                'Take the tour',
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+              ),
             ),
           ],
         ),

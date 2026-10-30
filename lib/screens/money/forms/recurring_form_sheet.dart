@@ -135,7 +135,7 @@ class RecurringFormSheetState extends State<RecurringFormSheet> {
                   border: OutlineInputBorder(),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               TextField(
                 controller: _amountController,
                 keyboardType: const TextInputType.numberWithOptions(
@@ -147,7 +147,7 @@ class RecurringFormSheetState extends State<RecurringFormSheet> {
                   border: const OutlineInputBorder(),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               DropdownButtonFormField<FinanceCategory>(
                 initialValue: _category,
                 decoration: const InputDecoration(
@@ -171,7 +171,7 @@ class RecurringFormSheetState extends State<RecurringFormSheet> {
                 onChanged: (c) =>
                     setState(() => _category = c ?? FinanceCategory.other),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               SegmentedButton<RecurrenceFrequency>(
                 segments: RecurrenceFrequency.values
                     .map((f) => ButtonSegment(value: f, label: Text(f.label)))
@@ -180,7 +180,7 @@ class RecurringFormSheetState extends State<RecurringFormSheet> {
                 onSelectionChanged: (selection) =>
                     setState(() => _frequency = selection.first),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               DropdownButtonFormField<int>(
                 initialValue: _dayOfMonth,
                 decoration: const InputDecoration(
@@ -196,7 +196,7 @@ class RecurringFormSheetState extends State<RecurringFormSheet> {
                 ).toList(),
                 onChanged: (d) => setState(() => _dayOfMonth = d ?? 1),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 dense: true,

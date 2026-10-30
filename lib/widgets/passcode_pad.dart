@@ -98,9 +98,7 @@ class PasscodeKeypad extends StatelessWidget {
         for (final row in rows) ...[
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              for (final digit in row) _digitKey(digit),
-            ],
+            children: [for (final digit in row) _digitKey(digit)],
           ),
           const SizedBox(height: 8),
         ],
@@ -121,10 +119,10 @@ class PasscodeKeypad extends StatelessWidget {
   }
 
   Widget _digitKey(String digit) => _iconKey(
-        label: digit,
-        onTap: enabled ? () => onDigit(digit) : null,
-        semanticLabel: digit,
-      );
+    label: digit,
+    onTap: enabled ? () => onDigit(digit) : null,
+    semanticLabel: digit,
+  );
 
   Widget _iconKey({
     String? label,
@@ -272,7 +270,9 @@ class _PasscodeLockPanelState extends State<PasscodeLockPanel>
 
   @override
   Widget build(BuildContext context) {
-    final titleColor = widget.onDark ? Colors.white : FinavigColors.textPrimaryLight;
+    final titleColor = widget.onDark
+        ? Colors.white
+        : FinavigColors.textPrimaryLight;
     final subtitleColor = widget.onDark
         ? Colors.white.withOpacity(0.65)
         : FinavigColors.textSecondaryLight;
