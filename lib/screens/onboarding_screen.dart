@@ -111,74 +111,157 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: Center(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(horizontal: 28),
-                    child: FinavigGlass(
-                      borderRadius: BorderRadius.circular(24),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 28,
-                        vertical: 36,
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 400),
-                            child: KeyedSubtree(
-                              key: ValueKey(_page),
-                              child: Column(
-                                children: [
-                                  Container(
-                                    width: 110,
-                                    height: 110,
-                                    decoration: BoxDecoration(
-                                      color: page.color.withOpacity(0.12),
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: page.color.withOpacity(0.3),
-                                        width: 1.5,
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: page.color.withOpacity(0.2),
-                                          blurRadius: 20,
-                                        ),
-                                      ],
-                                    ),
-                                    child: Icon(
-                                      page.icon,
-                                      size: 52,
-                                      color: page.color,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 28),
-                                  Text(
-                                    page.title,
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w800,
-                                      color: isDark
-                                          ? FinavigColors.textPrimaryDark
-                                          : FinavigColors.textPrimaryLight,
-                                      letterSpacing: -0.4,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 14),
-                                  Text(
-                                    page.body,
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      height: 1.55,
-                                      color: isDark
-                                          ? FinavigColors.textSecondary
-                                          : FinavigColors.textMuted,
-                                    ),
-                                  ),
-                                ],
+                    child: SizedBox(
+                      width: 340,
+                      child: FinavigGlass(
+                        borderRadius: BorderRadius.circular(24),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 28,
+                          vertical: 36,
+                        ),
+                        child: Stack(
+                          children: [
+                            // Decorative background icons (random app-related)
+                            Positioned(
+                              top: 10,
+                              right: 14,
+                              child: Transform.rotate(
+                                angle: 0.15,
+                                child: Icon(
+                                  Icons.description_outlined,
+                                  size: 36,
+                                  color: page.color.withValues(alpha: isDark ? 0.08 : 0.12),
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                            Positioned(
+                              top: 44,
+                              right: 60,
+                              child: Transform.rotate(
+                                angle: -0.1,
+                                child: Icon(
+                                  Icons.account_balance_wallet_outlined,
+                                  size: 28,
+                                  color: page.color.withValues(alpha: isDark ? 0.06 : 0.1),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              bottom: 22,
+                              right: 10,
+                              child: Transform.rotate(
+                                angle: 0.2,
+                                child: Icon(
+                                  Icons.receipt_long_outlined,
+                                  size: 32,
+                                  color: page.color.withValues(alpha: isDark ? 0.07 : 0.11),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              bottom: 10,
+                              left: 42,
+                              child: Transform.rotate(
+                                angle: -0.15,
+                                child: Icon(
+                                  Icons.attach_money_outlined,
+                                  size: 24,
+                                  color: page.color.withValues(alpha: isDark ? 0.05 : 0.09),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              top: 64,
+                              left: 10,
+                              child: Transform.rotate(
+                                angle: 0.12,
+                                child: Icon(
+                                  Icons.folder_outlined,
+                                  size: 26,
+                                  color: page.color.withValues(alpha: isDark ? 0.06 : 0.1),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              top: 18,
+                              left: 56,
+                              child: Transform.rotate(
+                                angle: -0.08,
+                                child: Icon(
+                                  Icons.insert_chart_outlined,
+                                  size: 22,
+                                  color: page.color.withValues(alpha: isDark ? 0.05 : 0.08),
+                                ),
+                              ),
+                            ),
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SizedBox(
+                                  width: 340,
+                                  child: AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 400),
+                                    child: KeyedSubtree(
+                                      key: ValueKey(_page),
+                                      child: Column(
+                                        children: [
+                                          Container(
+                                            width: 110,
+                                            height: 110,
+                                            decoration: BoxDecoration(
+                                              color: page.color.withValues(alpha: 0.12),
+                                              shape: BoxShape.circle,
+                                              border: Border.all(
+                                                color: page.color.withValues(alpha: 0.3),
+                                                width: 1.5,
+                                              ),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: page.color.withValues(alpha: 0.2),
+                                                  blurRadius: 20,
+                                                ),
+                                              ],
+                                            ),
+                                            child: Icon(
+                                              page.icon,
+                                              size: 52,
+                                              color: page.color,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 28),
+                                          Text(
+                                            page.title,
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.w800,
+                                              color: isDark
+                                                  ? FinavigColors.textPrimaryDark
+                                                  : FinavigColors.textPrimaryLight,
+                                              letterSpacing: -0.4,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 14),
+                                          Text(
+                                            page.body,
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              height: 1.55,
+                                              color: isDark
+                                                  ? FinavigColors.textSecondary
+                                                  : FinavigColors.textMuted,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -207,7 +290,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             color: i == _page
                                 ? FinavigColors.cyanAccent
                                 : (isDark
-                                      ? FinavigColors.textMuted.withOpacity(0.3)
+                                      ? FinavigColors.textMuted.withValues(alpha: 0.3)
                                       : Colors.black12),
                           ),
                         ),
