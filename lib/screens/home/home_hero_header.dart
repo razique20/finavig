@@ -195,23 +195,19 @@ class HomeHeroHeader extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          // Balance card — standard, classy, modern focal element.
+          const SizedBox(height: 14),
+          // Claude & ChatGPT signature search discovery pill
+          const _HomeSearchPill(),
+          const SizedBox(height: 14),
+          // Balance card — ChatGPT split card + Claude featured style
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  fade.color(const Color(0xFF16253D), const Color(0xFF191D28)),
-                  fade.color(const Color(0xFF0D1726), const Color(0xFF0F1219)),
-                ],
-              ),
+              color: FinavigColors.ink,
               borderRadius: BorderRadius.circular(FinavigRadius.card + 4),
               border: Border.all(
-                color: Colors.white.withValues(alpha: fade.value(0.12, 0.08)),
+                color: Colors.white.withValues(alpha: fade.value(0.14, 0.09)),
                 width: 1,
               ),
               boxShadow: FinavigShadows.adaptive(
@@ -221,14 +217,34 @@ class HomeHeroHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Top badge tag (Claude FEATURED / ChatGPT NEW LISTING pill style)
                 Row(
                   children: [
-                    Text(
-                      'Net this month',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.70),
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.4,
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.auto_awesome_rounded,
+                            size: 11,
+                            color: Color(0xFF67E8F9),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'FINANCIAL PULSE',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 9.5,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const Spacer(),
@@ -239,45 +255,74 @@ class HomeHeroHeader extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
                         DocumentCollectionService.instance.activeCurrency,
                         style: theme.textTheme.labelSmall?.copyWith(
-                          color: Colors.white.withValues(alpha: 0.9),
-                          fontWeight: FontWeight.w600,
+                          color: Colors.white.withValues(alpha: 0.95),
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    MoneyFormat.aed(summary.net),
-                    style: theme.textTheme.displayLarge?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -1.0,
+                const SizedBox(height: 14),
+                // Split row: Left stats, Right visual compliance dial
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Net this month',
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: Colors.white.withValues(alpha: 0.70),
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              MoneyFormat.aed(summary.net),
+                              style: theme.textTheme.displayLarge?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -1.0,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 12),
+                    _SplitHealthVisual(
+                      activeDocs: items.where((i) => i.isActive).length,
+                      urgentDocs: items
+                          .where((i) => i.isActive && i.daysRemaining <= 30)
+                          .length,
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 16),
                 // Cashflow indicator pills: Inflow, Outflow, Next renewal
                 Wrap(
-                  spacing: 12,
-                  runSpacing: 10,
+                  spacing: 8,
+                  runSpacing: 8,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
-                        vertical: 3,
+                        vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF10B981).withValues(alpha: 0.16),
+                        color: const Color(0xFF10B981).withValues(alpha: 0.18),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
@@ -303,10 +348,10 @@ class HomeHeroHeader extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
-                        vertical: 3,
+                        vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEF4444).withValues(alpha: 0.16),
+                        color: const Color(0xFFEF4444).withValues(alpha: 0.18),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
@@ -333,10 +378,10 @@ class HomeHeroHeader extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
-                          vertical: 3,
+                          vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.10),
+                          color: Colors.white.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Row(
@@ -345,13 +390,13 @@ class HomeHeroHeader extends StatelessWidget {
                             Icon(
                               Icons.calendar_today_rounded,
                               size: 11,
-                              color: Colors.white.withValues(alpha: 0.7),
+                              color: Colors.white.withValues(alpha: 0.8),
                             ),
                             const SizedBox(width: 4),
                             Text(
                               'Next: $nextRenewal',
                               style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.85),
+                                color: Colors.white.withValues(alpha: 0.9),
                                 fontSize: 11,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -361,10 +406,164 @@ class HomeHeroHeader extends StatelessWidget {
                       ),
                   ],
                 ),
-                const SizedBox(height: 22),
+                const SizedBox(height: 18),
                 _AiSummaryLink(onTap: () => context.push('/ai-summary')),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Claude & ChatGPT signature search discovery pill.
+class _HomeSearchPill extends StatelessWidget {
+  const _HomeSearchPill();
+
+  @override
+  Widget build(BuildContext context) {
+    final fade = FinavigTransition.of(context);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Material(
+      color: fade.color(Colors.white, FinavigColors.charcoal),
+      borderRadius: BorderRadius.circular(24),
+      elevation: isDark ? 0 : 1,
+      shadowColor: Colors.black.withValues(alpha: 0.05),
+      child: InkWell(
+        onTap: () => context.push('/search'),
+        borderRadius: BorderRadius.circular(24),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: fade.color(
+                FinavigColors.ink.withValues(alpha: 0.08),
+                Colors.white.withValues(alpha: 0.08),
+              ),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.search_rounded,
+                size: 20,
+                color: fade.color(
+                  FinavigColors.textMutedLight,
+                  FinavigColors.textSecondary,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Search documents, tags, expenses…',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: fade.color(
+                      FinavigColors.textMutedLight,
+                      FinavigColors.textSecondary,
+                    ),
+                    fontSize: 13,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              InkWell(
+                onTap: () => context.push('/expiry-list'),
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                    color: fade.color(
+                      FinavigColors.cloud,
+                      FinavigColors.slate,
+                    ),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.tune_rounded,
+                    size: 15,
+                    color: fade.color(
+                      FinavigColors.ink,
+                      Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Visual compliance & document count gauge for the ChatGPT split card.
+class _SplitHealthVisual extends StatelessWidget {
+  final int activeDocs;
+  final int urgentDocs;
+
+  const _SplitHealthVisual({
+    required this.activeDocs,
+    required this.urgentDocs,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final statusColor = urgentDocs > 0
+        ? const Color(0xFFFBBF24)
+        : const Color(0xFF34D399);
+
+    return Container(
+      width: 88,
+      height: 76,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.10),
+          width: 1,
+        ),
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          SizedBox(
+            width: 58,
+            height: 58,
+            child: CircularProgressIndicator(
+              value: activeDocs > 0 ? (urgentDocs > 0 ? 0.70 : 1.0) : 0.0,
+              strokeWidth: 3.5,
+              backgroundColor: Colors.white.withValues(alpha: 0.10),
+              valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+            ),
+          ),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '$activeDocs',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                  height: 1.1,
+                ),
+              ),
+              Text(
+                activeDocs == 1 ? 'doc' : 'docs',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.65),
+                  fontWeight: FontWeight.w600,
+                  fontSize: 9.5,
+                ),
+              ),
+            ],
           ),
         ],
       ),

@@ -30,7 +30,6 @@ import 'screens/ai_summary_screen.dart';
 import 'screens/ai_budget_plan_screen.dart';
 import 'screens/alerts_reminders_screen.dart';
 import 'services/auth_service.dart';
-import 'services/tab_scroll_registry.dart';
 import 'widgets/dialogs/quick_action_sheet.dart';
 import 'widgets/indicators/offline_banner.dart';
 
@@ -328,52 +327,53 @@ class _AppShellState extends State<_AppShell> {
           child: SizedBox(
             height: 56,
             child: Row(
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
+                Spacer(flex: 2),
                 _NavPillItem(
                   icon: widget.navigationShell.currentIndex == 0
                       ? Icons.home_rounded
                       : Icons.home_outlined,
                   active: widget.navigationShell.currentIndex == 0,
-                  tooltip: 'Home',
                   onTap: () => _goBranch(0),
                 ),
+                const SizedBox(width: 24),
                 _NavPillItem(
                   icon: widget.navigationShell.currentIndex == 1
                       ? Icons.account_balance_wallet_rounded
                       : Icons.account_balance_wallet_outlined,
                   active: widget.navigationShell.currentIndex == 1,
-                  tooltip: 'Money',
                   showDot: _budgetStatus != null,
                   dotColor: _budgetStatus?.status == BudgetAlertLevel.exceeded
                       ? FinavigColors.danger
                       : FinavigColors.warning,
                   onTap: () => _goBranch(1),
                 ),
-                // Universal quick action (+): scan a document, log money,
-                // voice AI log, or create an envelope from any tab.
-                // Long-press skips the menu and opens Ask Finavig AI.
+                const SizedBox(width: 24),
                 _QuickActionButton(
                   onTap: () => showQuickActionSheet(context),
                   onLongPress: () => showAskFinavigFlow(context),
                 ),
+                const SizedBox(width: 24),
                 _NavPillItem(
                   icon: widget.navigationShell.currentIndex == 2
                       ? Icons.description_rounded
                       : Icons.description_outlined,
                   active: widget.navigationShell.currentIndex == 2,
-                  tooltip: 'Documents',
                   showDot: pendingDocs > 0,
                   dotColor: FinavigColors.danger,
                   onTap: () => _goBranch(2),
                 ),
+                const SizedBox(width: 24),
                 _NavPillItem(
                   icon: widget.navigationShell.currentIndex == 3
                       ? Icons.person_rounded
                       : Icons.person_outline_rounded,
                   active: widget.navigationShell.currentIndex == 3,
-                  tooltip: 'Profile',
                   onTap: () => _goBranch(3),
                 ),
+                const Spacer(flex: 2),
               ],
             ),
           ),
@@ -383,9 +383,6 @@ class _AppShellState extends State<_AppShell> {
   }
 
   void _goBranch(int index) {
-    // Every tab tap lands at the top of that tab's screen. Tapping the
-    // already-active tab also resets its scroll (standard mobile pattern).
-    TabScrollRegistry.scrollToTop(index);
     PerfTracingService.trace(PerfTracingService.flowTabSwitch, () {
       widget.navigationShell.goBranch(
         index,
@@ -406,51 +403,54 @@ class _QuickActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Same dark plate as the Home balance card and the Settings avatar: the
-    // orb is the dock's one filled element, so it wears the brand ink instead
-    // of an unrelated accent. In dark mode it is lifted off the slate pill by
-    // a lighter end-stop plus a hairline; the glyph stays white.
     final fade = FinavigTransition.of(context);
-    return Expanded(
-      child: Center(
-        child: Tooltip(
-          message: 'Quick actions\nHold for Ask Finavig AI',
-          waitDuration: const Duration(milliseconds: 600),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: onTap,
-              onLongPress: onLongPress,
-              borderRadius: BorderRadius.circular(19),
-              child: Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      fade.color(FinavigColors.ink, FinavigColors.charcoal),
-                      fade.color(
-                        FinavigColors.inkDeep,
-                        FinavigColors.slateLight,
-                      ),
-                    ],
+    return Tooltip(
+      message: 'Quick actions\nHold for Ask Finavig AI',
+      waitDuration: const Duration(milliseconds: 600),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          onLongPress: onLongPress,
+          borderRadius: BorderRadius.circular(21),
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  fade.color(FinavigColors.ink, FinavigColors.charcoal),
+                  fade.color(
+                    FinavigColors.inkDeep,
+                    FinavigColors.slateLight,
                   ),
-                  border: Border.all(
-                    color: fade.color(
-                      Colors.transparent,
-                      Colors.white.withValues(alpha: 0.10),
-                    ),
-                  ),
-                ),
-                child: const Icon(
-                  Icons.add_rounded,
-                  size: 24,
-                  color: Colors.white,
-                ),
+                ],
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: fade.color(
+                    FinavigColors.ink.withValues(alpha: 0.25),
+                    Colors.black.withValues(alpha: 0.40),
+                  ),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+              border: Border.all(
+                color: fade.color(
+                  Colors.white.withValues(alpha: 0.15),
+                  Colors.white.withValues(alpha: 0.12),
+                ),
+                width: 1,
+              ),
+            ),
+            child: const Icon(
+              Icons.add_rounded,
+              size: 24,
+              color: Colors.white,
             ),
           ),
         ),
@@ -459,14 +459,10 @@ class _QuickActionButton extends StatelessWidget {
   }
 }
 
-/// One icon-only destination inside the floating nav pill. The active tab is
-/// marked by its glyph alone — the filled icon variant in brand ink (white in
-/// dark) rather than a circular selection plate; status dots mirror the shell
-/// badges.
+/// Destination inside the floating nav dock (ChatGPT style active pill layout).
 class _NavPillItem extends StatelessWidget {
   final IconData icon;
   final bool active;
-  final String tooltip;
   final VoidCallback onTap;
   final bool showDot;
   final Color? dotColor;
@@ -474,7 +470,6 @@ class _NavPillItem extends StatelessWidget {
   const _NavPillItem({
     required this.icon,
     required this.active,
-    required this.tooltip,
     required this.onTap,
     this.showDot = false,
     this.dotColor,
@@ -482,74 +477,74 @@ class _NavPillItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Dock colours resolve through the theme transition factor so the pill
-    // and every glyph cross-fade with the theme animation instead of snapping
-    // at its halfway point.
     final fade = FinavigTransition.of(context);
-    return Expanded(
-      child: Tooltip(
-        message: tooltip,
-        waitDuration: const Duration(milliseconds: 600),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(24),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 9),
-            child: Center(
-              child: Stack(
-                clipBehavior: Clip.none,
-                alignment: Alignment.center,
-                children: [
-                  if (active)
-                    Container(
-                      width: 44,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: fade.color(
-                          FinavigColors.ink.withValues(alpha: 0.08),
-                          Colors.white.withValues(alpha: 0.14),
-                        ),
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                    ),
-                  SizedBox(
-                    width: 42,
-                    height: 42,
-                    child: Icon(
-                      icon,
-                      size: 21,
-                      color: active
-                          ? fade.color(FinavigColors.ink, Colors.white)
-                          // White in dark mode — dimmed just enough that the
-                          // active tab still reads against it.
-                          : fade.color(
-                              FinavigColors.textMutedLight,
-                              Colors.white.withValues(alpha: 0.65),
+    return Tooltip(
+      message: 'Home',
+      waitDuration: const Duration(milliseconds: 600),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(24),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
+          child: Center(
+            child: Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.center,
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOutCubic,
+                  padding: active
+                      ? const EdgeInsets.symmetric(horizontal: 10, vertical: 6)
+                      : const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: active
+                        ? fade.color(
+                            FinavigColors.ink.withValues(alpha: 0.08),
+                            Colors.white.withValues(alpha: 0.14),
+                        )
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        icon,
+                        size: 21,
+                        color: active
+                            ? fade.color(FinavigColors.ink, Colors.white)
+                            : fade.color(
+                                FinavigColors.textMutedLight,
+                                Colors.white.withValues(alpha: 0.65),
                             ),
+                      ),
+                      const SizedBox(width: 4),
+                    ],
+                  ),
+                ),
+                if (showDot)
+                  Positioned(
+                    right: active ? -2 : 3,
+                    top: 1,
+                    child: Container(
+                      width: 9,
+                      height: 9,
+                      decoration: BoxDecoration(
+                        color: dotColor ?? FinavigColors.danger,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: fade.color(
+                            Colors.white,
+                            FinavigColors.slate,
+                          ),
+                          width: 1.5,
+                        ),
+                      ),
                     ),
                   ),
-                  if (showDot)
-                    Positioned(
-                      right: 3,
-                      top: 2,
-                      child: Container(
-                        width: 9,
-                        height: 9,
-                        decoration: BoxDecoration(
-                          color: dotColor ?? FinavigColors.danger,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: fade.color(
-                              Colors.white,
-                              FinavigColors.slate,
-                            ),
-                            width: 1.5,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
+              ],
             ),
           ),
         ),

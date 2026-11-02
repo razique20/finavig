@@ -126,72 +126,128 @@ class HomeUpcomingTile extends StatelessWidget {
     final theme = Theme.of(context);
     final fade = FinavigTransition.of(context);
     final isCritical = item.daysRemaining <= 7;
-    final accent = isCritical ? FinavigColors.danger : FinavigColors.accent;
+    final isWarning = item.daysRemaining <= 30;
+    final statusColor = isCritical
+        ? FinavigColors.danger
+        : isWarning
+        ? FinavigColors.warning
+        : FinavigColors.safe;
+    final statusBg = isCritical
+        ? FinavigColors.danger.withValues(alpha: 0.12)
+        : isWarning
+        ? FinavigColors.warning.withValues(alpha: 0.12)
+        : FinavigColors.safe.withValues(alpha: 0.12);
+    final statusLabel = isCritical
+        ? '★ Critical: ${item.daysRemaining}d left'
+        : isWarning
+        ? '⚠️ Due in ${item.daysRemaining} days'
+        : '✓ Valid • ${item.daysRemaining}d left';
 
     return Container(
       decoration: BoxDecoration(
         color: fade.color(Colors.white, FinavigColors.charcoal),
-        borderRadius: BorderRadius.circular(FinavigRadius.card),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: FinavigShadows.adaptive(theme.brightness == Brightness.dark),
         border: Border.all(
           color: fade.color(
-            Colors.transparent,
-            Colors.white.withValues(alpha: 0.06),
+            Colors.black.withValues(alpha: 0.05),
+            Colors.white.withValues(alpha: 0.08),
           ),
         ),
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(FinavigRadius.card),
+        borderRadius: BorderRadius.circular(18),
         child: InkWell(
           onTap: () => context.push('/document/${item.id}'),
-          borderRadius: BorderRadius.circular(FinavigRadius.card),
+          borderRadius: BorderRadius.circular(18),
           child: Padding(
             padding: const EdgeInsets.all(14),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                BentoIconTile(
-                  icon: item.docType.icon,
-                  color: accent,
-                  size: 40,
-                  iconSize: 20,
-                  radius: 12,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.displayName,
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                // Top badge tag (matching Claude's Guest favourite / featured badge)
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: statusBg,
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${item.docType.displayName} • ${item.expiresAt.day}/${item.expiresAt.month}/${item.expiresAt.year}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.outline,
+                      child: Text(
+                        statusLabel,
+                        style: TextStyle(
+                          color: statusColor,
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.2,
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    const Spacer(),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 13,
+                      color: theme.colorScheme.outline.withValues(alpha: 0.7),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  '${item.daysRemaining}d',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                    color: isCritical
-                        ? FinavigColors.danger
-                        : item.daysRemaining <= 30
-                        ? FinavigColors.warning
-                        : FinavigColors.safe,
-                  ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    BentoIconTile(
+                      icon: item.docType.icon,
+                      color: statusColor,
+                      size: 40,
+                      iconSize: 20,
+                      radius: 12,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.displayName,
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            '${item.docType.displayName} • ${item.expiresAt.day}/${item.expiresAt.month}/${item.expiresAt.year}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.outline,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: fade.color(
+                          FinavigColors.cloud,
+                          FinavigColors.slate,
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '${item.daysRemaining}d',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                          color: statusColor,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

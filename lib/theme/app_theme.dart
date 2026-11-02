@@ -54,8 +54,8 @@ class FinavigColors {
   static const Color tierGoldDark = Color(0xFFA16207); // readable on light
 
   // ── Ink (hero backdrops, dark CTAs) — logo navy ────────────────────────
-  static const Color ink = Color(0xFF0A1A3F);
-  static const Color inkDeep = Color(0xFF071230);
+  static const Color ink = Color(0xFF0F172A);
+  static const Color inkDeep = Color(0xFF0A0F1D);
 
   // ── Surfaces — Dark mode ────────────────────────────────────────────────
   static const Color obsidian = Color(0xFF0C0E14);
@@ -237,6 +237,7 @@ class FinavigRadius {
   static const double button = 16;
   static const double sheet = 28;
   static const double dialog = 24;
+  static const double pill = 32;
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
