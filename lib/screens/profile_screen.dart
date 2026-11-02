@@ -180,6 +180,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  /// Opens the future plans page showing finavig's roadmap and upcoming features.
+  void _openFuturePlans() => context.push('/future-plans');
+
   /// Opens a titled bottom sheet wrapping [child] — the shared chrome for the
   /// detailed settings surfaces (appearance, subscription, collections).
   void _showSheet({required String title, required Widget child}) {
@@ -471,6 +474,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               icon: Icons.battery_saver_outlined,
               title: 'Ensure reminders work',
               onTap: openBatteryGuidance,
+            ),
+            ProfileListRow(
+              icon: Icons.flash_on_outlined,
+              title: "What's coming in the future",
+              onTap: _openFuturePlans,
             ),
             const ProfileSectionHeader(title: 'Data & Account'),
             ProfileListRow(
