@@ -18,6 +18,58 @@ class HomeCategoriesGrid extends StatelessWidget {
     required this.onScanTap,
   });
 
+  /// Builds the featured AI Budget Plan pill at the top with distinct coloring
+  /// to make it stand out as a top feature of the app.
+  Widget _buildFeaturedAIBudgetPlan(
+      BuildContext context, ThemeData theme, FinavigTransition fade) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Distinct violet color for the featured AI Budget Plan
+    final featureIconColor = isDark
+        ? const Color(0xFFE8D1F5)
+        : const Color(0xFF7C3AED);
+    final featureTextColor = isDark
+        ? Colors.white
+        : const Color(0xFF3730A3);
+    final featureBgColor = isDark
+        ? const Color(0xFF1E1B4B)
+        : const Color(0xFFF3E8F5);
+
+    return Tooltip(
+      message: 'AI Budget Plan',
+      waitDuration: const Duration(milliseconds: 600),
+      child: Material(
+        color: featureBgColor,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () => context.push('/ai-budget-plan'),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.auto_awesome_outlined,
+                  size: 18,
+                  color: featureIconColor,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'AI Budget Plan',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: featureTextColor,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -148,12 +200,8 @@ class HomeCategoriesGrid extends StatelessWidget {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                tile(
-                  icon: Icons.auto_awesome_outlined,
-                  accent: FinavigColors.violetAccent,
-                  label: 'AI PLAN',
-                  onTap: () => context.push('/ai-budget-plan'),
-                ),
+                // AI Budget Plan — featured top item with distinct color
+                _buildFeaturedAIBudgetPlan(context, theme, fade),
                 const SizedBox(width: 4),
                 tile(
                   icon: Icons.description_outlined,
