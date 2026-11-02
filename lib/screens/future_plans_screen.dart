@@ -29,6 +29,7 @@ class FuturePlansScreen extends StatelessWidget {
           SingleChildScrollView(
             padding: const EdgeInsets.all(24.0),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Title section
