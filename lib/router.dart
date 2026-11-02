@@ -336,6 +336,7 @@ class _AppShellState extends State<_AppShell> {
                       ? Icons.home_rounded
                       : Icons.home_outlined,
                   active: widget.navigationShell.currentIndex == 0,
+                  tooltip: 'Home',
                   onTap: () => _goBranch(0),
                 ),
                 const SizedBox(width: 24),
@@ -344,6 +345,7 @@ class _AppShellState extends State<_AppShell> {
                       ? Icons.account_balance_wallet_rounded
                       : Icons.account_balance_wallet_outlined,
                   active: widget.navigationShell.currentIndex == 1,
+                  tooltip: 'Money',
                   showDot: _budgetStatus != null,
                   dotColor: _budgetStatus?.status == BudgetAlertLevel.exceeded
                       ? FinavigColors.danger
@@ -361,6 +363,7 @@ class _AppShellState extends State<_AppShell> {
                       ? Icons.description_rounded
                       : Icons.description_outlined,
                   active: widget.navigationShell.currentIndex == 2,
+                  tooltip: 'Documents',
                   showDot: pendingDocs > 0,
                   dotColor: FinavigColors.danger,
                   onTap: () => _goBranch(2),
@@ -371,6 +374,7 @@ class _AppShellState extends State<_AppShell> {
                       ? Icons.person_rounded
                       : Icons.person_outline_rounded,
                   active: widget.navigationShell.currentIndex == 3,
+                  tooltip: 'Profile',
                   onTap: () => _goBranch(3),
                 ),
                 const Spacer(flex: 2),
@@ -463,6 +467,7 @@ class _QuickActionButton extends StatelessWidget {
 class _NavPillItem extends StatelessWidget {
   final IconData icon;
   final bool active;
+  final String tooltip;
   final VoidCallback onTap;
   final bool showDot;
   final Color? dotColor;
@@ -470,6 +475,7 @@ class _NavPillItem extends StatelessWidget {
   const _NavPillItem({
     required this.icon,
     required this.active,
+    required this.tooltip,
     required this.onTap,
     this.showDot = false,
     this.dotColor,
@@ -479,7 +485,7 @@ class _NavPillItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final fade = FinavigTransition.of(context);
     return Tooltip(
-      message: 'Home',
+      message: tooltip,
       waitDuration: const Duration(milliseconds: 600),
       child: InkWell(
         onTap: onTap,
