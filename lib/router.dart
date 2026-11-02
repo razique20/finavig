@@ -491,12 +491,8 @@ class _NavPillItem extends StatelessWidget {
               clipBehavior: Clip.none,
               alignment: Alignment.center,
               children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeOutCubic,
-                  padding: active
-                      ? const EdgeInsets.symmetric(horizontal: 10, vertical: 6)
-                      : const EdgeInsets.all(7),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                   decoration: BoxDecoration(
                     color: active
                         ? fade.color(
