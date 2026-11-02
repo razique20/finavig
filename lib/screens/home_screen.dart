@@ -175,6 +175,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                 ),
+                // Search pill: global search across documents, tags, and expenses
+                // positioned below the scan CTA for easy access.
+                HomeSearchPill(),
+                const SizedBox(height: 16),
                 // Canvas filler: extends the background across the rest of
                 // the viewport and into overscroll behind the nav pill.
                 SliverFillRemaining(

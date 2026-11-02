@@ -196,9 +196,6 @@ class HomeHeroHeader extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          // Claude & ChatGPT signature search discovery pill
-          const _HomeSearchPill(),
-          const SizedBox(height: 14),
           // Balance card — ChatGPT split card + Claude featured style
           Container(
             width: double.infinity,
@@ -418,8 +415,8 @@ class HomeHeroHeader extends StatelessWidget {
 }
 
 /// Claude & ChatGPT signature search discovery pill.
-class _HomeSearchPill extends StatelessWidget {
-  const _HomeSearchPill();
+class HomeSearchPill extends StatelessWidget {
+  HomeSearchPill({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
