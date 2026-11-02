@@ -473,6 +473,7 @@ class _HomeSearchPill extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
+              const SizedBox(width: 8),
               InkWell(
                 onTap: () => context.push('/expiry-list'),
                 borderRadius: BorderRadius.circular(16),
@@ -484,14 +485,6 @@ class _HomeSearchPill extends StatelessWidget {
                       FinavigColors.slate,
                     ),
                     shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.tune_rounded,
-                    size: 15,
-                    color: fade.color(
-                      FinavigColors.ink,
-                      Colors.white,
-                    ),
                   ),
                 ),
               ),
