@@ -19,7 +19,6 @@ import 'screens/document_detail_screen.dart';
 import 'screens/expiry_list_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/onboarding_screen.dart';
-import 'screens/future_plans_screen.dart';
 import 'screens/money_screen.dart';
 import 'screens/budgets_screen.dart';
 import 'screens/envelopes_screen.dart';
@@ -155,11 +154,6 @@ final router = GoRouter(
       path: '/alerts-reminders',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const AlertsRemindersScreen(),
-    ),
-    GoRoute(
-      path: '/future-plans',
-      parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const FuturePlansScreen(),
     ),
     // 4-tab bottom-nav shell:
     //   Home      — cross-tier dashboard (documents + money summary)
