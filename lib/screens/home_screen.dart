@@ -145,40 +145,40 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: 18),
                       if (_loading)
                         const SizedBox(height: 420, child: HomeSkeletonView())
-                      else ...[
-                        HomeCategoriesGrid(
-                          pendingActionsCount: urgency.pendingActions.length,
-                          onScanTap: _openScanner,
+                      else
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            HomeCategoriesGrid(
+                              pendingActionsCount: urgency.pendingActions.length,
+                              onScanTap: _openScanner,
+                            ),
+                            const FirstRunGuideBanner(),
+                            HomeConsolidatedAlerts(
+                              pendingActionNames: urgency.pendingActions
+                                  .map((a) => a.displayName)
+                                  .toList(),
+                              dismissedAttentionCount: _dismissedAttentionCount,
+                              onDismissAttention: (count) =>
+                                  setState(() => _dismissedAttentionCount = count),
+                              expiredItems: _expiredItems
+                                  .map(
+                                    (i) => HomeExpiredItem(
+                                      id: i.id,
+                                      displayName: i.displayName,
+                                      daysRemaining: i.daysRemaining,
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
+                            HomeUpcomingSection(upcomingItems: _upcomingItems()),
+                            // Comfortable breathing room above the fixed bottom navigation bar.
+                            const SizedBox(height: 29),
+                          ],
                         ),
-                        const FirstRunGuideBanner(),
-                        HomeConsolidatedAlerts(
-                          pendingActionNames: urgency.pendingActions
-                              .map((a) => a.displayName)
-                              .toList(),
-                          dismissedAttentionCount: _dismissedAttentionCount,
-                          onDismissAttention: (count) =>
-                              setState(() => _dismissedAttentionCount = count),
-                          expiredItems: _expiredItems
-                              .map(
-                                (i) => HomeExpiredItem(
-                                  id: i.id,
-                                  displayName: i.displayName,
-                                  daysRemaining: i.daysRemaining,
-                                ),
-                              )
-                              .toList(),
-                        ),
-                        HomeUpcomingSection(upcomingItems: _upcomingItems()),
-                        // Comfortable breathing room above the fixed bottom navigation bar.
-                        const SizedBox(height: 28),
-                      ],
                     ],
                   ),
                 ),
-                // Search pill: global search across documents, tags, and expenses
-                // positioned below the scan CTA for easy access.
-                HomeSearchPill(),
-                const SizedBox(height: 16),
                 // Canvas filler: extends the background across the rest of
                 // the viewport and into overscroll behind the nav pill.
                 SliverFillRemaining(
