@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import '../theme/app_theme.dart';
 
 /// Screen showing finavig's future plans and roadmap in a pictorial storytelling mode.
@@ -21,118 +20,68 @@ class FuturePlansScreen extends StatelessWidget {
         backgroundColor: isDark ? FinavigColors.obsidian : FinavigColors.safe,
         foregroundColor: Colors.white,
       ),
-      body: Stack(
+      body: ListView(
+        padding: const EdgeInsets.all(24.0),
         children: [
-          // Background gradient with fintech vibe
-          _buildBackgroundGradient(isDark),
-          // Foreach content overlay
-          SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Title section
-                _buildTitleSection(theme),
-                const SizedBox(height: 8),
-                _buildTagline(theme),
-                const SizedBox(height: 32),
+          // Title section
+          Text(
+            'Finavig Roadmap',
+            style: theme.textTheme.headlineLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: theme.colorScheme.onSurface,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Your fintech transformation journey',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w400,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              letterSpacing: 0.2,
+            ),
+          ),
+          const SizedBox(height: 8),
 
-                // Storytelling section - the "Why"
-                _buildStorySection(theme),
-                const SizedBox(height: 32),
+          // Tagline
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Text(
+              'We are building the future of personal finance, one innovative feature at a time.',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: 32),
 
-                // Roadmap visual - pictorial representation
-                _buildRoadmapVisual(theme, isDark),
-                const SizedBox(height: 32),
+          // Storytelling section - the "Why"
+          _buildStorySection(theme),
+          const SizedBox(height: 32),
 
-                // Coming soon cards
-                _buildFeatureCards(theme),
-                const SizedBox(height: 32),
+          // Roadmap visual - pictorial representation
+          _buildRoadmapVisual(theme, isDark),
+          const SizedBox(height: 32),
 
-                // Call to action
-                _buildCTASection(theme),
-                const Spacer(),
-                const SizedBox(height: 24),
-                ElevatedButton.icon(
-                  onPressed: () => context.pop(),
-                  icon: const Icon(Icons.arrow_back_rounded),
-                  label: const Text('Back to Settings'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: Colors.white,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  ),
-                ),
-              ],
+          // Coming soon cards
+          _buildFeatureCards(theme),
+          const SizedBox(height: 32),
+
+          // Call to action
+          ElevatedButton.icon(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.arrow_back_rounded),
+            label: const Text('Back to Settings'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: Colors.white,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  /// Builds the gradient background with fintech transformation theme
-  Widget _buildBackgroundGradient(bool isDark) {
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: isDark
-              ? [
-                  FinavigColors.obsidian,
-                  FinavigColors.charcoal,
-                ]
-              : [
-                  FinavigColors.safe,
-                  FinavigColors.safeBgLight,
-                ],
-        ),
-      ),
-    );
-  }
-
-  /// Builds the title section with fintech transformation wording
-  Widget _buildTitleSection(ThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Finavig Roadmap',
-          style: theme.textTheme.headlineLarge?.copyWith(
-            fontWeight: FontWeight.w800,
-            color: theme.colorScheme.onSurface,
-            letterSpacing: -0.5,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Your fintech transformation journey',
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w400,
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-            letterSpacing: 0.2,
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Builds the tagline/description
-  Widget _buildTagline(ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: Text(
-        'We are building the future of personal finance, one innovative feature at a time.',
-        style: theme.textTheme.bodyLarge?.copyWith(
-          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-          height: 1.5,
-        ),
-        textAlign: TextAlign.center,
       ),
     );
   }
@@ -275,33 +224,6 @@ class FuturePlansScreen extends StatelessWidget {
         fontSize: 24,
         fontWeight: FontWeight.w700,
         color: FinavigColors.indigo,
-      ),
-    );
-  }
-
-  /// Builds the CTA section
-  Widget _buildCTASection(ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: const Center(
-        child: Text(
-          'Stay tuned for more exciting updates!',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: Colors.grey,
-          ),
-        ),
       ),
     );
   }
