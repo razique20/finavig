@@ -30,8 +30,8 @@ class HomeCategoriesGrid extends StatelessWidget {
       FinavigColors.slate.withValues(alpha: 0.5),
     );
     final labelColor = fade.color(
-      FinavigColors.textPrimaryLight,
-      FinavigColors.textSecondary,
+      const Color(0xFF333333),
+      const Color(0xFF666666),
     );
 
     /// One compact shortcut tab matching the reference image minimalist style:
