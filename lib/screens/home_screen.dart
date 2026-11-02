@@ -8,19 +8,19 @@ import '../services/finance_service.dart';
 import '../services/tab_scroll_registry.dart';
 import '../services/urgency_engine.dart';
 import '../theme/app_theme.dart';
-import '../widgets/widgets.dart';
 import 'home/home_banners.dart';
 import 'home/home_categories_grid.dart';
 import 'home/home_collection_switcher.dart';
 import 'home/home_hero_header.dart';
 import 'home/home_upcoming_section.dart';
+import '../widgets/shimmer_skeleton.dart';
+import '../widgets/cards/first_run_guide_banner.dart';
 
-/// Home tab: cross-tier dashboard on the light, airy canvas.
-///
-/// A greeting + gradient balance card, a bento categories grid, the alert
-/// banners, and the next renewals. Details live in the Documents and Money
-/// tabs. The heavy lifting lives in `lib/screens/home/` modules so each
-/// section rebuilds independently.
+// Home tab: cross-tier dashboard on the light, airy canvas.
+// A greeting + gradient balance card, a bento categories grid, the alert
+// banners, and the next renewals. Details live in the Documents and Money
+// tabs. The heavy lifting lives in `lib/screens/home/` modules so each
+// section rebuilds independently.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -37,9 +37,12 @@ class _HomeScreenState extends State<HomeScreen> {
   List<ExpiryItem> _items = [];
   bool _loading = true;
 
-  /// The "renewals need attention" banner was closed by the user this
-  /// session. Re-appears on restart or when data reloads with a *new* count.
+  // The \"renewals need attention\" banner was closed by the user this
+  // session. Re-appears on restart or when data reloads with a *new* count.
   int? _dismissedAttentionCount;
+
+  // Optimized: single UrgencyEngine instance, computed once and cached.
+  UrgencySnapshot? _urgencySnapshot;
 
   @override
   void initState() {
@@ -101,10 +104,16 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /// Computes and caches the urgency snapshot once per data change.
+  UrgencySnapshot _computeUrgency() {
+    _urgencySnapshot ??= UrgencyEngine().compute(_items);
+    return _urgencySnapshot!;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final urgency = UrgencyEngine().compute(_items);
+    final urgency = _computeUrgency();
     // Match the Money tab's flat canvas, cross-fading with theme changes.
     final canvas = FinavigTransition.of(
       context,
