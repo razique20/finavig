@@ -45,7 +45,7 @@ class HomeCategoriesGrid extends StatelessWidget {
       required VoidCallback onTap,
     }) {
       final itemColor = fade.color(
-        const Color(0xFF222222),
+        const Color(0xFF333333),
         Colors.white,
       );
 
