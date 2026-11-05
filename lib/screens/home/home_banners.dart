@@ -285,18 +285,9 @@ class _HomeConsolidatedAlertsState extends State<HomeConsolidatedAlerts> {
     final hasPlanAlert =
         entitlements.isPlanExpired || entitlements.lockedCollectionsCount > 0;
     final hasExpired = widget.expiredItems.isNotEmpty;
-    final hasAttention =
-        widget.pendingActionNames.isNotEmpty &&
-        widget.dismissedAttentionCount != widget.pendingActionNames.length;
 
     final activeBanners = <Widget>[
       if (hasExpired) HomeExpiredAlert(expiredItems: widget.expiredItems),
-      if (hasAttention)
-        HomeAttentionBanner(
-          pendingActionNames: widget.pendingActionNames,
-          dismissedAttentionCount: widget.dismissedAttentionCount,
-          onDismiss: widget.onDismissAttention,
-        ),
       if (hasPlanAlert) const HomePlanRestrictionBanner(),
     ];
 

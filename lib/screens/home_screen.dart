@@ -171,6 +171,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   )
                                   .toList(),
                             ),
+                            const SizedBox(height: 16),
                             HomeUpcomingSection(upcomingItems: _upcomingItems()),
                             // Comfortable breathing room above the fixed bottom navigation bar.
                             const SizedBox(height: 29),

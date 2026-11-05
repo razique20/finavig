@@ -225,7 +225,7 @@ class HomeHeroHeader extends StatelessWidget {
 
 /// Claude & ChatGPT signature search discovery pill.
 class HomeSearchPill extends StatelessWidget {
-  HomeSearchPill({Key? key}) : super(key: key);
+  const HomeSearchPill({super.key});
 
   @override
   Widget build(BuildContext context) {

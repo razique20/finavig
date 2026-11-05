@@ -22,7 +22,6 @@ class HomeCategoriesGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final pending = pendingActionsCount;
     // Resolved through the theme transition factor so the tiles cross-fade
     // with the light↔dark animation instead of snapping halfway through it.
     final fade = FinavigTransition.of(context);
@@ -31,8 +30,8 @@ class HomeCategoriesGrid extends StatelessWidget {
       FinavigColors.slate.withValues(alpha: 0.5),
     );
     final labelColor = fade.color(
-      const Color(0xFF4A4A4A),
-      const Color(0xFF737373),
+      FinavigColors.textPrimaryLight,
+      FinavigColors.textSecondary,
     );
 
     /// One compact shortcut tab matching the reference image minimalist style:
@@ -116,34 +115,6 @@ class HomeCategoriesGrid extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (pending > 0) ...[
-            Row(
-              children: [
-                Icon(
-                  Icons.event_outlined,
-                  size: 20,
-                  color: FinavigColors.danger,
-                ),
-                const SizedBox(width: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: FinavigColors.danger.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    '$pending need attention',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: FinavigColors.danger,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 10.5,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-          ],
           SingleChildScrollView(
             key: const ValueKey('home-category-scroller'),
             scrollDirection: Axis.horizontal,
@@ -154,6 +125,15 @@ class HomeCategoriesGrid extends StatelessWidget {
                   accent: FinavigColors.lilac,
                   label: 'AI Plan',
                   onTap: () => context.push('/ai-budget-plan'),
+                ),
+                const SizedBox(width: 4),
+                tile(
+                  icon: Icons.document_scanner_outlined,
+                  accent: FinavigColors.logoBlue,
+                  label: 'Scan',
+                  onTap: () {
+                    unawaited(onScanTap());
+                  },
                 ),
                 const SizedBox(width: 4),
                 tile(
@@ -193,6 +173,7 @@ class HomeCategoriesGrid extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(height: 12),
           // Subtle hairline divider matching the ChatGPT design
           Divider(
             height: 1,
@@ -200,91 +181,6 @@ class HomeCategoriesGrid extends StatelessWidget {
             color: fade.color(
               Colors.black.withValues(alpha: 0.08),
               Colors.white.withValues(alpha: 0.08),
-            ),
-          ),
-          const SizedBox(height: 16),
-          // Full-width primary CTA: Scan.
-          Material(
-            borderRadius: BorderRadius.circular(FinavigRadius.tile),
-            clipBehavior: Clip.antiAlias,
-            color: Colors.transparent,
-            child: Ink(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    fade.color(
-                      const Color(0xFF2E8BC0),
-                      const Color(0xFF2671A8),
-                    ),
-                    fade.color(
-                      const Color(0xFF1B5A8A),
-                      const Color(0xFF0E3A5C),
-                    ),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: InkWell(
-                onTap: () {
-                  // Free plan document limit — paywall when the quota is full.
-                  unawaited(onScanTap());
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: const Icon(
-                          Icons.document_scanner_outlined,
-                          color: Colors.white,
-                          size: 21,
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Scan',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Add a document to track its expiry',
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.85),
-                                fontSize: 11,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Icon(
-                        Icons.add_circle_outline_rounded,
-                        color: Colors.white,
-                        size: 22,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
             ),
           ),
         ],
