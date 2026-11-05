@@ -229,14 +229,13 @@ class HomeSearchPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fade = FinavigTransition.of(context);
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final fade = FinavigTransition.of(context);
 
     return Material(
       color: fade.color(Colors.white, FinavigColors.charcoal),
       borderRadius: BorderRadius.circular(24),
-      elevation: isDark ? 0 : 1,
+      elevation: fade.value(1.0, 0.0),
       shadowColor: Colors.black.withValues(alpha: 0.05),
       child: InkWell(
         onTap: () => context.push('/search'),
@@ -326,27 +325,21 @@ class _HomeOpenCockpit extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final fade = FinavigTransition.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     final activeDocs = items.where((i) => i.isActive).length;
     final urgentDocs = items
         .where((i) => i.isActive && i.daysRemaining <= 30)
         .length;
 
-    // Premium elevated card surface
+    // Premium elevated card surface smoothly interpolating with theme transitions
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: isDark
-              ? [
-                  const Color(0xFF1A1D2E),
-                  const Color(0xFF151824),
-                ]
-              : [
-                  Colors.white,
-                  const Color(0xFFF8F9FC),
-                ],
+          colors: [
+            fade.color(Colors.white, const Color(0xFF1A1D2E)),
+            fade.color(const Color(0xFFF8F9FC), const Color(0xFF151824)),
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -357,20 +350,18 @@ class _HomeOpenCockpit extends StatelessWidget {
             Colors.white.withValues(alpha: 0.08),
           ),
         ),
-        boxShadow: isDark
-            ? []
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 24,
-                  offset: const Offset(0, 8),
-                ),
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.02),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: fade.value(0.04, 0.0)),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: fade.value(0.02, 0.0)),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -486,7 +477,9 @@ class _HomeOpenCockpit extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: FinavigColors.safe.withValues(alpha: isDark ? 0.16 : 0.10),
+                  color: FinavigColors.safe.withValues(
+                    alpha: fade.value(0.10, 0.16),
+                  ),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -512,7 +505,9 @@ class _HomeOpenCockpit extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: FinavigColors.danger.withValues(alpha: isDark ? 0.16 : 0.10),
+                  color: FinavigColors.danger.withValues(
+                    alpha: fade.value(0.10, 0.16),
+                  ),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -571,9 +566,13 @@ class _HomeOpenCockpit extends StatelessWidget {
                       height: 34,
                       decoration: BoxDecoration(
                         color: urgentDocs > 0
-                            ? FinavigColors.warning.withValues(alpha: isDark ? 0.22 : 0.14)
+                            ? FinavigColors.warning.withValues(
+                                alpha: fade.value(0.14, 0.22),
+                              )
                             : activeDocs > 0
-                                ? FinavigColors.safe.withValues(alpha: isDark ? 0.22 : 0.14)
+                                ? FinavigColors.safe.withValues(
+                                    alpha: fade.value(0.14, 0.22),
+                                  )
                                 : fade.color(
                                     FinavigColors.mist,
                                     FinavigColors.slate,
@@ -626,7 +625,7 @@ class _HomeOpenCockpit extends StatelessWidget {
                                   ),
                                   decoration: BoxDecoration(
                                     color: FinavigColors.danger.withValues(
-                                      alpha: isDark ? 0.25 : 0.15,
+                                      alpha: fade.value(0.15, 0.25),
                                     ),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
@@ -647,7 +646,7 @@ class _HomeOpenCockpit extends StatelessWidget {
                                   ),
                                   decoration: BoxDecoration(
                                     color: FinavigColors.safe.withValues(
-                                      alpha: isDark ? 0.25 : 0.15,
+                                      alpha: fade.value(0.15, 0.25),
                                     ),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
