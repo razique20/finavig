@@ -327,10 +327,7 @@ class _AppShellState extends State<_AppShell> {
           child: SizedBox(
             height: 56,
             child: Row(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Spacer(flex: 2),
                 _NavPillItem(
                   icon: widget.navigationShell.currentIndex == 0
                       ? Icons.home_rounded
@@ -339,7 +336,6 @@ class _AppShellState extends State<_AppShell> {
                   tooltip: 'Home',
                   onTap: () => _goBranch(0),
                 ),
-                const SizedBox(width: 24),
                 _NavPillItem(
                   icon: widget.navigationShell.currentIndex == 1
                       ? Icons.account_balance_wallet_rounded
@@ -352,12 +348,10 @@ class _AppShellState extends State<_AppShell> {
                       : FinavigColors.warning,
                   onTap: () => _goBranch(1),
                 ),
-                const SizedBox(width: 24),
                 _QuickActionButton(
                   onTap: () => showQuickActionSheet(context),
                   onLongPress: () => showAskFinavigFlow(context),
                 ),
-                const SizedBox(width: 24),
                 _NavPillItem(
                   icon: widget.navigationShell.currentIndex == 2
                       ? Icons.description_rounded
@@ -368,7 +362,6 @@ class _AppShellState extends State<_AppShell> {
                   dotColor: FinavigColors.danger,
                   onTap: () => _goBranch(2),
                 ),
-                const SizedBox(width: 24),
                 _NavPillItem(
                   icon: widget.navigationShell.currentIndex == 3
                       ? Icons.person_rounded
@@ -377,7 +370,6 @@ class _AppShellState extends State<_AppShell> {
                   tooltip: 'Profile',
                   onTap: () => _goBranch(3),
                 ),
-                const Spacer(flex: 2),
               ],
             ),
           ),
@@ -408,53 +400,57 @@ class _QuickActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fade = FinavigTransition.of(context);
-    return Tooltip(
-      message: 'Quick actions\nHold for Ask Finavig AI',
-      waitDuration: const Duration(milliseconds: 600),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          onLongPress: onLongPress,
-          borderRadius: BorderRadius.circular(21),
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  fade.color(FinavigColors.ink, FinavigColors.charcoal),
-                  fade.color(
-                    FinavigColors.inkDeep,
-                    FinavigColors.slateLight,
+    return Expanded(
+      child: Center(
+        child: Tooltip(
+          message: 'Quick actions\nHold for Ask Finavig AI',
+          waitDuration: const Duration(milliseconds: 600),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onTap,
+              onLongPress: onLongPress,
+              borderRadius: BorderRadius.circular(21),
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      fade.color(FinavigColors.ink, FinavigColors.charcoal),
+                      fade.color(
+                        FinavigColors.inkDeep,
+                        FinavigColors.slateLight,
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: fade.color(
-                    FinavigColors.ink.withValues(alpha: 0.25),
-                    Colors.black.withValues(alpha: 0.40),
+                  boxShadow: [
+                    BoxShadow(
+                      color: fade.color(
+                        FinavigColors.ink.withValues(alpha: 0.25),
+                        Colors.black.withValues(alpha: 0.40),
+                      ),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                  border: Border.all(
+                    color: fade.color(
+                      Colors.white.withValues(alpha: 0.15),
+                      Colors.white.withValues(alpha: 0.12),
+                    ),
+                    width: 1,
                   ),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
                 ),
-              ],
-              border: Border.all(
-                color: fade.color(
-                  Colors.white.withValues(alpha: 0.15),
-                  Colors.white.withValues(alpha: 0.12),
+                child: const Icon(
+                  Icons.add_rounded,
+                  size: 24,
+                  color: Colors.white,
                 ),
-                width: 1,
               ),
-            ),
-            child: const Icon(
-              Icons.add_rounded,
-              size: 24,
-              color: Colors.white,
             ),
           ),
         ),
@@ -484,62 +480,64 @@ class _NavPillItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fade = FinavigTransition.of(context);
-    return Tooltip(
-      message: tooltip,
-      waitDuration: const Duration(milliseconds: 600),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(24),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
-          child: Center(
-            child: Stack(
-              clipBehavior: Clip.none,
-              alignment: Alignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: active
-                        ? fade.color(
-                            FinavigColors.ink.withValues(alpha: 0.08),
-                            Colors.white.withValues(alpha: 0.14),
-                        )
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(18),
+    return Expanded(
+      child: Tooltip(
+        message: tooltip,
+        waitDuration: const Duration(milliseconds: 600),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(24),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Center(
+              child: Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: active
+                          ? fade.color(
+                              FinavigColors.ink.withValues(alpha: 0.08),
+                              Colors.white.withValues(alpha: 0.14),
+                            )
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Icon(
+                      icon,
+                      size: 21,
+                      color: active
+                          ? fade.color(FinavigColors.ink, Colors.white)
+                          : fade.color(
+                              FinavigColors.textMutedLight,
+                              Colors.white.withValues(alpha: 0.65),
+                            ),
+                    ),
                   ),
-                  child: Icon(
-                    icon,
-                    size: 21,
-                    color: active
-                        ? fade.color(FinavigColors.ink, Colors.white)
-                        : fade.color(
-                            FinavigColors.textMutedLight,
-                            Colors.white.withValues(alpha: 0.65),
-                        ),
-                  ),
-                ),
-                if (showDot)
-                  Positioned(
-                    right: active ? -2 : 3,
-                    top: 1,
-                    child: Container(
-                      width: 9,
-                      height: 9,
-                      decoration: BoxDecoration(
-                        color: dotColor ?? FinavigColors.danger,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: fade.color(
-                            Colors.white,
-                            FinavigColors.slate,
+                  if (showDot)
+                    Positioned(
+                      right: 4,
+                      top: 1,
+                      child: Container(
+                        width: 9,
+                        height: 9,
+                        decoration: BoxDecoration(
+                          color: dotColor ?? FinavigColors.danger,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: fade.color(
+                              Colors.white,
+                              FinavigColors.slate,
+                            ),
+                            width: 1.5,
                           ),
-                          width: 1.5,
                         ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
