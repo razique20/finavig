@@ -181,12 +181,90 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
           ),
         ),
       ),
+      bottomNavigationBar: Container(
+        padding: EdgeInsets.fromLTRB(
+          16,
+          10,
+          16,
+          10 + MediaQuery.of(context).padding.bottom,
+        ),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface.withValues(alpha: 0.95),
+          border: Border(
+            top: BorderSide(
+              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+              width: 0.5,
+            ),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: () => _markAsRenewed(context, item),
+                icon: const Icon(Icons.check_circle_rounded, size: 18),
+                label: const Text('Mark as Renewed'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: FinavigColors.safe,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            IconButton.filledTonal(
+              onPressed: () => _scheduleReminders(context, item),
+              icon: Icon(
+                item.reminderStatus > 0
+                    ? Icons.notifications_active_rounded
+                    : Icons.notifications_none_rounded,
+                color: theme.colorScheme.primary,
+              ),
+              tooltip: item.reminderStatus > 0
+                  ? 'Reminders active — tap to reschedule'
+                  : 'Schedule reminders',
+              style: IconButton.styleFrom(
+                padding: const EdgeInsets.all(12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            IconButton.filledTonal(
+              onPressed: () => _shareDocumentFile(context, item),
+              icon: Icon(
+                Icons.share_outlined,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              tooltip: 'Share document',
+              style: IconButton.styleFrom(
+                padding: const EdgeInsets.all(12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
       body: SingleChildScrollView(
         padding: EdgeInsets.fromLTRB(
           16,
-          MediaQuery.of(context).padding.top + kToolbarHeight,
+          MediaQuery.of(context).padding.top + kToolbarHeight + 8,
           16,
-          8,
+          24,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -194,47 +272,33 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
             // Top Header Card with Department Logo
             _buildHeaderCard(theme, item, urgency, expiresAt, daysRemaining),
 
-            const SizedBox(height: 16),
+            // Warning box (when relevant)
+            if (!item.isExpired) ...[
+              const SizedBox(height: 14),
+              _buildWarningCard(theme, item),
+            ],
 
-            // Warning box
-            if (!item.isExpired) _buildWarningCard(theme, item),
-
+            // Attached file card (if any)
             if (item.fileName != null || item.filePath != null) ...[
               const SizedBox(height: 14),
               _buildAttachedFileCard(theme, item),
             ],
 
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
 
-            // Key info grid
+            // Unified Document details card (compact 2-column specifications)
             _buildInfoGrid(theme, item),
 
             const SizedBox(height: 16),
 
-            // Urgency path steps
+            // Urgency timeline & alerts ladder with inline custom alerts trigger
             _buildUrgencyPath(theme, item),
 
-            const SizedBox(height: 20),
-
-            // Per-document reminder overrides
-            _buildReminderOverridesCard(theme, item),
-
-            const SizedBox(height: 20),
-
-            // Renewal process
-            _buildRenewalProcess(theme, item),
-
-            const SizedBox(height: 20),
-
-            // Renewal history timeline
-            _buildRenewalHistoryTimeline(theme, item),
-
-            const SizedBox(height: 20),
-
-            // Actions
-            _buildActions(theme, item),
-
-            const SizedBox(height: 40),
+            // Renewal history timeline (only rendered if past renewals exist)
+            if (item.renewalHistory != null && item.renewalHistory!.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              _buildRenewalHistoryTimeline(theme, item),
+            ],
           ],
         ),
       ),
@@ -912,6 +976,8 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
   }
 
   Widget _buildInfoGrid(ThemeData theme, ExpiryItem item) {
+    final isDark = theme.brightness == Brightness.dark;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -924,70 +990,171 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
               fontWeight: FontWeight.w600,
               fontSize: 15,
               height: 1.0,
-              letterSpacing: 0,
             ),
           ),
         ),
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          padding: EdgeInsets.zero,
-          mainAxisSpacing: 6,
-          crossAxisSpacing: 6,
-          childAspectRatio: 3.1,
-          children: [
-            _InfoTile(
-              icon: Icons.folder_outlined,
-              label: 'Document type',
-              value: item.docType.displayName,
+        Container(
+          decoration: BoxDecoration(
+            color: isDark
+                ? FinavigColors.slate.withValues(alpha: 0.45)
+                : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: theme.colorScheme.outlineVariant
+                  .withValues(alpha: isDark ? 0.2 : 0.3),
+              width: 0.6,
             ),
-            _InfoTile(
-              icon: Icons.calendar_today_rounded,
-              label: 'Expiry date',
-              value: DateFormat('dd MMM yyyy').format(item.expiresAt),
-              valueColor: item.daysRemaining <= 7 ? FinavigColors.danger : null,
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Column(
+            children: [
+              _buildDetailRow(
+                theme: theme,
+                icon1: Icons.folder_outlined,
+                label1: 'Document type',
+                value1: item.docType.displayName,
+                icon2: Icons.location_on_outlined,
+                label2: 'Location',
+                value2: item.location ??
+                    DocumentCollectionService.instance.activeCountry.name,
+              ),
+              Divider(
+                height: 18,
+                thickness: 0.5,
+                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.25),
+              ),
+              _buildDetailRow(
+                theme: theme,
+                icon1: Icons.attach_money_rounded,
+                label1: 'Renewal fee',
+                value1: item.renewalFee != null
+                    ? '${DocumentCollectionService.instance.activeCurrency} ${item.renewalFee!.toStringAsFixed(0)}'
+                    : 'Estimated',
+                icon2: Icons.history_edu_rounded,
+                label2: 'Documented on',
+                value2: item.documentDate ?? 'Not recorded',
+              ),
+              Divider(
+                height: 18,
+                thickness: 0.5,
+                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.25),
+              ),
+              _buildDetailRow(
+                theme: theme,
+                icon1: Icons.person_outline_rounded,
+                label1: 'Assigned to',
+                value1: item.assignedTo ?? 'Unassigned',
+                icon2: Icons.notifications_active_outlined,
+                label2: 'Reminder status',
+                value2: _reminderStatusLabel(item.reminderStatus),
+                value2Color:
+                    item.reminderStatus > 0 ? theme.colorScheme.primary : null,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDetailRow({
+    required ThemeData theme,
+    required IconData icon1,
+    required String label1,
+    required String value1,
+    Color? value1Color,
+    required IconData icon2,
+    required String label2,
+    required String value2,
+    Color? value2Color,
+  }) {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildDetailCell(
+            theme: theme,
+            icon: icon1,
+            label: label1,
+            value: value1,
+            valueColor: value1Color,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildDetailCell(
+            theme: theme,
+            icon: icon2,
+            label: label2,
+            value: value2,
+            valueColor: value2Color,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDetailCell({
+    required ThemeData theme,
+    required IconData icon,
+    required String label,
+    required String value,
+    Color? valueColor,
+  }) {
+    final isDark = theme.brightness == Brightness.dark;
+    final iconColor = valueColor ??
+        FinavigColors.adaptiveIcon(
+          context,
+          theme.colorScheme.outline,
+        );
+
+    return Row(
+      children: [
+        Container(
+          width: 26,
+          height: 26,
+          decoration: BoxDecoration(
+            color: iconColor.withValues(alpha: isDark ? 0.16 : 0.08),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Center(
+            child: Icon(
+              icon,
+              size: 13,
+              color: iconColor,
             ),
-            _InfoTile(
-              icon: Icons.timer_outlined,
-              label: 'Days remaining',
-              value: '${item.daysRemaining} days',
-              valueColor: item.daysRemaining <= 7
-                  ? FinavigColors.danger
-                  : item.daysRemaining <= 30
-                  ? FinavigColors.warning
-                  : null,
-            ),
-            _InfoTile(
-              icon: Icons.location_on_outlined,
-              label: 'Location',
-              value:
-                  item.location ??
-                  DocumentCollectionService.instance.activeCountry.name,
-            ),
-            _InfoTile(
-              icon: Icons.attach_money,
-              label: 'Renewal fee',
-              value: item.renewalFee != null
-                  ? '${DocumentCollectionService.instance.activeCurrency} ${item.renewalFee!.toStringAsFixed(0)}'
-                  : 'Estimated',
-            ),
-            _InfoTile(
-              icon: Icons.history_edu_rounded,
-              label: 'Documented on',
-              value: item.documentDate ?? 'Not recorded',
-            ),
-            _InfoTile(
-              icon: Icons.person_outline,
-              label: 'Assigned to',
-              value: item.assignedTo ?? 'Unassigned',
-            ),
-            _InfoTile(
-              icon: Icons.notifications_active_outlined,
-              label: 'Reminder status',
-              value: _reminderStatusLabel(item.reminderStatus),
-            ),
-          ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                label,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.outline,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                  height: 1.1,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                  color: valueColor ?? theme.colorScheme.onSurface,
+                  height: 1.2,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -1011,174 +1178,28 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
   }
 
   Widget _buildUrgencyPath(ThemeData theme, ExpiryItem item) {
-    // Shared 90·60·30·7-day ladder — one implementation reused across
-    // screens (see lib/widgets/cards/urgency_timeline_card.dart).
-    return UrgencyTimelineCard.withIndicator(daysRemaining: item.daysRemaining);
-  }
-
-  Widget _buildRenewalProcess(ThemeData theme, ExpiryItem item) {
-    final steps =
-        item.renewalSteps ??
-        [
-          'Review current document status',
-          'Gather required renewal documents',
-          'Submit renewal application',
-          'Pay applicable fees',
-          'Receive renewed document',
-        ];
+    final customDays = item.customReminderDays;
+    final hasCustom = customDays != null && customDays.isNotEmpty;
+    final daysText = hasCustom
+        ? customDays.map((d) => '${d}d').join(', ')
+        : '90, 60, 30, 7 days';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Renewal process',
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 16),
-        ...steps.asMap().entries.map((entry) {
-          final index = entry.key;
-          final step = entry.value;
-          final isLast = index == steps.length - 1;
-
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Step number circle
-                Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: isLast
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.surfaceContainerHighest,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: theme.colorScheme.outline.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      '${index + 1}',
-                      style: TextStyle(
-                        color: isLast
-                            ? Colors.white
-                            : theme.colorScheme.outline,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                // Step content
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        step,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      if (isLast) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          'Complete this step to renew ${item.displayName}',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.outline,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          );
-        }),
-      ],
-    );
-  }
-
-  Widget _buildReminderOverridesCard(ThemeData theme, ExpiryItem item) {
-    final customDays = item.customReminderDays;
-    final hasCustom = customDays != null && customDays.isNotEmpty;
-    final daysText = hasCustom
-        ? customDays.map((d) => '$d days').join(', ')
-        : '90, 60, 30, 7 days (default ladder)';
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: hasCustom
-              ? theme.colorScheme.primary.withValues(alpha: 0.5)
-              : theme.colorScheme.outlineVariant,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.notification_add_rounded,
-                color: theme.colorScheme.primary,
-                size: 20,
+        Row(
+          children: [
+            Text(
+              'Urgency timeline & alerts',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
               ),
-              const SizedBox(width: 8),
-              Text(
-                'Reminder Overrides',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const Spacer(),
-              if (hasCustom)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    'Custom Alert Days',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onPrimaryContainer,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            hasCustom
-                ? 'OS notifications scheduled $daysText before expiry date.'
-                : 'Standard 90, 60, 30, and 7-day alert ladder active.',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.outline,
             ),
-          ),
-          const SizedBox(height: 16),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: OutlinedButton.icon(
-              onPressed: () async {
-                // Track 1 gate: custom alert days are a Plus feature.
+            const Spacer(),
+            InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: () async {
                 if (!EntitlementService.instance.allows(
                   EntitlementFeature.customReminderDays,
                 )) {
@@ -1190,20 +1211,33 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                 }
                 _showCustomReminderDaysDialog(context, item);
               },
-              icon: const Icon(Icons.tune_rounded, size: 16),
-              label: Text(
-                hasCustom ? 'Edit Alert Days' : 'Set Custom Alert Days',
-              ),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.tune_rounded,
+                      size: 13,
+                      color: theme.colorScheme.primary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      hasCustom ? 'Alerts: $daysText' : 'Custom alerts',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        UrgencyTimelineCard.withIndicator(daysRemaining: item.daysRemaining),
+      ],
     );
   }
 
@@ -1297,6 +1331,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
 
   Widget _buildRenewalHistoryTimeline(ThemeData theme, ExpiryItem item) {
     final history = item.renewalHistory ?? [];
+    if (history.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1304,185 +1339,118 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         Row(
           children: [
             Text(
-              'Renewal history',
+              'Renewal History',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
+                fontSize: 15,
               ),
             ),
             const SizedBox(width: 8),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest,
+                color: theme.colorScheme.primaryContainer,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
                 '${history.length}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 11,
+                  color: theme.colorScheme.onPrimaryContainer,
                 ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 16),
-        if (history.isEmpty)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest.withValues(
-                alpha: 0.4,
-              ),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.history_rounded,
-                  color: FinavigColors.adaptiveIcon(
-                    context,
-                    theme.colorScheme.outline,
-                  ),
-                  size: 22,
+        const SizedBox(height: 10),
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: history.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          itemBuilder: (context, index) {
+            final rec = history[history.length - 1 - index]; // Newest first
+            return Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+                  width: 0.6,
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'No past renewals recorded yet. Tap "Mark as renewed" when you complete a renewal to log cost and history.',
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.event_available,
+                        color: FinavigColors.safe,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Renewed on ${rec.formattedRenewedAt}',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      if (rec.fee != null && rec.fee! > 0)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: FinavigColors.safe.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            '${DocumentCollectionService.instance.activeCurrency} ${rec.fee!.toStringAsFixed(0)}',
+                            style: TextStyle(
+                              color: FinavigColors.safe,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Extended: ${rec.formattedPreviousExpiry}  ➔  ${rec.formattedNewExpiry}',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.outline,
+                      color: theme.colorScheme.onSurface,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                ),
-              ],
-            ),
-          )
-        else
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: history.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 8),
-            itemBuilder: (context, index) {
-              final rec = history[history.length - 1 - index]; // Newest first
-              return Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerLow,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: theme.colorScheme.outlineVariant),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.event_available,
-                          color: FinavigColors.safe,
-                          size: 18,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Renewed on ${rec.formattedRenewedAt}',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const Spacer(),
-                        if (rec.fee != null && rec.fee! > 0)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: FinavigColors.safe.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              '${DocumentCollectionService.instance.activeCurrency} ${rec.fee!.toStringAsFixed(0)}',
-                              style: TextStyle(
-                                color: FinavigColors.safe,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 11,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
+                  if (rec.renewedBy != null && rec.renewedBy!.isNotEmpty) ...[
+                    const SizedBox(height: 2),
                     Text(
-                      'Extended: ${rec.formattedPreviousExpiry}  ➔  ${rec.formattedNewExpiry}',
+                      'By: ${rec.renewedBy}',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface,
-                        fontWeight: FontWeight.w500,
+                        color: theme.colorScheme.outline,
                       ),
                     ),
-                    if (rec.renewedBy != null && rec.renewedBy!.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        'By: ${rec.renewedBy}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.outline,
-                        ),
-                      ),
-                    ],
-                    if (rec.note != null && rec.note!.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        'Note: "${rec.note}"',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          fontStyle: FontStyle.italic,
-                          color: theme.colorScheme.outline,
-                        ),
-                      ),
-                    ],
                   ],
-                ),
-              );
-            },
-          ),
-      ],
-    );
-  }
-
-  Widget _buildActions(ThemeData theme, ExpiryItem item) {
-    return Column(
-      children: [
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: () => _markAsRenewed(context, item),
-            icon: const Icon(Icons.check_circle_rounded),
-            label: const Text('Mark as renewed'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: FinavigColors.safe,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-            ),
-          ),
-        ),
-        const SizedBox(height: 14),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: () => _scheduleReminders(context, item),
-            icon: const Icon(Icons.notifications_active_rounded),
-            label: Text(
-              item.reminderStatus > 0
-                  ? 'Reminders active — tap to reschedule'
-                  : 'Schedule reminders',
-            ),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-            ),
-          ),
+                  if (rec.note != null && rec.note!.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      'Note: "${rec.note}"',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontStyle: FontStyle.italic,
+                        color: theme.colorScheme.outline,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            );
+          },
         ),
       ],
     );
@@ -1763,93 +1731,3 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
   }
 }
 
-class _InfoTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color? valueColor;
-
-  const _InfoTile({
-    required this.icon,
-    required this.label,
-    required this.value,
-    this.valueColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final iconColor = valueColor ??
-        FinavigColors.adaptiveIcon(
-          context,
-          theme.colorScheme.outline,
-        );
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: isDark
-            ? FinavigColors.slate.withValues(alpha: 0.5)
-            : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant
-              .withValues(alpha: isDark ? 0.2 : 0.35),
-          width: 0.6,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: isDark ? 0.16 : 0.08),
-              borderRadius: BorderRadius.circular(7),
-            ),
-            child: Center(
-              child: Icon(
-                icon,
-                size: 14,
-                color: iconColor,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  label,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.outline,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w500,
-                    height: 1.1,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                    color: valueColor ?? theme.colorScheme.onSurface,
-                    height: 1.2,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
