@@ -25,85 +25,68 @@ class HomeCategoriesGrid extends StatelessWidget {
     // Resolved through the theme transition factor so the tiles cross-fade
     // with the light↔dark animation instead of snapping halfway through it.
     final fade = FinavigTransition.of(context);
+
     final tileBg = fade.color(
       Colors.white,
       FinavigColors.slate.withValues(alpha: 0.5),
     );
-    final labelColor = fade.color(
-      FinavigColors.textPrimaryLight,
-      FinavigColors.textSecondary,
-    );
 
-    /// One compact shortcut tab matching the reference image minimalist style:
-    /// unboxed outline icon + label with uniform charcoal color across all items.
-    /// Since all categories navigate to different pages, they share the same
-    /// clean, unselected appearance without blue tint or dimmed states.
+    /// Modern squircle bento shortcut: elevated card surface with a soft-tinted
+    /// squircle icon container on top and concise label beneath.
     Widget tile({
       required IconData icon,
       required Color accent,
       required String label,
       required VoidCallback onTap,
     }) {
-      final itemColor = fade.color(
-        const Color(0xFF2A2A2A),
-        Colors.white,
-      );
-
       return Material(
         color: tileBg,
+        borderRadius: BorderRadius.circular(16),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(8),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Hidden zero-size decoration container ensuring unit test theme transition
-                // assertions pass seamlessly while maintaining pure unboxed outline aesthetics.
-                Container(
-                  width: 0,
-                  height: 0,
-                  decoration: BoxDecoration(
-                    color: accent.withValues(alpha: fade.value(0.11, 0.16)),
-                  ),
-                ),
-                // Hidden zero-size icon ensuring unit test brand theme-crossfade assertion passes.
-                SizedBox(
-                  width: 0,
-                  height: 0,
-                  child: OverflowBox(
-                    maxWidth: 0,
-                    maxHeight: 0,
-                    child: Icon(
-                      icon,
-                      size: 0,
-                      color: fade.color(FinavigColors.logoBlue, Colors.white),
+          borderRadius: BorderRadius.circular(16),
+          child: SizedBox(
+            width: 74,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Squircle icon container with tint matching feature accent
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: accent.withValues(alpha: fade.value(0.11, 0.16)),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        icon,
+                        size: 22,
+                        color: fade.color(FinavigColors.logoBlue, Colors.white),
+                      ),
                     ),
                   ),
-                ),
-                // Visible icon: clean outline glyph in dark charcoal matching reference image.
-                Icon(
-                  icon,
-                  size: 20,
-                  color: itemColor,
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  label,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: labelColor,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                    letterSpacing: -0.1,
-                    height: 1.2,
+                  const SizedBox(height: 8),
+                  Text(
+                    label,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: fade.color(
+                        FinavigColors.textPrimaryLight,
+                        FinavigColors.textSecondary,
+                      ),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 11,
+                      letterSpacing: -0.1,
+                      height: 1.2,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -126,61 +109,45 @@ class HomeCategoriesGrid extends StatelessWidget {
                   label: 'AI Plan',
                   onTap: () => context.push('/ai-budget-plan'),
                 ),
-                const SizedBox(width: 4),
                 tile(
                   icon: Icons.document_scanner_outlined,
-                  accent: FinavigColors.logoBlue,
+                  accent: const Color(0xFF0EA5E9),
                   label: 'Scan',
                   onTap: () {
                     unawaited(onScanTap());
                   },
                 ),
-                const SizedBox(width: 4),
                 tile(
                   icon: Icons.description_outlined,
                   accent: FinavigColors.logoBlue,
                   label: 'Documents',
                   onTap: () => context.go('/documents'),
                 ),
-                const SizedBox(width: 4),
                 tile(
                   icon: Icons.event_outlined,
                   accent: FinavigColors.logoRed,
                   label: 'Renewals',
                   onTap: () => context.push('/expiry-list'),
                 ),
-                const SizedBox(width: 4),
                 tile(
                   icon: Icons.mail_outline_rounded,
                   accent: FinavigColors.logoGreen,
                   label: 'Envelopes',
                   onTap: () => context.push('/envelopes'),
                 ),
-                const SizedBox(width: 4),
                 tile(
                   icon: Icons.receipt_long_outlined,
                   accent: FinavigColors.logoGold,
                   label: 'Records',
                   onTap: () => context.push('/records'),
                 ),
-                const SizedBox(width: 4),
                 tile(
                   icon: Icons.insights_outlined,
-                  accent: FinavigColors.logoBlue,
+                  accent: const Color(0xFF6366F1),
                   label: 'Forecast',
                   onTap: () => context.push('/cash-flow-forecast'),
                 ),
               ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          // Subtle hairline divider matching the ChatGPT design
-          Divider(
-            height: 1,
-            thickness: 0.5,
-            color: fade.color(
-              Colors.black.withValues(alpha: 0.08),
-              Colors.white.withValues(alpha: 0.08),
             ),
           ),
         ],

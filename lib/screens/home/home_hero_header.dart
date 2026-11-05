@@ -333,319 +333,371 @@ class _HomeOpenCockpit extends StatelessWidget {
         .where((i) => i.isActive && i.daysRemaining <= 30)
         .length;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // ── Top status badge: Pulse indicator + Active Currency ──
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: fade.color(
-              FinavigColors.accent.withValues(alpha: 0.08),
-              FinavigColors.accentBright.withValues(alpha: 0.15),
-            ),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
+    // Premium elevated card surface
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isDark
+              ? [
+                  const Color(0xFF1A1D2E),
+                  const Color(0xFF151824),
+                ]
+              : [
+                  Colors.white,
+                  const Color(0xFFF8F9FC),
+                ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: fade.color(
+            Colors.black.withValues(alpha: 0.06),
+            Colors.white.withValues(alpha: 0.08),
+          ),
+        ),
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 24,
+                  offset: const Offset(0, 8),
+                ),
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Top status badge: Pulse indicator + Active Currency ──
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
               color: fade.color(
-                FinavigColors.accent.withValues(alpha: 0.16),
-                FinavigColors.accentBright.withValues(alpha: 0.25),
+                FinavigColors.accent.withValues(alpha: 0.08),
+                FinavigColors.accentBright.withValues(alpha: 0.15),
               ),
-              width: 1,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: fade.color(
+                  FinavigColors.accent.withValues(alpha: 0.16),
+                  FinavigColors.accentBright.withValues(alpha: 0.25),
+                ),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: urgentDocs > 0
+                        ? FinavigColors.caution
+                        : FinavigColors.safe,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  'FINANCIAL PULSE',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: fade.color(
+                      FinavigColors.accent,
+                      FinavigColors.accentBright,
+                    ),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 9.5,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(width: 5),
+                Container(
+                  width: 3,
+                  height: 3,
+                  decoration: BoxDecoration(
+                    color: fade.color(
+                      FinavigColors.accent.withValues(alpha: 0.4),
+                      Colors.white.withValues(alpha: 0.4),
+                    ),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  activeCurrency,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: fade.color(
+                      FinavigColors.textSecondaryLight,
+                      FinavigColors.textSecondary,
+                    ),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 9.5,
+                  ),
+                ),
+              ],
             ),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
+          const SizedBox(height: 16),
+
+          // ── Main balance metric ──
+          Text(
+            'Net this month',
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: fade.color(
+                FinavigColors.textSecondaryLight,
+                FinavigColors.textSecondary,
+              ),
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.2,
+            ),
+          ),
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              MoneyFormat.aed(summary.net),
+              style: theme.textTheme.displayLarge?.copyWith(
+                color: fade.color(
+                  FinavigColors.textPrimaryLight,
+                  Colors.white,
+                ),
+                fontWeight: FontWeight.w800,
+                letterSpacing: -1.0,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // ── Cashflow stream pills: Inflow & Outflow ──
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Container(
-                width: 6,
-                height: 6,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: urgentDocs > 0
-                      ? FinavigColors.caution
-                      : FinavigColors.safe,
-                  shape: BoxShape.circle,
+                  color: FinavigColors.safe.withValues(alpha: isDark ? 0.16 : 0.10),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.arrow_downward_rounded,
+                      size: 12,
+                      color: FinavigColors.safe,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${MoneyFormat.aed(summary.income)} in',
+                      style: const TextStyle(
+                        color: FinavigColors.safe,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 5),
-              Text(
-                'FINANCIAL PULSE',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: fade.color(
-                    FinavigColors.accent,
-                    FinavigColors.accentBright,
-                  ),
-                  fontWeight: FontWeight.w700,
-                  fontSize: 9.5,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const SizedBox(width: 5),
               Container(
-                width: 3,
-                height: 3,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: fade.color(
-                    FinavigColors.accent.withValues(alpha: 0.4),
-                    Colors.white.withValues(alpha: 0.4),
-                  ),
-                  shape: BoxShape.circle,
+                  color: FinavigColors.danger.withValues(alpha: isDark ? 0.16 : 0.10),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-              ),
-              const SizedBox(width: 5),
-              Text(
-                activeCurrency,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: fade.color(
-                    FinavigColors.textSecondaryLight,
-                    FinavigColors.textSecondary,
-                  ),
-                  fontWeight: FontWeight.w700,
-                  fontSize: 9.5,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.arrow_upward_rounded,
+                      size: 12,
+                      color: FinavigColors.danger,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${MoneyFormat.aed(summary.expense)} out',
+                      style: const TextStyle(
+                        color: FinavigColors.danger,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-        ),
-        const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
-        // ── Main balance metric (Open, bold typography directly on canvas) ──
-        Text(
-          'Net this month',
-          style: theme.textTheme.labelMedium?.copyWith(
-            color: fade.color(
-              FinavigColors.textSecondaryLight,
-              FinavigColors.textSecondary,
-            ),
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.2,
-          ),
-        ),
-        const SizedBox(height: 4),
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: Alignment.centerLeft,
-          child: Text(
-            MoneyFormat.aed(summary.net),
-            style: theme.textTheme.displayLarge?.copyWith(
+          // ── Divider ──
+          Container(
+            height: 1,
+            decoration: BoxDecoration(
               color: fade.color(
-                FinavigColors.textPrimaryLight,
-                Colors.white,
+                Colors.black.withValues(alpha: 0.06),
+                Colors.white.withValues(alpha: 0.06),
               ),
-              fontWeight: FontWeight.w800,
-              letterSpacing: -1.0,
             ),
           ),
-        ),
-        const SizedBox(height: 10),
+          const SizedBox(height: 12),
 
-        // ── Cashflow stream pills: Inflow & Outflow ──
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-              decoration: BoxDecoration(
-                color: FinavigColors.safe.withValues(alpha: isDark ? 0.16 : 0.10),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.arrow_downward_rounded,
-                    size: 12,
-                    color: FinavigColors.safe,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${MoneyFormat.aed(summary.income)} in',
-                    style: const TextStyle(
-                      color: FinavigColors.safe,
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
+          // ── Renewal Readiness Strip (integrated in card) ──
+          Material(
+            color: fade.color(
+              const Color(0xFFF5F6F8),
+              const Color(0xFF1E2236),
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-              decoration: BoxDecoration(
-                color: FinavigColors.danger.withValues(alpha: isDark ? 0.16 : 0.10),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.arrow_upward_rounded,
-                    size: 12,
-                    color: FinavigColors.danger,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${MoneyFormat.aed(summary.expense)} out',
-                    style: const TextStyle(
-                      color: FinavigColors.danger,
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 14),
-
-        // ── Renewal Readiness & Liability Strip (Future-ready embedded payment readiness) ──
-        Material(
-          color: fade.color(
-            FinavigColors.cloud,
-            FinavigColors.charcoal,
-          ),
-          borderRadius: BorderRadius.circular(14),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: onOpenRenewals,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              child: Row(
-                children: [
-                  // Status badge / icon indicator
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: urgentDocs > 0
-                          ? FinavigColors.warning.withValues(alpha: isDark ? 0.22 : 0.14)
-                          : activeDocs > 0
-                              ? FinavigColors.safe.withValues(alpha: isDark ? 0.22 : 0.14)
-                              : fade.color(
-                                  FinavigColors.mist,
-                                  FinavigColors.slate,
-                                ),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(
-                      urgentDocs > 0
-                          ? Icons.warning_amber_rounded
-                          : activeDocs > 0
-                              ? Icons.verified_outlined
-                              : Icons.description_outlined,
-                      size: 17,
-                      color: urgentDocs > 0
-                          ? FinavigColors.warning
-                          : activeDocs > 0
-                              ? FinavigColors.safe
-                              : fade.color(
-                                  FinavigColors.textMutedLight,
-                                  FinavigColors.textMuted,
-                                ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  // Readiness text & details
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              'RENEWAL READINESS',
-                              style: TextStyle(
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.6,
-                                color: fade.color(
-                                  FinavigColors.textMutedLight,
-                                  FinavigColors.textSecondary,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            if (urgentDocs > 0)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 5,
-                                  vertical: 1.5,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: FinavigColors.danger.withValues(
-                                    alpha: isDark ? 0.25 : 0.15,
+            borderRadius: BorderRadius.circular(14),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: onOpenRenewals,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                child: Row(
+                  children: [
+                    // Status badge / icon indicator
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: urgentDocs > 0
+                            ? FinavigColors.warning.withValues(alpha: isDark ? 0.22 : 0.14)
+                            : activeDocs > 0
+                                ? FinavigColors.safe.withValues(alpha: isDark ? 0.22 : 0.14)
+                                : fade.color(
+                                    FinavigColors.mist,
+                                    FinavigColors.slate,
                                   ),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  '$urgentDocs due soon',
-                                  style: const TextStyle(
-                                    color: FinavigColors.danger,
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w700,
+                        borderRadius: BorderRadius.circular(11),
+                      ),
+                      child: Icon(
+                        urgentDocs > 0
+                            ? Icons.warning_amber_rounded
+                            : activeDocs > 0
+                                ? Icons.verified_outlined
+                                : Icons.description_outlined,
+                        size: 17,
+                        color: urgentDocs > 0
+                            ? FinavigColors.warning
+                            : activeDocs > 0
+                                ? FinavigColors.safe
+                                : fade.color(
+                                    FinavigColors.textMutedLight,
+                                    FinavigColors.textMuted,
                                   ),
-                                ),
-                              )
-                            else if (activeDocs > 0)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 5,
-                                  vertical: 1.5,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: FinavigColors.safe.withValues(
-                                    alpha: isDark ? 0.25 : 0.15,
-                                  ),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: const Text(
-                                  'Current',
-                                  style: TextStyle(
-                                    color: FinavigColors.safe,
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    // Readiness text & details
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                'RENEWAL READINESS',
+                                style: TextStyle(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.6,
+                                  color: fade.color(
+                                    FinavigColors.textMutedLight,
+                                    FinavigColors.textSecondary,
                                   ),
                                 ),
                               ),
-                          ],
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          nextItem != null
-                              ? '${nextItem!.displayName} · in ${nextItem!.daysRemaining}d (${nextRenewalLabel ?? ''})'
-                              : activeDocs > 0
-                                  ? '$activeDocs active documents · No imminent renewals'
-                                  : 'No documents tracked · Tap to view ledger',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: fade.color(
-                              FinavigColors.textPrimaryLight,
-                              Colors.white,
-                            ),
+                              const SizedBox(width: 6),
+                              if (urgentDocs > 0)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 5,
+                                    vertical: 1.5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: FinavigColors.danger.withValues(
+                                      alpha: isDark ? 0.25 : 0.15,
+                                    ),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    '$urgentDocs due soon',
+                                    style: const TextStyle(
+                                      color: FinavigColors.danger,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                )
+                              else if (activeDocs > 0)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 5,
+                                    vertical: 1.5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: FinavigColors.safe.withValues(
+                                      alpha: isDark ? 0.25 : 0.15,
+                                    ),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: const Text(
+                                    'Current',
+                                    style: TextStyle(
+                                      color: FinavigColors.safe,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+                          const SizedBox(height: 2),
+                          Text(
+                            nextItem != null
+                                ? '${nextItem!.displayName} · in ${nextItem!.daysRemaining}d (${nextRenewalLabel ?? ''})'
+                                : activeDocs > 0
+                                    ? '$activeDocs active documents · No imminent renewals'
+                                    : 'No documents tracked · Tap to view ledger',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: fade.color(
+                                FinavigColors.textPrimaryLight,
+                                Colors.white,
+                              ),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 6),
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    size: 18,
-                    color: fade.color(
-                      FinavigColors.textMutedLight,
-                      FinavigColors.textSecondary,
+                    const SizedBox(width: 6),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 18,
+                      color: fade.color(
+                        FinavigColors.textMutedLight,
+                        FinavigColors.textSecondary,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
