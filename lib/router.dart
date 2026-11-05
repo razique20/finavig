@@ -328,9 +328,9 @@ class _AppShellState extends State<_AppShell> {
             height: 56,
             child: Row(
               mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Spacer(flex: 2),
+                const Spacer(flex: 2),
                 _NavPillItem(
                   icon: widget.navigationShell.currentIndex == 0
                       ? Icons.home_rounded
@@ -508,22 +508,15 @@ class _NavPillItem extends StatelessWidget {
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(18),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        icon,
-                        size: 21,
-                        color: active
-                            ? fade.color(FinavigColors.ink, Colors.white)
-                            : fade.color(
-                                FinavigColors.textMutedLight,
-                                Colors.white.withValues(alpha: 0.65),
-                            ),
-                      ),
-                      const SizedBox(width: 4),
-                    ],
+                  child: Icon(
+                    icon,
+                    size: 21,
+                    color: active
+                        ? fade.color(FinavigColors.ink, Colors.white)
+                        : fade.color(
+                            FinavigColors.textMutedLight,
+                            Colors.white.withValues(alpha: 0.65),
+                        ),
                   ),
                 ),
                 if (showDot)

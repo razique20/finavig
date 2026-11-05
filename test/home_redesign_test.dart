@@ -127,9 +127,9 @@ void main() {
       tester.view.physicalSize = originalSize;
       tester.view.devicePixelRatio = originalRatio;
     });
-    await tester.ensureVisible(find.text('AI Budget Plan'));
+    await tester.ensureVisible(find.text('AI Plan'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('AI Budget Plan'));
+    await tester.tap(find.text('AI Plan'));
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     expect(find.text('AI Budget Planner'), findsOneWidget);
@@ -142,7 +142,7 @@ void main() {
 
     expect(find.text('Record'), findsNothing);
     expect(find.text('Budget'), findsNothing);
-    expect(find.text('AI Budget Plan'), findsOneWidget);
+    expect(find.text('AI Plan'), findsOneWidget);
   });
 
   testWidgets('home renders without overflowing a narrow phone viewport', (
@@ -192,7 +192,7 @@ void main() {
     expect(find.text('Envelopes'), findsOneWidget);
     expect(find.text('Records'), findsOneWidget);
     expect(find.text('Forecast'), findsOneWidget);
-    expect(find.text('AI Budget Plan'), findsOneWidget);
+    expect(find.text('AI Plan'), findsOneWidget);
     expect(find.text('AI Planner'), findsNothing);
     expect(find.text('Scan'), findsOneWidget);
   });
