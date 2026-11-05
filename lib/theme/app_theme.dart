@@ -58,10 +58,11 @@ class FinavigColors {
   static const Color inkDeep = Color(0xFF0A0F1D);
 
   // ── Surfaces — Dark mode ────────────────────────────────────────────────
-  static const Color obsidian = Color(0xFF0C0E14);
-  static const Color charcoal = Color(0xFF151824);
-  static const Color slate = Color(0xFF1D2130);
-  static const Color slateLight = Color(0xFF2B3042);
+  // Neutral modern fintech dark palette (Apple / Revolut / Stripe standard)
+  static const Color obsidian = Color(0xFF0D0E12); // Deep neutral canvas
+  static const Color charcoal = Color(0xFF16181E); // Primary elevated cards & sheets
+  static const Color slate = Color(0xFF21232B); // Secondary surfaces & action tiles
+  static const Color slateLight = Color(0xFF2C2F3A); // Subtle borders & dividers
 
   // ── Surfaces — Light mode ───────────────────────────────────────────────
   static const Color snowWhite = Color(0xFFF7F8FA); // canvas

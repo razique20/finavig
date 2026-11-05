@@ -25,9 +25,9 @@ class FinavigLogo extends StatelessWidget {
         boxShadow: showShadow
             ? [
                 BoxShadow(
-                  color: const Color(0xFF23236B).withOpacity(0.3),
+                  color: Colors.black.withValues(alpha: 0.2),
                   blurRadius: size * 0.25,
-                  spreadRadius: 2,
+                  spreadRadius: 1,
                   offset: const Offset(0, 4),
                 ),
               ]

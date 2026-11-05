@@ -337,8 +337,8 @@ class _HomeOpenCockpit extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            fade.color(Colors.white, const Color(0xFF1A1D2E)),
-            fade.color(const Color(0xFFF8F9FC), const Color(0xFF151824)),
+            fade.color(Colors.white, const Color(0xFF191B22)),
+            fade.color(const Color(0xFFF8F9FC), const Color(0xFF13151A)),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -550,7 +550,7 @@ class _HomeOpenCockpit extends StatelessWidget {
           Material(
             color: fade.color(
               const Color(0xFFF5F6F8),
-              const Color(0xFF1E2236),
+              FinavigColors.slate,
             ),
             borderRadius: BorderRadius.circular(14),
             clipBehavior: Clip.antiAlias,
