@@ -200,16 +200,16 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
             if (!item.isExpired) _buildWarningCard(theme, item),
 
             if (item.fileName != null || item.filePath != null) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
               _buildAttachedFileCard(theme, item),
             ],
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 14),
 
             // Key info grid
             _buildInfoGrid(theme, item),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
             // Urgency path steps
             _buildUrgencyPath(theme, item),
@@ -917,11 +917,12 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Padding(
-          padding: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.only(bottom: 8),
           child: Text(
             'Document details',
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w600,
+              fontSize: 15,
               height: 1.0,
               letterSpacing: 0,
             ),
@@ -932,9 +933,9 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           padding: EdgeInsets.zero,
-          mainAxisSpacing: 8,
-          crossAxisSpacing: 8,
-          childAspectRatio: 2.0,
+          mainAxisSpacing: 6,
+          crossAxisSpacing: 6,
+          childAspectRatio: 3.1,
           children: [
             _InfoTile(
               icon: Icons.folder_outlined,
@@ -982,7 +983,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
               value: item.assignedTo ?? 'Unassigned',
             ),
             _InfoTile(
-              icon: Icons.notifications_active,
+              icon: Icons.notifications_active_outlined,
               label: 'Reminder status',
               value: _reminderStatusLabel(item.reminderStatus),
             ),
@@ -995,17 +996,17 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
   String _reminderStatusLabel(int status) {
     switch (status) {
       case 0:
-        return 'No reminders set';
+        return 'No reminders';
       case 1:
-        return '90-day reminder active';
+        return '90-day active';
       case 2:
-        return '60-day task active';
+        return '60-day active';
       case 3:
-        return '30-day escalation active';
+        return '30-day active';
       case 4:
-        return '7-day urgent reminder sent';
+        return '7-day urgent';
       default:
-        return 'Unknown';
+        return 'None';
     }
   }
 
@@ -1778,40 +1779,68 @@ class _InfoTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final iconColor = valueColor ??
+        FinavigColors.adaptiveIcon(
+          context,
+          theme.colorScheme.outline,
+        );
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(8),
+        color: isDark
+            ? FinavigColors.slate.withValues(alpha: 0.5)
+            : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant
+              .withValues(alpha: isDark ? 0.2 : 0.35),
+          width: 0.6,
+        ),
       ),
       child: Row(
         children: [
-          Icon(
-            icon,
-            size: 15,
-            color: FinavigColors.adaptiveIcon(
-              context,
-              theme.colorScheme.outline,
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: isDark ? 0.16 : 0.08),
+              borderRadius: BorderRadius.circular(7),
+            ),
+            child: Center(
+              child: Icon(
+                icon,
+                size: 14,
+                color: iconColor,
+              ),
             ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
                   label,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.outline,
-                    fontSize: 11,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                    height: 1.1,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Text(
                   value,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
                     color: valueColor ?? theme.colorScheme.onSurface,
+                    height: 1.2,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
