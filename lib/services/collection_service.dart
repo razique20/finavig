@@ -67,6 +67,13 @@ class DocumentCollectionService extends ChangeNotifier {
     return _activeId;
   }
 
+  /// The stable ID of the user's built-in Personal collection.
+  /// Transactions detected from banking notifications are always saved here.
+  String get personalCollectionId {
+    final personal = _collections.where((c) => c.isPersonal).firstOrNull;
+    return personal?.id ?? DocumentCollection.personalId;
+  }
+
   /// Active GCC country based on active collection.
   GccCountry get activeCountry {
     final activeId = activeCollectionId;
@@ -176,8 +183,9 @@ class DocumentCollectionService extends ChangeNotifier {
       if (personal != null) targetId = personal.id;
     }
     if (!_collections.any((c) => c.id == targetId)) return false;
-    if (EntitlementService.instance.isCollectionIdLocked(targetId))
+    if (EntitlementService.instance.isCollectionIdLocked(targetId)) {
       return false;
+    }
     final changed = _activeId != targetId;
     _activeId = targetId;
     final prefs = await SharedPreferences.getInstance();

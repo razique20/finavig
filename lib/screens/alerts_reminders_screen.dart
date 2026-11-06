@@ -1,10 +1,15 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/alert_preferences_service.dart';
 import '../services/document_scanner_service.dart';
 import '../services/notification_service.dart';
+import '../services/pending_transaction_service.dart';
+import '../services/transaction_notification_listener.dart';
 import '../theme/app_theme.dart';
+import '../widgets/transaction_detection_card.dart';
 import '../widgets/widgets.dart';
 
 /// Full-screen settings page dedicated to managing Alert toggles and
@@ -16,11 +21,16 @@ class AlertsRemindersScreen extends StatefulWidget {
   State<AlertsRemindersScreen> createState() => _AlertsRemindersScreenState();
 }
 
-class _AlertsRemindersScreenState extends State<AlertsRemindersScreen> {
+class _AlertsRemindersScreenState extends State<AlertsRemindersScreen>
+    with WidgetsBindingObserver {
   bool _loading = true;
   bool _notificationsEnabled = true;
   bool _billSpikesEnabled = true;
   bool _budgetAlertsEnabled = true;
+
+  bool _detectionEnabled = false;
+  bool _hasListenerPermission = false;
+  int _pendingTxCount = 0;
 
   int _reminderCadence = 90;
   int _taskCadence = 60;
@@ -29,7 +39,41 @@ class _AlertsRemindersScreenState extends State<AlertsRemindersScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    TransactionNotificationListener.instance.addListener(_syncDetectionState);
+    PendingTransactionService.instance.addListener(_syncDetectionState);
     _loadSettings();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    TransactionNotificationListener.instance.removeListener(_syncDetectionState);
+    PendingTransactionService.instance.removeListener(_syncDetectionState);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkPermission();
+    }
+  }
+
+  void _syncDetectionState() {
+    if (!mounted) return;
+    setState(() {
+      _detectionEnabled = TransactionNotificationListener.instance.isEnabled;
+      _hasListenerPermission = TransactionNotificationListener.instance.hasPermission;
+      _pendingTxCount = PendingTransactionService.instance.pendingCount;
+    });
+  }
+
+  Future<void> _checkPermission() async {
+    final hasPerm =
+        await TransactionNotificationListener.instance.checkPermission();
+    if (!mounted) return;
+    setState(() => _hasListenerPermission = hasPerm);
   }
 
   Future<void> _loadSettings() async {
@@ -46,6 +90,11 @@ class _AlertsRemindersScreenState extends State<AlertsRemindersScreen> {
 
       _billSpikesEnabled = alertsService.billSpikesEnabled;
       _budgetAlertsEnabled = alertsService.budgetAlertsEnabled;
+
+      _detectionEnabled = TransactionNotificationListener.instance.isEnabled;
+      _hasListenerPermission =
+          TransactionNotificationListener.instance.hasPermission;
+      _pendingTxCount = PendingTransactionService.instance.pendingCount;
       _loading = false;
     });
   }
@@ -246,6 +295,231 @@ class _AlertsRemindersScreenState extends State<AlertsRemindersScreen> {
                           ),
                         ],
                       ),
+                      const SizedBox(height: 24),
+
+                      // Group 3: Bank Transaction Detection
+                      _buildGroupTitle(theme, 'Bank Transaction Detection'),
+                      const SizedBox(height: 14),
+                      _buildCardContainer(
+                        isDark: isDark,
+                        children: [
+                          _buildSwitchTile(
+                            theme: theme,
+                            icon: Icons.receipt_long_rounded,
+                            iconColor: FinavigColors.indigo,
+                            title: 'Auto-detect transactions',
+                            subtitle:
+                                'Extract expenses & income automatically from banking notifications',
+                            value: _detectionEnabled,
+                            onChanged: (val) async {
+                              setState(() => _detectionEnabled = val);
+                              await TransactionNotificationListener.instance
+                                  .setEnabled(val);
+                              await _checkPermission();
+                            },
+                          ),
+                          if (Platform.isAndroid) ...[
+                            _buildDivider(isDark),
+                            ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 4,
+                              ),
+                              leading: BentoIconTile(
+                                icon: _hasListenerPermission
+                                    ? Icons.verified_user_rounded
+                                    : Icons.security_rounded,
+                                color: _hasListenerPermission
+                                    ? FinavigColors.emerald
+                                    : Colors.amber.shade700,
+                                size: 38,
+                                iconSize: 18,
+                                radius: 12,
+                              ),
+                              title: Text(
+                                'Notification access',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              subtitle: Text(
+                                _hasListenerPermission
+                                    ? 'Access granted • Active'
+                                    : 'Required by Android to read bank alerts • Tap to grant',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: _hasListenerPermission
+                                      ? FinavigColors.emerald
+                                      : Colors.amber.shade700,
+                                ),
+                              ),
+                              trailing: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: (_hasListenerPermission
+                                          ? FinavigColors.emerald
+                                          : Colors.amber.shade700)
+                                      .withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  _hasListenerPermission ? 'Active' : 'Grant',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: _hasListenerPermission
+                                        ? FinavigColors.emerald
+                                        : Colors.amber.shade700,
+                                  ),
+                                ),
+                              ),
+                              onTap: () async {
+                                await TransactionNotificationListener.instance
+                                    .openPermissionSettings();
+                              },
+                            ),
+                          ],
+                          _buildDivider(isDark),
+                          ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 4,
+                            ),
+                            leading: BentoIconTile(
+                              icon: Icons.pending_actions_rounded,
+                              color: Colors.amber.shade700,
+                              size: 38,
+                              iconSize: 18,
+                              radius: 12,
+                            ),
+                            title: Text(
+                              'Pending review queue',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            subtitle: Text(
+                              _pendingTxCount > 0
+                                  ? '$_pendingTxCount transactions waiting for confirmation'
+                                  : 'No pending transactions',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.outline,
+                              ),
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (_pendingTxCount > 0)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.amber.shade700,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Text(
+                                      '$_pendingTxCount',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                const SizedBox(width: 6),
+                                Icon(
+                                  Icons.arrow_forward_ios_rounded,
+                                  size: 14,
+                                  color: theme.colorScheme.outline,
+                                ),
+                              ],
+                            ),
+                            onTap: () {
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.transparent,
+                                builder: (_) => const PendingTransactionsList(),
+                              );
+                            },
+                          ),
+                          _buildDivider(isDark),
+                          ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 4,
+                            ),
+                            leading: const BentoIconTile(
+                              icon: Icons.content_paste_rounded,
+                              color: FinavigColors.orange,
+                              size: 38,
+                              iconSize: 18,
+                              radius: 12,
+                            ),
+                            title: Text(
+                              'Paste bank SMS / alert',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            subtitle: Text(
+                              'Manually parse transaction text',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.outline,
+                              ),
+                            ),
+                            trailing: Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 14,
+                              color: theme.colorScheme.outline,
+                            ),
+                            onTap: () {
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.transparent,
+                                builder: (_) => const SmsPasteImport(),
+                              );
+                            },
+                          ),
+                          _buildDivider(isDark),
+                          ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 4,
+                            ),
+                            leading: const BentoIconTile(
+                              icon: Icons.science_outlined,
+                              color: FinavigColors.sky,
+                              size: 38,
+                              iconSize: 18,
+                              radius: 12,
+                            ),
+                            title: Text(
+                              'Test auto-detection',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            subtitle: Text(
+                              'Simulate an incoming bank notification now',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.outline,
+                              ),
+                            ),
+                            trailing: Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 14,
+                              color: theme.colorScheme.outline,
+                            ),
+                            onTap: () => _showTestNotificationSheet(context),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 32),
                     ]),
                   ),
@@ -413,6 +687,149 @@ class _AlertsRemindersScreenState extends State<AlertsRemindersScreen> {
           ),
         );
       },
+    );
+  }
+
+  void _showTestNotificationSheet(BuildContext context) {
+    final theme = Theme.of(context);
+    final scenarios = [
+      (
+        bank: 'Emirates NBD',
+        title: 'Emirates NBD',
+        text:
+            'Purchase of AED 245.50 with Debit Card ending 4321 at Carrefour on 06-Nov-2026. Avl Bal AED 12,450.00',
+        pkg: 'com.enbd.mobilebanking',
+        icon: Icons.shopping_cart_rounded,
+        color: FinavigColors.indigo,
+      ),
+      (
+        bank: 'ADCB Dining',
+        title: 'ADCB',
+        text:
+            'Dear Customer, your Credit Card ending 9876 was used for AED 85.00 at Starbucks Dubai Mall.',
+        pkg: 'com.adcb.bank',
+        icon: Icons.coffee_rounded,
+        color: Colors.amber.shade800,
+      ),
+      (
+        bank: 'FAB DEWA Bill',
+        title: 'FAB',
+        text:
+            'Your account **1234 has been debited with AED 1,200.00 for DEWA electricity payment.',
+        pkg: 'com.firstabudhabibank.fab',
+        icon: Icons.bolt_rounded,
+        color: FinavigColors.emerald,
+      ),
+      (
+        bank: 'WhatsApp Banking',
+        title: 'Emirates NBD',
+        text:
+            'Transaction alert: You have paid AED 45.00 at Costa Coffee using Card ending 1234.',
+        pkg: 'com.whatsapp',
+        icon: Icons.chat_rounded,
+        color: const Color(0xFF25D366),
+      ),
+      (
+        bank: 'Saudi SAR (Al Rajhi)',
+        title: 'Al Rajhi Bank',
+        text:
+            'Purchase of SAR 320.00 using mada card *7712 at Panda Hypermarket.',
+        pkg: 'com.alrajhi.mobile',
+        icon: Icons.storefront_rounded,
+        color: Colors.teal,
+      ),
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: theme.colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 16),
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.outlineVariant,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Text(
+                      'Simulate Bank Notification',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Select a sample alert to test the detection card overlay and de-duplication pipeline',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.outline,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              for (final s in scenarios)
+                ListTile(
+                  leading: BentoIconTile(
+                    icon: s.icon,
+                    color: s.color,
+                    size: 38,
+                    iconSize: 18,
+                    radius: 12,
+                  ),
+                  title: Text(
+                    s.bank,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  subtitle: Text(
+                    s.text,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.outline,
+                    ),
+                  ),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    final added = await TransactionNotificationListener.instance
+                        .simulateNotification(
+                      text: s.text,
+                      title: s.title,
+                      packageName: s.pkg,
+                    );
+                    if (!added && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Dropped: detected as duplicate within recent 15min window!',
+                          ),
+                          duration: Duration(seconds: 2),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  },
+                ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

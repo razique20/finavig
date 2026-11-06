@@ -23,6 +23,8 @@ import 'services/notification_service.dart';
 import 'services/perf_tracing_service.dart';
 import 'services/rating_prompt_ui.dart';
 import 'services/storage_migration_service.dart';
+import 'services/pending_transaction_service.dart';
+import 'services/transaction_notification_listener.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -92,7 +94,12 @@ void main() async {
 /// Initialise the services that don't depend on auth first, then the
 /// Supabase-backed ones (only meaningful when a session exists).
 Future<void> _prewarmServices() async {
-  await Future.wait([UrgencyEngine().init(), NotificationService().init()]);
+  await Future.wait([
+    UrgencyEngine().init(),
+    NotificationService().init(),
+    PendingTransactionService.instance.init(),
+    TransactionNotificationListener.instance.init(),
+  ]);
 
   if (AuthService.instance.isSignedIn) {
     // Custom types must load before documents: rows are decoded into

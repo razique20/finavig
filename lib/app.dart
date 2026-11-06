@@ -4,6 +4,7 @@ import 'router.dart';
 import 'services/theme_service.dart';
 import 'theme/app_theme.dart';
 import 'widgets/app_lock_gate.dart';
+import 'widgets/transaction_detection_card.dart';
 
 class FinavigApp extends StatefulWidget {
   const FinavigApp({super.key});
@@ -38,8 +39,11 @@ class _FinavigAppState extends State<FinavigApp> {
       routerConfig: router,
       // Local passcode lock — overlays the lock screen above every route and
       // dialog when the app is reopened (cold start or after the grace period).
-      builder: (context, child) =>
-          AppLockGate(child: child ?? const SizedBox.shrink()),
+      // TransactionDetectionOverlay — shows a confirmation card when a banking
+      // notification is detected (slides in from the top above everything).
+      builder: (context, child) => TransactionDetectionOverlay(
+        child: AppLockGate(child: child ?? const SizedBox.shrink()),
+      ),
     );
   }
 }
