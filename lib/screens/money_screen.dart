@@ -628,20 +628,47 @@ class _MoneyScreenState extends State<MoneyScreen> {
         children: [
           Row(
             children: [
-              Text(
-                'Money',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  color: fade.color(
-                    FinavigColors.textPrimaryLight,
-                    FinavigColors.textPrimary,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'FINANCIAL HUB',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.6,
+                      color: fade.color(
+                        FinavigColors.textMutedLight,
+                        FinavigColors.textMuted,
+                      ),
+                    ),
                   ),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(width: 8),
-              _CollectionSwitcherChip(
-                collection: DocumentCollectionService.instance.activeCollection,
-                onTap: _showCollectionSwitcher,
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Money',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.5,
+                          color: fade.color(
+                            FinavigColors.textPrimaryLight,
+                            FinavigColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      _CollectionSwitcherChip(
+                        collection:
+                            DocumentCollectionService.instance.activeCollection,
+                        onTap: _showCollectionSwitcher,
+                      ),
+                    ],
+                  ),
+                ],
               ),
               const Spacer(),
               CanvasIconButton(

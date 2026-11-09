@@ -40,28 +40,41 @@ class ProfileSettingsHeader extends StatelessWidget {
         children: [
           Row(
             children: [
-              const SizedBox(width: 40),
-              Expanded(
-                child: Center(
-                  child: Text(
-                    'Settings',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      color: titleColor,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'ACCOUNT & PREFERENCES',
+                    style: TextStyle(
+                      fontSize: 10,
                       fontWeight: FontWeight.w700,
+                      letterSpacing: 1.6,
+                      color: fade.color(
+                        FinavigColors.textMutedLight,
+                        FinavigColors.textMuted,
+                      ),
                     ),
                   ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Settings',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.5,
+                      color: titleColor,
+                    ),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              if (signedIn)
+                CanvasIconButton(
+                  icon: Icons.logout_rounded,
+                  tooltip: 'Sign out',
+                  onTap: () => _signOut(context),
                 ),
-              ),
-              SizedBox(
-                width: 40,
-                child: signedIn
-                    ? CanvasIconButton(
-                        icon: Icons.logout_rounded,
-                        tooltip: 'Sign out',
-                        onTap: () => _signOut(context),
-                      )
-                    : null,
-              ),
             ],
           ),
           const SizedBox(height: 18),

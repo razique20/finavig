@@ -354,7 +354,6 @@ class _ProfileStreakSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final fade = FinavigTransition.of(context);
     final streak = _weekStreak();
     final streakCount = streak.where((v) => v).length;
@@ -389,14 +388,28 @@ class _ProfileStreakSection extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Welcome back, $collectionName',
+                  'FINAVIG DASHBOARD',
                   style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.6,
                     color: fade.color(
-                      FinavigColors.textSecondaryLight,
-                      FinavigColors.textSecondary,
+                      FinavigColors.textMutedLight,
+                      FinavigColors.textMuted,
                     ),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Welcome, $collectionName',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.3,
+                    color: fade.color(
+                      FinavigColors.textPrimaryLight,
+                      FinavigColors.textPrimary,
+                    ),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -406,9 +419,13 @@ class _ProfileStreakSection extends StatelessWidget {
                   streakCount > 0
                       ? 'You have a $streakCount day streak going.'
                       : 'Start your streak today.',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
+                  style: TextStyle(
+                    color: fade.color(
+                      FinavigColors.textSecondaryLight,
+                      FinavigColors.textSecondary,
+                    ),
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w500,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

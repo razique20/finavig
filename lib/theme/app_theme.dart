@@ -393,71 +393,71 @@ class FinavigTheme {
     return GoogleFonts.interTextTheme(base)
         .copyWith(
           displayLarge: GoogleFonts.inter(
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -1.0,
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.8,
           ),
           displayMedium: GoogleFonts.inter(
-            fontSize: 18,
+            fontSize: 24,
             fontWeight: FontWeight.w700,
             letterSpacing: -0.5,
           ),
           displaySmall: GoogleFonts.inter(
-            fontSize: 16,
+            fontSize: 20,
             fontWeight: FontWeight.w700,
             letterSpacing: -0.3,
           ),
           headlineLarge: GoogleFonts.inter(
-            fontSize: 16,
+            fontSize: 20,
             fontWeight: FontWeight.w700,
             letterSpacing: -0.3,
           ),
           headlineMedium: GoogleFonts.inter(
-            fontSize: 14,
+            fontSize: 18,
             fontWeight: FontWeight.w700,
             letterSpacing: -0.2,
           ),
           headlineSmall: GoogleFonts.inter(
-            fontSize: 13,
+            fontSize: 16,
             fontWeight: FontWeight.w600,
             letterSpacing: -0.1,
           ),
           titleLarge: GoogleFonts.inter(
-            fontSize: 13,
+            fontSize: 20,
             fontWeight: FontWeight.w700,
-            letterSpacing: -0.1,
+            letterSpacing: -0.2,
           ),
           titleMedium: GoogleFonts.inter(
-            fontSize: 12,
+            fontSize: 15,
             fontWeight: FontWeight.w600,
             letterSpacing: -0.1,
           ),
           titleSmall: GoogleFonts.inter(
-            fontSize: 11,
+            fontSize: 13.5,
             fontWeight: FontWeight.w600,
           ),
           bodyLarge: GoogleFonts.inter(
-            fontSize: 12,
+            fontSize: 14,
             fontWeight: FontWeight.w400,
           ),
           bodyMedium: GoogleFonts.inter(
-            fontSize: 11,
+            fontSize: 13,
             fontWeight: FontWeight.w400,
           ),
           bodySmall: GoogleFonts.inter(
-            fontSize: 10,
+            fontSize: 11.5,
             fontWeight: FontWeight.w400,
           ),
           labelLarge: GoogleFonts.inter(
-            fontSize: 11,
+            fontSize: 13,
             fontWeight: FontWeight.w600,
           ),
           labelMedium: GoogleFonts.inter(
-            fontSize: 10,
+            fontSize: 11.5,
             fontWeight: FontWeight.w500,
           ),
           labelSmall: GoogleFonts.inter(
-            fontSize: 9,
+            fontSize: 10,
             fontWeight: FontWeight.w500,
           ),
         )
@@ -499,6 +499,8 @@ class FinavigTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
+      fontFamily: 'Inter',
+      fontFamilyFallback: _emojiFallback,
       colorScheme: scheme,
       textTheme: _textTheme(Brightness.dark),
       // Every icon that does not set its own colour renders pure white on the
@@ -756,6 +758,8 @@ class FinavigTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
+      fontFamily: 'Inter',
+      fontFamilyFallback: _emojiFallback,
       colorScheme: scheme,
       textTheme: _textTheme(Brightness.light),
       extensions: const [FinavigTransition.light],
