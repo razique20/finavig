@@ -375,12 +375,26 @@ class _LoginScreenState extends State<LoginScreen> {
                       Center(
                         child: Image.asset(
                           'assets/New Logo/finavig-mark-transparent.png',
-                          width: 90,
-                          height: 90,
+                          width: 86,
+                          height: 86,
                           fit: BoxFit.contain,
                         ),
                       ),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Smart Expiries & Financial Navigator',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 0.2,
+                          color: fade.color(
+                            FinavigColors.textSecondaryLight,
+                            FinavigColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 22),
 
                       // ── Segmented Control (Sign In / Create Account) ───────
                       Container(
