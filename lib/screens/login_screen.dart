@@ -168,20 +168,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Future<void> _continueAsLocal() async {
-    setState(() => _busy = true);
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('userCountry', _selectedCountry.code);
-    await DocumentCollectionService.instance.reset();
-    await DocumentScannerService.instance.refresh();
-    await FinanceService.instance.refresh();
 
-    if (mounted) {
-      final hasOnboarded = prefs.getBool('hasOnboarded') ?? false;
-      final destination = hasOnboarded ? '/home' : '/onboarding';
-      context.go(destination);
-    }
-  }
 
   Future<void> _forgotPassword() async {
     final email = _emailController.text.trim();
@@ -863,28 +850,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
 
-                      const SizedBox(height: 16),
 
-                      // ── Offline / Local Mode ──────────────────────────────
-                      TextButton.icon(
-                        onPressed: _busy ? null : _continueAsLocal,
-                        icon: const Icon(
-                          Icons.cloud_off_rounded,
-                          size: 16,
-                          color: FinavigColors.textSecondary,
-                        ),
-                        label: Text(
-                          'Explore in Local Mode (Offline)',
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w600,
-                            color: fade.color(
-                              FinavigColors.textSecondaryLight,
-                              FinavigColors.textSecondary,
-                            ),
-                          ),
-                        ),
-                      ),
 
                       const Spacer(),
                       const SizedBox(height: 16),
