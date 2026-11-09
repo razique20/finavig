@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -32,6 +33,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
+  final _emailFocusNode = FocusNode();
   final _passwordController = TextEditingController();
   final _phoneController = TextEditingController();
 
@@ -49,9 +51,28 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void dispose() {
     _emailController.dispose();
+    _emailFocusNode.dispose();
     _passwordController.dispose();
     _phoneController.dispose();
     super.dispose();
+  }
+
+  void _insertAtSymbol() {
+    HapticFeedback.lightImpact();
+    final text = _emailController.text;
+    final selection = _emailController.selection;
+    final start = (selection.isValid && selection.start >= 0)
+        ? selection.start
+        : text.length;
+    final end = (selection.isValid && selection.end >= 0)
+        ? selection.end
+        : text.length;
+    final newText = text.replaceRange(start, end, '@');
+    _emailController.value = TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: start + 1),
+    );
+    _emailFocusNode.requestFocus();
   }
 
   void _switchMode(bool signUp) {
@@ -191,9 +212,25 @@ class _LoginScreenState extends State<LoginScreen> {
               controller: controller,
               keyboardType: TextInputType.emailAddress,
               autofocus: true,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Email Address',
-                prefixIcon: Icon(Icons.alternate_email_rounded),
+                prefixIcon: IconButton(
+                  icon: const Icon(Icons.alternate_email_rounded, size: 18),
+                  tooltip: 'Insert @',
+                  splashRadius: 20,
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                    final text = controller.text;
+                    final sel = controller.selection;
+                    final s = (sel.isValid && sel.start >= 0) ? sel.start : text.length;
+                    final e = (sel.isValid && sel.end >= 0) ? sel.end : text.length;
+                    controller.value = TextEditingValue(
+                      text: text.replaceRange(s, e, '@'),
+                      selection: TextSelection.collapsed(offset: s + 1),
+                    );
+                  },
+                ),
               ),
             ),
           ],
@@ -492,11 +529,14 @@ class _LoginScreenState extends State<LoginScreen> {
                               // Email Field
                               _AuthInputField(
                                 controller: _emailController,
+                                focusNode: _emailFocusNode,
                                 label: 'Email Address',
                                 hint: 'name@example.com',
                                 icon: Icons.alternate_email_rounded,
                                 keyboardType: TextInputType.emailAddress,
                                 textInputAction: TextInputAction.next,
+                                onPrefixTap: _insertAtSymbol,
+                                prefixTooltip: 'Insert @',
                               ),
                               const SizedBox(height: 14),
 
@@ -918,6 +958,9 @@ class _AuthInputField extends StatelessWidget {
   final TextInputAction? textInputAction;
   final ValueChanged<String>? onSubmitted;
   final Widget? suffixIcon;
+  final FocusNode? focusNode;
+  final VoidCallback? onPrefixTap;
+  final String? prefixTooltip;
 
   const _AuthInputField({
     required this.controller,
@@ -929,6 +972,9 @@ class _AuthInputField extends StatelessWidget {
     this.textInputAction,
     this.onSubmitted,
     this.suffixIcon,
+    this.focusNode,
+    this.onPrefixTap,
+    this.prefixTooltip,
   });
 
   @override
@@ -960,6 +1006,7 @@ class _AuthInputField extends StatelessWidget {
         const SizedBox(height: 6),
         TextField(
           controller: controller,
+          focusNode: focusNode,
           obscureText: obscureText,
           keyboardType: keyboardType,
           textInputAction: textInputAction,
@@ -982,14 +1029,26 @@ class _AuthInputField extends StatelessWidget {
                 FinavigColors.textMuted,
               ),
             ),
-            prefixIcon: Icon(
-              icon,
-              size: 18,
-              color: fade.color(
-                FinavigColors.textMutedLight,
-                FinavigColors.textMuted,
-              ),
-            ),
+            prefixIcon: onPrefixTap != null
+                ? IconButton(
+                    icon: Icon(icon, size: 18),
+                    tooltip: prefixTooltip ?? 'Insert @',
+                    color: fade.color(
+                      FinavigColors.accent,
+                      FinavigColors.accent,
+                    ),
+                    onPressed: onPrefixTap,
+                    splashRadius: 20,
+                    visualDensity: VisualDensity.compact,
+                  )
+                : Icon(
+                    icon,
+                    size: 18,
+                    color: fade.color(
+                      FinavigColors.textMutedLight,
+                      FinavigColors.textMuted,
+                    ),
+                  ),
             suffixIcon: suffixIcon,
             filled: true,
             fillColor: fillColor,
