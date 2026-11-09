@@ -371,64 +371,27 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Column(
                     children: [
                       // ── Brand Header ──────────────────────────────────────
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
                       Center(
                         child: Container(
-                          width: 140,
-                          height: 140,
+                          width: 90,
+                          height: 90,
                           decoration: BoxDecoration(
                             boxShadow: [
                               BoxShadow(
-                                color: FinavigColors.accent.withValues(alpha: 0.2),
+                                color: FinavigColors.accent.withValues(alpha: 0.18),
                                 blurRadius: 32,
-                                spreadRadius: 4,
+                                spreadRadius: 2,
                               ),
                             ],
                           ),
                           child: Image.asset(
-                            'assets/New Logo/finavig-logo-transparent.png',
+                            'assets/New Logo/finavig-mark-transparent.png',
                             fit: BoxFit.contain,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      // GCC Region Strip
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: fade.color(
-                            Colors.black.withValues(alpha: 0.04),
-                            Colors.white.withValues(alpha: 0.05),
-                          ),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text(
-                              '🇦🇪 🇸🇦 🇶🇦 🇰🇼 🇧🇭 🇴🇲',
-                              style: TextStyle(fontSize: 11),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              'GCC Edition',
-                              style: TextStyle(
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.5,
-                                color: fade.color(
-                                  FinavigColors.textMutedLight,
-                                  FinavigColors.textMuted,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 28),
 
                       // ── Segmented Control (Sign In / Create Account) ───────
                       Container(
