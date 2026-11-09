@@ -34,18 +34,25 @@ class TabScrollRegistry {
     final controller = _controllers[branchIndex];
     if (controller == null || !controller.hasClients) return false;
 
-    final position = controller.position;
-    if (position.pixels <= 0) return false;
-
-    if (animated && position.maxScrollExtent > 0) {
-      controller.animateTo(
-        0,
-        duration: const Duration(milliseconds: 320),
-        curve: Curves.easeOutCubic,
-      );
-    } else {
-      controller.jumpTo(0);
+    try {
+      bool moved = false;
+      for (final position in controller.positions) {
+        if (position.pixels > 0) {
+          if (animated && position.maxScrollExtent > 0) {
+            controller.animateTo(
+              0,
+              duration: const Duration(milliseconds: 320),
+              curve: Curves.easeOutCubic,
+            );
+          } else {
+            controller.jumpTo(0);
+          }
+          moved = true;
+        }
+      }
+      return moved;
+    } catch (_) {
+      return false;
     }
-    return true;
   }
 }

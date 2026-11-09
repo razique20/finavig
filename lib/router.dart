@@ -9,6 +9,7 @@ import 'services/budget_alert_service.dart';
 import 'services/document_scanner_service.dart';
 import 'services/finance_service.dart';
 import 'services/perf_tracing_service.dart';
+import 'services/tab_scroll_registry.dart';
 import 'screens/login_screen.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/splash_screen.dart';
@@ -380,9 +381,17 @@ class _AppShellState extends State<_AppShell> {
 
   void _goBranch(int index) {
     PerfTracingService.trace(PerfTracingService.flowTabSwitch, () {
+      final isCurrent = index == widget.navigationShell.currentIndex;
+      if (isCurrent) {
+        TabScrollRegistry.scrollToTop(index, animated: true);
+      } else {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          TabScrollRegistry.scrollToTop(index, animated: false);
+        });
+      }
       widget.navigationShell.goBranch(
         index,
-        initialLocation: index == widget.navigationShell.currentIndex,
+        initialLocation: isCurrent,
       );
     });
   }
