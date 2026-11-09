@@ -304,10 +304,10 @@ class _SearchHeader extends StatelessWidget {
           const SizedBox(width: 8),
           _HeaderIconButton(
             icon: Icons.notifications_none_rounded,
-            tooltip: 'Alerts & Reminders',
+            tooltip: 'Alerts',
             color: iconColor,
             showBadge: hasUrgentAlerts,
-            onTap: () => context.push('/alerts-reminders'),
+            onTap: () => context.push('/alerts'),
           ),
           _HeaderIconButton(
             icon: Icons.auto_awesome_rounded,

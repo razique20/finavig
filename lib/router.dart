@@ -29,6 +29,7 @@ import 'screens/cash_flow_forecast_screen.dart';
 import 'screens/global_search_screen.dart';
 import 'screens/ai_summary_screen.dart';
 import 'screens/ai_budget_plan_screen.dart';
+import 'screens/alerts_screen.dart';
 import 'screens/alerts_reminders_screen.dart';
 import 'services/auth_service.dart';
 import 'widgets/dialogs/quick_action_sheet.dart';
@@ -150,6 +151,11 @@ final router = GoRouter(
       path: '/ai-budget-plan',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const AiBudgetPlanScreen(),
+    ),
+    GoRoute(
+      path: '/alerts',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const AlertsScreen(),
     ),
     GoRoute(
       path: '/alerts-reminders',
