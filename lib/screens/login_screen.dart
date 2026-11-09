@@ -373,22 +373,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       // ── Brand Header ──────────────────────────────────────
                       const SizedBox(height: 16),
                       Center(
-                        child: Container(
+                        child: Image.asset(
+                          'assets/New Logo/finavig-mark-transparent.png',
                           width: 90,
                           height: 90,
-                          decoration: BoxDecoration(
-                            boxShadow: [
-                              BoxShadow(
-                                color: FinavigColors.accent.withValues(alpha: 0.18),
-                                blurRadius: 32,
-                                spreadRadius: 2,
-                              ),
-                            ],
-                          ),
-                          child: Image.asset(
-                            'assets/New Logo/finavig-mark-transparent.png',
-                            fit: BoxFit.contain,
-                          ),
+                          fit: BoxFit.contain,
                         ),
                       ),
                       const SizedBox(height: 28),
