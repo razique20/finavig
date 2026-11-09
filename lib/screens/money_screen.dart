@@ -803,10 +803,11 @@ class _MoneyScreenState extends State<MoneyScreen> {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     MoneyFormat.aed(summary.net),
-                    style: theme.textTheme.displayLarge?.copyWith(
+                    style: theme.textTheme.headlineLarge?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
-                      letterSpacing: -1.0,
+                      fontSize: 22,
+                      letterSpacing: -0.4,
                     ),
                   ),
                 ),
@@ -1712,12 +1713,18 @@ class _MoneyMetricCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Text(
-                data.value,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  fontSize: data.compactValue ? 15 : 18,
-                  height: 1.0,
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    data.value,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      fontSize: data.compactValue ? 13.5 : 16,
+                      height: 1.0,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 4),
