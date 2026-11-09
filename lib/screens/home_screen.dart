@@ -158,7 +158,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _SearchHeader(onSearchTap: () => context.push('/search')),
+                      _SearchHeader(
+                        onSearchTap: () => context.push('/search'),
+                        hasUrgentAlerts: _expiredItems.isNotEmpty ||
+                            _upcomingItems().any((i) => i.daysRemaining <= 7),
+                      ),
                       const SizedBox(height: 10),
                       _ProfileStreakSection(
                         collectionName: _activeCollection?.name ?? 'Personal',
@@ -242,7 +246,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class _SearchHeader extends StatelessWidget {
   final VoidCallback onSearchTap;
-  const _SearchHeader({required this.onSearchTap});
+  final bool hasUrgentAlerts;
+
+  const _SearchHeader({
+    required this.onSearchTap,
+    this.hasUrgentAlerts = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -294,17 +303,21 @@ class _SearchHeader extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           _HeaderIconButton(
-            icon: Icons.bookmark_border_rounded,
+            icon: Icons.notifications_none_rounded,
+            tooltip: 'Alerts & Reminders',
             color: iconColor,
-            onTap: () => context.push('/expiry-list'),
+            showBadge: hasUrgentAlerts,
+            onTap: () => context.push('/alerts-reminders'),
           ),
           _HeaderIconButton(
-            icon: Icons.play_circle_outline_rounded,
+            icon: Icons.auto_awesome_rounded,
+            tooltip: 'AI Executive Summary',
             color: iconColor,
             onTap: () => context.push('/ai-summary'),
           ),
           _HeaderIconButton(
             icon: Icons.calendar_today_outlined,
+            tooltip: 'Expiry Schedule',
             color: iconColor,
             onTap: () => context.push('/expiry-list'),
           ),
@@ -317,21 +330,47 @@ class _SearchHeader extends StatelessWidget {
 class _HeaderIconButton extends StatelessWidget {
   final IconData icon;
   final Color color;
+  final String tooltip;
   final VoidCallback onTap;
+  final bool showBadge;
+
   const _HeaderIconButton({
     required this.icon,
     required this.color,
+    required this.tooltip,
     required this.onTap,
+    this.showBadge = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      icon: Icon(icon, color: color, size: 20),
-      onPressed: onTap,
-      visualDensity: VisualDensity.compact,
-      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-      padding: EdgeInsets.zero,
+    return Tooltip(
+      message: tooltip,
+      child: IconButton(
+        icon: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Icon(icon, color: color, size: 20),
+            if (showBadge)
+              Positioned(
+                top: -1,
+                right: -1,
+                child: Container(
+                  width: 7,
+                  height: 7,
+                  decoration: const BoxDecoration(
+                    color: FinavigColors.danger,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        onPressed: onTap,
+        visualDensity: VisualDensity.compact,
+        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+        padding: EdgeInsets.zero,
+      ),
     );
   }
 }
