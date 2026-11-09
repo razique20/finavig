@@ -35,6 +35,35 @@ class AuthService {
 
   String? get userEmail => _session?.user.email;
 
+  /// Human-friendly display name derived from user metadata, email prefix,
+  /// or a clean fallback.
+  String get displayName {
+    final meta = _session?.user.userMetadata;
+    final metaName =
+        (meta?['full_name'] ?? meta?['name'] ?? meta?['display_name'])
+            as String?;
+    if (metaName != null && metaName.trim().isNotEmpty) {
+      return metaName.trim();
+    }
+    final email = userEmail;
+    if (email != null && email.contains('@')) {
+      final raw = email
+          .split('@')
+          .first
+          .replaceAll('.', ' ')
+          .replaceAll('_', ' ')
+          .trim();
+      if (raw.isNotEmpty) {
+        return raw
+            .split(' ')
+            .where((w) => w.isNotEmpty)
+            .map((w) => w[0].toUpperCase() + w.substring(1).toLowerCase())
+            .join(' ');
+      }
+    }
+    return 'User';
+  }
+
   /// Sign in with email + password. Throws [AuthException] on failure with a
   /// user-presentable message.
   Future<void> signIn({required String email, required String password}) async {
@@ -107,8 +136,9 @@ class AuthService {
   /// No-op in local-only mode (no Supabase configured).
   Future<void> deleteAccount() async {
     final client = SupabaseService.clientOrNull;
-    if (client == null)
+    if (client == null) {
       return; // local-only mode: nothing to delete server-side
+    }
 
     // 1. Server-side deletion (auth user + all cascaded rows).
     await client.rpc('delete_own_account');

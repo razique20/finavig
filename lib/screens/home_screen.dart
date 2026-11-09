@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../models/document_collection.dart';
 import '../models/expiry_item.dart';
 import '../models/finance.dart';
+import '../services/auth_service.dart';
 import '../services/collection_service.dart';
 import '../services/document_scanner_service.dart';
 import '../services/finance_service.dart';
@@ -161,6 +162,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: 10),
                       _ProfileStreakSection(
                         collectionName: _activeCollection?.name ?? 'Personal',
+                        isPersonal: _activeCollection?.isPersonal ?? true,
+                        userName: AuthService.instance.displayName,
                         onTap: _showCollectionSwitcher,
                       ),
                       const SizedBox(height: 14),
@@ -339,9 +342,14 @@ class _HeaderIconButton extends StatelessWidget {
 
 class _ProfileStreakSection extends StatelessWidget {
   final String collectionName;
+  final bool isPersonal;
+  final String userName;
   final VoidCallback onTap;
+
   const _ProfileStreakSection({
     required this.collectionName,
+    required this.isPersonal,
+    required this.userName,
     required this.onTap,
   });
 
@@ -385,7 +393,7 @@ class _ProfileStreakSection extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'FINAVIG DASHBOARD',
+                      'FV DASHBOARD',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
@@ -397,19 +405,85 @@ class _ProfileStreakSection extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      'Welcome, $collectionName',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.3,
-                        color: fade.color(
-                          FinavigColors.textPrimaryLight,
-                          FinavigColors.textPrimary,
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            'Welcome, $userName',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.3,
+                              color: fade.color(
+                                FinavigColors.textPrimaryLight,
+                                FinavigColors.textPrimary,
+                              ),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                        const SizedBox(width: 8),
+                        InkWell(
+                          onTap: onTap,
+                          borderRadius: BorderRadius.circular(99),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                              vertical: 2.5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: fade.color(
+                                const Color(0xFFEBECEF),
+                                FinavigColors.slate,
+                              ),
+                              borderRadius: BorderRadius.circular(99),
+                              border: Border.all(
+                                color: fade.color(
+                                  const Color(0xFFDCDDE2),
+                                  Colors.white12,
+                                ),
+                                width: 0.8,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  isPersonal
+                                      ? Icons.person_rounded
+                                      : Icons.business_center_rounded,
+                                  size: 11,
+                                  color: FinavigColors.accent,
+                                ),
+                                const SizedBox(width: 3.5),
+                                Text(
+                                  isPersonal ? 'Personal' : collectionName,
+                                  style: TextStyle(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: fade.color(
+                                      FinavigColors.textPrimaryLight,
+                                      FinavigColors.textPrimary,
+                                    ),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(width: 2),
+                                Icon(
+                                  Icons.unfold_more_rounded,
+                                  size: 11,
+                                  color: fade.color(
+                                    FinavigColors.textMutedLight,
+                                    FinavigColors.textMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 3),
                     InkWell(
