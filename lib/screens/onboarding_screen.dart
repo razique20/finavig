@@ -16,119 +16,173 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen>
-    with TickerProviderStateMixin {
+    with SingleTickerProviderStateMixin {
   final PageController _pageController = PageController();
   int _page = 0;
-  late AnimationController _pulseController;
   late AnimationController _entryController;
 
   @override
   void initState() {
     super.initState();
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2400),
-    )..repeat(reverse: true);
     _entryController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 500),
     )..forward();
   }
 
   @override
   void dispose() {
-    _pulseController.dispose();
     _entryController.dispose();
     _pageController.dispose();
     super.dispose();
   }
 
-  List<_OnboardingSlide> _buildSlides(BuildContext context) => [
-        // ── Slide 1: Welcome / Brand ──────────────────────────────────────
+  List<_OnboardingSlide> _buildSlides() => [
+        // ── 1. Welcome ────────────────────────────────────────────────────
         _OnboardingSlide(
-          gradient: const [Color(0xFF0D1B2A), Color(0xFF1B2D45)],
-          accentColor: FinavigColors.cyanAccent,
-          icon: null, // uses logo
           useLogo: true,
+          accentColor: FinavigColors.accent,
           title: 'Welcome to Finavig',
-          subtitle: 'Your smart companion for GCC life',
+          subtitle: 'Your GCC companion',
           body:
-              'Track every expiry — visas, Emirates IDs, trade licences, insurance, contracts — and manage your finances. All in one secure app.',
-          chips: ['🇦🇪 UAE', '🇸🇦 KSA', '🇶🇦 Qatar', '🇰🇼 Kuwait', '🇧🇭 Bahrain', '🇴🇲 Oman'],
+              'Track every expiry — visas, Emirates IDs, trade licences, insurance, contracts — and manage your finances, all in one secure app.',
+          chips: [
+            '🇦🇪 UAE',
+            '🇸🇦 KSA',
+            '🇶🇦 Qatar',
+            '🇰🇼 Kuwait',
+            '🇧🇭 Bahrain',
+            '🇴🇲 Oman',
+          ],
         ),
 
-        // ── Slide 2: Documents Tab ────────────────────────────────────────
+        // ── 2. Documents ──────────────────────────────────────────────────
         _OnboardingSlide(
-          gradient: const [Color(0xFF0A1628), Color(0xFF152238)],
-          accentColor: FinavigColors.violetAccent,
           icon: Icons.description_rounded,
+          accentColor: FinavigColors.accent,
           title: 'Never Miss an Expiry',
-          subtitle: 'Documents Tab',
+          subtitle: 'Documents',
           body:
-              'Scan or upload any document — visa, Ejari, labour card, vehicle registration. Our AI reads the expiry date automatically and organises everything by category.',
+              'Scan or upload any document — visa, Ejari, labour card, vehicle registration. Our AI reads the expiry date and organises everything automatically.',
           previewItems: [
-            _PreviewRow(Icons.badge_outlined, 'Emirates ID', '23 days left', FinavigColors.warning),
-            _PreviewRow(Icons.apartment_rounded, 'Ejari Contract', '89 days left', FinavigColors.safe),
-            _PreviewRow(Icons.flight_rounded, 'Visa', 'Expired 3 days ago', FinavigColors.danger),
+            _PreviewRow(
+              Icons.badge_outlined,
+              'Emirates ID',
+              '23 days left',
+              FinavigColors.warning,
+            ),
+            _PreviewRow(
+              Icons.apartment_rounded,
+              'Ejari Contract',
+              '89 days left',
+              FinavigColors.safe,
+            ),
+            _PreviewRow(
+              Icons.flight_rounded,
+              'Visa',
+              'Expired 3 days ago',
+              FinavigColors.danger,
+            ),
           ],
         ),
 
-        // ── Slide 3: Money Tab ────────────────────────────────────────────
+        // ── 3. Money ──────────────────────────────────────────────────────
         _OnboardingSlide(
-          gradient: const [Color(0xFF0A1628), Color(0xFF1A2540)],
-          accentColor: FinavigColors.emeraldAccent,
           icon: Icons.account_balance_wallet_rounded,
+          accentColor: FinavigColors.safe,
           title: 'Master Your Finances',
-          subtitle: 'Money Tab',
+          subtitle: 'Money',
           body:
-              'Log income and expenses, set monthly budgets, view cash flow charts, and see exactly where your money goes — by category, by month.',
+              'Log income and expenses, set monthly budgets, view cash flow charts, and see exactly where your money goes.',
           previewItems: [
-            _PreviewRow(Icons.trending_up_rounded, 'Income', 'AED 12,500', FinavigColors.safe),
-            _PreviewRow(Icons.trending_down_rounded, 'Expenses', 'AED 8,340', FinavigColors.danger),
-            _PreviewRow(Icons.savings_rounded, 'Net Savings', 'AED 4,160', FinavigColors.cyanAccent),
+            _PreviewRow(
+              Icons.trending_up_rounded,
+              'Income',
+              'AED 12,500',
+              FinavigColors.safe,
+            ),
+            _PreviewRow(
+              Icons.trending_down_rounded,
+              'Expenses',
+              'AED 8,340',
+              FinavigColors.danger,
+            ),
+            _PreviewRow(
+              Icons.savings_rounded,
+              'Net Savings',
+              'AED 4,160',
+              FinavigColors.accent,
+            ),
           ],
         ),
 
-        // ── Slide 4: Home Dashboard ───────────────────────────────────────
+        // ── 4. Dashboard ──────────────────────────────────────────────────
         _OnboardingSlide(
-          gradient: const [Color(0xFF0D1B2A), Color(0xFF162540)],
-          accentColor: FinavigColors.cyanAccent,
           icon: Icons.home_rounded,
+          accentColor: FinavigColors.accent,
           title: 'Your FV Dashboard',
-          subtitle: 'Home Tab',
+          subtitle: 'Home',
           body:
-              'See everything at a glance — urgent renewals, spending trends, streak tracking, and quick actions. Switch between personal and business collections instantly.',
+              'See everything at a glance — urgent renewals, spending trends, streak tracking, and quick actions. Switch collections instantly.',
           previewItems: [
-            _PreviewRow(Icons.local_fire_department_rounded, '12-Day Streak', 'Keep it going!', FinavigColors.warning),
-            _PreviewRow(Icons.warning_amber_rounded, '3 Renewals Due', 'This week', FinavigColors.danger),
-            _PreviewRow(Icons.pie_chart_rounded, 'Budget Status', '67% used', FinavigColors.cyanAccent),
+            _PreviewRow(
+              Icons.local_fire_department_rounded,
+              '12-Day Streak',
+              'Keep going!',
+              FinavigColors.warning,
+            ),
+            _PreviewRow(
+              Icons.warning_amber_rounded,
+              '3 Renewals Due',
+              'This week',
+              FinavigColors.danger,
+            ),
+            _PreviewRow(
+              Icons.pie_chart_rounded,
+              'Budget Status',
+              '67% used',
+              FinavigColors.accent,
+            ),
           ],
         ),
 
-        // ── Slide 5: Notifications Permission ─────────────────────────────
+        // ── 5. Notifications ──────────────────────────────────────────────
         _OnboardingSlide(
-          gradient: const [Color(0xFF0A1628), Color(0xFF1B2D45)],
-          accentColor: FinavigColors.warning,
           icon: Icons.notifications_active_rounded,
+          accentColor: FinavigColors.warning,
           title: 'Stay Ahead of Deadlines',
           subtitle: 'Smart Reminders',
           body:
-              'Finavig alerts you at 90, 60, 30, and 7 days before any document expires. Allow notifications so the reminders that save you from fines can reach you.',
+              'Finavig alerts you at 90, 60, 30, and 7 days before any document expires. Allow notifications so the reminders can reach you.',
           isNotificationStep: true,
           previewItems: [
-            _PreviewRow(Icons.calendar_today_rounded, '90 days', 'Early reminder sent', FinavigColors.safe),
-            _PreviewRow(Icons.event_rounded, '30 days', 'Renewal task created', FinavigColors.warning),
-            _PreviewRow(Icons.alarm_rounded, '7 days', 'Urgent alert!', FinavigColors.danger),
+            _PreviewRow(
+              Icons.calendar_today_rounded,
+              '90 days',
+              'Early reminder',
+              FinavigColors.safe,
+            ),
+            _PreviewRow(
+              Icons.event_rounded,
+              '30 days',
+              'Task created',
+              FinavigColors.warning,
+            ),
+            _PreviewRow(
+              Icons.alarm_rounded,
+              '7 days',
+              'Urgent alert!',
+              FinavigColors.danger,
+            ),
           ],
         ),
 
-        // ── Slide 6: Ready ────────────────────────────────────────────────
+        // ── 6. Ready ──────────────────────────────────────────────────────
         _OnboardingSlide(
-          gradient: const [Color(0xFF0D1B2A), Color(0xFF1A2E48)],
-          accentColor: FinavigColors.safe,
           icon: Icons.rocket_launch_rounded,
+          accentColor: FinavigColors.safe,
           title: 'You\'re All Set',
-          subtitle: 'Let\'s get started',
+          subtitle: 'Let\'s go',
           body:
               'Upload your first document, log a transaction, or explore the dashboard. Finavig is ready when you are.',
           isFinal: true,
@@ -136,7 +190,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       ];
 
   void _nextPage() {
-    final slides = _buildSlides(context);
+    final slides = _buildSlides();
     if (_page < slides.length - 1) {
       final slide = slides[_page];
       if (slide.isNotificationStep) {
@@ -144,7 +198,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       }
       _entryController.reset();
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 450),
+        duration: const Duration(milliseconds: 400),
         curve: Curves.easeInOutCubic,
       );
       setState(() => _page++);
@@ -165,255 +219,229 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   @override
   Widget build(BuildContext context) {
-    final slides = _buildSlides(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fade = FinavigTransition.of(context);
+    final slides = _buildSlides();
     final slide = slides[_page];
     final progress = (_page + 1) / slides.length;
 
     return Scaffold(
-      body: Stack(
-        children: [
-          // ── Background gradient ──────────────────────────────────────
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 500),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: slide.gradient,
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-          ),
-
-          // ── Decorative floating shapes ───────────────────────────────
-          AnimatedBuilder(
-            animation: _pulseController,
-            builder: (context, child) {
-              final t = _pulseController.value;
-              return Stack(
-                children: [
-                  Positioned(
-                    top: -60 + (t * 20),
-                    right: -40 + (t * 10),
-                    child: Container(
-                      width: 200,
-                      height: 200,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: isDark
+              ? FinavigGradients.surfaceDark
+              : FinavigGradients.surfaceLight,
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              // ── Top bar: progress + skip ─────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+                child: Row(
+                  children: [
+                    // Step counter pill
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          colors: [
-                            slide.accentColor.withValues(alpha: 0.08 + t * 0.04),
-                            slide.accentColor.withValues(alpha: 0),
-                          ],
+                        color: slide.accentColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: slide.accentColor.withValues(alpha: 0.15),
+                        ),
+                      ),
+                      child: Text(
+                        '${_page + 1} of ${slides.length}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: slide.accentColor,
                         ),
                       ),
                     ),
-                  ),
-                  Positioned(
-                    bottom: 100 + (t * 15),
-                    left: -80,
-                    child: Container(
-                      width: 260,
-                      height: 260,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          colors: [
-                            slide.accentColor.withValues(alpha: 0.06 + t * 0.03),
-                            slide.accentColor.withValues(alpha: 0),
-                          ],
+                    const SizedBox(width: 12),
+                    // Progress bar
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 400),
+                          height: 4,
+                          child: LinearProgressIndicator(
+                            value: progress,
+                            backgroundColor: fade.color(
+                              FinavigColors.fog,
+                              Colors.white.withValues(alpha: 0.08),
+                            ),
+                            valueColor:
+                                AlwaysStoppedAnimation(slide.accentColor),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              );
-            },
-          ),
-
-          // ── Page content ─────────────────────────────────────────────
-          SafeArea(
-            child: Column(
-              children: [
-                // ── Top bar: progress + skip ───────────────────────────
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
-                  child: Row(
-                    children: [
-                      // Step counter
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: slide.accentColor.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(20),
+                    const SizedBox(width: 12),
+                    // Skip (hidden on final)
+                    if (!slide.isFinal)
+                      TextButton(
+                        onPressed: _finish,
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
                         child: Text(
-                          '${_page + 1} of ${slides.length}',
+                          'Skip',
                           style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: slide.accentColor,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      // Progress bar
-                      Expanded(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 400),
-                            height: 4,
-                            child: LinearProgressIndicator(
-                              value: progress,
-                              backgroundColor: Colors.white.withValues(alpha: 0.08),
-                              valueColor: AlwaysStoppedAnimation(slide.accentColor),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: fade.color(
+                              FinavigColors.textMutedLight,
+                              FinavigColors.textMuted,
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      // Skip button (hidden on final slide)
-                      if (!slide.isFinal)
-                        TextButton(
-                          onPressed: _finish,
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          child: Text(
-                            'Skip',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white.withValues(alpha: 0.5),
-                            ),
-                          ),
-                        )
-                      else
-                        const SizedBox(width: 40),
-                    ],
-                  ),
+                      )
+                    else
+                      const SizedBox(width: 40),
+                  ],
                 ),
+              ),
 
-                // ── Slide content area ─────────────────────────────────
-                Expanded(
-                  child: PageView.builder(
-                    controller: _pageController,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: slides.length,
-                    onPageChanged: (i) => setState(() => _page = i),
-                    itemBuilder: (context, index) {
-                      final s = slides[index];
-                      return FadeTransition(
-                        opacity: _entryController,
-                        child: SlideTransition(
-                          position: Tween<Offset>(
-                            begin: const Offset(0, 0.06),
-                            end: Offset.zero,
-                          ).animate(CurvedAnimation(
-                            parent: _entryController,
-                            curve: Curves.easeOut,
-                          )),
-                          child: _SlideContent(slide: s, pulse: _pulseController),
-                        ),
-                      );
-                    },
-                  ),
+              // ── Slide content ────────────────────────────────────────
+              Expanded(
+                child: PageView.builder(
+                  controller: _pageController,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: slides.length,
+                  onPageChanged: (i) => setState(() => _page = i),
+                  itemBuilder: (context, index) {
+                    final s = slides[index];
+                    return FadeTransition(
+                      opacity: _entryController,
+                      child: SlideTransition(
+                        position: Tween<Offset>(
+                          begin: const Offset(0, 0.04),
+                          end: Offset.zero,
+                        ).animate(CurvedAnimation(
+                          parent: _entryController,
+                          curve: Curves.easeOut,
+                        )),
+                        child: _SlideContent(slide: s),
+                      ),
+                    );
+                  },
                 ),
+              ),
 
-                // ── Bottom navigation ──────────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
-                  child: Row(
-                    children: [
-                      // Dot indicators
-                      Row(
-                        children: List.generate(
-                          slides.length,
-                          (i) => AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            width: i == _page ? 24 : 8,
-                            height: 8,
-                            margin: const EdgeInsets.symmetric(horizontal: 3),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(4),
-                              color: i == _page
-                                  ? slide.accentColor
-                                  : Colors.white.withValues(alpha: 0.15),
-                            ),
+              // ── Bottom: dots + action button ─────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+                child: Row(
+                  children: [
+                    // Dots
+                    Row(
+                      children: List.generate(
+                        slides.length,
+                        (i) => AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          width: i == _page ? 22 : 8,
+                          height: 8,
+                          margin: const EdgeInsets.symmetric(horizontal: 3),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(4),
+                            color: i == _page
+                                ? slide.accentColor
+                                : fade.color(
+                                    FinavigColors.fog,
+                                    Colors.white.withValues(alpha: 0.12),
+                                  ),
                           ),
                         ),
                       ),
-                      const Spacer(),
-                      // Action button
-                      slide.isFinal
-                          ? _GlowButton(
-                              label: 'Get Started',
-                              icon: Icons.arrow_forward_rounded,
-                              color: slide.accentColor,
-                              onTap: _finish,
-                            )
-                          : _GlowButton(
-                              label: slide.isNotificationStep
-                                  ? 'Allow & Continue'
-                                  : 'Next',
-                              icon: Icons.arrow_forward_rounded,
-                              color: slide.accentColor,
-                              onTap: _nextPage,
-                            ),
-                    ],
-                  ),
+                    ),
+                    const Spacer(),
+                    // Next / Get Started button
+                    ElevatedButton.icon(
+                      onPressed:
+                          slide.isFinal ? _finish : _nextPage,
+                      icon: Text(
+                        slide.isFinal
+                            ? 'Get Started'
+                            : slide.isNotificationStep
+                                ? 'Allow & Continue'
+                                : 'Next',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                        ),
+                      ),
+                      label: const Icon(Icons.arrow_forward_rounded, size: 18),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: slide.accentColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 22,
+                          vertical: 13,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: 0,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 }
 
-// ─── Slide Content Widget ───────────────────────────────────────────────────
+// ─── Slide Content ──────────────────────────────────────────────────────────
 
 class _SlideContent extends StatelessWidget {
   final _OnboardingSlide slide;
-  final AnimationController pulse;
 
-  const _SlideContent({required this.slide, required this.pulse});
+  const _SlideContent({required this.slide});
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fade = FinavigTransition.of(context);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 28),
       child: Column(
         children: [
-          const SizedBox(height: 32),
-
-          // ── Icon / Logo ──────────────────────────────────────────────
-          if (slide.useLogo)
-            _LogoBadge(color: slide.accentColor, pulse: pulse)
-          else
-            _IconBadge(icon: slide.icon!, color: slide.accentColor, pulse: pulse),
-
           const SizedBox(height: 28),
 
-          // ── Subtitle pill ────────────────────────────────────────────
+          // ── Icon / Logo ────────────────────────────────────────────
+          if (slide.useLogo)
+            _LogoBadge(color: slide.accentColor)
+          else
+            _IconBadge(icon: slide.icon!, color: slide.accentColor),
+
+          const SizedBox(height: 24),
+
+          // ── Subtitle pill ──────────────────────────────────────────
           if (slide.subtitle.isNotEmpty)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
               margin: const EdgeInsets.only(bottom: 10),
               decoration: BoxDecoration(
-                color: slide.accentColor.withValues(alpha: 0.1),
+                color: slide.accentColor.withValues(alpha: isDark ? 0.1 : 0.08),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: slide.accentColor.withValues(alpha: 0.2),
+                  color: slide.accentColor.withValues(alpha: 0.15),
                 ),
               ),
               child: Text(
@@ -422,38 +450,44 @@ class _SlideContent extends StatelessWidget {
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: slide.accentColor,
-                  letterSpacing: 0.5,
+                  letterSpacing: 0.3,
                 ),
               ),
             ),
 
-          // ── Title ────────────────────────────────────────────────────
+          // ── Title ──────────────────────────────────────────────────
           Text(
             slide.title,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 26,
+            style: TextStyle(
+              fontSize: 24,
               fontWeight: FontWeight.w800,
-              color: Colors.white,
-              letterSpacing: -0.5,
+              color: fade.color(
+                FinavigColors.textPrimaryLight,
+                FinavigColors.textPrimary,
+              ),
+              letterSpacing: -0.4,
               height: 1.2,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
 
-          // ── Body ─────────────────────────────────────────────────────
+          // ── Body ───────────────────────────────────────────────────
           Text(
             slide.body,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 14.5,
+              fontSize: 14,
               height: 1.6,
-              color: Colors.white.withValues(alpha: 0.65),
+              color: fade.color(
+                FinavigColors.textSecondaryLight,
+                FinavigColors.textSecondary,
+              ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
 
-          // ── GCC Country chips ────────────────────────────────────────
+          // ── GCC chips ──────────────────────────────────────────────
           if (slide.chips.isNotEmpty) ...[
             Wrap(
               spacing: 8,
@@ -466,10 +500,16 @@ class _SlideContent extends StatelessWidget {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.06),
+                          color: fade.color(
+                            FinavigColors.mist,
+                            FinavigColors.slate,
+                          ),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.1),
+                            color: fade.color(
+                              FinavigColors.fog,
+                              FinavigColors.slateLight,
+                            ),
                           ),
                         ),
                         child: Text(
@@ -477,7 +517,10 @@ class _SlideContent extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600,
-                            color: Colors.white.withValues(alpha: 0.8),
+                            color: fade.color(
+                              FinavigColors.textPrimaryLight,
+                              FinavigColors.textPrimary,
+                            ),
                           ),
                         ),
                       ))
@@ -486,27 +529,25 @@ class _SlideContent extends StatelessWidget {
             const SizedBox(height: 8),
           ],
 
-          // ── Preview rows ─────────────────────────────────────────────
+          // ── Preview rows ───────────────────────────────────────────
           if (slide.previewItems.isNotEmpty) ...[
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.04),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.06),
-                ),
-              ),
+            FinavigGlass(
+              borderRadius: BorderRadius.circular(16),
+              padding: const EdgeInsets.all(14),
               child: Column(
-                children: slide.previewItems.asMap().entries.map((entry) {
+                children:
+                    slide.previewItems.asMap().entries.map((entry) {
                   final i = entry.key;
                   final item = entry.value;
                   return Column(
                     children: [
                       if (i > 0)
                         Divider(
-                          height: 20,
-                          color: Colors.white.withValues(alpha: 0.06),
+                          height: 18,
+                          color: fade.color(
+                            FinavigColors.fog,
+                            Colors.white.withValues(alpha: 0.06),
+                          ),
                         ),
                       Row(
                         children: [
@@ -514,7 +555,9 @@ class _SlideContent extends StatelessWidget {
                             width: 36,
                             height: 36,
                             decoration: BoxDecoration(
-                              color: item.color.withValues(alpha: 0.12),
+                              color: item.color.withValues(
+                                alpha: isDark ? 0.12 : 0.08,
+                              ),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Icon(
@@ -530,7 +573,10 @@ class _SlideContent extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.white.withValues(alpha: 0.85),
+                                color: fade.color(
+                                  FinavigColors.textPrimaryLight,
+                                  FinavigColors.textPrimary,
+                                ),
                               ),
                             ),
                           ),
@@ -552,13 +598,13 @@ class _SlideContent extends StatelessWidget {
             const SizedBox(height: 8),
           ],
 
-          // ── Final slide: feature grid ────────────────────────────────
+          // ── Final: feature grid ────────────────────────────────────
           if (slide.isFinal) ...[
             const SizedBox(height: 8),
             _FeatureGrid(),
           ],
 
-          const SizedBox(height: 32),
+          const SizedBox(height: 28),
         ],
       ),
     );
@@ -569,48 +615,38 @@ class _SlideContent extends StatelessWidget {
 
 class _LogoBadge extends StatelessWidget {
   final Color color;
-  final AnimationController pulse;
 
-  const _LogoBadge({required this.color, required this.pulse});
+  const _LogoBadge({required this.color});
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: pulse,
-      builder: (context, child) {
-        final t = pulse.value;
-        return Container(
-          width: 120,
-          height: 120,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: color.withValues(alpha: 0.15 + t * 0.1),
-                blurRadius: 40 + t * 20,
-                spreadRadius: t * 8,
-              ),
-            ],
+    final fade = FinavigTransition.of(context);
+
+    return Container(
+      width: 110,
+      height: 110,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: fade.color(Colors.white, FinavigColors.slate),
+        border: Border.all(
+          color: fade.color(FinavigColors.fog, FinavigColors.slateLight),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.15),
+            blurRadius: 24,
+            spreadRadius: 2,
           ),
-          child: Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: const Color(0xFF0F1A2E),
-              border: Border.all(
-                color: color.withValues(alpha: 0.3 + t * 0.15),
-                width: 2,
-              ),
-            ),
-            padding: const EdgeInsets.all(20),
-            child: ClipOval(
-              child: Image.asset(
-                'assets/New Logo/finavig-mark-transparent.png',
-                fit: BoxFit.contain,
-              ),
-            ),
-          ),
-        );
-      },
+        ],
+      ),
+      padding: const EdgeInsets.all(18),
+      child: ClipOval(
+        child: Image.asset(
+          'assets/New Logo/finavig-mark-transparent.png',
+          fit: BoxFit.contain,
+        ),
+      ),
     );
   }
 }
@@ -620,102 +656,31 @@ class _LogoBadge extends StatelessWidget {
 class _IconBadge extends StatelessWidget {
   final IconData icon;
   final Color color;
-  final AnimationController pulse;
 
-  const _IconBadge({
-    required this.icon,
-    required this.color,
-    required this.pulse,
-  });
+  const _IconBadge({required this.icon, required this.color});
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: pulse,
-      builder: (context, child) {
-        final t = pulse.value;
-        return Container(
-          width: 100,
-          height: 100,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: color.withValues(alpha: 0.12 + t * 0.08),
-                blurRadius: 30 + t * 15,
-                spreadRadius: t * 5,
-              ),
-            ],
-          ),
-          child: Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  color.withValues(alpha: 0.15),
-                  color.withValues(alpha: 0.05),
-                ],
-              ),
-              border: Border.all(
-                color: color.withValues(alpha: 0.25 + t * 0.1),
-                width: 1.5,
-              ),
-            ),
-            child: Icon(icon, size: 44, color: color),
-          ),
-        );
-      },
-    );
-  }
-}
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-// ─── Glow Button ────────────────────────────────────────────────────────────
-
-class _GlowButton extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _GlowButton({
-    required this.label,
-    required this.icon,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
     return Container(
+      width: 92,
+      height: 92,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
+        shape: BoxShape.circle,
+        color: color.withValues(alpha: isDark ? 0.1 : 0.08),
+        border: Border.all(
+          color: color.withValues(alpha: 0.2),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
-            color: color.withValues(alpha: 0.3),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
+            color: color.withValues(alpha: 0.12),
+            blurRadius: 20,
           ),
         ],
       ),
-      child: ElevatedButton.icon(
-        onPressed: onTap,
-        icon: Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-        ),
-        label: Icon(icon, size: 18),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          foregroundColor: const Color(0xFF0A0E1A),
-          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 13),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-          elevation: 0,
-        ),
-      ),
+      child: Icon(icon, size: 40, color: color),
     );
   }
 }
@@ -725,11 +690,14 @@ class _GlowButton extends StatelessWidget {
 class _FeatureGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fade = FinavigTransition.of(context);
+
     final features = [
-      _FeatureItem(Icons.description_rounded, 'Documents', FinavigColors.violetAccent),
-      _FeatureItem(Icons.account_balance_wallet_rounded, 'Money', FinavigColors.emeraldAccent),
+      _FeatureItem(Icons.description_rounded, 'Documents', FinavigColors.accent),
+      _FeatureItem(Icons.account_balance_wallet_rounded, 'Money', FinavigColors.safe),
       _FeatureItem(Icons.notifications_active_rounded, 'Alerts', FinavigColors.warning),
-      _FeatureItem(Icons.local_fire_department_rounded, 'Streaks', FinavigColors.cyanAccent),
+      _FeatureItem(Icons.local_fire_department_rounded, 'Streaks', FinavigColors.accent),
     ];
 
     return Row(
@@ -740,16 +708,16 @@ class _FeatureGrid extends StatelessWidget {
                 child: Column(
                   children: [
                     Container(
-                      width: 56,
-                      height: 56,
+                      width: 54,
+                      height: 54,
                       decoration: BoxDecoration(
-                        color: f.color.withValues(alpha: 0.1),
+                        color: f.color.withValues(alpha: isDark ? 0.1 : 0.08),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: f.color.withValues(alpha: 0.2),
+                          color: f.color.withValues(alpha: 0.15),
                         ),
                       ),
-                      child: Icon(f.icon, size: 26, color: f.color),
+                      child: Icon(f.icon, size: 24, color: f.color),
                     ),
                     const SizedBox(height: 6),
                     Text(
@@ -757,7 +725,10 @@ class _FeatureGrid extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white.withValues(alpha: 0.6),
+                        color: fade.color(
+                          FinavigColors.textSecondaryLight,
+                          FinavigColors.textSecondary,
+                        ),
                       ),
                     ),
                   ],
@@ -771,10 +742,9 @@ class _FeatureGrid extends StatelessWidget {
 // ─── Data Models ────────────────────────────────────────────────────────────
 
 class _OnboardingSlide {
-  final List<Color> gradient;
-  final Color accentColor;
   final IconData? icon;
   final bool useLogo;
+  final Color accentColor;
   final String title;
   final String subtitle;
   final String body;
@@ -784,10 +754,9 @@ class _OnboardingSlide {
   final bool isFinal;
 
   const _OnboardingSlide({
-    required this.gradient,
-    required this.accentColor,
     this.icon,
     this.useLogo = false,
+    required this.accentColor,
     required this.title,
     this.subtitle = '',
     required this.body,

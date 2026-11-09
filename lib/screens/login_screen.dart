@@ -391,32 +391,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'FINAVIG',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 3.5,
-                          color: fade.color(
-                            FinavigColors.textPrimaryLight,
-                            FinavigColors.textPrimary,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Smart Expiries & Financial Navigator',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: fade.color(
-                            FinavigColors.textSecondaryLight,
-                            FinavigColors.textSecondary,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
                       // GCC Region Strip
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -822,7 +797,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                             Text(
                                               _isSignUp
                                                   ? 'Create Free Account'
-                                                  : 'Sign In to Finavig',
+                                                  : 'Sign In',
                                               style: const TextStyle(
                                                 fontSize: 15,
                                                 fontWeight: FontWeight.w800,
