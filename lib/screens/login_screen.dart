@@ -1,39 +1,28 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import '../services/app_version_service.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/gcc_country.dart';
+import '../services/app_version_service.dart';
 import '../services/auth_service.dart';
 import '../services/collection_service.dart';
 import '../services/custom_document_type_service.dart';
 import '../services/document_scanner_service.dart';
 import '../services/entitlement_service.dart';
 import '../services/finance_service.dart';
-import '../utils/error_messages.dart';
 import '../theme/app_theme.dart';
+import '../utils/error_messages.dart';
 import '../widgets/dialogs/legal_info_dialogs.dart';
 import 'app_lock_flows.dart';
 
-/// One beat for the whole step change: the cross-fade/slide of the two steps
-/// and the height settle of their container run together, so the centred
-/// block glides to its new position instead of snapping to it.
-const Duration _kStepTransition = Duration(milliseconds: 320);
+class AppVersionBadge {
+  AppVersionBadge._();
+  static const String version = 'v1.0.0';
+}
 
-/// Login & Sign-up — a Material-3 centred auth screen: a quiet
-/// brand header (wordmark + a pill of all six GCC flags) above the quiz
-/// flow, which sits in a soft card on a flat surface.
-///
-/// Always renders the app's dark brand theme — the same
-/// blue/dark-blue look as the welcome page — so the
-/// welcome → login navigation feels like one branded flow.
-///
-/// Flow is a quiz: one question per step, per-step validation, keyboard
-/// submit advances. Step 0 always asks what kind of user you are —
-/// the answer routes you into the sign-in quiz (3 steps) or the
-/// sign-up quiz, which adds date of birth, country and phone.
+/// Modern, app-centred Login and Sign-Up screen for Finavig.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -46,177 +35,46 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   final _phoneController = TextEditingController();
 
-  final _emailFocus = FocusNode();
-  final _passwordFocus = FocusNode();
-  final _phoneFocus = FocusNode();
-
-  GccCountry _selectedCountry = GccCountry.uae;
-
-  /// Self-reported date of birth, captured at signup for fintech KYC /
-  /// age-gate readiness. Optional — null when the user skips it.
-  DateTime? _selectedDob;
+  final _formKey = GlobalKey<FormState>();
 
   bool _isSignUp = false;
-
-  /// Whether the step-0 "what type of user are you?" question has
-  /// been answered yet. Gates Continue so the mode can't be skipped.
-  bool _modePicked = false;
-
-  /// Timestamp of the last answer-card tap, for double-click
-  /// detection (double-click = select + advance to the next slide).
-  DateTime? _lastOptionTap;
-
-  /// Press state for the brand wordmark — drives its subtle
-  /// fade so it reads as tappable.
-  bool _wordmarkPressed = false;
   bool _busy = false;
   bool _obscurePassword = true;
   String? _error;
-  String? _stepError;
 
-  int _step = 0;
-  int _dir = 1; // +1 forward, -1 backward (slide direction)
-
-  // Step 0 is the user-type question for everyone; the email and
-  // password steps follow, and sign-up adds DOB, country and phone.
-  int get _totalSteps => _isSignUp ? 6 : 3;
+  GccCountry _selectedCountry = GccCountry.uae;
+  DateTime? _selectedDob;
+  bool _showAdvancedFields = false;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     _phoneController.dispose();
-    _emailFocus.dispose();
-    _passwordFocus.dispose();
-    _phoneFocus.dispose();
     super.dispose();
   }
 
-  // ── Navigation between steps ──────────────────────────────────────────────
-
-  /// Answer to the step-0 quiz question: tapping an option only
-  /// records the choice (highlighting it). Continue routes into
-  /// the matching sign-in / sign-up flow.
-  void _chooseMode(bool signUp) {
-    if (_busy) return;
-    FocusScope.of(context).unfocus();
+  void _switchMode(bool signUp) {
+    if (_isSignUp == signUp) return;
     setState(() {
       _isSignUp = signUp;
-      _modePicked = true;
-      _stepError = null;
       _error = null;
     });
   }
-
-  /// Single tap on an answer selects it; a second tap within
-  /// 300 ms (double-click) selects it AND advances to the
-  /// next slide of that flow — a shortcut for Continue.
-  void _onOptionTap(bool signUp) {
-    if (_busy) return;
-    final now = DateTime.now();
-    final doubleTap =
-        _lastOptionTap != null &&
-        now.difference(_lastOptionTap!) < const Duration(milliseconds: 300);
-    _lastOptionTap = doubleTap ? null : now;
-    _chooseMode(signUp);
-    if (doubleTap) _gotoStep(1);
-  }
-
-  void _gotoStep(int step) {
-    if (_busy) return;
-    FocusScope.of(context).unfocus();
-    setState(() {
-      _dir = step >= _step ? 1 : -1;
-      _step = step;
-      _error = null;
-      _stepError = null;
-    });
-    _focusCurrent();
-  }
-
-  void _back() => _gotoStep(_step - 1);
-
-  void _continue() {
-    FocusScope.of(context).unfocus();
-    setState(() {
-      _stepError = null;
-      _error = null;
-    });
-    if (!_validateStep(_step)) return;
-    if (_step < _totalSteps - 1) {
-      _gotoStep(_step + 1);
-    } else {
-      _submit();
-    }
-  }
-
-  bool _validateStep(int step) {
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
-    if (step == 0) {
-      if (!_modePicked) {
-        return _failStep('Choose an option to continue');
-      }
-    } else if (step == 1) {
-      if (email.isEmpty) return _failStep('Enter your email');
-      if (!email.contains('@') || !email.contains('.')) {
-        return _failStep('Enter a valid email');
-      }
-    } else if (step == 2) {
-      if (password.isEmpty) return _failStep('Enter your password');
-      if (password.length < 6) return _failStep('At least 6 characters');
-    } else if (_isSignUp && step == 3) {
-      // DOB is optional (self-reported), but if given it must be a real
-      // date of the past and the user must be 16+ (see the T&C).
-      if (_selectedDob != null) {
-        final now = DateTime.now();
-        if (_selectedDob!.isAfter(now)) {
-          return _failStep('Date of birth cannot be in the future');
-        }
-        if (_selectedDob!.isBefore(DateTime(1900))) {
-          return _failStep('Enter a realistic date of birth');
-        }
-        var age = now.year - _selectedDob!.year;
-        if (now.month < _selectedDob!.month ||
-            (now.month == _selectedDob!.month && now.day < _selectedDob!.day)) {
-          age--;
-        }
-        if (age < 16) {
-          return _failStep('You must be at least 16 to use Finavig');
-        }
-      }
-    }
-    return true;
-  }
-
-  bool _failStep(String message) {
-    setState(() => _stepError = message);
-    return false;
-  }
-
-  void _focusCurrent() {
-    // Wait for the step-slide transition (320 ms) to finish before
-    // requesting focus, so the keyboard's own slide-in doesn't fight
-    // the step animation and cause a mid-transition layout jump.
-    Future<void>.delayed(const Duration(milliseconds: 360), () {
-      if (!mounted) return;
-      final FocusNode? node;
-      if (_step == 1) {
-        node = _emailFocus;
-      } else if (_step == 2) {
-        node = _passwordFocus;
-      } else if (_isSignUp && _step == 5) {
-        node = _phoneFocus;
-      } else {
-        node = null; // DOB picker / country picker — keep keyboard closed
-      }
-      node?.requestFocus();
-    });
-  }
-
-  // ── Auth submission ──────────────────────────────────────────────────────
 
   Future<void> _submit() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (email.isEmpty || !email.contains('@')) {
+      setState(() => _error = 'Please enter a valid email address.');
+      return;
+    }
+    if (password.length < 6) {
+      setState(() => _error = 'Password must be at least 6 characters.');
+      return;
+    }
+
     setState(() {
       _busy = true;
       _error = null;
@@ -224,8 +82,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final auth = AuthService.instance;
+      final prefs = await SharedPreferences.getInstance();
+
       if (_isSignUp) {
-        final prefs = await SharedPreferences.getInstance();
         await prefs.setString('userCountry', _selectedCountry.code);
         if (_selectedDob != null) {
           await prefs.setString(
@@ -237,11 +96,13 @@ class _LoginScreenState extends State<LoginScreen> {
         if (phone.isNotEmpty) {
           await prefs.setString('userPhone', phone);
         }
+
         await auth.signUp(
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
+          email: email,
+          password: password,
           dateOfBirth: _selectedDob,
         );
+
         if (!auth.isSignedIn) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -249,45 +110,27 @@ class _LoginScreenState extends State<LoginScreen> {
                 content: Text(
                   'Account created! Check your email to confirm, then sign in.',
                 ),
+                backgroundColor: FinavigColors.safe,
               ),
             );
             setState(() {
               _isSignUp = false;
-              _modePicked = true;
-              _step = 1; // land on the sign-in email step
               _busy = false;
             });
-            _focusCurrent();
           }
           return;
         }
       } else {
-        await auth.signIn(
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-        );
+        await auth.signIn(email: email, password: password);
       }
 
-      // Best-effort: report this launch to the admin app-health pipeline.
-      // This is the canonical post-sign-in reporting site.
-      // Do not block entry into the app if this fails.
       if (mounted) {
         unawaited(AppVersionService.instance.trackAppUsage());
       }
 
-      // Reload everything that is scoped per-user. Order matters:
-      // collections first (DocumentScannerService maps legacy collection
-      // ids against this list), then custom doc types (rows decode into
-      // ExpiryItems via the registry), then documents and finance.
-      //
-      // Auth has already succeeded at this point — a failure here must
-      // NEVER send the user back to "try again" (the account exists, so a
-      // retry would report "already registered"). Log it and enter the app;
-      // services re-sync on next launch.
+      // Initialize user-scoped services
       try {
         await DocumentCollectionService.instance.reset();
-        // On signup the DB trigger creates the personal collection with
-        // default country 'AE'. Patch it to the selected country.
         if (_isSignUp) {
           await DocumentCollectionService.instance.updatePersonalCountry(
             _selectedCountry.code,
@@ -296,93 +139,73 @@ class _LoginScreenState extends State<LoginScreen> {
         await CustomDocumentTypeService.instance.reset();
         await DocumentScannerService.instance.refresh();
         await FinanceService.instance.refresh();
-        // Load the tier granted to this user (Track 1 entitlements).
         await EntitlementService.instance.refresh();
       } catch (e) {
-        debugPrint('Post-auth refresh failed (entering app anyway): $e');
+        debugPrint('Post-auth refresh error: $e');
       }
 
-      // One-time, opt-in App Lock set-up offer for returning users (never
-      // shown to brand-new sign-ups). Purely a convenience — a failure here
-      // must not surface as a login error, so entry always proceeds.
+      // Offer app lock setup to returning sign-ins
       if (mounted && !_isSignUp) {
         try {
           await maybeOfferAppLockSetup(context);
         } catch (e) {
-          debugPrint('App Lock offer skipped: $e');
+          debugPrint('App lock offer skipped: $e');
         }
       }
 
       if (mounted) {
-        // Brand-new accounts go through the onboarding tour once, right
-        // after sign-up. Returning sign-ins (and anyone who has already
-        // onboarded) land straight on Home. Without this, onboarding was
-        // only reachable from the splash screen — i.e. on the *next* cold
-        // start — so a fresh sign-up never saw it.
-        final prefs = await SharedPreferences.getInstance();
         final hasOnboarded = prefs.getBool('hasOnboarded') ?? false;
-        final destination = (_isSignUp && !hasOnboarded)
-            ? '/onboarding'
-            : '/home';
-
-        // Brief, quiet logo loader so the auth → app transition feels
-        // smoother than an instant pop into the home screen.
-        if (mounted) {
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            barrierColor: Colors.transparent,
-            builder: (_) => const _AuthLoader(),
-          );
-        }
-
-        await Future<void>.delayed(const Duration(milliseconds: 550));
-
-        if (mounted) {
-          // Pop the loader before navigating away.
-          Navigator.of(context, rootNavigator: true).pop();
-          await Future<void>.delayed(const Duration(milliseconds: 80));
-          context.go(destination);
-        }
+        final destination = (_isSignUp && !hasOnboarded) ? '/onboarding' : '/home';
+        context.go(destination);
       }
     } catch (e) {
-      setState(() {
-        _error = friendlyError(e);
-        _busy = false;
-      });
+      if (mounted) {
+        setState(() {
+          _error = friendlyError(e);
+          _busy = false;
+        });
+      }
     }
   }
 
-  Future<void> _showForgotPassword() async {
-    final resetEmailController = TextEditingController(
-      text: _emailController.text.trim(),
-    );
+  Future<void> _continueAsLocal() async {
+    setState(() => _busy = true);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('userCountry', _selectedCountry.code);
+    await DocumentCollectionService.instance.reset();
+    await DocumentScannerService.instance.refresh();
+    await FinanceService.instance.refresh();
 
-    final confirmed = await showDialog<bool>(
+    if (mounted) {
+      final hasOnboarded = prefs.getBool('hasOnboarded') ?? false;
+      final destination = hasOnboarded ? '/home' : '/onboarding';
+      context.go(destination);
+    }
+  }
+
+  Future<void> _forgotPassword() async {
+    final email = _emailController.text.trim();
+    final controller = TextEditingController(text: email);
+
+    final resetEmail = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(FinavigRadius.dialog),
-        ),
-        title: const Text(
-          'Reset Password',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: const Text('Reset Password'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Enter your email address and we\'ll send you a link to reset '
-              'your password.',
-              style: TextStyle(fontSize: 13),
+              'Enter your registered email address and we will send you a password reset link.',
+              style: TextStyle(fontSize: 13.5),
             ),
             const SizedBox(height: 16),
             TextField(
-              controller: resetEmailController,
+              controller: controller,
               keyboardType: TextInputType.emailAddress,
+              autofocus: true,
               decoration: const InputDecoration(
-                labelText: 'Email',
+                labelText: 'Email Address',
                 prefixIcon: Icon(Icons.alternate_email_rounded),
               ),
             ),
@@ -390,40 +213,26 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
+            onPressed: () => Navigator.pop(ctx),
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Send Reset Link'),
+            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            child: const Text('Send Link'),
           ),
         ],
       ),
     );
 
-    final email = resetEmailController.text.trim();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      resetEmailController.dispose();
-    });
-
-    if (confirmed != true) return;
-
-    if (email.isEmpty || !email.contains('@')) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter a valid email address.')),
-        );
-      }
-      return;
-    }
+    if (resetEmail == null || resetEmail.isEmpty) return;
 
     try {
-      await AuthService.instance.sendPasswordReset(email);
+      await AuthService.instance.sendPasswordReset(resetEmail);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Password reset link sent! Check your inbox.'),
+            backgroundColor: FinavigColors.safe,
           ),
         );
       }
@@ -439,7 +248,106 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // ── Build ────────────────────────────────────────────────────────────────
+  void _showCountryPicker() {
+    final theme = Theme.of(context);
+    final fade = FinavigTransition.of(context);
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: theme.colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                child: Row(
+                  children: [
+                    const Text('🌍', style: TextStyle(fontSize: 20)),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Select GCC Country',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              Flexible(
+                child: ListView(
+                  shrinkWrap: true,
+                  children: GccCountry.values.map((country) {
+                    final selected = country == _selectedCountry;
+                    return ListTile(
+                      leading: Text(
+                        country.flagEmoji,
+                        style: const TextStyle(fontSize: 24),
+                      ),
+                      title: Text(
+                        country.displayName,
+                        style: TextStyle(
+                          fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
+                        ),
+                      ),
+                      subtitle: Text(
+                        'Currency: ${country.currency} · ${country.nationalIdLabel}',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: fade.color(
+                            FinavigColors.textMutedLight,
+                            FinavigColors.textMuted,
+                          ),
+                        ),
+                      ),
+                      trailing: selected
+                          ? const Icon(
+                              Icons.check_circle_rounded,
+                              color: FinavigColors.accent,
+                            )
+                          : null,
+                      onTap: () {
+                        setState(() => _selectedCountry = country);
+                        Navigator.pop(ctx);
+                      },
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _pickDob() async {
+    final now = DateTime.now();
+    final initial = _selectedDob ?? DateTime(now.year - 25, 1, 1);
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(1920),
+      lastDate: DateTime(now.year - 15, now.month, now.day),
+    );
+    if (picked != null) {
+      setState(() => _selectedDob = picked);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -447,1370 +355,652 @@ class _LoginScreenState extends State<LoginScreen> {
     final fade = FinavigTransition.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
+    final bg = fade.color(
+      const Color(0xFFF6F7FA),
+      FinavigColors.obsidian,
+    );
+    final cardBg = fade.color(
+      Colors.white,
+      FinavigColors.charcoal,
+    );
+    final cardBorder = fade.color(
+      const Color(0xFFE5E7EB),
+      Colors.white.withValues(alpha: 0.08),
+    );
+
     return Scaffold(
-      backgroundColor: fade.color(
-        FinavigColors.snowWhite,
-        FinavigColors.obsidian,
-      ),
-      body: SafeArea(bottom: false, child: _glassSheet(theme, isDark)),
-    );
-  }
-
-  /// The full-screen surface: the centred brand header, the mode
-  /// toggle + progress, the quiz flow in a soft card, and the
-  /// footer, over the flat scaffold surface.
-  Widget _glassSheet(ThemeData theme, bool isDark) {
-    return SafeArea(
-      bottom: false,
-      child: Column(
-        children: [
-          _brandHeader(isDark),
-          Expanded(child: _stepsArea(theme, isDark)),
-          _footer(theme, isDark),
-        ],
-      ),
-    );
-  }
-
-  // ── Brand header (centred: wordmark + GCC pill) ──
-
-  Widget _brandHeader(bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-      child: Column(
-        children: [
-          // Tappable logo — returns to the welcome pitch.
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTapDown: (_) => setState(() => _wordmarkPressed = true),
-            onTapUp: (_) => setState(() => _wordmarkPressed = false),
-            onTapCancel: () => setState(() => _wordmarkPressed = false),
-            onTap: () {
-              if (_busy) return;
-              context.go('/welcome');
-            },
-            child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 120),
-              opacity: _wordmarkPressed ? 0.55 : 1.0,
-              child: Image.asset(
-                'assets/New Logo/finavig-mark-transparent.png',
-                width: 44,
-                height: 44,
-                fit: BoxFit.contain,
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Welcome back',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.4,
-              color: isDark
-                  ? FinavigColors.textPrimary
-                  : FinavigColors.textPrimaryLight,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Sign in to track documents, budgets and renewals',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13.5,
-              fontWeight: FontWeight.w400,
-              height: 1.45,
-              color: isDark
-                  ? FinavigColors.textSecondary
-                  : FinavigColors.textSecondaryLight,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Chrome: quiz progress (on the surface sheet) ──────────
-
-  // ── Steps: quiz block that can grow with the keyboard ──────────────────
-
-  Widget _stepsArea(ThemeData theme, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 4),
-      child: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 320),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Height settle: the box adopts the incoming step's
-              // height immediately and animates the difference across
-              // the same beat as the cross-fade. Without it the box held
-              // the taller outgoing step for its whole 320 ms and then
-              // collapsed by ~80 px in a single frame, which is what
-              // kicked the email field up and back down.
-              AnimatedSize(
-                duration: _kStepTransition,
-                // Ease in and out: the settle starts gently so it never
-                // reads as a snap, however tall the outgoing step was.
-                curve: Curves.easeInOutCubic,
-                alignment: Alignment.topCenter,
-                child: AnimatedSwitcher(
-                  duration: _kStepTransition,
-                  switchInCurve: Curves.easeOutCubic,
-                  switchOutCurve: Curves.easeInCubic,
-                  transitionBuilder: (child, animation) {
-                    final slide = Tween<Offset>(
-                      begin: Offset(_dir * 0.06, 0),
-                      end: Offset.zero,
-                    ).animate(animation);
-                    return FadeTransition(
-                      opacity: animation,
-                      child: SlideTransition(position: slide, child: child),
-                    );
-                  },
-                  // Only the incoming step sizes the box. The outgoing
-                  // one is positioned out of the layout so it cannot
-                  // hold the height open; it just fades (clipped as the
-                  // box shrinks under it) — a collapse, not a
-                  // single-frame jump.
-                  layoutBuilder: (currentChild, previousChildren) {
-                    return Stack(
-                      alignment: Alignment.topCenter,
-                      children: [
-                        if (currentChild != null) currentChild,
-                        ...previousChildren.map(
-                          (child) => Positioned(
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            child: child,
+      backgroundColor: bg,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              physics: const ClampingScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight - 40,
+                ),
+                child: IntrinsicHeight(
+                  child: Column(
+                    children: [
+                      // ── Brand Header ──────────────────────────────────────
+                      const SizedBox(height: 12),
+                      Center(
+                        child: Container(
+                          width: 68,
+                          height: 68,
+                          decoration: BoxDecoration(
+                            color: fade.color(
+                              Colors.white,
+                              FinavigColors.slate,
+                            ),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: FinavigColors.accent.withValues(alpha: 0.25),
+                                blurRadius: 24,
+                                spreadRadius: 2,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          padding: const EdgeInsets.all(14),
+                          child: Image.asset(
+                            'assets/New Logo/finavig-mark-transparent.png',
+                            fit: BoxFit.contain,
                           ),
                         ),
-                      ],
-                    );
-                  },
-                  child: KeyedSubtree(
-                    // Keyed by step only — NOT the mode — so
-                    // re-tapping an answer at step 0 (which flips
-                    // _isSignUp) doesn't re-animate the slide.
-                    key: ValueKey('step-$_step'),
-                    child: _buildStep(isDark),
-                  ),
-                ),
-              ),
-              if (_error != null) ...[
-                const SizedBox(height: 14),
-                _errorBanner(isDark),
-              ],
-              const SizedBox(height: 16),
-              _actionRow(isDark),
-              const SizedBox(height: 16),
-              _TrustRow(isDark: isDark),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _errorBanner(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isDark ? FinavigColors.dangerBg : FinavigColors.dangerBgLight,
-        borderRadius: BorderRadius.circular(FinavigRadius.tile),
-        border: Border.all(color: FinavigColors.danger.withOpacity(0.3)),
-      ),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.error_outline_rounded,
-            size: 18,
-            color: FinavigColors.danger,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              _error!,
-              style: const TextStyle(
-                fontSize: 13,
-                color: FinavigColors.danger,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _actionRow(bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            if (_step > 0) ...[
-              _BackButton(isDark: isDark, onTap: _busy ? null : _back),
-              const SizedBox(width: 10),
-            ],
-            Expanded(
-              child: _PrimaryButton(
-                isDark: isDark,
-                label: _step < _totalSteps - 1
-                    ? 'Continue'
-                    : (_isSignUp ? 'Create account' : 'Sign in'),
-                busy: _busy,
-                onPressed: _continue,
-              ),
-            ),
-          ],
-        ),
-        if (_isSignUp && _step == _totalSteps - 1)
-          TextButton(
-            onPressed: _busy ? null : _submit,
-            child: Text(
-              'Skip for now',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: isDark
-                    ? FinavigColors.textSecondary
-                    : FinavigColors.textSecondaryLight,
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  // ── Footer: links + legal (inside the surface sheet) ─────────────────────
-
-  Widget _footer(ThemeData theme, bool isDark) {
-    final subColor = isDark
-        ? FinavigColors.textSecondary
-        : FinavigColors.textSecondaryLight;
-    final accentText = isDark
-        ? FinavigColors.textPrimary
-        : FinavigColors.textPrimaryLight;
-
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 10, 24, 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Wrap(
-              alignment: WrapAlignment.center,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: 4,
-              children: [
-                Text(
-                  'By continuing you agree to our',
-                  style: TextStyle(fontSize: 12, color: subColor, height: 1.5),
-                ),
-                _LegalLink(
-                  label: 'Terms & Conditions',
-                  color: accentText,
-                  onTap: () => showTermsDialog(context),
-                ),
-                Text(
-                  'and',
-                  style: TextStyle(fontSize: 12, color: subColor, height: 1.5),
-                ),
-                _LegalLink(
-                  label: 'Privacy Policy',
-                  color: accentText,
-                  onTap: () => showPrivacyDialog(context),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _TextLink(
-                  label: 'About',
-                  color: subColor,
-                  onTap: () => showAboutSheet(context),
-                ),
-                _DotSeparator(color: subColor),
-                _TextLink(
-                  label: 'Terms',
-                  color: subColor,
-                  onTap: () => showTermsDialog(context),
-                ),
-                _DotSeparator(color: subColor),
-                _TextLink(
-                  label: 'Privacy',
-                  color: subColor,
-                  onTap: () => showPrivacyDialog(context),
-                ),
-                _DotSeparator(color: subColor),
-                _TextLink(
-                  label: 'Support',
-                  color: subColor,
-                  onTap: () => showSupportSheet(context),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '${AppVersionBadge.version} · Made for the GCC',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 11,
-                color: isDark
-                    ? FinavigColors.textMuted
-                    : FinavigColors.textMutedLight,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ── Step content ─────────────────────────────────────────────────────────
-
-  Widget _buildStep(bool isDark) {
-    if (_step == 0) return _userTypeStep(isDark);
-    if (!_isSignUp) {
-      switch (_step) {
-        case 1:
-          return _emailStep(isDark, isSignUp: false);
-        default:
-          return _passwordStep(isDark, isSignUp: false);
-      }
-    }
-    switch (_step) {
-      case 1:
-        return _emailStep(isDark, isSignUp: true);
-      case 2:
-        return _passwordStep(isDark, isSignUp: true);
-      case 3:
-        return _dobStep(isDark);
-      case 4:
-        return _countryStep(isDark);
-      default:
-        return _phoneStep(isDark);
-    }
-  }
-
-  /// "you're signing up as …" review chip on later steps.
-  Widget _emailReviewChip(bool isDark) {
-    final subColor = isDark
-        ? FinavigColors.textSecondary
-        : FinavigColors.textSecondaryLight;
-    final email = _emailController.text.trim();
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        children: [
-          Icon(
-            Icons.mark_email_read_outlined,
-            size: 14,
-            color: FinavigColors.adaptiveIcon(
-              context,
-              FinavigColors.textSecondaryLight,
-            ),
-          ),
-          const SizedBox(width: 6),
-          Flexible(
-            child: Text(
-              email.isEmpty ? '—' : email,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 12, color: subColor),
-            ),
-          ),
-          const SizedBox(width: 8),
-          GestureDetector(
-            onTap: () => _gotoStep(1),
-            behavior: HitTestBehavior.opaque,
-            child: const Text(
-              'Change',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: FinavigColors.ink,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Step 0 — the quiz opener: "What type of user are you?"
-  /// One tap on an answer routes into the sign-up or sign-in
-  /// quiz, replacing the old sign-in/sign-up toggle.
-  Widget _userTypeStep(bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _QuizQuestion(
-          isDark: isDark,
-          title: 'How would you like to continue?',
-          subtitle: 'Choose an option to continue.',
-        ),
-        _ModeOption(
-          isDark: isDark,
-          icon: Icons.person_add_alt_rounded,
-          title: 'Create account',
-          subtitle: 'New to Finavig — set one up in seconds',
-          selected: _modePicked && _isSignUp,
-          onTap: () => _onOptionTap(true),
-        ),
-        const SizedBox(height: 14),
-        _ModeOption(
-          isDark: isDark,
-          icon: Icons.login_rounded,
-          title: 'Sign in',
-          subtitle: 'Already a member — jump straight in',
-          selected: _modePicked && !_isSignUp,
-          onTap: () => _onOptionTap(false),
-        ),
-        if (_stepError != null) ...[
-          const SizedBox(height: 14),
-          Text(
-            _stepError!,
-            style: const TextStyle(
-              fontSize: 13,
-              color: FinavigColors.danger,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _emailStep(bool isDark, {required bool isSignUp}) {
-    return AutofillGroup(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _QuizQuestion(
-            isDark: isDark,
-            title: "What's your email?",
-            subtitle: isSignUp
-                ? "We'll create your Finavig account with it."
-                : "Welcome back! Let's get you signed in.",
-          ),
-          TextFormField(
-            controller: _emailController,
-            focusNode: _emailFocus,
-            keyboardType: TextInputType.emailAddress,
-            autofillHints: const [AutofillHints.email],
-            textInputAction: TextInputAction.next,
-            onFieldSubmitted: (_) => _continue(),
-            style: TextStyle(color: _fieldTextColor(isDark), fontSize: 15),
-            decoration: _fieldDecoration(
-              isDark,
-              label: 'Email Address',
-              icon: Icons.alternate_email_rounded,
-              errorText: _stepError,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _passwordStep(bool isDark, {required bool isSignUp}) {
-    return AutofillGroup(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _emailReviewChip(isDark),
-          _QuizQuestion(
-            isDark: isDark,
-            title: isSignUp ? 'Create a password' : 'Enter your password',
-            subtitle: isSignUp
-                ? 'At least 6 characters. You can change it later.'
-                : null,
-          ),
-          TextFormField(
-            controller: _passwordController,
-            focusNode: _passwordFocus,
-            obscureText: _obscurePassword,
-            autofillHints: const [AutofillHints.password],
-            textInputAction: isSignUp
-                ? TextInputAction.next
-                : TextInputAction.done,
-            onFieldSubmitted: (_) => _continue(),
-            style: TextStyle(color: _fieldTextColor(isDark), fontSize: 15),
-            decoration: _fieldDecoration(
-              isDark,
-              label: 'Password',
-              icon: Icons.lock_outline_rounded,
-              errorText: _stepError,
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _obscurePassword
-                      ? Icons.visibility_off_rounded
-                      : Icons.visibility_rounded,
-                  size: 20,
-                  color: FinavigColors.adaptiveIcon(
-                    context,
-                    FinavigColors.textSecondaryLight,
-                  ),
-                ),
-                onPressed: () {
-                  setState(() {
-                    _obscurePassword = !_obscurePassword;
-                  });
-                },
-              ),
-            ),
-          ),
-          if (!isSignUp) ...[
-            const SizedBox(height: 6),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: _busy ? null : _showForgotPassword,
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  visualDensity: VisualDensity.compact,
-                ),
-                child: const Text(
-                  'Forgot password?',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: FinavigColors.ink,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  /// Signup step: optional self-reported date of birth — collected now so
-  /// the future fintech (KYC / age-gated) features don't need a re-onboarding.
-  Widget _dobStep(bool isDark) {
-    final subColor = isDark
-        ? FinavigColors.textSecondary
-        : FinavigColors.textSecondaryLight;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _QuizQuestion(
-          isDark: isDark,
-          title: 'When were you born?',
-          subtitle:
-              'Optional — we use it to tailor budgets and to meet age rules. '
-              'You can skip this.',
-        ),
-        GestureDetector(
-          onTap: _busy ? null : _pickDateOfBirth,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withOpacity(0.06)
-                  : Colors.black.withOpacity(0.03),
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(
-                color: (isDark ? Colors.white : Colors.black).withOpacity(0.14),
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.cake_rounded,
-                  size: 19,
-                  color: FinavigColors.adaptiveIcon(
-                    context,
-                    FinavigColors.textSecondaryLight,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    _selectedDob == null
-                        ? 'Select your date of birth'
-                        : '${_selectedDob!.day.toString().padLeft(2, '0')} '
-                              '${_monthName(_selectedDob!.month)} '
-                              '${_selectedDob!.year}',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: _selectedDob == null
-                          ? subColor
-                          : _fieldTextColor(isDark),
-                    ),
-                  ),
-                ),
-                if (_selectedDob != null)
-                  GestureDetector(
-                    onTap: () => setState(() => _selectedDob = null),
-                    child: Icon(
-                      Icons.close_rounded,
-                      size: 18,
-                      color: FinavigColors.adaptiveIcon(
-                        context,
-                        FinavigColors.textSecondaryLight,
                       ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Stored privately under our Privacy Policy — never sold or shared.',
-          style: TextStyle(fontSize: 12, color: subColor),
-        ),
-      ],
-    );
-  }
-
-  Future<void> _pickDateOfBirth() async {
-    final now = DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDob ?? DateTime(now.year - 30, now.month, now.day),
-      firstDate: DateTime(1900),
-      lastDate: now,
-      helpText: 'Select your date of birth',
-      cancelText: 'Cancel',
-      confirmText: 'Confirm',
-    );
-    if (picked != null && mounted) {
-      setState(() {
-        _selectedDob = picked;
-        _stepError = null;
-      });
-    }
-  }
-
-  static String _monthName(int month) {
-    const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
-    ];
-    return months[month - 1];
-  }
-
-  Widget _countryStep(bool isDark) {
-    final c = _selectedCountry;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _QuizQuestion(
-          isDark: isDark,
-          title: 'Where are you based?',
-          subtitle:
-              "We'll default your document types — IDs, licences, tenancy — to ${c.displayName}.",
-        ),
-        // Dropdown-style picker: tappable field opening a bottom sheet with
-        // all 6 GCC countries (same pattern as the app's other pickers).
-        GestureDetector(
-          onTap: _busy ? null : _pickCountry,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withOpacity(0.06)
-                  : Colors.black.withOpacity(0.03),
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(
-                color: (isDark ? Colors.white : Colors.black).withOpacity(0.14),
-              ),
-            ),
-            child: Row(
-              children: [
-                // Bundled flag image (emoji flags render as tofu with the
-                // bundled fonts); hairline border keeps white-edged flags
-                // like AE visible on light backgrounds.
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: isDark
-                          ? Colors.white.withOpacity(0.20)
-                          : Colors.black.withOpacity(0.10),
-                    ),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(5),
-                    child: Image.asset(
-                      c.flagAsset,
-                      width: 32,
-                      height: 22,
-                      fit: BoxFit.cover,
-                      gaplessPlayback: true,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
+                      const SizedBox(height: 16),
                       Text(
-                        c.displayName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        'FINAVIG',
                         style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: _fieldTextColor(isDark),
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 3.5,
+                          color: fade.color(
+                            FinavigColors.textPrimaryLight,
+                            FinavigColors.textPrimary,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 4),
                       Text(
-                        '${c.currency} · ${c.phoneCode}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        'Smart Expiries & Financial Navigator',
                         style: TextStyle(
-                          fontSize: 11,
-                          color: isDark
-                              ? FinavigColors.textSecondary
-                              : FinavigColors.textSecondaryLight,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: fade.color(
+                            FinavigColors.textSecondaryLight,
+                            FinavigColors.textSecondary,
+                          ),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.expand_more_rounded,
-                  size: 22,
-                  color: FinavigColors.adaptiveIcon(
-                    context,
-                    FinavigColors.textSecondaryLight,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Opens the country picker bottom sheet and updates the selection.
-  Future<void> _pickCountry() async {
-    FocusScope.of(context).unfocus();
-    final picked = await showModalBottomSheet<GccCountry>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) {
-        final theme = Theme.of(ctx);
-        final sheetDark = theme.brightness == Brightness.dark;
-        return SafeArea(
-          top: false,
-          child: Container(
-            margin: const EdgeInsets.all(12),
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 14),
-                    decoration: BoxDecoration(
-                      color: sheetDark
-                          ? Colors.white.withOpacity(0.15)
-                          : Colors.black.withOpacity(0.10),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                Text(
-                  'Select your country',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: sheetDark
-                        ? FinavigColors.textPrimary
-                        : FinavigColors.textPrimaryLight,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ...GccCountry.values.map((option) {
-                  final selected = option == _selectedCountry;
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: GestureDetector(
-                      onTap: () => Navigator.pop(ctx, option),
-                      behavior: HitTestBehavior.opaque,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 150),
+                      const SizedBox(height: 8),
+                      // GCC Region Strip
+                      Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
+                          horizontal: 10,
+                          vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: selected
-                              ? FinavigColors.ink.withOpacity(0.06)
-                              : (sheetDark
-                                    ? Colors.white.withOpacity(0.05)
-                                    : FinavigColors.cloud),
-                          borderRadius: BorderRadius.circular(
-                            FinavigRadius.tile,
+                          color: fade.color(
+                            Colors.black.withValues(alpha: 0.04),
+                            Colors.white.withValues(alpha: 0.05),
                           ),
-                          border: Border.all(
-                            color: selected
-                                ? FinavigColors.ink
-                                : (sheetDark
-                                      ? Colors.white.withOpacity(0.08)
-                                      : Colors.black.withOpacity(0.05)),
-                            width: selected ? 1.5 : 1,
-                          ),
+                          borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: sheetDark
-                                      ? Colors.white.withOpacity(0.20)
-                                      : Colors.black.withOpacity(0.10),
+                            const Text(
+                              '🇦🇪 🇸🇦 🇶🇦 🇰🇼 🇧🇭 🇴🇲',
+                              style: TextStyle(fontSize: 11),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'GCC Edition',
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.5,
+                                color: fade.color(
+                                  FinavigColors.textMutedLight,
+                                  FinavigColors.textMuted,
                                 ),
                               ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(7),
-                                child: Image.asset(
-                                  option.flagAsset,
-                                  width: 38,
-                                  height: 28,
-                                  fit: BoxFit.cover,
-                                  gaplessPlayback: true,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    option.displayName,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                      color: sheetDark
-                                          ? FinavigColors.textPrimary
-                                          : FinavigColors.textPrimaryLight,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    '${option.currency} · ${option.phoneCode}',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: sheetDark
-                                          ? FinavigColors.textSecondary
-                                          : FinavigColors.textSecondaryLight,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            SizedBox(
-                              width: 22,
-                              child: selected
-                                  ? const Icon(
-                                      Icons.check_circle_rounded,
-                                      size: 20,
-                                      color: FinavigColors.ink,
-                                    )
-                                  : null,
                             ),
                           ],
                         ),
                       ),
-                    ),
-                  );
-                }),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-    if (picked != null && mounted) {
-      setState(() {
-        _selectedCountry = picked;
-        _stepError = null;
-      });
-    }
-  }
+                      const SizedBox(height: 24),
 
-  Widget _phoneStep(bool isDark) {
-    return AutofillGroup(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _emailReviewChip(isDark),
-          _QuizQuestion(
-            isDark: isDark,
-            title: 'Add your phone',
-            subtitle:
-                'Optional — used for renewal reminders and cash-flow alerts. You can skip this.',
-          ),
-          TextFormField(
-            controller: _phoneController,
-            focusNode: _phoneFocus,
-            keyboardType: TextInputType.phone,
-            autofillHints: const [AutofillHints.telephoneNumber],
-            textInputAction: TextInputAction.done,
-            onFieldSubmitted: (_) => _continue(),
-            style: TextStyle(color: _fieldTextColor(isDark), fontSize: 15),
-            decoration: _fieldDecoration(
-              isDark,
-              label: 'Phone — ${_selectedCountry.phoneCode} (Optional)',
-              icon: Icons.phone_iphone_rounded,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+                      // ── Segmented Control (Sign In / Create Account) ───────
+                      Container(
+                        height: 46,
+                        padding: const EdgeInsets.all(3.5),
+                        decoration: BoxDecoration(
+                          color: fade.color(
+                            const Color(0xFFEBECEF),
+                            FinavigColors.slate,
+                          ),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: _AuthTabButton(
+                                label: 'Sign In',
+                                active: !_isSignUp,
+                                onTap: () => _switchMode(false),
+                              ),
+                            ),
+                            Expanded(
+                              child: _AuthTabButton(
+                                label: 'Create Account',
+                                active: _isSignUp,
+                                onTap: () => _switchMode(true),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
 
-  Color _fieldTextColor(bool isDark) =>
-      isDark ? FinavigColors.textPrimary : FinavigColors.textPrimaryLight;
+                      // ── Main Auth Card ────────────────────────────────────
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(22),
+                        decoration: BoxDecoration(
+                          color: cardBg,
+                          borderRadius: BorderRadius.circular(22),
+                          border: Border.all(color: cardBorder),
+                          boxShadow: [
+                            BoxShadow(
+                              color: isDark
+                                  ? Colors.black.withValues(alpha: 0.35)
+                                  : Colors.black.withValues(alpha: 0.04),
+                              blurRadius: 18,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              // Error Banner
+                              if (_error != null) ...[
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 9,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: FinavigColors.danger.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: FinavigColors.danger.withValues(alpha: 0.3),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.error_outline_rounded,
+                                        size: 16,
+                                        color: FinavigColors.danger,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          _error!,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: FinavigColors.danger,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 14),
+                              ],
 
-  /// Field style mirrors the app-wide InputDecorationTheme
-  /// (slate/cloud fill, violet focus ring) so login feels native.
-  InputDecoration _fieldDecoration(
-    bool isDark, {
-    required String label,
-    required IconData icon,
-    String? errorText,
-    Widget? suffixIcon,
-  }) {
-    // Sharp-edged, compact fields: quiet fill, hairline border, NO accent
-    // highlight when focused — focus is communicated by the caret and
-    // keyboard only. Tight icon constraints + slim padding keep the boxes
-    // ~44px tall instead of the Material default ~56px.
-    const radius = BorderRadius.all(Radius.circular(6));
-    const iconSlot = BoxConstraints(minWidth: 40, minHeight: 36);
-    final hairline = (isDark ? Colors.white : Colors.black).withOpacity(0.14);
-    return InputDecoration(
-      labelText: label,
-      labelStyle: TextStyle(
-        color: isDark
-            ? FinavigColors.textSecondary
-            : FinavigColors.textSecondaryLight,
-        fontSize: 13,
-      ),
-      errorText: errorText,
-      prefixIcon: Icon(
-        icon,
-        size: 19,
-        color: FinavigColors.adaptiveIcon(
-          context,
-          FinavigColors.textSecondaryLight,
-        ),
-      ),
-      prefixIconConstraints: iconSlot,
-      suffixIconConstraints: iconSlot,
-      suffixIcon: suffixIcon,
-      filled: true,
-      fillColor: isDark
-          ? Colors.white.withOpacity(0.06)
-          : Colors.black.withOpacity(0.03),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-      border: OutlineInputBorder(
-        borderRadius: radius,
-        borderSide: BorderSide(color: hairline),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: radius,
-        borderSide: BorderSide(color: hairline),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: radius,
-        borderSide: BorderSide(
-          color: (isDark ? Colors.white : Colors.black).withOpacity(0.22),
-        ),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: radius,
-        borderSide: const BorderSide(color: FinavigColors.danger, width: 1.2),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: radius,
-        borderSide: const BorderSide(color: FinavigColors.danger, width: 1.2),
-      ),
-    );
-  }
-}
+                              // Email Field
+                              _AuthInputField(
+                                controller: _emailController,
+                                label: 'Email Address',
+                                hint: 'name@example.com',
+                                icon: Icons.alternate_email_rounded,
+                                keyboardType: TextInputType.emailAddress,
+                                textInputAction: TextInputAction.next,
+                              ),
+                              const SizedBox(height: 14),
 
-// ──────────────────────────────────────────────────────────────────────────────
-// Building blocks — violet & dark, matching Home's bento style
-// ──────────────────────────────────────────────────────────────────────────────
+                              // Password Field
+                              _AuthInputField(
+                                controller: _passwordController,
+                                label: 'Password',
+                                hint: '••••••••',
+                                icon: Icons.lock_outline_rounded,
+                                obscureText: _obscurePassword,
+                                textInputAction: _isSignUp
+                                    ? TextInputAction.next
+                                    : TextInputAction.done,
+                                onSubmitted: (_) => _submit(),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscurePassword
+                                        ? Icons.visibility_outlined
+                                        : Icons.visibility_off_outlined,
+                                    size: 18,
+                                    color: fade.color(
+                                      FinavigColors.textMutedLight,
+                                      FinavigColors.textMuted,
+                                    ),
+                                  ),
+                                  onPressed: () => setState(
+                                    () => _obscurePassword = !_obscurePassword,
+                                  ),
+                                ),
+                              ),
 
-/// Big question heading for the current step.
-class _QuizQuestion extends StatelessWidget {
-  final bool isDark;
-  final String title;
-  final String? subtitle;
+                              // Sign-In Extra: Forgot Password
+                              if (!_isSignUp) ...[
+                                const SizedBox(height: 8),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: TextButton(
+                                    onPressed: _forgotPassword,
+                                    style: TextButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 4,
+                                      ),
+                                      minimumSize: Size.zero,
+                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                    child: const Text(
+                                      'Forgot password?',
+                                      style: TextStyle(
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: FinavigColors.accent,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
 
-  const _QuizQuestion({
-    required this.isDark,
-    required this.title,
-    this.subtitle,
-  });
+                              // Sign-Up Extras: Country & KYC Fields
+                              if (_isSignUp) ...[
+                                const SizedBox(height: 14),
+                                // GCC Country Selector
+                                InkWell(
+                                  onTap: _showCountryPicker,
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 12,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: fade.color(
+                                        const Color(0xFFF9FAFB),
+                                        FinavigColors.slate.withValues(alpha: 0.5),
+                                      ),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: cardBorder),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Text(
+                                          _selectedCountry.flagEmoji,
+                                          style: const TextStyle(fontSize: 20),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'GCC Country',
+                                                style: TextStyle(
+                                                  fontSize: 10.5,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: fade.color(
+                                                    FinavigColors.textMutedLight,
+                                                    FinavigColors.textMuted,
+                                                  ),
+                                                ),
+                                              ),
+                                              Text(
+                                                '${_selectedCountry.displayName} (${_selectedCountry.currency})',
+                                                style: TextStyle(
+                                                  fontSize: 13.5,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: fade.color(
+                                                    FinavigColors.textPrimaryLight,
+                                                    FinavigColors.textPrimary,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Icon(
+                                          Icons.keyboard_arrow_down_rounded,
+                                          size: 18,
+                                          color: fade.color(
+                                            FinavigColors.textMutedLight,
+                                            FinavigColors.textMuted,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 19,
-            height: 1.2,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.3,
-            color: isDark
-                ? FinavigColors.textPrimary
-                : FinavigColors.textPrimaryLight,
-          ),
-        ),
-        if (subtitle != null) ...[
-          const SizedBox(height: 6),
-          Text(
-            subtitle!,
-            style: TextStyle(
-              fontSize: 13,
-              height: 1.45,
-              // The step description carries the brand blue — the deep step on
-              // the white surface, the bright one on an ink one.
-              color: isDark ? FinavigColors.accentBright : FinavigColors.accent,
-            ),
-          ),
-        ],
-        const SizedBox(height: 14),
-      ],
-    );
-  }
-}
+                                // Toggle Optional Fields
+                                InkWell(
+                                  onTap: () => setState(
+                                    () => _showAdvancedFields =
+                                        !_showAdvancedFields,
+                                  ),
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 4,
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          _showAdvancedFields
+                                              ? Icons.expand_less_rounded
+                                              : Icons.expand_more_rounded,
+                                          size: 16,
+                                          color: FinavigColors.accent,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          _showAdvancedFields
+                                              ? 'Hide optional KYC fields'
+                                              : 'Add phone & date of birth (optional)',
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                            color: FinavigColors.accent,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
 
-/// Segmented progress bar: one violet segment per quiz step.
-class _StepProgress extends StatelessWidget {
-  final int step;
-  final int total;
-  final bool isDark;
+                                if (_showAdvancedFields) ...[
+                                  const SizedBox(height: 10),
+                                  _AuthInputField(
+                                    controller: _phoneController,
+                                    label: 'Phone Number (Optional)',
+                                    hint: '${_selectedCountry.phoneCode} 50 123 4567',
+                                    icon: Icons.phone_outlined,
+                                    keyboardType: TextInputType.phone,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  InkWell(
+                                    onTap: _pickDob,
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 12,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: fade.color(
+                                          const Color(0xFFF9FAFB),
+                                          FinavigColors.slate.withValues(alpha: 0.5),
+                                        ),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(color: cardBorder),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.cake_outlined,
+                                            size: 18,
+                                            color: fade.color(
+                                              FinavigColors.textMutedLight,
+                                              FinavigColors.textMuted,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: Text(
+                                              _selectedDob != null
+                                                  ? 'DOB: ${_selectedDob!.year}-${_selectedDob!.month.toString().padLeft(2, '0')}-${_selectedDob!.day.toString().padLeft(2, '0')}'
+                                                  : 'Date of Birth (Optional)',
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: _selectedDob != null
+                                                    ? FontWeight.w700
+                                                    : FontWeight.w500,
+                                                color: fade.color(
+                                                  FinavigColors.textPrimaryLight,
+                                                  FinavigColors.textPrimary,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          Icon(
+                                            Icons.calendar_month_outlined,
+                                            size: 18,
+                                            color: fade.color(
+                                              FinavigColors.textMutedLight,
+                                              FinavigColors.textMuted,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
 
-  const _StepProgress({
-    required this.step,
-    required this.total,
-    required this.isDark,
-  });
+                              const SizedBox(height: 20),
 
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Row(
-            children: List.generate(total, (i) {
-              final done = i <= step;
-              return Expanded(
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 240),
-                  curve: Curves.easeOut,
-                  height: 4,
-                  margin: EdgeInsets.only(right: i == total - 1 ? 0 : 5),
-                  decoration: BoxDecoration(
-                    color: done
-                        ? FinavigColors.ink
-                        : (isDark
-                              ? Colors.white.withOpacity(0.12)
-                              : Colors.black.withOpacity(0.08)),
-                    borderRadius: BorderRadius.circular(2),
+                              // Primary Submit Button
+                              SizedBox(
+                                height: 50,
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: FinavigColors.accent,
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                  ),
+                                  onPressed: _busy ? null : _submit,
+                                  child: _busy
+                                      ? const SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              _isSignUp
+                                                  ? 'Create Free Account'
+                                                  : 'Sign In to Finavig',
+                                              style: const TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w800,
+                                                letterSpacing: 0.2,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            const Icon(
+                                              Icons.arrow_forward_rounded,
+                                              size: 17,
+                                            ),
+                                          ],
+                                        ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // ── Offline / Local Mode ──────────────────────────────
+                      TextButton.icon(
+                        onPressed: _busy ? null : _continueAsLocal,
+                        icon: const Icon(
+                          Icons.cloud_off_rounded,
+                          size: 16,
+                          color: FinavigColors.textSecondary,
+                        ),
+                        label: Text(
+                          'Explore in Local Mode (Offline)',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: fade.color(
+                              FinavigColors.textSecondaryLight,
+                              FinavigColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const Spacer(),
+                      const SizedBox(height: 16),
+
+                      // ── Trust & Security Footer ───────────────────────────
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.verified_user_rounded,
+                            size: 13,
+                            color: fade.color(
+                              FinavigColors.textMutedLight,
+                              FinavigColors.textMuted,
+                            ),
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            'Bank-grade AES encryption · Offline-first privacy',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: fade.color(
+                                FinavigColors.textMutedLight,
+                                FinavigColors.textMuted,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _FooterLink(
+                            label: 'Terms of Service',
+                            onTap: () => showTermsDialog(context),
+                          ),
+                          Text(
+                            ' · ',
+                            style: TextStyle(
+                              color: fade.color(
+                                FinavigColors.textMutedLight,
+                                FinavigColors.textMuted,
+                              ),
+                            ),
+                          ),
+                          _FooterLink(
+                            label: 'Privacy Policy',
+                            onTap: () => showPrivacyDialog(context),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                   ),
                 ),
-              );
-            }),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Text(
-          'Step ${step + 1} of $total',
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: isDark
-                ? FinavigColors.textMuted
-                : FinavigColors.textMutedLight,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Primary action — the app's ink button (white on ink canvases).
-class _PrimaryButton extends StatelessWidget {
-  final bool isDark;
-  final String label;
-  final bool busy;
-  final VoidCallback onPressed;
-
-  const _PrimaryButton({
-    required this.isDark,
-    required this.label,
-    required this.busy,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // On the plain-white surface the CTA is the home hero's ink navy,
-    // matching the welcome screen's "Continue to Login". On an ink canvas it
-    // stays the inverted white button so it still pops.
-    final background = isDark ? Colors.white : FinavigColors.ink;
-    final foreground = isDark ? FinavigColors.ink : Colors.white;
-    return SizedBox(
-      height: 48,
-      child: FilledButton(
-        onPressed: busy ? null : onPressed,
-        style: FilledButton.styleFrom(
-          backgroundColor: background,
-          foregroundColor: foreground,
-          disabledBackgroundColor: background.withOpacity(0.5),
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(FinavigRadius.button),
-          ),
-        ),
-        child: busy
-            ? SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(foreground),
-                ),
-              )
-            : Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.2,
-                ),
               ),
-      ),
-    );
-  }
-}
-
-/// Circular back button for the action row.
-class _BackButton extends StatelessWidget {
-  final bool isDark;
-  final VoidCallback? onTap;
-
-  const _BackButton({required this.isDark, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 44,
-      height: 44,
-      child: OutlinedButton(
-        onPressed: onTap,
-        style: OutlinedButton.styleFrom(
-          padding: EdgeInsets.zero,
-          side: BorderSide(
-            color: isDark
-                ? Colors.white.withOpacity(0.14)
-                : Colors.black.withOpacity(0.10),
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(22),
-          ),
-        ),
-        child: Icon(
-          Icons.arrow_back_rounded,
-          size: 18,
-          color: isDark
-              ? FinavigColors.textPrimary
-              : FinavigColors.textPrimaryLight,
+            );
+          },
         ),
       ),
     );
   }
 }
 
-/// Step-0 quiz question: two big tappable answers. Tapping one
-/// records the mode and routes into that flow — no separate toggle.
-class _ModeOption extends StatelessWidget {
-  final bool isDark;
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final bool selected;
+class _AuthTabButton extends StatelessWidget {
+  final String label;
+  final bool active;
   final VoidCallback onTap;
 
-  const _ModeOption({
-    required this.isDark,
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.selected,
+  const _AuthTabButton({
+    required this.label,
+    required this.active,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final subColor = isDark
-        ? FinavigColors.textSecondary
-        : FinavigColors.textSecondaryLight;
+    final fade = FinavigTransition.of(context);
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        curve: Curves.easeOut,
-        padding: const EdgeInsets.all(12),
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOutCubic,
+        alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: selected
-              ? FinavigColors.ink.withOpacity(0.06)
-              : (isDark ? Colors.white.withOpacity(0.05) : FinavigColors.cloud),
-          borderRadius: BorderRadius.circular(FinavigRadius.tile),
-          border: Border.all(
-            color: selected
-                ? FinavigColors.ink
-                : (isDark
-                      ? Colors.white.withOpacity(0.08)
-                      : Colors.black.withOpacity(0.05)),
-            width: selected ? 1.5 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white.withOpacity(0.10)
-                    : FinavigColors.ink.withOpacity(0.06),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                icon,
-                size: 18,
-                color: FinavigColors.adaptiveIcon(context, FinavigColors.ink),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: isDark
-                          ? FinavigColors.textPrimary
-                          : FinavigColors.textPrimaryLight,
-                    ),
+          color: active
+              ? fade.color(Colors.white, FinavigColors.charcoal)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(11),
+          boxShadow: active
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
                   ),
-                  const SizedBox(height: 1),
-                  Text(
-                    subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12,
-                      // Same blue as the step descriptions above.
-                      color: isDark
-                          ? FinavigColors.accentBright
-                          : FinavigColors.accent,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              selected
-                  ? Icons.check_circle_rounded
-                  : Icons.arrow_forward_ios_rounded,
-              size: selected ? 18 : 14,
-              color: selected ? FinavigColors.ink : subColor,
-            ),
-          ],
+                ]
+              : null,
         ),
-      ),
-    );
-  }
-}
-
-// ──────────────────────────────────────────────────────────────────────────────
-// Footer text links
-// ──────────────────────────────────────────────────────────────────────────────
-
-class _TextLink extends StatelessWidget {
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _TextLink({
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: color,
+            fontSize: 13,
+            fontWeight: active ? FontWeight.w800 : FontWeight.w600,
+            color: active
+                ? fade.color(
+                    FinavigColors.textPrimaryLight,
+                    FinavigColors.textPrimary,
+                  )
+                : fade.color(
+                    FinavigColors.textSecondaryLight,
+                    FinavigColors.textSecondary,
+                  ),
           ),
         ),
       ),
@@ -1818,72 +1008,110 @@ class _TextLink extends StatelessWidget {
   }
 }
 
-class _DotSeparator extends StatelessWidget {
-  final Color color;
-
-  const _DotSeparator({required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      '·',
-      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: color),
-    );
-  }
-}
-
-class _LegalLink extends StatelessWidget {
+class _AuthInputField extends StatelessWidget {
+  final TextEditingController controller;
   final String label;
-  final Color color;
-  final VoidCallback onTap;
+  final String hint;
+  final IconData icon;
+  final bool obscureText;
+  final TextInputType? keyboardType;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onSubmitted;
+  final Widget? suffixIcon;
 
-  const _LegalLink({
+  const _AuthInputField({
+    required this.controller,
     required this.label,
-    required this.color,
-    required this.onTap,
+    required this.hint,
+    required this.icon,
+    this.obscureText = false,
+    this.keyboardType,
+    this.textInputAction,
+    this.onSubmitted,
+    this.suffixIcon,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-        child: Text(
+    final fade = FinavigTransition.of(context);
+    final borderColor = fade.color(
+      const Color(0xFFE5E7EB),
+      Colors.white.withValues(alpha: 0.1),
+    );
+    final fillColor = fade.color(
+      const Color(0xFFF9FAFB),
+      FinavigColors.slate.withValues(alpha: 0.5),
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
           label,
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
-            color: color,
-            decoration: TextDecoration.underline,
+            color: fade.color(
+              FinavigColors.textSecondaryLight,
+              FinavigColors.textSecondary,
+            ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-/// Security line under the CTA — a fintech trust cue, in the brand blue.
-class _TrustRow extends StatelessWidget {
-  final bool isDark;
-
-  const _TrustRow({required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    final color = isDark ? FinavigColors.accentBright : FinavigColors.accent;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(Icons.verified_user_rounded, size: 13, color: color),
-        const SizedBox(width: 6),
-        Text(
-          'Secure sign-in — your data stays private',
+        const SizedBox(height: 6),
+        TextField(
+          controller: controller,
+          obscureText: obscureText,
+          keyboardType: keyboardType,
+          textInputAction: textInputAction,
+          onSubmitted: onSubmitted,
           style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-            color: color,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: fade.color(
+              FinavigColors.textPrimaryLight,
+              FinavigColors.textPrimary,
+            ),
+          ),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w400,
+              color: fade.color(
+                FinavigColors.textMutedLight,
+                FinavigColors.textMuted,
+              ),
+            ),
+            prefixIcon: Icon(
+              icon,
+              size: 18,
+              color: fade.color(
+                FinavigColors.textMutedLight,
+                FinavigColors.textMuted,
+              ),
+            ),
+            suffixIcon: suffixIcon,
+            filled: true,
+            fillColor: fillColor,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 13,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: borderColor),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: borderColor),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: FinavigColors.accent,
+                width: 1.5,
+              ),
+            ),
           ),
         ),
       ],
@@ -1891,31 +1119,23 @@ class _TrustRow extends StatelessWidget {
   }
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
-// Version badge
-// ──────────────────────────────────────────────────────────────────────────────
+class _FooterLink extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
 
-class AppVersionBadge {
-  AppVersionBadge._();
-  static const String version = 'v1.0.0';
-}
-
-// ──────────────────────────────────────────────────────────────────────────────
-// Post-auth loader: small logo on a transparent backdrop, shown briefly
-// while the app resolves the post-sign-in destination.
-// ──────────────────────────────────────────────────────────────────────────────
-
-class _AuthLoader extends StatelessWidget {
-  const _AuthLoader();
+  const _FooterLink({required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Image.asset(
-        'assets/New Logo/finavig-mark-transparent.png',
-        width: 48,
-        height: 48,
-        fit: BoxFit.contain,
+    return InkWell(
+      onTap: onTap,
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: FinavigColors.accent,
+        ),
       ),
     );
   }
