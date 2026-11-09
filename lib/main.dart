@@ -24,6 +24,7 @@ import 'services/perf_tracing_service.dart';
 import 'services/rating_prompt_ui.dart';
 import 'services/storage_migration_service.dart';
 import 'services/pending_transaction_service.dart';
+import 'services/streak_service.dart';
 import 'services/transaction_notification_listener.dart';
 
 void main() async {
@@ -99,6 +100,7 @@ Future<void> _prewarmServices() async {
     NotificationService().init(),
     PendingTransactionService.instance.init(),
     TransactionNotificationListener.instance.init(),
+    StreakService.instance.init(),
   ]);
 
   if (AuthService.instance.isSignedIn) {

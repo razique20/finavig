@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -7,11 +9,13 @@ import '../models/finance.dart';
 import '../services/collection_service.dart';
 import '../services/document_scanner_service.dart';
 import '../services/finance_service.dart';
+import '../services/streak_service.dart';
 import '../services/tab_scroll_registry.dart';
 import '../theme/app_theme.dart';
 import 'home/home_banners.dart';
 import 'home/home_collection_switcher.dart';
 import 'home/home_upcoming_section.dart';
+import 'home/streak_details_sheet.dart';
 
 // Peloton-inspired home tab (design reference only). Sections map to Finavig:
 // search header, profile + activity streak, timeframe tabs, metrics cards
@@ -81,6 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
       includeExpired: true,
     );
     await FinanceService.instance.init();
+    unawaited(StreakService.instance.recordActivity());
     if (mounted) {
       setState(() {
         _activeCollection = collection;
@@ -112,20 +117,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Count of days in the last [period] with tracked activity — used as a
-  /// simple "active days" streak metric for the Peloton-style cards.
+  /// Count of days in the last [period] with tracked activity — derived from
+  /// the unified [StreakService].
   int _activeDaysInPeriod(int period) {
-    final now = DateTime.now();
-    final cutoff = now.subtract(Duration(days: period));
-    final days = <int>{};
-    for (final item in _items) {
-      final ref = item.updatedAt ?? item.expiresAt;
-      if (ref.isAfter(cutoff)) {
-        days.add(ref.year * 10000 + ref.month * 100 + ref.day);
-      }
-    }
-    days.add(now.year * 10000 + now.month * 100 + now.day);
-    return days.length.clamp(1, period);
+    return StreakService.instance.activeDaysInPeriod(
+      period,
+      items: _items,
+      transactions: FinanceService.instance.activeTransactions,
+    );
   }
 
   Future<void> _showCollectionSwitcher() async {
@@ -346,97 +345,135 @@ class _ProfileStreakSection extends StatelessWidget {
     required this.onTap,
   });
 
-  List<bool> _weekStreak() {
-    // Simple heuristic: mark recent days as active based on weekday.
-    final today = DateTime.now().weekday; // 1=Mon..7=Sun
-    return List.generate(7, (i) => i < today);
-  }
-
   @override
   Widget build(BuildContext context) {
     final fade = FinavigTransition.of(context);
-    final streak = _weekStreak();
-    final streakCount = streak.where((v) => v).length;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: onTap,
-              borderRadius: BorderRadius.circular(22),
-              child: CircleAvatar(
-                radius: 20,
-                backgroundColor: fade.color(
-                  FinavigColors.accentSoft,
-                  FinavigColors.slate,
-                ),
-                child: Icon(
-                  Icons.person_rounded,
-                  color: fade.color(FinavigColors.accent, Colors.white),
-                  size: 20,
+    return ListenableBuilder(
+      listenable: StreakService.instance,
+      builder: (context, _) {
+        final streakCount = StreakService.instance.currentStreak;
+        final weekDays = StreakService.instance.weekActivity();
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: onTap,
+                  borderRadius: BorderRadius.circular(22),
+                  child: CircleAvatar(
+                    radius: 20,
+                    backgroundColor: fade.color(
+                      FinavigColors.accentSoft,
+                      FinavigColors.slate,
+                    ),
+                    child: Icon(
+                      Icons.person_rounded,
+                      color: fade.color(FinavigColors.accent, Colors.white),
+                      size: 20,
+                    ),
+                  ),
                 ),
               ),
-            ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'FINAVIG DASHBOARD',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.6,
+                        color: fade.color(
+                          FinavigColors.textMutedLight,
+                          FinavigColors.textMuted,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Welcome, $collectionName',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.3,
+                        color: fade.color(
+                          FinavigColors.textPrimaryLight,
+                          FinavigColors.textPrimary,
+                        ),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 3),
+                    InkWell(
+                      onTap: () => showStreakDetailsSheet(context),
+                      borderRadius: BorderRadius.circular(6),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 2),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              streakCount > 0 ? '🔥 ' : '⚡ ',
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                            Flexible(
+                              child: Text(
+                                streakCount > 0
+                                    ? (streakCount == 1
+                                        ? '1 day streak active'
+                                        : '$streakCount day streak going')
+                                    : 'Start your streak today',
+                                style: TextStyle(
+                                  color: streakCount > 0
+                                      ? fade.color(
+                                          FinavigColors.textPrimaryLight,
+                                          FinavigColors.textPrimary,
+                                        )
+                                      : fade.color(
+                                          FinavigColors.textSecondaryLight,
+                                          FinavigColors.textSecondary,
+                                        ),
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 2),
+                            Icon(
+                              Icons.chevron_right_rounded,
+                              size: 15,
+                              color: fade.color(
+                                FinavigColors.textMutedLight,
+                                FinavigColors.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => showStreakDetailsSheet(context),
+                      child: _StreakRow(days: weekDays),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'FINAVIG DASHBOARD',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.6,
-                    color: fade.color(
-                      FinavigColors.textMutedLight,
-                      FinavigColors.textMuted,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Welcome, $collectionName',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.3,
-                    color: fade.color(
-                      FinavigColors.textPrimaryLight,
-                      FinavigColors.textPrimary,
-                    ),
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  streakCount > 0
-                      ? 'You have a $streakCount day streak going.'
-                      : 'Start your streak today.',
-                  style: TextStyle(
-                    color: fade.color(
-                      FinavigColors.textSecondaryLight,
-                      FinavigColors.textSecondary,
-                    ),
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 6),
-                _StreakRow(days: streak),
-              ],
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -494,8 +531,17 @@ class _StreakRow extends StatelessWidget {
                   shape: BoxShape.circle,
                   border: border,
                 ),
-                child: done && isToday
-                    ? const Icon(Icons.check, size: 11, color: Colors.white)
+                child: done
+                    ? Icon(
+                        Icons.check,
+                        size: 11,
+                        color: isToday
+                            ? Colors.white
+                            : fade.color(
+                                Colors.white,
+                                FinavigColors.textPrimary,
+                              ),
+                      )
                     : null,
               ),
               const SizedBox(height: 2),
