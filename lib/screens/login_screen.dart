@@ -374,26 +374,19 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 12),
                       Center(
                         child: Container(
-                          width: 68,
-                          height: 68,
+                          width: 140,
+                          height: 140,
                           decoration: BoxDecoration(
-                            color: fade.color(
-                              Colors.white,
-                              FinavigColors.slate,
-                            ),
-                            shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: FinavigColors.accent.withValues(alpha: 0.25),
-                                blurRadius: 24,
-                                spreadRadius: 2,
-                                offset: const Offset(0, 4),
+                                color: FinavigColors.accent.withValues(alpha: 0.2),
+                                blurRadius: 32,
+                                spreadRadius: 4,
                               ),
                             ],
                           ),
-                          padding: const EdgeInsets.all(14),
                           child: Image.asset(
-                            'assets/New Logo/finavig-mark-transparent.png',
+                            'assets/New Logo/finavig-logo-transparent.png',
                             fit: BoxFit.contain,
                           ),
                         ),
