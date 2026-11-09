@@ -1,26 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../models/document_collection.dart';
 import '../models/expiry_item.dart';
+import '../models/finance.dart';
 import '../services/collection_service.dart';
 import '../services/document_scanner_service.dart';
 import '../services/finance_service.dart';
 import '../services/tab_scroll_registry.dart';
-import '../services/urgency_engine.dart';
 import '../theme/app_theme.dart';
 import 'home/home_banners.dart';
-import 'home/home_categories_grid.dart';
 import 'home/home_collection_switcher.dart';
-import 'home/home_hero_header.dart';
 import 'home/home_upcoming_section.dart';
-import '../widgets/shimmer_skeleton.dart';
-import '../widgets/cards/first_run_guide_banner.dart';
 
-// Home tab: cross-tier dashboard on the light, airy canvas.
-// A greeting + gradient balance card, a bento categories grid, the alert
-// banners, and the next renewals. Details live in the Documents and Money
-// tabs. The heavy lifting lives in `lib/screens/home/` modules so each
-// section rebuilds independently.
+// Peloton-inspired home tab (design reference only). Sections map to Finavig:
+// search header, profile + activity streak, timeframe tabs, metrics cards
+// (active docs, renewals, spend, net), category/filter pills, alerts,
+// and "Live and Upcoming" renewals.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -29,20 +25,17 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // Root scrollable of this tab — registered so a bottom-nav tap scrolls
-  // the tab back to the top (see TabScrollRegistry).
   final ScrollController _scrollController = ScrollController();
 
   DocumentCollection? _activeCollection;
   List<ExpiryItem> _items = [];
   bool _loading = true;
 
-  // The \"renewals need attention\" banner was closed by the user this
-  // session. Re-appears on restart or when data reloads with a *new* count.
-  int? _dismissedAttentionCount;
+  /// Selected timeframe: 7, 30, or 90 days.
+  int _selectedPeriod = 7;
 
-  // Optimized: single UrgencyEngine instance, computed once and cached.
-  UrgencySnapshot? _urgencySnapshot;
+  // "renewals need attention" banner dismissed this session.
+  int? _dismissedAttentionCount;
 
   @override
   void initState() {
@@ -81,13 +74,6 @@ class _HomeScreenState extends State<HomeScreen> {
     if (mounted) setState(() {});
   }
 
-  /// Active documents already past their expiry date.
-  List<ExpiryItem> get _expiredItems {
-    final now = DateTime.now();
-    return _items.where((i) => i.isActive && i.expiresAt.isBefore(now)).toList()
-      ..sort((a, b) => a.expiresAt.compareTo(b.expiresAt));
-  }
-
   Future<void> _loadData() async {
     final collection = await DocumentCollectionService.instance
         .getActiveCollection();
@@ -104,20 +90,56 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  /// Computes and caches the urgency snapshot once per data change.
-  UrgencySnapshot _computeUrgency() {
-    _urgencySnapshot ??= UrgencyEngine().compute(_items);
-    return _urgencySnapshot!;
+  List<ExpiryItem> get _expiredItems {
+    final now = DateTime.now();
+    return _items.where((i) => i.isActive && i.expiresAt.isBefore(now)).toList()
+      ..sort((a, b) => a.expiresAt.compareTo(b.expiresAt));
+  }
+
+  List<ExpiryItem> _upcomingItems() {
+    final now = DateTime.now();
+    final upcoming =
+        _items.where((i) => i.isActive && i.expiresAt.isAfter(now)).toList()
+          ..sort((a, b) => a.expiresAt.compareTo(b.expiresAt));
+    return upcoming;
+  }
+
+  ({double income, double expense, double net}) get _financeSummary {
+    final now = DateTime.now();
+    return FinanceMath.summaryForMonth(
+      FinanceService.instance.activeTransactions,
+      now,
+    );
+  }
+
+  /// Count of days in the last [period] with tracked activity — used as a
+  /// simple "active days" streak metric for the Peloton-style cards.
+  int _activeDaysInPeriod(int period) {
+    final now = DateTime.now();
+    final cutoff = now.subtract(Duration(days: period));
+    final days = <int>{};
+    for (final item in _items) {
+      final ref = item.updatedAt ?? item.expiresAt;
+      if (ref.isAfter(cutoff)) {
+        days.add(ref.year * 10000 + ref.month * 100 + ref.day);
+      }
+    }
+    days.add(now.year * 10000 + now.month * 100 + now.day);
+    return days.length.clamp(1, period);
+  }
+
+  Future<void> _showCollectionSwitcher() async {
+    final selectedId = await showHomeCollectionSwitcher(context);
+    if (!mounted || selectedId == null) return;
+    await applyHomeCollectionSelection(context, selectedId);
+    await _loadData();
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final urgency = _computeUrgency();
-    // Match the Money tab's flat canvas, cross-fading with theme changes.
     final canvas = FinavigTransition.of(
       context,
-    ).color(Colors.white, FinavigColors.obsidian);
+    ).color(const Color(0xFFF5F5F7), FinavigColors.obsidian);
 
     return Scaffold(
       backgroundColor: canvas,
@@ -126,7 +148,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: SafeArea(
           bottom: false,
           child: RefreshIndicator(
-            color: theme.colorScheme.secondary,
+            color: Theme.of(context).colorScheme.secondary,
             onRefresh: _loadData,
             child: CustomScrollView(
               controller: _scrollController,
@@ -136,52 +158,65 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      HomeHeroHeader(
-                        activeCollection: _activeCollection,
-                        items: _items,
-                        dismissedAttentionCount: _dismissedAttentionCount,
-                        onCollectionSwitcherTap: _showCollectionSwitcher,
+                      _SearchHeader(onSearchTap: () => context.push('/search')),
+                      const SizedBox(height: 10),
+                      _ProfileStreakSection(
+                        collectionName: _activeCollection?.name ?? 'Personal',
+                        onTap: _showCollectionSwitcher,
                       ),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 14),
+                      _TimeframeTabs(
+                        selected: _selectedPeriod,
+                        onPeriodChanged: (p) =>
+                            setState(() => _selectedPeriod = p),
+                      ),
+                      const SizedBox(height: 12),
+                      _MetricsCarousel(
+                        activeDays: _activeDaysInPeriod(_selectedPeriod),
+                        docsCount: _items.where((i) => i.isActive).length,
+                        spent: _financeSummary.expense,
+                        upcomingCount: _upcomingItems()
+                            .where((i) => i.daysRemaining <= _selectedPeriod)
+                            .length,
+                      ),
+                      const SizedBox(height: 14),
+                      const _CategoryPillsRow(),
+                      const SizedBox(height: 14),
                       if (_loading)
-                        const SizedBox(height: 420, child: HomeSkeletonView())
-                      else
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            HomeCategoriesGrid(
-                              pendingActionsCount: urgency.pendingActions.length,
-                              onScanTap: _openScanner,
-                            ),
-                            const FirstRunGuideBanner(),
-                            HomeConsolidatedAlerts(
-                              pendingActionNames: urgency.pendingActions
-                                  .map((a) => a.displayName)
-                                  .toList(),
-                              dismissedAttentionCount: _dismissedAttentionCount,
-                              onDismissAttention: (count) =>
-                                  setState(() => _dismissedAttentionCount = count),
-                              expiredItems: _expiredItems
-                                  .map(
-                                    (i) => HomeExpiredItem(
-                                      id: i.id,
-                                      displayName: i.displayName,
-                                      daysRemaining: i.daysRemaining,
-                                    ),
-                                  )
-                                  .toList(),
-                            ),
-                            const SizedBox(height: 16),
-                            HomeUpcomingSection(upcomingItems: _upcomingItems()),
-                            // Comfortable breathing room above the fixed bottom navigation bar.
-                            const SizedBox(height: 29),
-                          ],
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16),
+                          child: _HomeSkeletonView(),
+                        )
+                      else ...[
+                        HomeConsolidatedAlerts(
+                          pendingActionNames: _upcomingItems()
+                              .where((i) => i.daysRemaining <= 30)
+                              .map((i) => i.displayName)
+                              .toList(),
+                          dismissedAttentionCount: _dismissedAttentionCount,
+                          onDismissAttention: (count) => setState(
+                            () => _dismissedAttentionCount = count,
+                          ),
+                          expiredItems: _expiredItems
+                              .map(
+                                (i) => HomeExpiredItem(
+                                  id: i.id,
+                                  displayName: i.displayName,
+                                  daysRemaining: i.daysRemaining,
+                                ),
+                              )
+                              .toList(),
                         ),
+                        const SizedBox(height: 6),
+                        _UpcomingSection(
+                          items: _upcomingItems(),
+                          onItemTap: (id) => context.push('/document/$id'),
+                        ),
+                        const SizedBox(height: 80),
+                      ],
                     ],
                   ),
                 ),
-                // Canvas filler: extends the background across the rest of
-                // the viewport and into overscroll behind the nav pill.
                 SliverFillRemaining(
                   hasScrollBody: false,
                   fillOverscroll: true,
@@ -192,27 +227,978 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
+      floatingActionButton: _FloatingActionButton(
+        onTap: () => context.push('/scan'),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Search header (Peloton-style pill search + action icons)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _SearchHeader extends StatelessWidget {
+  final VoidCallback onSearchTap;
+  const _SearchHeader({required this.onSearchTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final fade = FinavigTransition.of(context);
+    final iconColor = fade.color(
+      FinavigColors.textPrimaryLight,
+      FinavigColors.textPrimary,
+    );
+    final pillBg = fade.color(
+      const Color(0xFFEDEDEF),
+      FinavigColors.charcoal,
+    );
+    final hintColor = fade.color(
+      FinavigColors.textMutedLight,
+      FinavigColors.textSecondary,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+      child: Row(
+        children: [
+          Expanded(
+            child: Material(
+              color: pillBg,
+              borderRadius: BorderRadius.circular(20),
+              child: InkWell(
+                onTap: onSearchTap,
+                borderRadius: BorderRadius.circular(20),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Row(
+                    children: [
+                      Icon(Icons.search_rounded, size: 18, color: hintColor),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Search',
+                        style: TextStyle(
+                          color: hintColor,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          _HeaderIconButton(
+            icon: Icons.bookmark_border_rounded,
+            color: iconColor,
+            onTap: () => context.push('/expiry-list'),
+          ),
+          _HeaderIconButton(
+            icon: Icons.play_circle_outline_rounded,
+            color: iconColor,
+            onTap: () => context.push('/ai-summary'),
+          ),
+          _HeaderIconButton(
+            icon: Icons.calendar_today_outlined,
+            color: iconColor,
+            onTap: () => context.push('/expiry-list'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeaderIconButton extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+  const _HeaderIconButton({
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      icon: Icon(icon, color: color, size: 20),
+      onPressed: onTap,
+      visualDensity: VisualDensity.compact,
+      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+      padding: EdgeInsets.zero,
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Profile + streak section (maps to Finavig collection / active-usage streak)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ProfileStreakSection extends StatelessWidget {
+  final String collectionName;
+  final VoidCallback onTap;
+  const _ProfileStreakSection({
+    required this.collectionName,
+    required this.onTap,
+  });
+
+  List<bool> _weekStreak() {
+    // Simple heuristic: mark recent days as active based on weekday.
+    final today = DateTime.now().weekday; // 1=Mon..7=Sun
+    return List.generate(7, (i) => i < today);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final fade = FinavigTransition.of(context);
+    final streak = _weekStreak();
+    final streakCount = streak.where((v) => v).length;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(22),
+              child: CircleAvatar(
+                radius: 20,
+                backgroundColor: fade.color(
+                  FinavigColors.accentSoft,
+                  FinavigColors.slate,
+                ),
+                child: Icon(
+                  Icons.person_rounded,
+                  color: fade.color(FinavigColors.accent, Colors.white),
+                  size: 20,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Welcome back, $collectionName',
+                  style: TextStyle(
+                    color: fade.color(
+                      FinavigColors.textSecondaryLight,
+                      FinavigColors.textSecondary,
+                    ),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  streakCount > 0
+                      ? 'You have a $streakCount day streak going.'
+                      : 'Start your streak today.',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 6),
+                _StreakRow(days: streak),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StreakRow extends StatelessWidget {
+  final List<bool> days;
+  const _StreakRow({required this.days});
+
+  static const _labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+  @override
+  Widget build(BuildContext context) {
+    final fade = FinavigTransition.of(context);
+    final todayIndex = (DateTime.now().weekday - 1).clamp(0, 6);
+    return Row(
+      children: List.generate(7, (i) {
+        final done = days[i];
+        final isToday = i == todayIndex;
+        final bg = done
+            ? (isToday
+                ? FinavigColors.accent
+                : fade.color(
+                    const Color(0xFFD9D9DE),
+                    FinavigColors.slateLight,
+                  ))
+            : Colors.transparent;
+        final border = !done
+            ? Border.all(
+                color: fade.color(
+                  const Color(0xFFD0D0D6),
+                  FinavigColors.slateLight,
+                ),
+                width: 1.2,
+              )
+            : null;
+        final labelColor = isToday
+            ? fade.color(
+                FinavigColors.textPrimaryLight,
+                FinavigColors.textPrimary,
+              )
+            : fade.color(
+                FinavigColors.textMutedLight,
+                FinavigColors.textMuted,
+              );
+
+        return Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: Column(
+            children: [
+              Container(
+                width: 18,
+                height: 18,
+                decoration: BoxDecoration(
+                  color: bg,
+                  shape: BoxShape.circle,
+                  border: border,
+                ),
+                child: done && isToday
+                    ? const Icon(Icons.check, size: 11, color: Colors.white)
+                    : null,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                _labels[i],
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
+                  color: labelColor,
+                ),
+              ),
+            ],
+          ),
+        );
+      }),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Timeframe tabs (7/30/90 Day)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _TimeframeTabs extends StatelessWidget {
+  final int selected;
+  final ValueChanged<int> onPeriodChanged;
+  const _TimeframeTabs({
+    required this.selected,
+    required this.onPeriodChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final fade = FinavigTransition.of(context);
+    const periods = [7, 30, 90];
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: periods.map((p) {
+          final active = p == selected;
+          return GestureDetector(
+            onTap: () => onPeriodChanged(p),
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$p Day',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                      color: active
+                          ? fade.color(
+                              FinavigColors.textPrimaryLight,
+                              FinavigColors.textPrimary,
+                            )
+                          : fade.color(
+                              FinavigColors.textMutedLight,
+                              FinavigColors.textMuted,
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    height: 2.5,
+                    width: active ? 36 : 0,
+                    decoration: BoxDecoration(
+                      color: FinavigColors.logoRed,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Metrics summary cards (Finavig: active days, documents, spend, renewals)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _MetricsCarousel extends StatelessWidget {
+  final int activeDays;
+  final int docsCount;
+  final double spent;
+  final int upcomingCount;
+  const _MetricsCarousel({
+    required this.activeDays,
+    required this.docsCount,
+    required this.spent,
+    required this.upcomingCount,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cards = [
+      _MetricCardData(
+        label: 'Active days',
+        value: '$activeDays',
+        delta: '+$activeDays',
+      ),
+      _MetricCardData(
+        label: 'Documents',
+        value: '$docsCount',
+        delta: docsCount > 0 ? '+$docsCount' : '0',
+      ),
+      _MetricCardData(
+        label: 'Spent',
+        value: MoneyFormat.aed(spent),
+        delta: spent > 0 ? '100%' : '0%',
+        compactValue: true,
+      ),
+      _MetricCardData(
+        label: 'Renewals',
+        value: '$upcomingCount',
+        delta: upcomingCount > 0 ? '+$upcomingCount' : '0',
+      ),
+    ];
+
+    return SizedBox(
+      height: 72,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: cards.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, i) => _MetricCard(data: cards[i]),
+      ),
+    );
+  }
+}
+
+class _MetricCardData {
+  final String label;
+  final String value;
+  final String delta;
+  final bool compactValue;
+  const _MetricCardData({
+    required this.label,
+    required this.value,
+    required this.delta,
+    this.compactValue = false,
+  });
+}
+
+class _MetricCard extends StatelessWidget {
+  final _MetricCardData data;
+  const _MetricCard({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final fade = FinavigTransition.of(context);
+    return Container(
+      constraints: const BoxConstraints(minWidth: 100),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: fade.color(Colors.white, FinavigColors.charcoal),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: fade.color(
+            Colors.black.withValues(alpha: 0.04),
+            Colors.white.withValues(alpha: 0.06),
+          ),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            data.label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: fade.color(
+                FinavigColors.textSecondaryLight,
+                FinavigColors.textSecondary,
+              ),
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+            ),
+            maxLines: 1,
+          ),
+          const Spacer(),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                data.value,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: data.compactValue ? 15 : 18,
+                  height: 1.0,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.arrow_drop_up_rounded,
+                    size: 14,
+                    color: FinavigColors.safe,
+                  ),
+                  Text(
+                    data.delta,
+                    style: const TextStyle(
+                      color: FinavigColors.safe,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Category filter pills (Finavig: Documents, Renewals, Money, AI)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _CategoryPillsRow extends StatelessWidget {
+  const _CategoryPillsRow();
+
+  @override
+  Widget build(BuildContext context) {
+    final pills = [
+      _CategoryPillData(
+        label: 'Documents',
+        icon: Icons.description_outlined,
+        route: '/documents',
+      ),
+      _CategoryPillData(
+        label: 'Renewals',
+        icon: Icons.event_outlined,
+        route: '/expiry-list',
+      ),
+      _CategoryPillData(
+        label: 'Money',
+        icon: Icons.account_balance_wallet_outlined,
+        route: '/money',
+      ),
+      _CategoryPillData(
+        label: 'AI Plan',
+        icon: Icons.auto_awesome_outlined,
+        route: '/ai-budget-plan',
+      ),
+    ];
+
+    return SizedBox(
+      height: 36,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: pills.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, i) => _CategoryPill(data: pills[i]),
+      ),
+    );
+  }
+}
+
+class _CategoryPillData {
+  final String label;
+  final IconData icon;
+  final String route;
+  const _CategoryPillData({
+    required this.label,
+    required this.icon,
+    required this.route,
+  });
+}
+
+class _CategoryPill extends StatelessWidget {
+  final _CategoryPillData data;
+  const _CategoryPill({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    final fade = FinavigTransition.of(context);
+    final bg = fade.color(Colors.white, FinavigColors.charcoal);
+    final border = fade.color(
+      Colors.black.withValues(alpha: 0.06),
+      Colors.white.withValues(alpha: 0.08),
+    );
+    final fg = fade.color(
+      FinavigColors.textPrimaryLight,
+      FinavigColors.textPrimary,
+    );
+
+    return Material(
+      color: bg,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: BorderSide(color: border),
+      ),
+      child: InkWell(
+        onTap: () {
+          if (data.route == '/documents' ||
+              data.route == '/money' ||
+              data.route == '/home' ||
+              data.route == '/profile') {
+            context.go(data.route);
+          } else {
+            context.push(data.route);
+          }
+        },
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(data.icon, size: 15, color: fg),
+              const SizedBox(width: 6),
+              Text(
+                data.label,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: fg,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// "Live and Upcoming" section (maps to Finavig upcoming renewals)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _UpcomingSection extends StatelessWidget {
+  final List<ExpiryItem> items;
+  final void Function(String id) onItemTap;
+  const _UpcomingSection({required this.items, required this.onItemTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final featured = items.isNotEmpty ? items.first : null;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Live and Upcoming',
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+              fontSize: 18,
+              letterSpacing: -0.3,
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (featured == null)
+            _UpcomingEmptyCard()
+          else
+            _UpcomingFeatureCard(
+              item: featured,
+              onTap: () => onItemTap(featured.id),
+            ),
+          if (items.length > 1) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Next renewals · ${items.length - 1}',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => context.push('/expiry-list'),
+                  style: TextButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    minimumSize: const Size(0, 30),
+                  ),
+                  child: const Text('View all', style: TextStyle(fontSize: 13)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            ...items.skip(1).take(3).map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: HomeUpcomingTile(item: item),
+                  ),
+                ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _UpcomingEmptyCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final fade = FinavigTransition.of(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: fade.color(Colors.white, FinavigColors.charcoal),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: fade.color(
+            Colors.black.withValues(alpha: 0.05),
+            Colors.white.withValues(alpha: 0.06),
+          ),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'No upcoming renewals',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              fontSize: 15,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Scan a document to start tracking renewals and deadlines.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: fade.color(
+                FinavigColors.textSecondaryLight,
+                FinavigColors.textSecondary,
+              ),
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 12),
+          FilledButton(
+            onPressed: () => context.push('/scan'),
+            style: FilledButton.styleFrom(
+              backgroundColor: FinavigColors.logoRed,
+              foregroundColor: Colors.white,
+              shape: const StadiumBorder(),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              minimumSize: const Size(0, 32),
+            ),
+            child: const Text(
+              'SCAN DOCUMENT',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _UpcomingFeatureCard extends StatelessWidget {
+  final ExpiryItem item;
+  final VoidCallback onTap;
+  const _UpcomingFeatureCard({required this.item, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final fade = FinavigTransition.of(context);
+    final isCritical = item.daysRemaining <= 7;
+    final badgeText = item.daysRemaining <= 0
+        ? 'EXPIRED'
+        : isCritical
+            ? 'URGENT'
+            : 'UPCOMING';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: fade.color(Colors.white, FinavigColors.charcoal),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: fade.color(
+            Colors.black.withValues(alpha: 0.05),
+            Colors.white.withValues(alpha: 0.06),
+          ),
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      '${item.expiresAt.day} ${_month(item.expiresAt.month)} ${item.expiresAt.year}',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13.5,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(5),
+                        border: Border.all(
+                          color: fade.color(
+                            FinavigColors.textMutedLight,
+                            FinavigColors.textMuted,
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        badgeText,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.3,
+                          color: fade.color(
+                            FinavigColors.textSecondaryLight,
+                            FinavigColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Divider(
+                  height: 1,
+                  color: fade.color(
+                    Colors.black.withValues(alpha: 0.06),
+                    Colors.white.withValues(alpha: 0.08),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 18,
+                      backgroundColor: fade.color(
+                        FinavigColors.accentSoft,
+                        FinavigColors.slate,
+                      ),
+                      child: Icon(
+                        item.docType.icon,
+                        color: fade.color(FinavigColors.accent, Colors.white),
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.displayName,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${item.docType.displayName.toUpperCase()} · RENEWAL',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: fade.color(
+                                FinavigColors.textSecondaryLight,
+                                FinavigColors.textSecondary,
+                              ),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    FilledButton(
+                      onPressed: onTap,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: FinavigColors.logoRed,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 6,
+                        ),
+                        shape: const StadiumBorder(),
+                        minimumSize: const Size(0, 30),
+                      ),
+                      child: const Text(
+                        'VIEW',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 11.5,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '${item.daysRemaining}d remaining',
+                      style: const TextStyle(
+                        color: FinavigColors.logoRed,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
-  /// Upcoming (active, not yet expired) documents sorted by expiry.
-  List<ExpiryItem> _upcomingItems() {
-    final now = DateTime.now();
-    final upcoming =
-        _items.where((i) => i.isActive && i.expiresAt.isAfter(now)).toList()
-          ..sort((a, b) => a.expiresAt.compareTo(b.expiresAt));
-    return upcoming;
+  static String _month(int m) => const [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ][m - 1];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Floating action button (Peloton-style red FAB)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _FloatingActionButton extends StatelessWidget {
+  final VoidCallback onTap;
+  const _FloatingActionButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return FloatingActionButton(
+      onPressed: onTap,
+      backgroundColor: FinavigColors.logoRed,
+      foregroundColor: Colors.white,
+      elevation: 2,
+      shape: const CircleBorder(),
+      child: const Icon(Icons.document_scanner_rounded, size: 24),
+    );
   }
+}
 
-  /// Open the collection switcher sheet and apply the selection.
-  Future<void> _showCollectionSwitcher() async {
-    final selectedId = await showHomeCollectionSwitcher(context);
-    if (!mounted || selectedId == null) return;
+// ─────────────────────────────────────────────────────────────────────────────
+// Skeleton
+// ─────────────────────────────────────────────────────────────────────────────
 
-    await applyHomeCollectionSelection(context, selectedId);
-    await _loadData();
+class _HomeSkeletonView extends StatelessWidget {
+  const _HomeSkeletonView();
+
+  @override
+  Widget build(BuildContext context) {
+    final fade = FinavigTransition.of(context);
+    final base = fade.color(const Color(0xFFE8E8EC), FinavigColors.slate);
+    Widget box(double h, {double? w, double r = 12}) => Container(
+          height: h,
+          width: w,
+          decoration: BoxDecoration(
+            color: base,
+            borderRadius: BorderRadius.circular(r),
+          ),
+        );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(children: [
+          Expanded(child: box(68)),
+          const SizedBox(width: 8),
+          Expanded(child: box(68)),
+          const SizedBox(width: 8),
+          Expanded(child: box(68)),
+        ]),
+        const SizedBox(height: 12),
+        box(140, r: 16),
+      ],
+    );
   }
-
-  /// Open the scan flow after enforcing the free-tier document limit.
-  Future<void> _openScanner() => openGatedScanner(context);
 }

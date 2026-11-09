@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 import '../models/document_folder.dart';
 import '../models/document_type.dart';
 import '../models/expiry_item.dart';
+import '../models/finance.dart';
+import '../models/gcc_country.dart';
 import '../models/subscription_tier.dart';
 import '../services/collection_service.dart';
 import '../services/demo_document_service.dart';
@@ -285,6 +287,25 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                               _buildDocumentList(theme, filtered),
                             ] else ...[
                               // ── Root View ──
+                              if (!_isSearching) ...[
+                                _DocTimeframeTabs(
+                                  selected: _filter,
+                                  onFilterChanged: (f) =>
+                                      setState(() => _filter = f),
+                                ),
+                                const SizedBox(height: 12),
+                                _DocMetricsCarousel(items: _items),
+                                const SizedBox(height: 14),
+                                _DocTypePillsRow(
+                                  selectedType: _typeFilter,
+                                  country: DocumentCollectionService
+                                      .instance
+                                      .activeCountry,
+                                  onTypeSelected: (t) =>
+                                      setState(() => _typeFilter = t),
+                                ),
+                                const SizedBox(height: 14),
+                              ],
                               if (_hasActiveFilters) ...[
                                 const SizedBox(height: 8),
                                 DocumentsActiveFiltersRow(
@@ -847,5 +868,348 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   Future<void> _showSortSheet() async {
     final value = await showDocumentsSortSheet(context, _sort);
     if (value is DocSort && mounted) setState(() => _sort = value);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Peloton-style Document Timeframe / Status Tabs (with signature red indicator)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _DocTimeframeTabs extends StatelessWidget {
+  final DocFilter selected;
+  final ValueChanged<DocFilter> onFilterChanged;
+
+  const _DocTimeframeTabs({
+    required this.selected,
+    required this.onFilterChanged,
+  });
+
+  static const _filters = [
+    (DocFilter.all, 'All'),
+    (DocFilter.critical, 'Critical'),
+    (DocFilter.upcoming, 'Upcoming'),
+    (DocFilter.later, 'Later'),
+    (DocFilter.expired, 'Expired'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final fade = FinavigTransition.of(context);
+    return SizedBox(
+      height: 32,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: _filters.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 18),
+        itemBuilder: (context, i) {
+          final entry = _filters[i];
+          final active = entry.$1 == selected;
+          return GestureDetector(
+            onTap: () => onFilterChanged(entry.$1),
+            behavior: HitTestBehavior.opaque,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  entry.$2,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                    color: active
+                        ? fade.color(
+                            FinavigColors.textPrimaryLight,
+                            FinavigColors.textPrimary,
+                          )
+                        : fade.color(
+                            FinavigColors.textMutedLight,
+                            FinavigColors.textMuted,
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  height: 2.5,
+                  width: active ? 32 : 0,
+                  decoration: BoxDecoration(
+                    color: FinavigColors.logoRed,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Compact Document Metrics Carousel (72px height, 98px width)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _DocMetricsCarousel extends StatelessWidget {
+  final List<ExpiryItem> items;
+
+  const _DocMetricsCarousel({required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    final totalCount = items.length;
+    final criticalCount = items.where((i) => i.isActive && i.daysRemaining <= 7).length;
+    final upcomingCount = items
+        .where((i) => i.isActive && i.daysRemaining > 7 && i.daysRemaining <= 30)
+        .length;
+    final totalFees = items.fold(0.0, (s, i) => s + (i.renewalFee ?? 0));
+
+    final cards = [
+      _DocMetricCardData(
+        label: 'Total',
+        value: '$totalCount',
+        delta: '+$totalCount',
+      ),
+      _DocMetricCardData(
+        label: 'Critical',
+        value: '$criticalCount',
+        delta: '≤7d',
+        statusColor: criticalCount > 0 ? FinavigColors.danger : FinavigColors.safe,
+      ),
+      _DocMetricCardData(
+        label: 'Upcoming',
+        value: '$upcomingCount',
+        delta: '≤30d',
+        statusColor: upcomingCount > 0 ? FinavigColors.warning : FinavigColors.safe,
+      ),
+      _DocMetricCardData(
+        label: 'Est. cost',
+        value: MoneyFormat.aed(totalFees),
+        delta: totalFees > 0 ? '100%' : '0%',
+        compactValue: true,
+      ),
+    ];
+
+    return SizedBox(
+      height: 72,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: cards.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, i) => _DocMetricCard(data: cards[i]),
+      ),
+    );
+  }
+}
+
+class _DocMetricCardData {
+  final String label;
+  final String value;
+  final String delta;
+  final bool compactValue;
+  final Color? statusColor;
+
+  const _DocMetricCardData({
+    required this.label,
+    required this.value,
+    required this.delta,
+    this.compactValue = false,
+    this.statusColor,
+  });
+}
+
+class _DocMetricCard extends StatelessWidget {
+  final _DocMetricCardData data;
+
+  const _DocMetricCard({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final fade = FinavigTransition.of(context);
+    final trendColor = data.statusColor ?? FinavigColors.safe;
+
+    return Container(
+      constraints: const BoxConstraints(minWidth: 100),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: fade.color(Colors.white, FinavigColors.charcoal),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: fade.color(
+            Colors.black.withValues(alpha: 0.04),
+            Colors.white.withValues(alpha: 0.06),
+          ),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            data.label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: fade.color(
+                FinavigColors.textSecondaryLight,
+                FinavigColors.textSecondary,
+              ),
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+            ),
+            maxLines: 1,
+          ),
+          const Spacer(),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                data.value,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: data.compactValue ? 15 : 18,
+                  height: 1.0,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.arrow_drop_up_rounded,
+                    size: 14,
+                    color: trendColor,
+                  ),
+                  Text(
+                    data.delta,
+                    style: TextStyle(
+                      color: trendColor,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Document Type Category Pills (36px rounded rectangle chips)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _DocTypePillsRow extends StatelessWidget {
+  final DocumentTypeMeta? selectedType;
+  final GccCountry country;
+  final ValueChanged<DocumentTypeMeta?> onTypeSelected;
+
+  const _DocTypePillsRow({
+    required this.selectedType,
+    required this.country,
+    required this.onTypeSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final activeTypes = DocumentTypeRegistry.instance.all;
+    final isAll = selectedType == null;
+
+    return SizedBox(
+      height: 36,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: activeTypes.length + 1,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, i) {
+          if (i == 0) {
+            return _DocTypePillChip(
+              label: 'All types',
+              icon: Icons.layers_outlined,
+              selected: isAll,
+              onTap: () => onTypeSelected(null),
+            );
+          }
+          final meta = activeTypes[i - 1];
+          final isSelected = selectedType?.key == meta.key;
+          return _DocTypePillChip(
+            label: meta.localizedDisplayName(country),
+            icon: meta.icon,
+            selected: isSelected,
+            onTap: () => onTypeSelected(isSelected ? null : meta),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _DocTypePillChip extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _DocTypePillChip({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final fade = FinavigTransition.of(context);
+    final bg = selected
+        ? FinavigColors.accent
+        : fade.color(Colors.white, FinavigColors.charcoal);
+    final fg = selected
+        ? Colors.white
+        : fade.color(
+            FinavigColors.textPrimaryLight,
+            FinavigColors.textPrimary,
+          );
+    final border = selected
+        ? Colors.transparent
+        : fade.color(
+            Colors.black.withValues(alpha: 0.06),
+            Colors.white.withValues(alpha: 0.08),
+          );
+
+    return Material(
+      color: bg,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: BorderSide(color: border),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 15, color: fg),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: fg,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

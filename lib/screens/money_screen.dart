@@ -83,6 +83,33 @@ class _MoneyScreenState extends State<MoneyScreen> {
   List<CreditEntry> _credits = [];
   List<ExpiryItem> _items = [];
   bool _loading = true;
+  int _selectedPeriod = 30;
+  String _selectedCategory = 'All';
+
+  void _onCategorySelected(String cat) {
+    setState(() {
+      _selectedCategory = cat;
+      if (cat == 'Cashflow') {
+        _collapsedSections.remove('pace');
+        _collapsedSections.remove('weekly');
+      } else if (cat == 'Categories') {
+        _collapsedSections.remove('categories');
+        _collapsedSections.remove('top');
+      } else if (cat == 'Budgets') {
+        _collapsedSections.remove('budgets');
+        _collapsedSections.remove('pace');
+      } else if (cat == 'Subscriptions') {
+        _collapsedSections.remove('recurring');
+        _collapsedSections.remove('renewalBreakdown');
+      } else if (cat == 'Envelopes') {
+        _collapsedSections.remove('envelopes');
+      } else if (cat == 'Debt & Credit') {
+        _collapsedSections.remove('credit');
+      } else if (cat == 'Recent') {
+        _collapsedSections.remove('transactions');
+      }
+    });
+  }
 
   /// Bill-spike transaction ids the user dismissed this session; keeps the
   /// card hidden until a *new* anomaly appears. Cleared when the user
@@ -250,7 +277,7 @@ class _MoneyScreenState extends State<MoneyScreen> {
     // ink card floating on top instead of a full-width band.
     final canvas = FinavigTransition.of(
       context,
-    ).color(Colors.white, FinavigColors.obsidian);
+    ).color(const Color(0xFFF5F5F7), FinavigColors.obsidian);
 
     return Scaffold(
       backgroundColor: canvas,
@@ -265,194 +292,305 @@ class _MoneyScreenState extends State<MoneyScreen> {
             slivers: [
               SliverToBoxAdapter(child: _buildHeroHeader(theme, summary)),
               SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 4, bottom: 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _MoneyTimeframeTabs(
+                        selected: _selectedPeriod,
+                        onPeriodChanged: (period) =>
+                            setState(() => _selectedPeriod = period),
+                      ),
+                      const SizedBox(height: 12),
+                      _MoneyMetricsCarousel(
+                        summary: summary,
+                        upcomingCount: _items
+                            .where((i) =>
+                                i.daysRemaining <= _selectedPeriod &&
+                                (i.renewalFee ?? 0) > 0)
+                            .length,
+                      ),
+                      const SizedBox(height: 12),
+                      _MoneyCategoryPillsRow(
+                        selectedCategory: _selectedCategory,
+                        onCategorySelected: _onCategorySelected,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SliverToBoxAdapter(
                 child: SizedBox(
                   width: double.infinity,
                   child: _loading
                       ? const SizedBox(height: 420, child: MoneySkeletonView())
-                      : Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 20),
-                            // Urgent anomalies (section owns its top spacing).
-                            _sheetPadding(
-                              BillSpikeAlertsCard(
-                                transactions: _transactions,
-                                dismissedIds: _dismissedSpikeIds,
-                                onDismiss: (ids) => setState(() {
-                                  _dismissedSpikeIds.addAll(ids);
-                                }),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            // 1. At a glance: the month's summary, the
-                            //    upcoming renewal fees, the forecast and
-                            //    the credit shortcut stack flush as one
-                            //    group — no gap between them.
-                            _sheetPadding(const MonthlySummaryCard()),
-                            _sheetPadding(
-                              RenewalBreakdownCard(
-                                items: _items,
-                                collapsed: _collapsedSections.contains(
-                                  'renewalBreakdown',
-                                ),
-                                onToggleSection: () =>
-                                    _toggleSection('renewalBreakdown'),
-                              ),
-                            ),
-                            _sheetPadding(
-                              CashFlowTeaserCard(
-                                forecast: FinanceMath.calculate90DayCashFlow(
-                                  transactions: _transactions,
-                                  recurringTemplates: _recurring,
-                                  expiryItems: _items,
-                                  initialBalance: summary.net,
-                                ),
-                              ),
-                            ),
-                            // Credit shortcut — relocated out of the
-                            // dark hero into the light sheet.
-                            _sheetPadding(
-                              _CreditShortcutCard(
-                                onTap: () => context.push('/credits'),
-                                credits: _credits,
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            // 2. Spending pace, then budget control.
-                            _sheetPadding(
-                              SpendingPaceCard(
-                                summary: summary,
-                                collapsed: _collapsedSections.contains('pace'),
-                                onToggleSection: () => _toggleSection('pace'),
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            _sheetPadding(
-                              BudgetsSection(
-                                budgets: _budgets,
-                                spendByCategory: spendByCategory,
-                                overallBudget:
-                                    FinanceService.instance.activeOverallBudget,
-                                onAddCategory: _showBudgetSheet,
-                                onEditCategory: (b) =>
-                                    _showBudgetSheet(existing: b),
-                                onDeleteCategory: (b) =>
-                                    FinanceService.instance.deleteBudget(b.id),
-                                onEditOverall: _showOverallBudgetSheet,
-                                collapsed: _collapsedSections.contains(
-                                  'budgets',
-                                ),
-                                onToggleSection: () =>
-                                    _toggleSection('budgets'),
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            // 3. Planning & history.
-                            _sheetPadding(
-                              RecurringSection(
-                                recurring: _recurring,
-                                transactions: _transactions,
-                                onAdd: _showRecurringSheet,
-                                onEdit: (r) => _showRecurringSheet(existing: r),
-                                onDelete: (r) => FinanceService.instance
-                                    .deleteRecurring(r.id),
-                                onToggle: (r) => FinanceService.instance
-                                    .setRecurringActive(r.id, !r.isActive),
-                                collapsed: _collapsedSections.contains(
-                                  'recurring',
-                                ),
-                                onToggleSection: () =>
-                                    _toggleSection('recurring'),
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            _sheetPadding(
-                              EnvelopesSection(
-                                envelopes: _envelopes,
-                                onAdd: _showEnvelopeSheet,
-                                // + adds and − withdraws the envelope's
-                                // step (plan amount, or AED 50). Both signs
-                                // are decided here, per envelope.
-                                onAdjust: (e) =>
-                                    _adjustEnvelope(e, e.adjustStep),
-                                onWithdraw: (e) =>
-                                    _adjustEnvelope(e, -e.adjustStep),
-                                onDelete: (e) => FinanceService.instance
-                                    .deleteEnvelope(e.id),
-                                collapsed: _collapsedSections.contains(
-                                  'envelopes',
-                                ),
-                                onToggleSection: () =>
-                                    _toggleSection('envelopes'),
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            // 4. Credit obligations.
-                            _sheetPadding(
-                              CreditSection(
-                                credits: _credits,
-                                onAdd: _showCreditSheet,
-                                onEdit: (c) => _showCreditSheet(existing: c),
-                                onDelete: (c) =>
-                                    CreditService.instance.deleteCredit(c.id),
-                                onExtend: _showExtendDeadlineSheet,
-                                onSettle: _showSettleCreditSheet,
-                                collapsed: _collapsedSections.contains(
-                                  'credit',
-                                ),
-                                onToggleSection: () => _toggleSection('credit'),
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            // 5. Transactions — the list most visits come
-                            //    for — then the spending analysis that is
-                            //    read from it.
-                            _sheetPadding(
-                              TransactionsSection(
-                                transactions: _transactions,
-                                collapsed: _collapsedSections.contains(
-                                  'transactions',
-                                ),
-                                onToggleSection: () =>
-                                    _toggleSection('transactions'),
-                                onViewAll: () => context.push('/records'),
-                                onTransactionTap: _showEditTransactionSheet,
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            _sheetPadding(
-                              WeeklySpendChart(
-                                transactions: _transactions,
-                                collapsed: _collapsedSections.contains(
-                                  'weekly',
-                                ),
-                                onToggleSection: () => _toggleSection('weekly'),
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            _sheetPadding(
-                              CategoryBreakdownCard(
-                                spendByCategory: spendByCategory,
-                                totalExpense: summary.expense,
-                                collapsed: _collapsedSections.contains(
-                                  'categories',
-                                ),
-                                onToggleSection: () =>
-                                    _toggleSection('categories'),
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            _sheetPadding(
-                              TopExpensesCard(
-                                transactions: _transactions,
-                                collapsed: _collapsedSections.contains('top'),
-                                onToggleSection: () => _toggleSection('top'),
-                              ),
-                            ),
-                            // Comfortable breathing room above the fixed bottom navigation bar.
-                            const SizedBox(height: 28),
-                          ],
-                        ),
+                      : Builder(
+                            builder: (context) {
+                              final fade = FinavigTransition.of(context);
+                              final showAll = _selectedCategory == 'All';
+                              final showCashflow = showAll || _selectedCategory == 'Cashflow';
+                              final showBudgets = showAll ||
+                                  _selectedCategory == 'Budgets' ||
+                                  _selectedCategory == 'Categories';
+                              final showCategories = showAll ||
+                                  _selectedCategory == 'Categories';
+                              final showSubscriptions = showAll || _selectedCategory == 'Subscriptions';
+                              final showEnvelopes = showAll || _selectedCategory == 'Envelopes';
+                              final showCredit = showAll || _selectedCategory == 'Debt & Credit';
+                              final showTransactions = showAll || _selectedCategory == 'Recent';
+                              final showPace = showAll ||
+                                  _selectedCategory == 'Cashflow' ||
+                                  _selectedCategory == 'Budgets';
+                              final showWeekly = showAll || _selectedCategory == 'Cashflow';
+                              final showTopExpenses = showAll ||
+                                  _selectedCategory == 'Categories' ||
+                                  _selectedCategory == 'Recent';
+
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 16),
+                                  if (!showAll) ...[
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                                      child: Row(
+                                        children: [
+                                          Text(
+                                            'Filtered: $_selectedCategory',
+                                            style: theme.textTheme.labelMedium?.copyWith(
+                                              fontWeight: FontWeight.w700,
+                                              color: theme.colorScheme.primary,
+                                            ),
+                                          ),
+                                          const Spacer(),
+                                          GestureDetector(
+                                            onTap: () => _onCategorySelected('All'),
+                                            child: Container(
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 8,
+                                                vertical: 4,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: fade.color(
+                                                  Colors.black.withValues(alpha: 0.05),
+                                                  Colors.white.withValues(alpha: 0.10),
+                                                ),
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  const Icon(Icons.close_rounded, size: 13),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    'Show all',
+                                                    style: theme.textTheme.labelSmall?.copyWith(
+                                                      fontWeight: FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                  ],
+                                  if (showAll) ...[
+                                    _sheetPadding(
+                                      BillSpikeAlertsCard(
+                                        transactions: _transactions,
+                                        dismissedIds: _dismissedSpikeIds,
+                                        onDismiss: (ids) => setState(() {
+                                          _dismissedSpikeIds.addAll(ids);
+                                        }),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                  ],
+                                  if (showAll || showCashflow) ...[
+                                    _sheetPadding(const MonthlySummaryCard()),
+                                  ],
+                                  if (showSubscriptions) ...[
+                                    _sheetPadding(
+                                      RenewalBreakdownCard(
+                                        items: _items,
+                                        collapsed: _collapsedSections.contains(
+                                          'renewalBreakdown',
+                                        ),
+                                        onToggleSection: () =>
+                                            _toggleSection('renewalBreakdown'),
+                                      ),
+                                    ),
+                                  ],
+                                  if (showCashflow) ...[
+                                    _sheetPadding(
+                                      CashFlowTeaserCard(
+                                        forecast: FinanceMath.calculate90DayCashFlow(
+                                          transactions: _transactions,
+                                          recurringTemplates: _recurring,
+                                          expiryItems: _items,
+                                          initialBalance: summary.net,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                  if (showCredit && !showAll) ...[
+                                    _sheetPadding(
+                                      _CreditShortcutCard(
+                                        onTap: () => context.push('/credits'),
+                                        credits: _credits,
+                                      ),
+                                    ),
+                                  ],
+                                  if (showPace) ...[
+                                    const SizedBox(height: 20),
+                                    _sheetPadding(
+                                      SpendingPaceCard(
+                                        summary: summary,
+                                        collapsed: _collapsedSections.contains('pace'),
+                                        onToggleSection: () => _toggleSection('pace'),
+                                      ),
+                                    ),
+                                  ],
+                                  if (showBudgets) ...[
+                                    const SizedBox(height: 20),
+                                    _sheetPadding(
+                                      BudgetsSection(
+                                        budgets: _budgets,
+                                        spendByCategory: spendByCategory,
+                                        overallBudget:
+                                            FinanceService.instance.activeOverallBudget,
+                                        onAddCategory: _showBudgetSheet,
+                                        onEditCategory: (b) =>
+                                            _showBudgetSheet(existing: b),
+                                        onDeleteCategory: (b) =>
+                                            FinanceService.instance.deleteBudget(b.id),
+                                        onEditOverall: _showOverallBudgetSheet,
+                                        collapsed: _collapsedSections.contains(
+                                          'budgets',
+                                        ),
+                                        onToggleSection: () =>
+                                            _toggleSection('budgets'),
+                                      ),
+                                    ),
+                                  ],
+                                  if (showSubscriptions) ...[
+                                    const SizedBox(height: 20),
+                                    _sheetPadding(
+                                      RecurringSection(
+                                        recurring: _recurring,
+                                        transactions: _transactions,
+                                        onAdd: _showRecurringSheet,
+                                        onEdit: (r) => _showRecurringSheet(existing: r),
+                                        onDelete: (r) => FinanceService.instance
+                                            .deleteRecurring(r.id),
+                                        onToggle: (r) => FinanceService.instance
+                                            .setRecurringActive(r.id, !r.isActive),
+                                        collapsed: _collapsedSections.contains(
+                                          'recurring',
+                                        ),
+                                        onToggleSection: () =>
+                                            _toggleSection('recurring'),
+                                      ),
+                                    ),
+                                  ],
+                                  if (showEnvelopes) ...[
+                                    const SizedBox(height: 20),
+                                    _sheetPadding(
+                                      EnvelopesSection(
+                                        envelopes: _envelopes,
+                                        onAdd: _showEnvelopeSheet,
+                                        onAdjust: (e) =>
+                                            _adjustEnvelope(e, e.adjustStep),
+                                        onWithdraw: (e) =>
+                                            _adjustEnvelope(e, -e.adjustStep),
+                                        onDelete: (e) => FinanceService.instance
+                                            .deleteEnvelope(e.id),
+                                        collapsed: _collapsedSections.contains(
+                                          'envelopes',
+                                        ),
+                                        onToggleSection: () =>
+                                            _toggleSection('envelopes'),
+                                      ),
+                                    ),
+                                  ],
+                                  if (showCredit) ...[
+                                    const SizedBox(height: 20),
+                                    _sheetPadding(
+                                      CreditSection(
+                                        credits: _credits,
+                                        onAdd: _showCreditSheet,
+                                        onEdit: (c) => _showCreditSheet(existing: c),
+                                        onDelete: (c) =>
+                                            CreditService.instance.deleteCredit(c.id),
+                                        onExtend: _showExtendDeadlineSheet,
+                                        onSettle: _showSettleCreditSheet,
+                                        collapsed: _collapsedSections.contains(
+                                          'credit',
+                                        ),
+                                        onToggleSection: () => _toggleSection('credit'),
+                                      ),
+                                    ),
+                                  ],
+                                  if (showTransactions) ...[
+                                    const SizedBox(height: 20),
+                                    _sheetPadding(
+                                      TransactionsSection(
+                                        transactions: _transactions,
+                                        collapsed: _collapsedSections.contains(
+                                          'transactions',
+                                        ),
+                                        onToggleSection: () =>
+                                            _toggleSection('transactions'),
+                                        onViewAll: () => context.push('/records'),
+                                        onTransactionTap: _showEditTransactionSheet,
+                                      ),
+                                    ),
+                                  ],
+                                  if (showWeekly) ...[
+                                    const SizedBox(height: 20),
+                                    _sheetPadding(
+                                      WeeklySpendChart(
+                                        transactions: _transactions,
+                                        collapsed: _collapsedSections.contains(
+                                          'weekly',
+                                        ),
+                                        onToggleSection: () => _toggleSection('weekly'),
+                                      ),
+                                    ),
+                                  ],
+                                  if (showCategories) ...[
+                                    const SizedBox(height: 20),
+                                    _sheetPadding(
+                                      CategoryBreakdownCard(
+                                        spendByCategory: spendByCategory,
+                                        totalExpense: summary.expense,
+                                        collapsed: _collapsedSections.contains(
+                                          'categories',
+                                        ),
+                                        onToggleSection: () =>
+                                            _toggleSection('categories'),
+                                      ),
+                                    ),
+                                  ],
+                                  if (showTopExpenses) ...[
+                                    const SizedBox(height: 20),
+                                    _sheetPadding(
+                                      TopExpensesCard(
+                                        transactions: _transactions,
+                                        collapsed: _collapsedSections.contains('top'),
+                                        onToggleSection: () => _toggleSection('top'),
+                                      ),
+                                    ),
+                                  ],
+                                  const SizedBox(height: 28),
+                                ],
+                              );
+                            },
+                          ),
                 ),
               ),
               // Canvas filler: extends the background across the rest of the
@@ -664,15 +802,15 @@ class _MoneyScreenState extends State<MoneyScreen> {
                         size: 14,
                         color: Color(0xFF34D399),
                       ),
-                      const SizedBox(width: 5),
-                      Text(
-                        '${MoneyFormat.aed(summary.income)} in · ${MoneyFormat.aed(summary.expense)} out',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: Colors.white.withValues(alpha: 0.85),
-                          fontWeight: FontWeight.w600,
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          '${MoneyFormat.aed(summary.income)} in · ${MoneyFormat.aed(summary.expense)} out',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: Colors.white.withValues(alpha: 0.85),
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
@@ -1059,7 +1197,6 @@ class _MoneyAddCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final fade = FinavigTransition.of(context);
 
     if (outlined) {
       return Material(
@@ -1109,10 +1246,10 @@ class _MoneyAddCard extends StatelessWidget {
       color: Colors.transparent,
       child: Ink(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
+          gradient: const LinearGradient(
             colors: [
-              fade.color(const Color(0xFF2E8BC0), const Color(0xFF2671A8)),
-              fade.color(const Color(0xFF1B5A8A), const Color(0xFF0E3A5C)),
+              FinavigColors.logoRed,
+              Color(0xFFC01515),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -1359,3 +1496,341 @@ class _CollectionSwitcherChip extends StatelessWidget {
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Peloton-style Timeframe Tabs (7 Day, 30 Day, 90 Day) with Red Bar
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _MoneyTimeframeTabs extends StatelessWidget {
+  final int selected;
+  final ValueChanged<int> onPeriodChanged;
+
+  const _MoneyTimeframeTabs({
+    required this.selected,
+    required this.onPeriodChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final fade = FinavigTransition.of(context);
+    const periods = [7, 30, 90];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: periods.map((p) {
+          final active = p == selected;
+          return GestureDetector(
+            onTap: () => onPeriodChanged(p),
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$p Day',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                      color: active
+                          ? fade.color(
+                              FinavigColors.textPrimaryLight,
+                              FinavigColors.textPrimary,
+                            )
+                          : fade.color(
+                              FinavigColors.textMutedLight,
+                              FinavigColors.textMuted,
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    height: 2.5,
+                    width: active ? 36 : 0,
+                    decoration: BoxDecoration(
+                      color: FinavigColors.logoRed,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Compact Metrics Carousel (72px height, 98px width cards)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _MoneyMetricsCarousel extends StatelessWidget {
+  final ({double income, double expense, double net}) summary;
+  final int upcomingCount;
+
+  const _MoneyMetricsCarousel({
+    required this.summary,
+    required this.upcomingCount,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cards = [
+      _MoneyMetricCardData(
+        label: 'Net cash',
+        value: MoneyFormat.aed(summary.net),
+        delta: summary.net >= 0
+            ? '+${summary.net.toStringAsFixed(0)}'
+            : '-${(-summary.net).toStringAsFixed(0)}',
+        isPositive: summary.net >= 0,
+        compactValue: true,
+      ),
+      _MoneyMetricCardData(
+        label: 'Income',
+        value: MoneyFormat.aed(summary.income),
+        delta: '+${summary.income.toStringAsFixed(0)}',
+        isPositive: true,
+        compactValue: true,
+      ),
+      _MoneyMetricCardData(
+        label: 'Expenses',
+        value: MoneyFormat.aed(summary.expense),
+        delta: '-${summary.expense.toStringAsFixed(0)}',
+        isPositive: false,
+        compactValue: true,
+      ),
+      _MoneyMetricCardData(
+        label: 'Renewals',
+        value: '$upcomingCount',
+        delta: upcomingCount > 0 ? '+$upcomingCount' : '0',
+        isPositive: true,
+      ),
+    ];
+
+    return SizedBox(
+      height: 72,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: cards.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, i) => _MoneyMetricCard(data: cards[i]),
+      ),
+    );
+  }
+}
+
+class _MoneyMetricCardData {
+  final String label;
+  final String value;
+  final String delta;
+  final bool isPositive;
+  final bool compactValue;
+
+  const _MoneyMetricCardData({
+    required this.label,
+    required this.value,
+    required this.delta,
+    this.isPositive = true,
+    this.compactValue = false,
+  });
+}
+
+class _MoneyMetricCard extends StatelessWidget {
+  final _MoneyMetricCardData data;
+
+  const _MoneyMetricCard({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final fade = FinavigTransition.of(context);
+    final trendColor = data.isPositive ? FinavigColors.safe : FinavigColors.warning;
+
+    return Container(
+      constraints: const BoxConstraints(minWidth: 100),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: fade.color(Colors.white, FinavigColors.charcoal),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: fade.color(
+            Colors.black.withValues(alpha: 0.04),
+            Colors.white.withValues(alpha: 0.06),
+          ),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            data.label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: fade.color(
+                FinavigColors.textSecondaryLight,
+                FinavigColors.textSecondary,
+              ),
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+            ),
+            maxLines: 1,
+          ),
+          const Spacer(),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                data.value,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: data.compactValue ? 15 : 18,
+                  height: 1.0,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    data.isPositive
+                        ? Icons.arrow_drop_up_rounded
+                        : Icons.arrow_drop_down_rounded,
+                    size: 14,
+                    color: trendColor,
+                  ),
+                  Text(
+                    data.delta,
+                    style: TextStyle(
+                      color: trendColor,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Compact Category Pills Row (36px height, rounded rectangle radius 10)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _MoneyCategoryPillsRow extends StatelessWidget {
+  final String selectedCategory;
+  final ValueChanged<String> onCategorySelected;
+
+  const _MoneyCategoryPillsRow({
+    required this.selectedCategory,
+    required this.onCategorySelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const categories = [
+      (label: 'All', icon: Icons.apps_rounded),
+      (label: 'Cashflow', icon: Icons.waterfall_chart_rounded),
+      (label: 'Budgets', icon: Icons.donut_small_rounded),
+      (label: 'Categories', icon: Icons.pie_chart_outline_rounded),
+      (label: 'Subscriptions', icon: Icons.repeat_rounded),
+      (label: 'Envelopes', icon: Icons.mail_outline_rounded),
+      (label: 'Debt & Credit', icon: Icons.credit_card_rounded),
+      (label: 'Recent', icon: Icons.receipt_long_rounded),
+    ];
+
+    return SizedBox(
+      height: 36,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: categories.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, i) {
+          final cat = categories[i];
+          final isSelected = selectedCategory == cat.label;
+          return _MoneyCategoryPillChip(
+            label: cat.label,
+            icon: cat.icon,
+            selected: isSelected,
+            onTap: () => onCategorySelected(cat.label),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _MoneyCategoryPillChip extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _MoneyCategoryPillChip({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final fade = FinavigTransition.of(context);
+    final bg = selected
+        ? FinavigColors.accent
+        : fade.color(Colors.white, FinavigColors.charcoal);
+    final fg = selected
+        ? Colors.white
+        : fade.color(
+            FinavigColors.textPrimaryLight,
+            FinavigColors.textPrimary,
+          );
+    final border = selected
+        ? Colors.transparent
+        : fade.color(
+            Colors.black.withValues(alpha: 0.06),
+            Colors.white.withValues(alpha: 0.08),
+          );
+
+    return Material(
+      color: bg,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: BorderSide(color: border),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 15, color: fg),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: fg,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+

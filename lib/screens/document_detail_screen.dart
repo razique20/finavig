@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:ui' show ImageFilter;
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -61,27 +60,38 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    final fade = FinavigTransition.of(context);
+    final canvas = fade.color(FinavigColors.snowWhite, FinavigColors.obsidian);
+
     if (_loading) {
       return Scaffold(
-        backgroundColor: theme.colorScheme.surface,
+        backgroundColor: canvas,
         appBar: AppBar(
+          backgroundColor: canvas,
+          elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
+            icon: const Icon(Icons.arrow_back_rounded),
             onPressed: () =>
                 context.canPop() ? context.pop() : context.go('/documents'),
           ),
           title: const Text('Loading...'),
         ),
-        body: const Center(child: CircularProgressIndicator()),
+        body: Center(
+          child: CircularProgressIndicator(
+            color: theme.colorScheme.secondary,
+          ),
+        ),
       );
     }
 
     if (_item == null) {
       return Scaffold(
-        backgroundColor: theme.colorScheme.surface,
+        backgroundColor: canvas,
         appBar: AppBar(
+          backgroundColor: canvas,
+          elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
+            icon: const Icon(Icons.arrow_back_rounded),
             onPressed: () =>
                 context.canPop() ? context.pop() : context.go('/documents'),
           ),
@@ -91,7 +101,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                Icons.error_outline,
+                Icons.error_outline_rounded,
                 size: 64,
                 color: FinavigColors.adaptiveIcon(context, Colors.grey),
               ),
@@ -121,65 +131,60 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     final daysRemaining = item.daysRemaining;
     final expiresAt = item.expiresAt;
 
-    final isDark = theme.brightness == Brightness.dark;
-    final barBg = isDark
-        ? FinavigColors.obsidian.withValues(alpha: 0.72)
-        : Colors.white.withValues(alpha: 0.78);
-
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      extendBodyBehindAppBar: true,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-            child: AppBar(
-              backgroundColor: barBg,
-              elevation: 0,
-              scrolledUnderElevation: 0,
-              title: Text(
-                item.displayName,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.edit_outlined),
-                  onPressed: () => _editDocument(context, item),
-                  tooltip: 'Edit document',
-                ),
-                PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert),
-                  onSelected: (value) =>
-                      _handleMenuAction(context, value, item),
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(
-                      value: 'edit',
-                      child: Text('Edit document'),
-                    ),
-                    const PopupMenuItem(
-                      value: 'renew',
-                      child: Text('Mark as renewed'),
-                    ),
-                    const PopupMenuItem(
-                      value: 'share',
-                      child: Text('Share details'),
-                    ),
-                    const PopupMenuItem(
-                      value: 'export',
-                      child: Text('Export report'),
-                    ),
-                    const PopupMenuItem(
-                      value: 'delete',
-                      child: Text('Remove document'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+      backgroundColor: canvas,
+      appBar: AppBar(
+        backgroundColor: canvas,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go('/documents'),
         ),
+        title: Text(
+          item.displayName,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            fontSize: 16,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_outlined, size: 20),
+            onPressed: () => _editDocument(context, item),
+            tooltip: 'Edit document',
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert_rounded),
+            onSelected: (value) =>
+                _handleMenuAction(context, value, item),
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'edit',
+                child: Text('Edit document'),
+              ),
+              const PopupMenuItem(
+                value: 'renew',
+                child: Text('Mark as renewed'),
+              ),
+              const PopupMenuItem(
+                value: 'share',
+                child: Text('Share details'),
+              ),
+              const PopupMenuItem(
+                value: 'export',
+                child: Text('Export report'),
+              ),
+              const PopupMenuItem(
+                value: 'delete',
+                child: Text('Remove document'),
+              ),
+            ],
+          ),
+        ],
       ),
       bottomNavigationBar: Container(
         padding: EdgeInsets.fromLTRB(
@@ -189,16 +194,19 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
           10 + MediaQuery.of(context).padding.bottom,
         ),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surface.withValues(alpha: 0.95),
+          color: fade.color(Colors.white, FinavigColors.charcoal),
           border: Border(
             top: BorderSide(
-              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+              color: fade.color(
+                Colors.black.withValues(alpha: 0.05),
+                Colors.white.withValues(alpha: 0.06),
+              ),
               width: 0.5,
             ),
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 8,
               offset: const Offset(0, -2),
             ),
@@ -215,9 +223,9 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                   backgroundColor: FinavigColors.safe,
                   foregroundColor: Colors.white,
                   elevation: 0,
-                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                 ),
               ),
@@ -237,7 +245,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
               style: IconButton.styleFrom(
                 padding: const EdgeInsets.all(12),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(14),
                 ),
               ),
             ),
@@ -252,7 +260,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
               style: IconButton.styleFrom(
                 padding: const EdgeInsets.all(12),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(14),
                 ),
               ),
             ),
@@ -260,12 +268,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         ),
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(
-          16,
-          MediaQuery.of(context).padding.top + kToolbarHeight + 8,
-          16,
-          24,
-        ),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -312,20 +315,34 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     DateTime expiresAt,
     int daysRemaining,
   ) {
+    final fade = FinavigTransition.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final activeCountry = DocumentCollectionService.instance.activeCountry;
+    final localizedDocType = item.docType.localizedDisplayName(activeCountry);
+    final isOverdue = daysRemaining < 0;
+    final urgencyColor = FinavigColors.urgencyColor(daysRemaining);
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: urgency.color.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: urgency.color.withValues(alpha: 0.2)),
+        color: fade.color(Colors.white, FinavigColors.charcoal),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: FinavigShadows.adaptive(isDark),
+        border: Border.all(
+          color: fade.color(
+            Colors.black.withValues(alpha: 0.04),
+            Colors.white.withValues(alpha: 0.06),
+          ),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              DepartmentLogo(item: item, size: 52),
+              DepartmentLogo(item: item, size: 54),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
@@ -334,19 +351,67 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                     Text(
                       item.displayName,
                       style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 18,
+                        letterSpacing: -0.3,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      (item.location != null && item.location!.isNotEmpty)
-                          ? '${item.docType.displayName} • ${item.location}'
-                          : item.docType.displayName,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.outline,
-                      ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: fade.color(
+                              FinavigColors.accent.withValues(alpha: 0.08),
+                              Colors.white.withValues(alpha: 0.10),
+                            ),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            localizedDocType,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: fade.color(
+                                FinavigColors.accent,
+                                Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                        if (item.location != null && item.location!.isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: fade.color(
+                                Colors.black.withValues(alpha: 0.04),
+                                Colors.white.withValues(alpha: 0.06),
+                              ),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              item.location!,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: fade.color(
+                                  FinavigColors.textSecondaryLight,
+                                  FinavigColors.textSecondary,
+                                ),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ],
                 ),
@@ -354,59 +419,59 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          const Divider(height: 1),
-          const SizedBox(height: 16),
+          Container(
+            height: 0.5,
+            color: fade.color(
+              Colors.black.withValues(alpha: 0.06),
+              Colors.white.withValues(alpha: 0.08),
+            ),
+          ),
+          const SizedBox(height: 14),
           Row(
             children: [
-              const Icon(Icons.calendar_today_rounded, size: 16),
-              const SizedBox(width: 6),
+              Icon(
+                Icons.calendar_today_rounded,
+                size: 15,
+                color: fade.color(
+                  FinavigColors.textSecondaryLight,
+                  FinavigColors.textSecondary,
+                ),
+              ),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Expires ${DateFormat('EEEE, dd MMMM yyyy').format(expiresAt)}',
+                  'Expires ${DateFormat('EEEE, dd MMM yyyy').format(expiresAt)}',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
                   ),
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: FinavigColors.urgencyColor(daysRemaining),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  daysRemaining < 0
-                      ? '${-daysRemaining}d overdue'
-                      : '$daysRemaining days left',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
+                  color: FinavigColors.urgencyBg(daysRemaining, brightness: theme.brightness),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: urgencyColor.withValues(alpha: 0.35),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(urgency.icon, size: 15, color: urgency.color),
-              const SizedBox(width: 6),
-              Text(
-                urgency.title,
-                style: TextStyle(
-                  color: urgency.color,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(urgency.icon, size: 12, color: urgencyColor),
+                    const SizedBox(width: 4),
+                    Text(
+                      isOverdue ? '${-daysRemaining}d overdue' : '$daysRemaining days left',
+                      style: TextStyle(
+                        color: urgencyColor,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              if (item.documentDate != null && item.documentDate!.isNotEmpty)
-                Text(
-                  'Documented: ${item.documentDate}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.outline,
-                  ),
-                ),
             ],
           ),
         ],
@@ -545,13 +610,23 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         lowerPath.contains('.gif') ||
         lowerPath.contains('.heic');
 
+    final fade = FinavigTransition.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
+        color: fade.color(Colors.white, FinavigColors.charcoal),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: FinavigShadows.adaptive(isDark),
+        border: Border.all(
+          color: fade.color(
+            Colors.black.withValues(alpha: 0.04),
+            Colors.white.withValues(alpha: 0.06),
+          ),
+          width: 0.6,
+        ),
       ),
       child: Row(
         children: [
@@ -561,7 +636,10 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: theme.colorScheme.primaryContainer,
+              color: fade.color(
+                FinavigColors.accent.withValues(alpha: 0.10),
+                Colors.white.withValues(alpha: 0.08),
+              ),
               borderRadius: BorderRadius.circular(10),
             ),
             clipBehavior: Clip.antiAlias,
@@ -575,7 +653,10 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                   )
                 : Icon(
                     Icons.attach_file_rounded,
-                    color: theme.colorScheme.onPrimaryContainer,
+                    color: fade.color(
+                      FinavigColors.accent,
+                      Colors.white,
+                    ),
                     size: 24,
                   ),
           ),
@@ -592,7 +673,10 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.primary,
+                        color: fade.color(
+                          FinavigColors.accent,
+                          FinavigColors.accentBright,
+                        ),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -632,19 +716,25 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
           const SizedBox(width: 8),
           OutlinedButton.icon(
             onPressed: () => _openAttachmentViewer(context, item),
-            icon: const Icon(Icons.remove_red_eye_outlined, size: 16),
+            icon: const Icon(Icons.remove_red_eye_outlined, size: 15),
             label: const Text('View'),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           ),
           const SizedBox(width: 6),
           OutlinedButton.icon(
             onPressed: () => _shareDocumentFile(context, item),
-            icon: const Icon(Icons.ios_share_rounded, size: 16),
+            icon: const Icon(Icons.ios_share_rounded, size: 15),
             label: const Text('Share'),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           ),
         ],
@@ -923,27 +1013,34 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
   Widget _buildWarningCard(ThemeData theme, ExpiryItem item) {
     final days = item.daysRemaining;
     final isCritical = days <= 7;
+    final urgencyColor = FinavigColors.urgencyColor(days);
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: FinavigColors.urgencyBg(days, brightness: theme.brightness),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: FinavigColors.urgencyColor(days).withValues(alpha: 0.35),
+          color: urgencyColor.withValues(alpha: 0.35),
         ),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            isCritical
-                ? Icons.warning_amber_rounded
-                : Icons.info_outline_rounded,
-            color: isCritical
-                ? theme.colorScheme.error
-                : theme.colorScheme.primary,
-            size: 24,
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: urgencyColor.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              isCritical
+                  ? Icons.warning_amber_rounded
+                  : Icons.info_outline_rounded,
+              color: urgencyColor,
+              size: 20,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -953,7 +1050,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                 Text(
                   isCritical ? 'Urgent action required' : 'Renewal information',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     color: isCritical ? theme.colorScheme.error : null,
                   ),
                 ),
@@ -964,7 +1061,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                   item.effectiveRenewalWarning,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.outline,
-                    height: 1.5,
+                    height: 1.4,
                   ),
                 ),
               ],
@@ -976,56 +1073,61 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
   }
 
   Widget _buildInfoGrid(ThemeData theme, ExpiryItem item) {
+    final fade = FinavigTransition.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final activeCountry = DocumentCollectionService.instance.activeCountry;
+    final localizedDocType = item.docType.localizedDisplayName(activeCountry);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
         Padding(
-          padding: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
             'Document details',
             style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
               fontSize: 15,
-              height: 1.0,
             ),
           ),
         ),
         Container(
           decoration: BoxDecoration(
-            color: isDark
-                ? FinavigColors.slate.withValues(alpha: 0.45)
-                : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
-            borderRadius: BorderRadius.circular(14),
+            color: fade.color(Colors.white, FinavigColors.charcoal),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: FinavigShadows.adaptive(isDark),
             border: Border.all(
-              color: theme.colorScheme.outlineVariant
-                  .withValues(alpha: isDark ? 0.2 : 0.3),
+              color: fade.color(
+                Colors.black.withValues(alpha: 0.04),
+                Colors.white.withValues(alpha: 0.06),
+              ),
               width: 0.6,
             ),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Column(
             children: [
               _buildDetailRow(
                 theme: theme,
                 icon1: Icons.folder_outlined,
                 label1: 'Document type',
-                value1: item.docType.displayName,
+                value1: localizedDocType,
                 icon2: Icons.location_on_outlined,
                 label2: 'Location',
-                value2: item.location ??
-                    DocumentCollectionService.instance.activeCountry.name,
+                value2: item.location ?? activeCountry.displayName,
               ),
               Divider(
-                height: 18,
+                height: 20,
                 thickness: 0.5,
-                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.25),
+                color: fade.color(
+                  Colors.black.withValues(alpha: 0.05),
+                  Colors.white.withValues(alpha: 0.06),
+                ),
               ),
               _buildDetailRow(
                 theme: theme,
-                icon1: Icons.attach_money_rounded,
+                icon1: Icons.payments_outlined,
                 label1: 'Renewal fee',
                 value1: item.renewalFee != null
                     ? '${DocumentCollectionService.instance.activeCurrency} ${item.renewalFee!.toStringAsFixed(0)}'
@@ -1035,9 +1137,12 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                 value2: item.documentDate ?? 'Not recorded',
               ),
               Divider(
-                height: 18,
+                height: 20,
                 thickness: 0.5,
-                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.25),
+                color: fade.color(
+                  Colors.black.withValues(alpha: 0.05),
+                  Colors.white.withValues(alpha: 0.06),
+                ),
               ),
               _buildDetailRow(
                 theme: theme,
@@ -1048,7 +1153,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                 label2: 'Reminder status',
                 value2: _reminderStatusLabel(item.reminderStatus),
                 value2Color:
-                    item.reminderStatus > 0 ? theme.colorScheme.primary : null,
+                    item.reminderStatus > 0 ? FinavigColors.safe : null,
               ),
             ],
           ),
@@ -1100,31 +1205,32 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     required String value,
     Color? valueColor,
   }) {
+    final fade = FinavigTransition.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final iconColor = valueColor ??
-        FinavigColors.adaptiveIcon(
-          context,
-          theme.colorScheme.outline,
+        fade.color(
+          FinavigColors.accent,
+          FinavigColors.textPrimary,
         );
 
     return Row(
       children: [
         Container(
-          width: 26,
-          height: 26,
+          width: 32,
+          height: 32,
           decoration: BoxDecoration(
             color: iconColor.withValues(alpha: isDark ? 0.16 : 0.08),
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(8),
           ),
           child: Center(
             child: Icon(
               icon,
-              size: 13,
+              size: 16,
               color: iconColor,
             ),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 10),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1133,8 +1239,11 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
               Text(
                 label,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.outline,
-                  fontSize: 10,
+                  color: fade.color(
+                    FinavigColors.textSecondaryLight,
+                    FinavigColors.textSecondary,
+                  ),
+                  fontSize: 10.5,
                   fontWeight: FontWeight.w500,
                   height: 1.1,
                 ),
@@ -1145,9 +1254,13 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
               Text(
                 value,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12,
-                  color: valueColor ?? theme.colorScheme.onSurface,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12.5,
+                  color: valueColor ??
+                      fade.color(
+                        FinavigColors.textPrimaryLight,
+                        FinavigColors.textPrimary,
+                      ),
                   height: 1.2,
                 ),
                 maxLines: 1,
@@ -1178,6 +1291,8 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
   }
 
   Widget _buildUrgencyPath(ThemeData theme, ExpiryItem item) {
+    final fade = FinavigTransition.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final customDays = item.customReminderDays;
     final hasCustom = customDays != null && customDays.isNotEmpty;
     final daysText = hasCustom
@@ -1189,11 +1304,14 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       children: [
         Row(
           children: [
-            Text(
-              'Urgency timeline & alerts',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                fontSize: 15,
+            Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(
+                'Urgency timeline & alerts',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                ),
               ),
             ),
             const Spacer(),
@@ -1219,13 +1337,13 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                     Icon(
                       Icons.tune_rounded,
                       size: 13,
-                      color: theme.colorScheme.primary,
+                      color: fade.color(FinavigColors.accent, Colors.white),
                     ),
                     const SizedBox(width: 4),
                     Text(
                       hasCustom ? 'Alerts: $daysText' : 'Custom alerts',
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.primary,
+                        color: fade.color(FinavigColors.accent, Colors.white),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -1236,7 +1354,22 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
           ],
         ),
         const SizedBox(height: 10),
-        UrgencyTimelineCard.withIndicator(daysRemaining: item.daysRemaining),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: fade.color(Colors.white, FinavigColors.charcoal),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: FinavigShadows.adaptive(isDark),
+            border: Border.all(
+              color: fade.color(
+                Colors.black.withValues(alpha: 0.04),
+                Colors.white.withValues(alpha: 0.06),
+              ),
+              width: 0.6,
+            ),
+          ),
+          child: UrgencyTimelineCard.withIndicator(daysRemaining: item.daysRemaining),
+        ),
       ],
     );
   }
@@ -1333,6 +1466,8 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     final history = item.renewalHistory ?? [];
     if (history.isEmpty) return const SizedBox.shrink();
 
+    final isDark = theme.brightness == Brightness.dark;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1343,27 +1478,28 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
                 fontSize: 15,
+                color: isDark ? Colors.white : FinavigColors.ink,
               ),
             ),
             const SizedBox(width: 8),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer,
+                color: FinavigColors.accent.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
                 '${history.length}',
-                style: TextStyle(
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 11,
-                  color: theme.colorScheme.onPrimaryContainer,
+                  color: FinavigColors.accent,
                 ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         ListView.separated(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -1372,14 +1508,23 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
           itemBuilder: (context, index) {
             final rec = history[history.length - 1 - index]; // Newest first
             return Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(12),
+                color: isDark ? FinavigColors.charcoal : Colors.white,
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-                  width: 0.6,
+                  color: isDark ? Colors.white10 : FinavigColors.fog,
+                  width: 1,
                 ),
+                boxShadow: isDark
+                    ? null
+                    : [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.03),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
