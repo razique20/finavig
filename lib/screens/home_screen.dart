@@ -6,8 +6,11 @@ import 'package:go_router/go_router.dart';
 import '../models/document_collection.dart';
 import '../models/expiry_item.dart';
 import '../models/finance.dart';
+import '../services/alert_preferences_service.dart';
+import '../services/anomaly_detection_service.dart';
 import '../services/auth_service.dart';
 import '../services/collection_service.dart';
+import '../services/companion_suggestion_service.dart';
 import '../services/document_scanner_service.dart';
 import '../services/finance_service.dart';
 import '../services/streak_service.dart';
@@ -128,6 +131,48 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Unread/undismissed alert count shown on the notification bell:
+  /// expired docs, upcoming renewals needing attention (not dismissed this
+  /// session), enabled finance alerts (bill spikes, budget alerts), and any
+  /// pending companion-suggestion cue.
+  int get _notificationAlertCount {
+    final expired = _expiredItems.length;
+    final pending = _items
+        .where(
+          (i) =>
+              i.isActive &&
+              !i.isExpired &&
+              i.daysRemaining <= 30 &&
+              i.daysRemaining != _dismissedAttentionCount,
+        )
+        .length;
+
+    var spikes = 0;
+    if (AlertPreferencesService.instance.billSpikesEnabled) {
+      spikes = AnomalyDetectionService.instance
+          .detectRecentAnomalies(FinanceService.instance.activeTransactions)
+          .length;
+    }
+
+    var budgetAlerts = 0;
+    if (AlertPreferencesService.instance.budgetAlertsEnabled) {
+      final budgets = FinanceService.instance.activeBudgets;
+      if (budgets.isNotEmpty) {
+        final spend = FinanceMath.spendByCategory(
+          FinanceService.instance.activeTransactions,
+          DateTime.now(),
+          collectionId: FinanceService.instance.activeCollectionIdSafe,
+        );
+        budgetAlerts = FinanceMath.budgetStatuses(budgets, spend)
+            .where((s) => s.status != BudgetAlertLevel.none)
+            .length;
+      }
+    }
+
+    final companion = PendingCompanionAlertService.instance.pendingCount;
+    return expired + pending + spikes + budgetAlerts + companion;
+  }
+
   Future<void> _showCollectionSwitcher() async {
     final selectedId = await showHomeCollectionSwitcher(context);
     if (!mounted || selectedId == null) return;
@@ -160,8 +205,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       _SearchHeader(
                         onSearchTap: () => context.push('/search'),
-                        hasUrgentAlerts: _expiredItems.isNotEmpty ||
-                            _upcomingItems().any((i) => i.daysRemaining <= 7),
+                        alertCount: _notificationAlertCount,
                       ),
                       const SizedBox(height: 10),
                       _ProfileStreakSection(
@@ -246,11 +290,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class _SearchHeader extends StatelessWidget {
   final VoidCallback onSearchTap;
-  final bool hasUrgentAlerts;
+  final int alertCount;
 
   const _SearchHeader({
     required this.onSearchTap,
-    this.hasUrgentAlerts = false,
+    this.alertCount = 0,
   });
 
   @override
@@ -306,7 +350,7 @@ class _SearchHeader extends StatelessWidget {
             icon: Icons.notifications_none_rounded,
             tooltip: 'Alerts',
             color: iconColor,
-            showBadge: hasUrgentAlerts,
+            badgeCount: alertCount,
             onTap: () => context.push('/alerts'),
           ),
           _HeaderIconButton(
@@ -332,18 +376,19 @@ class _HeaderIconButton extends StatelessWidget {
   final Color color;
   final String tooltip;
   final VoidCallback onTap;
-  final bool showBadge;
+  final int badgeCount;
 
   const _HeaderIconButton({
     required this.icon,
     required this.color,
     required this.tooltip,
     required this.onTap,
-    this.showBadge = false,
+    this.badgeCount = 0,
   });
 
   @override
   Widget build(BuildContext context) {
+    final fade = FinavigTransition.of(context);
     return Tooltip(
       message: tooltip,
       child: IconButton(
@@ -351,16 +396,23 @@ class _HeaderIconButton extends StatelessWidget {
           clipBehavior: Clip.none,
           children: [
             Icon(icon, color: color, size: 20),
-            if (showBadge)
+            if (badgeCount > 0)
               Positioned(
                 top: -1,
                 right: -1,
                 child: Container(
-                  width: 7,
-                  height: 7,
-                  decoration: const BoxDecoration(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
                     color: FinavigColors.danger,
                     shape: BoxShape.circle,
+                    border: Border.all(
+                      color: fade.color(
+                        const Color(0xFFF5F5F7),
+                        FinavigColors.obsidian,
+                      ),
+                      width: 1.2,
+                    ),
                   ),
                 ),
               ),

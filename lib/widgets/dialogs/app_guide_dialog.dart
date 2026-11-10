@@ -78,10 +78,10 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
           maxHeight: isCompact ? size.height * 0.95 : 680,
         ),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF0F172A) : Colors.white,
+          color: isDark ? FinavigColors.charcoal : Colors.white,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: isDark ? FinavigColors.slate : FinavigColors.cloud,
+            color: isDark ? FinavigColors.slateLight : FinavigColors.fog,
             width: 1.2,
           ),
           boxShadow: [
@@ -101,7 +101,7 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
                 padding: const EdgeInsets.fromLTRB(20, 16, 12, 12),
                 decoration: BoxDecoration(
                   color: isDark
-                      ? const Color(0xFF1E293B).withOpacity(0.5)
+                      ? FinavigColors.slate.withOpacity(0.5)
                       : FinavigColors.cloud.withOpacity(0.6),
                   border: Border(
                     bottom: BorderSide(
@@ -197,7 +197,7 @@ class _AppGuideDialogState extends State<AppGuideDialog> {
               Container(
                 padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF0F172A) : Colors.white,
+                  color: isDark ? FinavigColors.charcoal : Colors.white,
                   border: Border(
                     top: BorderSide(
                       color: isDark

@@ -104,9 +104,6 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
       final upgrade = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
           title: const Row(
             children: [
               Icon(Icons.warning_amber_rounded, color: FinavigColors.warning),
@@ -182,7 +179,6 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(
           children: [
             Icon(
@@ -207,7 +203,10 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
             icon: const Icon(Icons.bolt_rounded, size: 16),
             label: const Text('Confirm & Use 1 Credit'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: FinavigColors.ink,
+              backgroundColor: FinavigTransition.of(context).color(
+                FinavigColors.ink,
+                FinavigColors.accentBright,
+              ),
               foregroundColor: Colors.white,
             ),
           ),
@@ -229,7 +228,6 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Create savings envelope'),
         content: Text(
           'Create an envelope "$name"'
@@ -286,7 +284,6 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text('Set ${category.displayName} budget'),
         content: Text(
           'Cap ${category.displayName} at $_cur ${limit.toStringAsFixed(0)} '
@@ -301,7 +298,10 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: FinavigColors.ink,
+              backgroundColor: FinavigTransition.of(context).color(
+                FinavigColors.ink,
+                FinavigColors.accentBright,
+              ),
               foregroundColor: Colors.white,
             ),
             child: const Text('Set budget'),
@@ -448,10 +448,16 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final currentTier = EntitlementService.instance.tier;
 
+    final fade = FinavigTransition.of(context);
+
     return Scaffold(
+      backgroundColor: fade.color(FinavigColors.snowWhite, FinavigColors.obsidian),
       appBar: AppBar(
         title: const Text('AI Budget Planner'),
         centerTitle: false,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -516,15 +522,20 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: isDark
-              ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
-              : [const Color(0xFF0B1020), const Color(0xFF1E293B)],
+              ? [FinavigColors.charcoal, FinavigColors.obsidian]
+              : [FinavigColors.ink, FinavigColors.inkDeep],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(FinavigRadius.card),
+        border: Border.all(
+          color: isDark
+              ? FinavigColors.slateLight
+              : Colors.white.withValues(alpha: 0.12),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
+            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.15),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -1390,7 +1401,6 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Apply these budgets?'),
         content: Text(
           'Set monthly caps for ${changed.length} categor'
@@ -1405,7 +1415,10 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: FinavigColors.ink,
+              backgroundColor: FinavigTransition.of(context).color(
+                FinavigColors.ink,
+                FinavigColors.accentBright,
+              ),
               foregroundColor: Colors.white,
             ),
             child: const Text('Apply'),
@@ -1465,7 +1478,6 @@ class _AiBudgetPlanScreenState extends State<AiBudgetPlanScreen> {
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(
           children: [
             Icon(Icons.key_rounded, color: FinavigColors.violetAccent),

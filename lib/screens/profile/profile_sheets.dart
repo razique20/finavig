@@ -43,10 +43,6 @@ Future<void> showProfileEditSheet(
     context: context,
     useRootNavigator: true,
     isScrollControlled: true,
-    backgroundColor: Theme.of(context).colorScheme.surface,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
     builder: (ctx) => SafeArea(
       child: Padding(
         padding: EdgeInsets.only(
@@ -194,10 +190,6 @@ Future<void> showProfileSupportSheet(BuildContext context) async {
     context: context,
     useRootNavigator: true,
     isScrollControlled: true,
-    backgroundColor: theme.colorScheme.surface,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
     builder: (ctx) => StatefulBuilder(
       builder: (ctx, setSheetState) {
         /// Small value type so the const list of feature categories is valid.
@@ -573,10 +565,6 @@ Future<void> showProfileRequestHistorySheet(BuildContext context) async {
     context: context,
     useRootNavigator: true,
     isScrollControlled: true,
-    backgroundColor: theme.colorScheme.surface,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
     builder: (ctx) {
       return SafeArea(
         child: SizedBox(
@@ -982,7 +970,10 @@ Future<void> showDeleteAccountSheet(BuildContext context) async {
                 const SizedBox(width: 12),
                 Expanded(
                   child: FilledButton(
-                    style: FilledButton.styleFrom(backgroundColor: Colors.red),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: FinavigColors.danger,
+                      foregroundColor: Colors.white,
+                    ),
                     onPressed: () => Navigator.pop(sheetCtx, true),
                     child: const Text('Continue'),
                   ),
@@ -1039,7 +1030,10 @@ Future<void> showDeleteAccountSheet(BuildContext context) async {
           ValueListenableBuilder<TextEditingValue>(
             valueListenable: controller,
             builder: (ctx, value, _) => FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: Colors.red),
+              style: FilledButton.styleFrom(
+                backgroundColor: FinavigColors.danger,
+                foregroundColor: Colors.white,
+              ),
               onPressed:
                   value.text.trim().toLowerCase() ==
                           email.trim().toLowerCase() &&

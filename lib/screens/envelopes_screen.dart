@@ -47,10 +47,6 @@ class _EnvelopesScreenState extends State<EnvelopesScreen> {
       // Scrollable + keyboard-aware sheet (matches the Money tab's call site),
       // so the form lifts above the keyboard instead of hiding behind it.
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (_) => const EnvelopeFormSheet(),
     );
     if (result == null) return;
@@ -76,10 +72,16 @@ class _EnvelopesScreenState extends State<EnvelopesScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final fade = FinavigTransition.of(context);
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      appBar: AppBar(title: const Text('Savings envelopes')),
+      backgroundColor: fade.color(FinavigColors.snowWhite, FinavigColors.obsidian),
+      appBar: AppBar(
+        title: const Text('Savings envelopes'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+      ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'envelopes_add',
         onPressed: _showEnvelopeSheet,
@@ -88,7 +90,7 @@ class _EnvelopesScreenState extends State<EnvelopesScreen> {
           'New envelope',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: FinavigColors.ink,
+        backgroundColor: fade.color(FinavigColors.ink, FinavigColors.accentBright),
         foregroundColor: Colors.white,
       ),
       body: _loading

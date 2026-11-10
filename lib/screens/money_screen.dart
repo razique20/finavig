@@ -255,10 +255,6 @@ class _MoneyScreenState extends State<MoneyScreen> {
     final updated = await showModalBottomSheet<FinanceTransaction>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (_) => TransactionFormSheet(existing: existing),
     );
     if (updated != null) {
@@ -926,10 +922,6 @@ class _MoneyScreenState extends State<MoneyScreen> {
     final created = await showModalBottomSheet<FinanceTransaction>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (_) => const TransactionFormSheet(),
     );
     if (created == null) return;
@@ -1002,10 +994,6 @@ class _MoneyScreenState extends State<MoneyScreen> {
     final result = await showModalBottomSheet<double?>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (_) => Padding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -1030,10 +1018,6 @@ class _MoneyScreenState extends State<MoneyScreen> {
     final result = await showModalBottomSheet<(FinanceCategory, double)>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (_) => Padding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -1051,10 +1035,7 @@ class _MoneyScreenState extends State<MoneyScreen> {
   Future<void> _showEnvelopeSheet() async {
     final result = await showModalBottomSheet<(String, double, double)>(
       context: context,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      isScrollControlled: true,
       builder: (_) => const EnvelopeFormSheet(),
     );
     if (result == null) return;
@@ -1065,10 +1046,6 @@ class _MoneyScreenState extends State<MoneyScreen> {
     final result = await showModalBottomSheet<RecurringTransaction>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (_) => RecurringFormSheet(existing: existing),
     );
     if (result == null) return;
@@ -1083,10 +1060,6 @@ class _MoneyScreenState extends State<MoneyScreen> {
     final result = await showModalBottomSheet<CreditFormResult>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (_) => CreditFormSheet(existing: existing),
     );
     if (result == null) return;
@@ -1108,10 +1081,6 @@ class _MoneyScreenState extends State<MoneyScreen> {
     final result = await showModalBottomSheet<CreditSettlement>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (_) => CreditSettleSheet(entry: entry),
     );
     if (result == null) return;
@@ -1128,10 +1097,6 @@ class _MoneyScreenState extends State<MoneyScreen> {
     final newDeadline = await showModalBottomSheet<DateTime>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (_) => CreditExtendSheet(entry: entry),
     );
     if (newDeadline == null) return;

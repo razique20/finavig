@@ -16,10 +16,6 @@ Future<void> showFaqSheet(
     context: context,
     useRootNavigator: true,
     isScrollControlled: true,
-    backgroundColor: theme.colorScheme.surface,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-    ),
     builder: (ctx) =>
         _FaqSheetContent(onOpenSupportTicket: onOpenSupportTicket),
   );
@@ -65,6 +61,7 @@ class _FaqSheetContentState extends State<_FaqSheetContent> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final fade = FinavigTransition.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final filtered = _filteredFaqs;
 
@@ -72,8 +69,10 @@ class _FaqSheetContentState extends State<_FaqSheetContent> {
       child: Container(
         height: MediaQuery.of(context).size.height * 0.88,
         decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          color: fade.color(Colors.white, FinavigColors.charcoal),
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(FinavigRadius.sheet),
+          ),
         ),
         child: Column(
           children: [
@@ -84,7 +83,10 @@ class _FaqSheetContentState extends State<_FaqSheetContent> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.outline.withOpacity(0.3),
+                  color: fade.color(
+                    const Color(0xFFE2E5EC),
+                    Colors.white.withValues(alpha: 0.2),
+                  ),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),

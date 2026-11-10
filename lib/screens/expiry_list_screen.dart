@@ -92,10 +92,15 @@ class _ExpiryListScreenState extends State<ExpiryListScreen> {
     final theme = Theme.of(context);
     final urgency = UrgencyEngine().compute(_filteredItems);
 
+    final fade = FinavigTransition.of(context);
+
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
+      backgroundColor: fade.color(FinavigColors.snowWhite, FinavigColors.obsidian),
       appBar: AppBar(
         title: const Text('Upcoming Expiries'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go('/home'),
@@ -364,11 +369,8 @@ class _ExpiryListScreenState extends State<ExpiryListScreen> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: theme.colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (ctx) {
+        final fade = FinavigTransition.of(ctx);
         return SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -379,7 +381,10 @@ class _ExpiryListScreenState extends State<ExpiryListScreen> {
                 height: 4,
                 margin: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.outline.withValues(alpha: 0.3),
+                  color: fade.color(
+                    const Color(0xFFE2E5EC),
+                    Colors.white.withValues(alpha: 0.2),
+                  ),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -728,11 +733,8 @@ class _ExpiryListScreenState extends State<ExpiryListScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true, // the filter list caps itself at 65% height
-      backgroundColor: theme.colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (ctx) {
+        final fade = FinavigTransition.of(ctx);
         return SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -742,7 +744,10 @@ class _ExpiryListScreenState extends State<ExpiryListScreen> {
                 height: 4,
                 margin: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.outline.withValues(alpha: 0.3),
+                  color: fade.color(
+                    const Color(0xFFE2E5EC),
+                    Colors.white.withValues(alpha: 0.2),
+                  ),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -1016,9 +1021,6 @@ class _ExpiryListScreenState extends State<ExpiryListScreen> {
 
     final choice = await showModalBottomSheet<String>(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,

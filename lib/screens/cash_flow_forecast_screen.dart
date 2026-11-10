@@ -57,10 +57,15 @@ class _CashFlowForecastScreenState extends State<CashFlowForecastScreen> {
         .where((p) => p.events.isNotEmpty)
         .toList();
 
+    final fade = FinavigTransition.of(context);
+
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
+      backgroundColor: fade.color(FinavigColors.snowWhite, FinavigColors.obsidian),
       appBar: AppBar(
         title: const Text('90-Day Cash-Flow Forecast'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
@@ -146,10 +151,11 @@ class _CashFlowForecastScreenState extends State<CashFlowForecastScreen> {
                         padding: const EdgeInsets.all(24),
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: isDark
-                              ? const Color(0xFF1E2430)
-                              : Colors.grey.shade50,
-                          borderRadius: BorderRadius.circular(12),
+                          color: fade.color(FinavigColors.cloud, FinavigColors.charcoal),
+                          borderRadius: BorderRadius.circular(FinavigRadius.card),
+                          border: Border.all(
+                            color: isDark ? FinavigColors.slateLight : FinavigColors.fog,
+                          ),
                         ),
                         child: Text(
                           'No scheduled recurring payments or document renewals in the next 90 days.',
@@ -191,10 +197,10 @@ class _CashFlowForecastScreenState extends State<CashFlowForecastScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E2430) : Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        color: isDark ? FinavigColors.charcoal : Colors.white,
+        borderRadius: BorderRadius.circular(FinavigRadius.card),
         border: Border.all(
-          color: theme.colorScheme.outlineVariant.withAlpha(60),
+          color: isDark ? FinavigColors.slateLight : FinavigColors.fog,
         ),
       ),
       child: Padding(

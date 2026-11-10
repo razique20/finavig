@@ -6,6 +6,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/dialogs/ask_finavig_sheet.dart';
 import '../../widgets/hero_widgets.dart';
 
+
 /// Header of the Documents tab, sitting directly on the light/airy canvas.
 ///
 /// Compact layout: title row with inline-expandable search, a live status line,
@@ -20,6 +21,7 @@ class DocumentsHeroHeader extends StatelessWidget {
   final UrgencySnapshot urgency;
   final int visibleCount;
   final bool hasActiveFilters;
+  final int pendingCompanionCount;
 
   /// Whether the inline search field is currently expanded.
   final bool isSearching;
@@ -58,6 +60,7 @@ class DocumentsHeroHeader extends StatelessWidget {
     required this.onSortTap,
     required this.onAddTap,
     this.onClearFilters,
+    this.pendingCompanionCount = 0,
   });
 
   @override
@@ -66,6 +69,7 @@ class DocumentsHeroHeader extends StatelessWidget {
     final fade = FinavigTransition.of(context);
     final pending = urgency.pendingActions.length;
     final expired = items.where((i) => i.isActive && i.isExpired).length;
+    final pendingCompanion = pendingCompanionCount;
 
     // One status line that doubles as filter feedback — "shown" only appears
     // while filters narrow the list. The leading dot carries the urgency.
@@ -73,7 +77,9 @@ class DocumentsHeroHeader extends StatelessWidget {
         ? '$expired expired'
         : pending > 0
         ? '$pending need attention'
-        : 'All on track';
+        : pendingCompanion > 0
+            ? '$pendingCompanion related doc${pendingCompanion == 1 ? '' : 's'} suggested'
+            : 'All on track';
     final scopePart = hasActiveFilters
         ? '$visibleCount of ${items.length} shown'
         : '${items.length} tracked';

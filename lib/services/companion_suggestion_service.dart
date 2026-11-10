@@ -203,3 +203,67 @@ class CompanionSuggestionService {
   static bool isPoolComplete(CompanionPool pool, Set<String> trackedTypeKeys) =>
       pool.members.every((m) => trackedTypeKeys.contains(m.name));
 }
+
+/// A lightweight app-wide cue that the companion-suggestion sheet was shown
+/// but not yet acted on or explicitly dismissed.
+///
+/// This is deliberately separate from document-expiry / finance alerts because
+/// it represents a different kind of prompt: "you may want to add these related
+/// documents", not "something is already expiring".
+class PendingCompanionAlert {
+  /// Document type that was just added and triggered the suggestion.
+  final DocumentType addedType;
+
+  /// Human-readable name shown in the suggestion header.
+  final String addedName;
+
+  /// The suggested companion types that were available.
+  final List<CompanionSuggestion> suggestions;
+
+  /// When this cue was created.
+  final DateTime createdAt;
+
+  const PendingCompanionAlert({
+    required this.addedType,
+    required this.addedName,
+    required this.suggestions,
+    required this.createdAt,
+  });
+
+  /// The document type the user would add to clear this cue.
+  DocumentTypeMeta get addedMeta => DocumentTypeRegistry.instance.byEnum(addedType);
+}
+
+/// A tiny in-memory store for the currently outstanding companion-suggestion cue.
+///
+/// It is intentionally ephemeral: it does not persist across app restarts, and it
+/// is cleared as soon as the user acts on it or dismisses it. That matches the
+/// UX we want here — an unread dot while the suggestion is pending, gone once it
+/// is handled.
+class PendingCompanionAlertService {
+  PendingCompanionAlertService._();
+
+  static final PendingCompanionAlertService instance =
+      PendingCompanionAlertService._();
+
+  PendingCompanionAlert? _current;
+
+  /// The outstanding companion cue, if any.
+  PendingCompanionAlert? get current => _current;
+
+  /// True when a companion cue is currently unhandled.
+  bool get hasPending => _current != null;
+
+  /// The number of pending companion cues. Always 0 or 1.
+  int get pendingCount => _current != null ? 1 : 0;
+
+  /// Drop any pending companion cue.
+  void clear() {
+    _current = null;
+  }
+
+  /// Surface a new companion cue. If one is already pending, it is replaced.
+  void signal(PendingCompanionAlert alert) {
+    _current = alert;
+  }
+}

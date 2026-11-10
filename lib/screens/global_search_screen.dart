@@ -61,9 +61,14 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final fade = FinavigTransition.of(context);
 
     return Scaffold(
+      backgroundColor: fade.color(FinavigColors.snowWhite, FinavigColors.obsidian),
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         titleSpacing: 0,
         title: Padding(
           padding: const EdgeInsets.only(right: 16),
@@ -169,7 +174,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                 ? 'Try a different name, number or note text.'
                 : 'Names, record numbers, notes, assignees and file names\nare all searched across every collection.',
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.outline.withOpacity(0.7),
+              color: theme.colorScheme.outline.withValues(alpha: 0.7),
             ),
             textAlign: TextAlign.center,
           ),

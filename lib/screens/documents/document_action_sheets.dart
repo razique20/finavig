@@ -21,24 +21,25 @@ Future<void> showDocumentActionSheet(
     context: context,
     useRootNavigator: true,
     isScrollControlled: true,
-    backgroundColor: theme.colorScheme.surface,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
-    builder: (ctx) => SafeArea(
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.outline.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
+    builder: (ctx) {
+      final fade = FinavigTransition.of(ctx);
+      return SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 8),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: fade.color(
+                    const Color(0xFFE2E5EC),
+                    Colors.white.withValues(alpha: 0.2),
+                  ),
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
@@ -78,9 +79,9 @@ Future<void> showDocumentActionSheet(
             ListTile(
               dense: true,
               visualDensity: VisualDensity.compact,
-              leading: const Icon(
+              leading: Icon(
                 Icons.edit_calendar_rounded,
-                color: Colors.blue,
+                color: FinavigColors.blue,
               ),
               title: const Text('Update expiry date'),
               subtitle: const Text('Correct or adjust the date'),
@@ -89,9 +90,9 @@ Future<void> showDocumentActionSheet(
             ListTile(
               dense: true,
               visualDensity: VisualDensity.compact,
-              leading: const Icon(
+              leading: Icon(
                 Icons.folder_open_rounded,
-                color: Colors.teal,
+                color: FinavigColors.teal,
               ),
               title: const Text('Move to folder…'),
               subtitle: const Text('Organize into custom folders'),
@@ -100,9 +101,9 @@ Future<void> showDocumentActionSheet(
             ListTile(
               dense: true,
               visualDensity: VisualDensity.compact,
-              leading: const Icon(
+              leading: Icon(
                 Icons.person_add_alt_rounded,
-                color: Colors.indigo,
+                color: FinavigColors.indigo,
               ),
               title: const Text('Assign to…'),
               subtitle: const Text('Responsible team member'),
@@ -120,7 +121,8 @@ Future<void> showDocumentActionSheet(
           ],
         ),
       ),
-    ),
+    );
+  },
   );
 
   if (action == null || !context.mounted) return;

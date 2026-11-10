@@ -181,7 +181,9 @@ class FolderCarousel extends StatelessWidget {
     showModalBottomSheet<void>(
       context: context,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(FinavigRadius.sheet),
+        ),
       ),
       backgroundColor: fade.color(Colors.white, FinavigColors.charcoal),
       builder: (sheetCtx) {
@@ -259,7 +261,10 @@ class FolderCarousel extends StatelessWidget {
             child: const Text('Cancel'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            style: FilledButton.styleFrom(
+              backgroundColor: FinavigColors.danger,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () async {
               Navigator.pop(ctx);
               if (selectedFolderId == folder.id) {

@@ -397,9 +397,6 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
       context: context,
       useRootNavigator: true,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (sheetContext) => Padding(
         padding: EdgeInsets.only(
           left: 20,
@@ -663,18 +660,28 @@ class _DocumentScanScreenState extends State<DocumentScanScreen> {
     final theme = Theme.of(context);
     final isEdit = widget.isEditing || _editingItem != null;
     final daysRemaining = _expiresAt.difference(DateTime.now()).inDays;
+    final fade = FinavigTransition.of(context);
 
     if (_isLoadingToEdit) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Edit document')),
+        backgroundColor: fade.color(FinavigColors.snowWhite, FinavigColors.obsidian),
+        appBar: AppBar(
+          title: const Text('Edit document'),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+        ),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
+      backgroundColor: fade.color(FinavigColors.snowWhite, FinavigColors.obsidian),
       appBar: AppBar(
         title: Text(isEdit ? 'Edit document' : 'Upload document'),
+        backgroundColor: Colors.transparent,
         elevation: 0,
+        scrolledUnderElevation: 0,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),

@@ -128,11 +128,16 @@ class _AlertsRemindersScreenState extends State<AlertsRemindersScreen>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final fade = FinavigTransition.of(context);
 
     return Scaffold(
+      backgroundColor: fade.color(FinavigColors.snowWhite, FinavigColors.obsidian),
       appBar: AppBar(
         title: const Text('Alerts & Reminders'),
         centerTitle: false,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -642,12 +647,9 @@ class _AlertsRemindersScreenState extends State<AlertsRemindersScreen>
         ),
       ),
       onTap: () {
+        final fade = FinavigTransition.of(context);
         showModalBottomSheet<T>(
           context: context,
-          backgroundColor: theme.colorScheme.surface,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
           builder: (ctx) => SafeArea(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -657,7 +659,10 @@ class _AlertsRemindersScreenState extends State<AlertsRemindersScreen>
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.outlineVariant,
+                    color: fade.color(
+                      const Color(0xFFE2E5EC),
+                      Colors.white.withValues(alpha: 0.2),
+                    ),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -740,12 +745,9 @@ class _AlertsRemindersScreenState extends State<AlertsRemindersScreen>
       ),
     ];
 
+    final fade = FinavigTransition.of(context);
     showModalBottomSheet(
       context: context,
-      backgroundColor: theme.colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (ctx) => SafeArea(
         child: SingleChildScrollView(
           child: Column(
@@ -756,7 +758,10 @@ class _AlertsRemindersScreenState extends State<AlertsRemindersScreen>
                 width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.outlineVariant,
+                  color: fade.color(
+                    const Color(0xFFE2E5EC),
+                    Colors.white.withValues(alpha: 0.2),
+                  ),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),

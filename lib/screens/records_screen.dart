@@ -48,10 +48,6 @@ class _RecordsScreenState extends State<RecordsScreen> {
     showModalBottomSheet<FinanceTransaction>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (_) => const TransactionFormSheet(),
     ).then((created) async {
       if (created == null) return;
@@ -64,10 +60,6 @@ class _RecordsScreenState extends State<RecordsScreen> {
     await showModalBottomSheet<FinanceTransaction>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (_) => TransactionFormSheet(existing: existing),
     );
     await _reload();
@@ -91,6 +83,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final fade = FinavigTransition.of(context);
     final sorted = [..._transactions]
       ..sort((a, b) => b.occurredAt.compareTo(a.occurredAt));
 
@@ -103,9 +96,12 @@ class _RecordsScreenState extends State<RecordsScreen> {
     }
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
+      backgroundColor: fade.color(FinavigColors.snowWhite, FinavigColors.obsidian),
       appBar: AppBar(
         title: const Text('Records'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.ios_share_rounded),
@@ -122,7 +118,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
           'Add Record',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: FinavigColors.ink,
+        backgroundColor: fade.color(FinavigColors.ink, FinavigColors.accentBright),
         foregroundColor: Colors.white,
       ),
       body: _loading

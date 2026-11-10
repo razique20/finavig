@@ -48,10 +48,6 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
     final result = await showModalBottomSheet<double?>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (_) => OverallBudgetFormSheet(currentLimit: current),
     );
     if (result == null) return;
@@ -72,10 +68,6 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
     final result = await showModalBottomSheet<(FinanceCategory, double)>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (_) => CategoryBudgetFormSheet(
         existing: existing,
         maxAllowedLimit: maxAllowed,
@@ -98,9 +90,16 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
     final isOverAllocated =
         _overallBudget != null && totalAllocated > _overallBudget!;
 
+    final fade = FinavigTransition.of(context);
+
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      appBar: AppBar(title: const Text('Budgets')),
+      backgroundColor: fade.color(FinavigColors.snowWhite, FinavigColors.obsidian),
+      appBar: AppBar(
+        title: const Text('Budgets'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+      ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'budgets_add',
         onPressed: () => _showBudgetSheet(),
@@ -109,7 +108,7 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
           'Add category',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: FinavigColors.ink,
+        backgroundColor: fade.color(FinavigColors.ink, FinavigColors.accentBright),
         foregroundColor: Colors.white,
       ),
       body: _loading
@@ -126,18 +125,18 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
                         Card(
                           elevation: 0,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(FinavigRadius.card),
                             side: BorderSide(
                               color: isOverAllocated
                                   ? theme.colorScheme.error
-                                  : theme.colorScheme.outlineVariant,
+                                  : fade.color(FinavigColors.fog, FinavigColors.slateLight),
                             ),
                           ),
                           color: isOverAllocated
                               ? theme.colorScheme.errorContainer.withValues(
                                   alpha: 0.15,
                                 )
-                              : theme.colorScheme.surfaceContainerLow,
+                              : fade.color(Colors.white, FinavigColors.charcoal),
                           child: Padding(
                             padding: const EdgeInsets.all(16),
                             child: Column(

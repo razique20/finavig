@@ -101,10 +101,6 @@ Future<void> showTierRequestSheet(BuildContext context) {
     context: context,
     useRootNavigator: true,
     isScrollControlled: true,
-    backgroundColor: Theme.of(context).colorScheme.surface,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
     builder: (ctx) => const _TierRequestSheet(),
   );
 }
@@ -181,7 +177,6 @@ class _TierRequestSheetState extends State<_TierRequestSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final currentTier = EntitlementService.instance.tier;
     final planEndsAt = EntitlementService.instance.planEndsAt;
     final tiers = _eligibleTiers;
@@ -544,7 +539,9 @@ class UpgradeDialog extends StatelessWidget {
     final info = TierInfo.all[target]!;
 
     return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(FinavigRadius.dialog),
+      ),
       title: Row(
         children: [
           Container(
@@ -578,15 +575,8 @@ class UpgradeDialog extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [
-                    FinavigColors.navyPrimary,
-                    FinavigColors.navyPrimaryDark,
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(14),
+                gradient: FinavigGradients.primary,
+                borderRadius: BorderRadius.circular(FinavigRadius.card),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

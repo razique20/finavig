@@ -125,16 +125,26 @@ class ProfileSettingsHeader extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        icon: const Icon(
+          Icons.logout_rounded,
+          color: FinavigColors.danger,
+          size: 28,
+        ),
         title: const Text('Sign out?'),
         content: const Text(
           'You will need to sign in again to see your documents.',
+          textAlign: TextAlign.center,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: const Text('Cancel'),
           ),
-          ElevatedButton(
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: FinavigColors.danger,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Sign out'),
           ),

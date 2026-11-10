@@ -68,10 +68,6 @@ class _QuickActionSheet extends StatelessWidget {
           context: context,
           useRootNavigator: true,
           isScrollControlled: true,
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
           builder: (_) => const TransactionFormSheet(),
         );
         if (created != null) {
@@ -94,8 +90,9 @@ class _QuickActionSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final fade = FinavigTransition.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final sheetColor = isDark ? FinavigColors.slate : Colors.white;
+    final sheetColor = fade.color(Colors.white, FinavigColors.charcoal);
 
     return SafeArea(
       top: false,
@@ -105,7 +102,8 @@ class _QuickActionSheet extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(8, 10, 8, 8),
           decoration: BoxDecoration(
             color: sheetColor,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(FinavigRadius.sheet),
+            border: isDark ? Border.all(color: Colors.white.withOpacity(0.08)) : null,
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(isDark ? 0.5 : 0.18),
@@ -123,7 +121,10 @@ class _QuickActionSheet extends StatelessWidget {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 10),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.outline.withOpacity(0.3),
+                  color: fade.color(
+                    const Color(0xFFE2E5EC),
+                    Colors.white.withOpacity(0.2),
+                  ),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -240,7 +241,7 @@ class _QuickActionTile extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: accent.withOpacity(isDark ? 0.22 : 0.12),
+                  color: accent.withValues(alpha: isDark ? 0.22 : 0.12),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(action.icon, color: accent, size: 22),

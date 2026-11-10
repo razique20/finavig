@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../models/document_type.dart';
@@ -10,6 +9,7 @@ import '../../services/document_scanner_service.dart';
 import '../../services/entitlement_service.dart';
 import '../../theme/app_theme.dart';
 import 'upgrade_dialog.dart';
+
 
 /// Bottom sheet shown after a document is added, suggesting related document
 /// types from the same UAE companion pool that the user does not track yet.
@@ -56,10 +56,6 @@ class CompanionSuggestionSheet extends StatefulWidget {
       useRootNavigator: true,
       isScrollControlled: true,
       isDismissible: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (_) => CompanionSuggestionSheet(
         addedType: addedType,
         addedName: addedName,
@@ -88,11 +84,27 @@ class CompanionSuggestionSheet extends StatefulWidget {
 
       // The root navigator owns this sheet. Use its current context for all
       // post-selection UI so dismissal/pickouts cannot walk into a stale overlay.
+      final addedType = newItem.docType.builtinEnum!;
+      final addedName = newItem.displayName;
+      final trackedTypeKeys =
+          tracked.map((i) => i.docType.key).toSet();
+
+      // Surface a pending companion cue before the modal is shown, so the
+      // header badge/dot reflects that a suggestion is waiting for the user.
+      PendingCompanionAlertService.instance.signal(
+        PendingCompanionAlert(
+          addedType: addedType,
+          addedName: addedName,
+          suggestions: suggestions,
+          createdAt: DateTime.now(),
+        ),
+      );
+
       final picked = await show(
         rootNavigator.context,
-        addedType: newItem.docType.builtinEnum!,
-        addedName: newItem.displayName,
-        trackedTypeKeys: tracked.map((i) => i.docType.key).toSet(),
+        addedType: addedType,
+        addedName: addedName,
+        trackedTypeKeys: trackedTypeKeys,
       );
       if (picked.isEmpty) return;
 
@@ -120,17 +132,22 @@ class CompanionSuggestionSheet extends StatefulWidget {
       }
 
       if (added > 0 && rootNavigator.mounted) {
-        final messenger = ScaffoldMessenger.maybeOf(rootNavigator.context);
-        messenger?.showSnackBar(
-          SnackBar(
-            content: Text(
-              '$added related document${added == 1 ? '' : 's'} added ✓',
+          final messenger = ScaffoldMessenger.maybeOf(rootNavigator.context);
+          messenger?.showSnackBar(
+            SnackBar(
+              content: Text(
+                '$added related document${added == 1 ? '' : 's'} added ✓',
+              ),
+              backgroundColor: Colors.green,
             ),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (_) {}
+          );
+        }
+    } finally {
+      // Clear the pending cue whenever the suggestion flow resolves:
+      // either the user picked something (added > 0), or the sheet was
+      // dismissed without adding anything.
+      PendingCompanionAlertService.instance.clear();
+    }
   }
 
   @override
@@ -153,14 +170,31 @@ class _CompanionSuggestionSheetState extends State<CompanionSuggestionSheet> {
     if (suggestions.isEmpty) return const SizedBox.shrink();
 
     final pools = suggestions.map((s) => s.poolName).toSet();
+    final fade = FinavigTransition.of(context);
 
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Drag handle at top
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: fade.color(
+                    const Color(0xFFE2E5EC),
+                    Colors.white.withOpacity(0.2),
+                  ),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
             // Header: lightbulb icon + question + hint.
             Row(
               children: [
@@ -199,19 +233,6 @@ class _CompanionSuggestionSheetState extends State<CompanionSuggestionSheet> {
               ],
             ),
             const SizedBox(height: 16),
-
-            // Drag handle so the sheet is clearly dismissible by gesture.
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.outlineVariant,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
 
             // Lazy builder over a flattened pool-header/item index: only the
             // visible portion of the suggestion list is built.

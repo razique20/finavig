@@ -22,9 +22,6 @@ Future<void> showMoveToFolderSheet(
   await showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
     builder: (sheetCtx) {
       return _MoveToFolderContent(item: item, initialFolders: folders);
     },
@@ -84,7 +81,10 @@ class _MoveToFolderContentState extends State<_MoveToFolderContent> {
                 width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.outline.withValues(alpha: 0.25),
+                  color: fade.color(
+                    const Color(0xFFE2E5EC),
+                    Colors.white.withOpacity(0.2),
+                  ),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),

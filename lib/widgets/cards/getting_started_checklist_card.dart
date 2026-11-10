@@ -109,8 +109,8 @@ class _GettingStartedChecklistCardState
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: Container(
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
-          borderRadius: BorderRadius.circular(18),
+          color: isDark ? FinavigColors.charcoal : Colors.white,
+          borderRadius: BorderRadius.circular(FinavigRadius.card),
           border: Border.all(
             color: isDark ? FinavigColors.slateLight : FinavigColors.mist,
             width: 1.1,
@@ -124,7 +124,7 @@ class _GettingStartedChecklistCardState
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(FinavigRadius.card),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

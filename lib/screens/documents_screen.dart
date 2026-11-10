@@ -10,6 +10,7 @@ import '../models/finance.dart';
 import '../models/gcc_country.dart';
 import '../models/subscription_tier.dart';
 import '../services/collection_service.dart';
+import '../services/companion_suggestion_service.dart';
 import '../services/demo_document_service.dart';
 import '../services/document_folder_service.dart';
 import '../services/document_scanner_service.dart';
@@ -261,6 +262,8 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                       if (!_isSearching) _query = '';
                     }),
                     activeFilterCount: _activeFilterCount,
+                    pendingCompanionCount:
+                        PendingCompanionAlertService.instance.pendingCount,
                     onFilterTap: () => _showFilterSheet(urgency),
                     onSortTap: _showSortSheet,
                     onAddTap: _openScanner,
@@ -643,7 +646,9 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       useRootNavigator: true,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(FinavigRadius.sheet),
+        ),
       ),
       backgroundColor: fade.color(Colors.white, FinavigColors.charcoal),
       builder: (sheetCtx) {
@@ -721,7 +726,10 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
             child: const Text('Cancel'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            style: FilledButton.styleFrom(
+              backgroundColor: FinavigColors.danger,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () async {
               Navigator.pop(ctx);
               if (_openFolder?.id == folder.id) {

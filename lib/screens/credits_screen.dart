@@ -51,10 +51,6 @@ class _CreditsScreenState extends State<CreditsScreen> {
       // Scrollable + keyboard-aware sheet (matches the Money tab's
       // call site), so the form lifts above the keyboard.
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (_) => CreditFormSheet(existing: existing),
     );
     if (result == null) return;
@@ -72,10 +68,6 @@ class _CreditsScreenState extends State<CreditsScreen> {
     final result = await showModalBottomSheet<CreditSettlement>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (_) => CreditSettleSheet(entry: entry),
     );
     if (result == null) return;
@@ -92,10 +84,6 @@ class _CreditsScreenState extends State<CreditsScreen> {
     final newDeadline = await showModalBottomSheet<DateTime>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (_) => CreditExtendSheet(entry: entry),
     );
     if (newDeadline == null) return;
@@ -104,9 +92,16 @@ class _CreditsScreenState extends State<CreditsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final fade = FinavigTransition.of(context);
+
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(title: const Text('Credit')),
+      backgroundColor: fade.color(FinavigColors.snowWhite, FinavigColors.obsidian),
+      appBar: AppBar(
+        title: const Text('Credit'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+      ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'credits_add',
         onPressed: () => _showCreditSheet(),
@@ -115,7 +110,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
           'Add entry',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: FinavigColors.ink,
+        backgroundColor: fade.color(FinavigColors.ink, FinavigColors.accentBright),
         foregroundColor: Colors.white,
       ),
       body: _loading

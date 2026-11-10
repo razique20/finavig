@@ -278,10 +278,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: theme.colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
       builder: (ctx) {
         return SafeArea(
           child: Column(
@@ -292,7 +288,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 height: 4,
                 margin: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: Colors.white24,
+                  color: fade.color(
+                    const Color(0xFFE2E5EC),
+                    Colors.white.withValues(alpha: 0.2),
+                  ),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),

@@ -106,10 +106,6 @@ class CreditSection extends StatelessWidget {
     final friendly = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (_) => _WhatsAppTemplateSheet(entry: entry),
     );
     if (friendly == null) return;

@@ -807,14 +807,26 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       backgroundColor: Colors.transparent,
       builder: (sheetContext) {
         final theme = Theme.of(sheetContext);
+        final fade = FinavigTransition.of(sheetContext);
+        final isDark = theme.brightness == Brightness.dark;
         return SafeArea(
           top: false,
           child: Container(
             margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(20),
+              color: fade.color(Colors.white, FinavigColors.charcoal),
+              borderRadius: BorderRadius.circular(FinavigRadius.sheet),
+              border: Border.all(
+                color: isDark ? FinavigColors.slateLight : FinavigColors.fog,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -889,14 +901,26 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       backgroundColor: Colors.transparent,
       builder: (sheetContext) {
         final theme = Theme.of(sheetContext);
+        final fade = FinavigTransition.of(sheetContext);
+        final isDark = theme.brightness == Brightness.dark;
         return SafeArea(
           top: false,
           child: Container(
             margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(20),
+              color: fade.color(Colors.white, FinavigColors.charcoal),
+              borderRadius: BorderRadius.circular(FinavigRadius.sheet),
+              border: Border.all(
+                color: isDark ? FinavigColors.slateLight : FinavigColors.fog,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,

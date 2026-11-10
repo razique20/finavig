@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/app_version_service.dart';
+import '../../theme/app_theme.dart';
 
 class AppVersionDialog extends StatelessWidget {
   final VersionCheckResult result;
@@ -62,7 +63,9 @@ class AppVersionDialog extends StatelessWidget {
     final isForce = result.status == VersionCheckStatus.forceUpdate;
 
     return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(FinavigRadius.dialog),
+      ),
       titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
       contentPadding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
       actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -72,7 +75,9 @@ class AppVersionDialog extends StatelessWidget {
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: isForce
-                  ? Colors.red.shade100
+                  ? (theme.brightness == Brightness.dark
+                      ? FinavigColors.dangerBg
+                      : FinavigColors.dangerBgLight)
                   : theme.colorScheme.primaryContainer,
               borderRadius: BorderRadius.circular(12),
             ),
@@ -81,7 +86,7 @@ class AppVersionDialog extends StatelessWidget {
                   ? Icons.system_update_rounded
                   : Icons.rocket_launch_rounded,
               color: isForce
-                  ? Colors.red.shade900
+                  ? FinavigColors.danger
                   : theme.colorScheme.onPrimaryContainer,
               size: 28,
             ),
@@ -161,9 +166,9 @@ class AppVersionDialog extends StatelessWidget {
                 : 'Update on ${AppVersionService.storeName}',
           ),
           style: FilledButton.styleFrom(
-            backgroundColor: isForce ? Colors.red.shade700 : null,
+            backgroundColor: isForce ? FinavigColors.danger : null,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(FinavigRadius.button),
             ),
           ),
         ),

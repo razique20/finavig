@@ -52,9 +52,6 @@ class _AiSummaryScreenState extends State<AiSummaryScreen> {
         final upgrade = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
             title: const Row(
               children: [
                 Icon(Icons.warning_amber_rounded, color: FinavigColors.warning),
@@ -242,11 +239,16 @@ class _AiSummaryScreenState extends State<AiSummaryScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final currentTier = EntitlementService.instance.tier;
+    final fade = FinavigTransition.of(context);
 
     return Scaffold(
+      backgroundColor: fade.color(FinavigColors.snowWhite, FinavigColors.obsidian),
       appBar: AppBar(
         title: const Text('AI Executive Summary'),
         centerTitle: false,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
       ),
       body: _loading
           ? const Center(
@@ -325,15 +327,20 @@ class _AiSummaryScreenState extends State<AiSummaryScreen> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: isDark
-              ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
-              : [const Color(0xFF0B1020), const Color(0xFF1E293B)],
+              ? [FinavigColors.charcoal, FinavigColors.obsidian]
+              : [FinavigColors.ink, FinavigColors.inkDeep],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(FinavigRadius.card),
+        border: Border.all(
+          color: isDark
+              ? FinavigColors.slateLight
+              : Colors.white.withValues(alpha: 0.12),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
+            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.15),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -515,11 +522,14 @@ class _AiSummaryScreenState extends State<AiSummaryScreen> {
                       : const Icon(Icons.bolt_rounded, size: 18),
                   label: const Text('Generate AI Executive Summary (1 Credit)'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: FinavigColors.ink,
+                    backgroundColor: FinavigTransition.of(context).color(
+                      FinavigColors.ink,
+                      FinavigColors.accentBright,
+                    ),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(FinavigRadius.button),
                     ),
                   ),
                 ),
@@ -638,13 +648,9 @@ class _AiSummaryScreenState extends State<AiSummaryScreen> {
                     : const Icon(Icons.refresh_rounded, size: 16),
                 label: const Text('Generate Fresh AI Summary (Uses 1 Credit)'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: FinavigColors.navyPrimary,
-                  side: BorderSide(
-                    color: FinavigColors.navyPrimary.withOpacity(0.5),
-                  ),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(FinavigRadius.button),
                   ),
                 ),
               ),

@@ -12,6 +12,7 @@ import '../../services/finance_service.dart';
 import '../../services/theme_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/widgets.dart';
+import '../../services/companion_suggestion_service.dart';
 
 /// Header of the Home tab on the light, airy canvas: a greeting + collection
 /// switcher chip, the dark-mode toggle and the notification bell, then a
@@ -186,6 +187,8 @@ class HomeHeroHeader extends StatelessWidget {
               HomeNotificationBell(
                 items: items,
                 dismissedAttentionCount: dismissedAttentionCount,
+                pendingCompanionCount:
+                    PendingCompanionAlertService.instance.pendingCount,
               ),
               // Refresh button - top right corner of the header
               const SizedBox(width: 6),
@@ -1000,13 +1003,18 @@ class HomeNotificationBell extends StatelessWidget {
   /// excluded from the badge so the bell matches the banner.
   final int? dismissedAttentionCount;
 
+  /// Pending companion-suggestion cues to surface as a dot on the bell.
+  final int pendingCompanionCount;
+
   const HomeNotificationBell({
     super.key,
     required this.items,
     required this.dismissedAttentionCount,
+    this.pendingCompanionCount = 0,
   });
 
-  int get _count {
+  /// Regular alert count: expired + upcoming renewals + finance spikes.
+  int get _alertCount {
     final expired = items.where((i) => i.isActive && i.isExpired).length;
     final pending = items
         .where(
@@ -1028,8 +1036,9 @@ class HomeNotificationBell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final count = _count;
     final fade = FinavigTransition.of(context);
+    final alertCount = _alertCount;
+    final hasCompanionDot = pendingCompanionCount > 0;
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -1038,7 +1047,7 @@ class HomeNotificationBell extends StatelessWidget {
           tooltip: 'Alerts & notifications',
           onTap: () => _showNotificationsSheet(context),
         ),
-        if (count > 0)
+        if (alertCount > 0)
           Positioned(
             right: -2,
             top: -2,
@@ -1057,13 +1066,26 @@ class HomeNotificationBell extends StatelessWidget {
               ),
               constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
               child: Text(
-                count > 9 ? '9+' : '$count',
+                alertCount > 9 ? '9+' : '$alertCount',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
                 ),
+              ),
+            ),
+          ),
+        if (hasCompanionDot)
+          Positioned(
+            right: 6,
+            top: 6,
+            child: Container(
+              width: 8,
+              height: 8,
+              decoration: const BoxDecoration(
+                color: FinavigColors.accent,
+                shape: BoxShape.circle,
               ),
             ),
           ),

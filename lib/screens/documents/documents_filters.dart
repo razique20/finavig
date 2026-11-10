@@ -377,11 +377,7 @@ Future<DocumentsFilterResult?> showDocumentsFilterSheet({
 
   return showModalBottomSheet<DocumentsFilterResult>(
     context: context,
-    backgroundColor: theme.colorScheme.surface,
     isScrollControlled: true,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
     builder: (sheetContext) => StatefulBuilder(
       builder: (context, setSheetState) {
         final hasActive =
@@ -678,11 +674,7 @@ Future<String?> showDocumentsTypeFilterSheet(
       country ?? DocumentCollectionService.instance.activeCountry;
   return showModalBottomSheet<String>(
     context: context,
-    backgroundColor: theme.colorScheme.surface,
     isScrollControlled: true,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
     builder: (sheetContext) => SafeArea(
       child: ConstrainedBox(
         constraints: BoxConstraints(
@@ -743,29 +735,30 @@ Future<String?> showDocumentsTypeFilterSheet(
 /// Opens the sort-order bottom sheet. Resolves to the chosen [DocSort] or
 /// null when dismissed.
 Future<DocSort?> showDocumentsSortSheet(BuildContext context, DocSort current) {
-  final theme = Theme.of(context);
   return showModalBottomSheet<DocSort>(
     context: context,
-    backgroundColor: theme.colorScheme.surface,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
-    builder: (sheetContext) => SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: 8),
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.outline.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(2),
+    builder: (sheetContext) {
+      final theme = Theme.of(sheetContext);
+      final fade = FinavigTransition.of(sheetContext);
+      return SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: fade.color(
+                  const Color(0xFFE2E5EC),
+                  Colors.white.withValues(alpha: 0.2),
+                ),
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
               'Sort by',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
@@ -792,6 +785,7 @@ Future<DocSort?> showDocumentsSortSheet(BuildContext context, DocSort current) {
             ),
         ],
       ),
-    ),
-  );
+    );
+  },
+);
 }

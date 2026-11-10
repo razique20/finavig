@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../models/document_type.dart';
 import '../../models/expiry_item.dart';
+import '../../theme/app_theme.dart';
 
 class UrgencyDialog extends StatelessWidget {
   final ExpiryItem item;
@@ -13,17 +13,23 @@ class UrgencyDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isCritical = item.daysRemaining <= 7;
+    final urgencyColor = FinavigColors.urgencyColor(item.daysRemaining);
+    final urgencyBg = FinavigColors.urgencyBg(
+      item.daysRemaining,
+      brightness: theme.brightness,
+    );
 
     return AlertDialog(
-      backgroundColor: theme.colorScheme.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(FinavigRadius.dialog),
+      ),
       title: Row(
         children: [
           Icon(
             isCritical
                 ? Icons.warning_amber_rounded
                 : Icons.notifications_active_rounded,
-            color: isCritical ? Colors.red : theme.colorScheme.primary,
+            color: urgencyColor,
             size: 28,
           ),
           const SizedBox(width: 12),
@@ -48,7 +54,7 @@ class UrgencyDialog extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '${item.docType.displayName}',
+            item.docType.displayName,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.outline,
             ),
@@ -57,10 +63,8 @@ class UrgencyDialog extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: isCritical
-                  ? Colors.red.shade50
-                  : theme.colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(8),
+              color: urgencyBg,
+              borderRadius: BorderRadius.circular(FinavigRadius.tile / 2),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -69,7 +73,7 @@ class UrgencyDialog extends StatelessWidget {
                   isCritical
                       ? Icons.warning_amber_rounded
                       : Icons.calendar_today_rounded,
-                  color: isCritical ? Colors.red : theme.colorScheme.primary,
+                  color: urgencyColor,
                   size: 16,
                 ),
                 const SizedBox(width: 8),
@@ -79,9 +83,7 @@ class UrgencyDialog extends StatelessWidget {
                       : '${item.daysRemaining} days until expiry',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w500,
-                    color: isCritical
-                        ? Colors.red
-                        : theme.colorScheme.onPrimaryContainer,
+                    color: urgencyColor,
                   ),
                 ),
               ],
@@ -146,9 +148,12 @@ class UrgencyDialog extends StatelessWidget {
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: isCritical
-                ? Colors.red
+                ? FinavigColors.danger
                 : theme.colorScheme.primary,
             foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(FinavigRadius.button),
+            ),
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
           ),
           child: Text(isCritical ? 'Take action now' : 'Start renewal'),
