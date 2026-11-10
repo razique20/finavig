@@ -207,14 +207,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         onSearchTap: () => context.push('/search'),
                         alertCount: _notificationAlertCount,
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 6),
                       _ProfileStreakSection(
                         collectionName: _activeCollection?.name ?? 'Personal',
                         isPersonal: _activeCollection?.isPersonal ?? true,
                         userName: AuthService.instance.displayName,
                         onTap: _showCollectionSwitcher,
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 10),
                       _TimeframeTabs(
                         selected: _selectedPeriod,
                         onPeriodChanged: (p) =>
@@ -458,7 +458,7 @@ class _ProfileStreakSection extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Top Greeting Row: Avatar + Welcome + Workspace Pill ─────────
+            // ── Top Greeting Row: Compact Avatar + Welcome + Workspace Pill ─
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
@@ -467,10 +467,10 @@ class _ProfileStreakSection extends StatelessWidget {
                     color: Colors.transparent,
                     child: InkWell(
                       onTap: onTap,
-                      borderRadius: BorderRadius.circular(24),
+                      borderRadius: BorderRadius.circular(18),
                       child: Container(
-                        width: 44,
-                        height: 44,
+                        width: 36,
+                        height: 36,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: fade.color(
@@ -482,7 +482,7 @@ class _ProfileStreakSection extends StatelessWidget {
                               FinavigColors.fog,
                               FinavigColors.slateLight,
                             ),
-                            width: 1.2,
+                            width: 1.1,
                           ),
                         ),
                         alignment: Alignment.center,
@@ -491,7 +491,7 @@ class _ProfileStreakSection extends StatelessWidget {
                               ? userName[0].toUpperCase()
                               : 'U',
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: 15,
                             fontWeight: FontWeight.w800,
                             color: fade.color(FinavigColors.accent, Colors.white),
                           ),
@@ -499,7 +499,7 @@ class _ProfileStreakSection extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -508,7 +508,7 @@ class _ProfileStreakSection extends StatelessWidget {
                         Text(
                           'Welcome,',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 11,
                             fontWeight: FontWeight.w500,
                             color: fade.color(
                               FinavigColors.textMutedLight,
@@ -517,13 +517,12 @@ class _ProfileStreakSection extends StatelessWidget {
                             letterSpacing: 0.2,
                           ),
                         ),
-                        const SizedBox(height: 1),
                         Text(
                           userName,
                           style: TextStyle(
-                            fontSize: 19,
+                            fontSize: 16,
                             fontWeight: FontWeight.w800,
-                            letterSpacing: -0.4,
+                            letterSpacing: -0.3,
                             color: fade.color(
                               FinavigColors.textPrimaryLight,
                               FinavigColors.textPrimary,
@@ -543,8 +542,8 @@ class _ProfileStreakSection extends StatelessWidget {
                       borderRadius: BorderRadius.circular(99),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
+                          horizontal: 9,
+                          vertical: 5,
                         ),
                         decoration: BoxDecoration(
                           color: fade.color(
@@ -564,8 +563,8 @@ class _ProfileStreakSection extends StatelessWidget {
                               color: Colors.black.withValues(
                                 alpha: isDark ? 0.2 : 0.04,
                               ),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
+                              blurRadius: 4,
+                              offset: const Offset(0, 1.5),
                             ),
                           ],
                         ),
@@ -576,16 +575,16 @@ class _ProfileStreakSection extends StatelessWidget {
                               isPersonal
                                   ? Icons.person_rounded
                                   : Icons.business_center_rounded,
-                              size: 13,
+                              size: 12,
                               color: FinavigColors.accent,
                             ),
-                            const SizedBox(width: 5),
+                            const SizedBox(width: 4),
                             ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 95),
+                              constraints: const BoxConstraints(maxWidth: 90),
                               child: Text(
                                 isPersonal ? 'Personal' : collectionName,
                                 style: TextStyle(
-                                  fontSize: 12,
+                                  fontSize: 11.5,
                                   fontWeight: FontWeight.w700,
                                   color: fade.color(
                                     FinavigColors.textPrimaryLight,
@@ -596,10 +595,10 @@ class _ProfileStreakSection extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            const SizedBox(width: 3),
+                            const SizedBox(width: 2),
                             Icon(
                               Icons.unfold_more_rounded,
-                              size: 13,
+                              size: 12,
                               color: fade.color(
                                 FinavigColors.textMutedLight,
                                 FinavigColors.textMuted,
@@ -613,9 +612,9 @@ class _ProfileStreakSection extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
 
-            // ── Sleek Bento Streak Card ──────────────────────────────────────
+            // ── Sleek Compact Bento Streak Bar (Single Row) ──────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Material(
@@ -625,7 +624,10 @@ class _ProfileStreakSection extends StatelessWidget {
                   onTap: () => showStreakDetailsSheet(context),
                   borderRadius: BorderRadius.circular(FinavigRadius.card),
                   child: Container(
-                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(FinavigRadius.card),
                       border: Border.all(
@@ -638,90 +640,69 @@ class _ProfileStreakSection extends StatelessWidget {
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(
-                            alpha: isDark ? 0.25 : 0.03,
+                            alpha: isDark ? 0.2 : 0.03,
                           ),
-                          blurRadius: 10,
-                          offset: const Offset(0, 3),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
                         ),
                       ],
                     ),
-                    child: Column(
+                    child: Row(
                       children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 30,
-                              height: 30,
-                              decoration: BoxDecoration(
-                                color: (streakCount > 0
-                                    ? FinavigColors.orange
-                                    : FinavigColors.accent
-                                ).withValues(alpha: isDark ? 0.22 : 0.12),
-                                shape: BoxShape.circle,
+                        Flexible(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 24,
+                                height: 24,
+                                decoration: BoxDecoration(
+                                  color: (streakCount > 0
+                                      ? FinavigColors.orange
+                                      : FinavigColors.accent
+                                  ).withValues(alpha: isDark ? 0.22 : 0.12),
+                                  shape: BoxShape.circle,
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  streakCount > 0 ? '🔥' : '⚡',
+                                  style: const TextStyle(fontSize: 13),
+                                ),
                               ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                streakCount > 0 ? '🔥' : '⚡',
-                                style: const TextStyle(fontSize: 15),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    streakCount > 0
-                                        ? (streakCount == 1
-                                            ? '1 Day Streak Active'
-                                            : '$streakCount Day Streak Going')
-                                        : 'Start Your Streak Today',
-                                    style: TextStyle(
-                                      fontSize: 13.5,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: -0.2,
-                                      color: fade.color(
-                                        FinavigColors.textPrimaryLight,
-                                        FinavigColors.textPrimary,
-                                      ),
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: Text(
+                                  streakCount > 0
+                                      ? (streakCount == 1
+                                          ? '1-Day Streak'
+                                          : '$streakCount-Day Streak')
+                                      : 'Daily Streak',
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: -0.2,
+                                    color: fade.color(
+                                      FinavigColors.textPrimaryLight,
+                                      FinavigColors.textPrimary,
                                     ),
                                   ),
-                                  Text(
-                                    streakCount > 0
-                                        ? 'Consistent financial habits'
-                                        : 'Log or review activity to build streak',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w400,
-                                      color: fade.color(
-                                        FinavigColors.textMutedLight,
-                                        FinavigColors.textMuted,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                            ),
-                            Icon(
-                              Icons.arrow_forward_ios_rounded,
-                              size: 12,
-                              color: fade.color(
-                                FinavigColors.textMutedLight,
-                                FinavigColors.textMuted,
+                              const SizedBox(width: 2),
+                              Icon(
+                                Icons.chevron_right_rounded,
+                                size: 15,
+                                color: fade.color(
+                                  FinavigColors.textMutedLight,
+                                  FinavigColors.textMuted,
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Divider(
-                          height: 1,
-                          thickness: 0.8,
-                          color: fade.color(
-                            FinavigColors.cloud,
-                            FinavigColors.slateLight,
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(width: 8),
                         _StreakRow(days: weekDays),
                       ],
                     ),
@@ -748,83 +729,69 @@ class _StreakRow extends StatelessWidget {
     final todayIndex = (DateTime.now().weekday - 1).clamp(0, 6);
 
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisSize: MainAxisSize.min,
       children: List.generate(7, (i) {
         final done = days[i];
         final isToday = i == todayIndex;
 
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 26,
-              height: 26,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: done
-                    ? (isToday
-                        ? FinavigColors.accent
-                        : fade.color(
-                            const Color(0xFFD9E9F7),
-                            FinavigColors.slateLight,
-                          ))
-                    : (isToday
-                        ? FinavigColors.accent.withValues(alpha: 0.1)
-                        : Colors.transparent),
-                border: Border.all(
-                  color: isToday
+        return Padding(
+          padding: EdgeInsets.only(left: i == 0 ? 0 : 4),
+          child: Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: done
+                  ? (isToday
                       ? FinavigColors.accent
-                      : (done
-                          ? Colors.transparent
-                          : fade.color(
-                              const Color(0xFFDCDDE2),
-                              FinavigColors.slateLight,
-                            )),
-                  width: isToday ? 1.6 : 1.0,
-                ),
-              ),
-              child: done
-                  ? Icon(
-                      Icons.check_rounded,
-                      size: 14,
-                      color: isToday
-                          ? Colors.white
-                          : fade.color(
-                              FinavigColors.accent,
-                              Colors.white,
-                            ),
-                    )
+                      : fade.color(
+                          const Color(0xFFD9E9F7),
+                          FinavigColors.slateLight,
+                        ))
                   : (isToday
-                      ? Center(
-                          child: Container(
-                            width: 6,
-                            height: 6,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: FinavigColors.accent,
-                            ),
-                          ),
-                        )
-                      : null),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              _labels[i],
-              style: TextStyle(
-                fontSize: 10.5,
-                fontWeight: isToday ? FontWeight.w800 : FontWeight.w600,
+                      ? FinavigColors.accent.withValues(alpha: 0.12)
+                      : Colors.transparent),
+              border: Border.all(
                 color: isToday
-                    ? fade.color(
-                        FinavigColors.accent,
-                        FinavigColors.accentBright,
-                      )
-                    : fade.color(
-                        FinavigColors.textMutedLight,
-                        FinavigColors.textMuted,
-                      ),
+                    ? FinavigColors.accent
+                    : (done
+                        ? Colors.transparent
+                        : fade.color(
+                            const Color(0xFFDCDDE2),
+                            FinavigColors.slateLight,
+                          )),
+                width: isToday ? 1.4 : 1.0,
               ),
             ),
-          ],
+            alignment: Alignment.center,
+            child: done
+                ? Icon(
+                    Icons.check_rounded,
+                    size: 12,
+                    color: isToday
+                        ? Colors.white
+                        : fade.color(
+                            FinavigColors.accent,
+                            Colors.white,
+                          ),
+                  )
+                : Text(
+                    _labels[i],
+                    style: TextStyle(
+                      fontSize: 9.5,
+                      fontWeight: isToday ? FontWeight.w800 : FontWeight.w600,
+                      color: isToday
+                          ? fade.color(
+                              FinavigColors.accent,
+                              FinavigColors.accentBright,
+                            )
+                          : fade.color(
+                              FinavigColors.textMutedLight,
+                              FinavigColors.textMuted,
+                            ),
+                    ),
+                  ),
+          ),
         );
       }),
     );
