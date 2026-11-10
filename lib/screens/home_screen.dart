@@ -447,6 +447,7 @@ class _ProfileStreakSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fade = FinavigTransition.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return ListenableBuilder(
       listenable: StreakService.instance,
@@ -454,169 +455,151 @@ class _ProfileStreakSection extends StatelessWidget {
         final streakCount = StreakService.instance.currentStreak;
         final weekDays = StreakService.instance.weekActivity();
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: onTap,
-                  borderRadius: BorderRadius.circular(22),
-                  child: CircleAvatar(
-                    radius: 20,
-                    backgroundColor: fade.color(
-                      FinavigColors.accentSoft,
-                      FinavigColors.slate,
-                    ),
-                    child: Icon(
-                      Icons.person_rounded,
-                      color: fade.color(FinavigColors.accent, Colors.white),
-                      size: 20,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'FV DASHBOARD',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.6,
-                        color: fade.color(
-                          FinavigColors.textMutedLight,
-                          FinavigColors.textMuted,
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Top Greeting Row: Avatar + Welcome + Workspace Pill ─────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: onTap,
+                      borderRadius: BorderRadius.circular(24),
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: fade.color(
+                            FinavigColors.cloud,
+                            FinavigColors.slate,
+                          ),
+                          border: Border.all(
+                            color: fade.color(
+                              FinavigColors.fog,
+                              FinavigColors.slateLight,
+                            ),
+                            width: 1.2,
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          userName.isNotEmpty
+                              ? userName[0].toUpperCase()
+                              : 'U',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: fade.color(FinavigColors.accent, Colors.white),
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Row(
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Flexible(
-                          child: Text(
-                            'Welcome, $userName',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -0.3,
-                              color: fade.color(
-                                FinavigColors.textPrimaryLight,
-                                FinavigColors.textPrimary,
-                              ),
+                        Text(
+                          'Welcome,',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: fade.color(
+                              FinavigColors.textMutedLight,
+                              FinavigColors.textMuted,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            letterSpacing: 0.2,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        InkWell(
-                          onTap: onTap,
-                          borderRadius: BorderRadius.circular(99),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 7,
-                              vertical: 2.5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: fade.color(
-                                const Color(0xFFEBECEF),
-                                FinavigColors.slate,
-                              ),
-                              borderRadius: BorderRadius.circular(99),
-                              border: Border.all(
-                                color: fade.color(
-                                  const Color(0xFFDCDDE2),
-                                  Colors.white12,
-                                ),
-                                width: 0.8,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  isPersonal
-                                      ? Icons.person_rounded
-                                      : Icons.business_center_rounded,
-                                  size: 11,
-                                  color: FinavigColors.accent,
-                                ),
-                                const SizedBox(width: 3.5),
-                                Text(
-                                  isPersonal ? 'Personal' : collectionName,
-                                  style: TextStyle(
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: fade.color(
-                                      FinavigColors.textPrimaryLight,
-                                      FinavigColors.textPrimary,
-                                    ),
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(width: 2),
-                                Icon(
-                                  Icons.unfold_more_rounded,
-                                  size: 11,
-                                  color: fade.color(
-                                    FinavigColors.textMutedLight,
-                                    FinavigColors.textMuted,
-                                  ),
-                                ),
-                              ],
+                        const SizedBox(height: 1),
+                        Text(
+                          userName,
+                          style: TextStyle(
+                            fontSize: 19,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.4,
+                            color: fade.color(
+                              FinavigColors.textPrimaryLight,
+                              FinavigColors.textPrimary,
                             ),
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
-                    const SizedBox(height: 3),
-                    InkWell(
-                      onTap: () => showStreakDetailsSheet(context),
-                      borderRadius: BorderRadius.circular(6),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 2),
+                  ),
+                  const SizedBox(width: 8),
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: onTap,
+                      borderRadius: BorderRadius.circular(99),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: fade.color(
+                            Colors.white,
+                            FinavigColors.charcoal,
+                          ),
+                          borderRadius: BorderRadius.circular(99),
+                          border: Border.all(
+                            color: fade.color(
+                              FinavigColors.fog,
+                              FinavigColors.slateLight,
+                            ),
+                            width: 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(
+                                alpha: isDark ? 0.2 : 0.04,
+                              ),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(
-                              streakCount > 0 ? '🔥 ' : '⚡ ',
-                              style: const TextStyle(fontSize: 12),
+                            Icon(
+                              isPersonal
+                                  ? Icons.person_rounded
+                                  : Icons.business_center_rounded,
+                              size: 13,
+                              color: FinavigColors.accent,
                             ),
-                            Flexible(
+                            const SizedBox(width: 5),
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 95),
                               child: Text(
-                                streakCount > 0
-                                    ? (streakCount == 1
-                                        ? '1 day streak active'
-                                        : '$streakCount day streak going')
-                                    : 'Start your streak today',
+                                isPersonal ? 'Personal' : collectionName,
                                 style: TextStyle(
-                                  color: streakCount > 0
-                                      ? fade.color(
-                                          FinavigColors.textPrimaryLight,
-                                          FinavigColors.textPrimary,
-                                        )
-                                      : fade.color(
-                                          FinavigColors.textSecondaryLight,
-                                          FinavigColors.textSecondary,
-                                        ),
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: fade.color(
+                                    FinavigColors.textPrimaryLight,
+                                    FinavigColors.textPrimary,
+                                  ),
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            const SizedBox(width: 2),
+                            const SizedBox(width: 3),
                             Icon(
-                              Icons.chevron_right_rounded,
-                              size: 15,
+                              Icons.unfold_more_rounded,
+                              size: 13,
                               color: fade.color(
                                 FinavigColors.textMutedLight,
                                 FinavigColors.textMuted,
@@ -626,17 +609,127 @@ class _ProfileStreakSection extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () => showStreakDetailsSheet(context),
-                      child: _StreakRow(days: weekDays),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // ── Sleek Bento Streak Card ──────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Material(
+                color: fade.color(Colors.white, FinavigColors.charcoal),
+                borderRadius: BorderRadius.circular(FinavigRadius.card),
+                child: InkWell(
+                  onTap: () => showStreakDetailsSheet(context),
+                  borderRadius: BorderRadius.circular(FinavigRadius.card),
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(FinavigRadius.card),
+                      border: Border.all(
+                        color: fade.color(
+                          FinavigColors.fog,
+                          FinavigColors.slateLight,
+                        ),
+                        width: 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(
+                            alpha: isDark ? 0.25 : 0.03,
+                          ),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
                     ),
-                  ],
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 30,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                color: (streakCount > 0
+                                    ? FinavigColors.orange
+                                    : FinavigColors.accent
+                                ).withValues(alpha: isDark ? 0.22 : 0.12),
+                                shape: BoxShape.circle,
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                streakCount > 0 ? '🔥' : '⚡',
+                                style: const TextStyle(fontSize: 15),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    streakCount > 0
+                                        ? (streakCount == 1
+                                            ? '1 Day Streak Active'
+                                            : '$streakCount Day Streak Going')
+                                        : 'Start Your Streak Today',
+                                    style: TextStyle(
+                                      fontSize: 13.5,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: -0.2,
+                                      color: fade.color(
+                                        FinavigColors.textPrimaryLight,
+                                        FinavigColors.textPrimary,
+                                      ),
+                                    ),
+                                  ),
+                                  Text(
+                                    streakCount > 0
+                                        ? 'Consistent financial habits'
+                                        : 'Log or review activity to build streak',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w400,
+                                      color: fade.color(
+                                        FinavigColors.textMutedLight,
+                                        FinavigColors.textMuted,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 12,
+                              color: fade.color(
+                                FinavigColors.textMutedLight,
+                                FinavigColors.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Divider(
+                          height: 1,
+                          thickness: 0.8,
+                          color: fade.color(
+                            FinavigColors.cloud,
+                            FinavigColors.slateLight,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        _StreakRow(days: weekDays),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         );
       },
     );
@@ -653,73 +746,85 @@ class _StreakRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final fade = FinavigTransition.of(context);
     final todayIndex = (DateTime.now().weekday - 1).clamp(0, 6);
+
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: List.generate(7, (i) {
         final done = days[i];
         final isToday = i == todayIndex;
-        final bg = done
-            ? (isToday
-                ? FinavigColors.accent
-                : fade.color(
-                    const Color(0xFFD9D9DE),
-                    FinavigColors.slateLight,
-                  ))
-            : Colors.transparent;
-        final border = !done
-            ? Border.all(
-                color: fade.color(
-                  const Color(0xFFD0D0D6),
-                  FinavigColors.slateLight,
-                ),
-                width: 1.2,
-              )
-            : null;
-        final labelColor = isToday
-            ? fade.color(
-                FinavigColors.textPrimaryLight,
-                FinavigColors.textPrimary,
-              )
-            : fade.color(
-                FinavigColors.textMutedLight,
-                FinavigColors.textMuted,
-              );
 
-        return Padding(
-          padding: const EdgeInsets.only(right: 8),
-          child: Column(
-            children: [
-              Container(
-                width: 18,
-                height: 18,
-                decoration: BoxDecoration(
-                  color: bg,
-                  shape: BoxShape.circle,
-                  border: border,
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 26,
+              height: 26,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: done
+                    ? (isToday
+                        ? FinavigColors.accent
+                        : fade.color(
+                            const Color(0xFFD9E9F7),
+                            FinavigColors.slateLight,
+                          ))
+                    : (isToday
+                        ? FinavigColors.accent.withValues(alpha: 0.1)
+                        : Colors.transparent),
+                border: Border.all(
+                  color: isToday
+                      ? FinavigColors.accent
+                      : (done
+                          ? Colors.transparent
+                          : fade.color(
+                              const Color(0xFFDCDDE2),
+                              FinavigColors.slateLight,
+                            )),
+                  width: isToday ? 1.6 : 1.0,
                 ),
-                child: done
-                    ? Icon(
-                        Icons.check,
-                        size: 11,
-                        color: isToday
-                            ? Colors.white
-                            : fade.color(
-                                Colors.white,
-                                FinavigColors.textPrimary,
-                              ),
+              ),
+              child: done
+                  ? Icon(
+                      Icons.check_rounded,
+                      size: 14,
+                      color: isToday
+                          ? Colors.white
+                          : fade.color(
+                              FinavigColors.accent,
+                              Colors.white,
+                            ),
+                    )
+                  : (isToday
+                      ? Center(
+                          child: Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: FinavigColors.accent,
+                            ),
+                          ),
+                        )
+                      : null),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _labels[i],
+              style: TextStyle(
+                fontSize: 10.5,
+                fontWeight: isToday ? FontWeight.w800 : FontWeight.w600,
+                color: isToday
+                    ? fade.color(
+                        FinavigColors.accent,
+                        FinavigColors.accentBright,
                       )
-                    : null,
+                    : fade.color(
+                        FinavigColors.textMutedLight,
+                        FinavigColors.textMuted,
+                      ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                _labels[i],
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
-                  color: labelColor,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         );
       }),
     );
