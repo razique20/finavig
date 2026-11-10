@@ -25,24 +25,37 @@ class CompanionSuggestionSheet extends StatefulWidget {
   /// Doc-type keys of the user's currently tracked documents.
   final Set<String> trackedTypeKeys;
 
+  /// The root navigator context that presented this sheet.
+  ///
+  /// Stored so the sheet’s dismissal controls can always close the modal
+  /// reliably, even when the sheet is opened on top of another sheet/dialog.
+  final BuildContext rootNavigatorContext;
+
   const CompanionSuggestionSheet({
     super.key,
     required this.addedType,
     required this.addedName,
     required this.trackedTypeKeys,
+    required this.rootNavigatorContext,
   });
 
   /// Opens the sheet and returns the picked types (empty list on dismiss).
+  ///
+  /// The returned [context] is the root navigator context that actually owns
+  /// the modal, so the sheet’s dismissal buttons can always pop the right
+  /// stack even when the sheet is opened on top of another modal/overlay.
   static Future<List<DocumentType>> show(
     BuildContext context, {
     required DocumentType addedType,
     required String addedName,
     required Set<String> trackedTypeKeys,
   }) async {
+    final rootNavigator = Navigator.of(context, rootNavigator: true);
     final picked = await showModalBottomSheet<List<DocumentType>>(
-      context: context,
+      context: rootNavigator.context,
       useRootNavigator: true,
       isScrollControlled: true,
+      isDismissible: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -51,6 +64,7 @@ class CompanionSuggestionSheet extends StatefulWidget {
         addedType: addedType,
         addedName: addedName,
         trackedTypeKeys: trackedTypeKeys,
+        rootNavigatorContext: rootNavigator.context,
       ),
     );
     return picked ?? const [];
@@ -64,7 +78,7 @@ class CompanionSuggestionSheet extends StatefulWidget {
   ) async {
     if (newItem.docType.builtinEnum == null) return;
     try {
-      final navigator = Navigator.of(context, rootNavigator: true);
+      final rootNavigator = Navigator.of(context, rootNavigator: true);
       final tracked = await DocumentScannerService.instance.getAllItems();
       final suggestions = CompanionSuggestionService.instance.suggestionsFor(
         newItem.docType.builtinEnum!,
@@ -72,8 +86,10 @@ class CompanionSuggestionSheet extends StatefulWidget {
       );
       if (suggestions.isEmpty) return;
 
+      // The root navigator owns this sheet. Use its current context for all
+      // post-selection UI so dismissal/pickouts cannot walk into a stale overlay.
       final picked = await show(
-        navigator.context,
+        rootNavigator.context,
         addedType: newItem.docType.builtinEnum!,
         addedName: newItem.displayName,
         trackedTypeKeys: tracked.map((i) => i.docType.key).toSet(),
@@ -86,13 +102,11 @@ class CompanionSuggestionSheet extends StatefulWidget {
         // exhausted mid-batch.
         final used = await EntitlementService.instance.documentsInUse();
         if (!EntitlementService.instance.canAddDocuments(used)) {
-          final scaffoldContext = navigator.context;
-          if (scaffoldContext.mounted) {
-            await showUpgradeDialog(
-              scaffoldContext,
-              EntitlementFeature.moreDocuments,
-            );
-          }
+          if (!rootNavigator.mounted) break;
+          await showUpgradeDialog(
+            rootNavigator.context,
+            EntitlementFeature.moreDocuments,
+          );
           break;
         }
         await DocumentScannerService.instance.addItem(
@@ -104,8 +118,9 @@ class CompanionSuggestionSheet extends StatefulWidget {
         );
         added++;
       }
-      if (added > 0) {
-        final messenger = ScaffoldMessenger.maybeOf(navigator.context);
+
+      if (added > 0 && rootNavigator.mounted) {
+        final messenger = ScaffoldMessenger.maybeOf(rootNavigator.context);
         messenger?.showSnackBar(
           SnackBar(
             content: Text(
@@ -146,6 +161,7 @@ class _CompanionSuggestionSheetState extends State<CompanionSuggestionSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Header: lightbulb icon + question + hint.
             Row(
               children: [
                 Container(
@@ -171,7 +187,8 @@ class _CompanionSuggestionSheetState extends State<CompanionSuggestionSheet> {
                         ),
                       ),
                       Text(
-                        'Businesses tracking a ${_typeName(widget.addedType)} usually also track:',
+                        'Businesses tracking a ${_typeName(widget.addedType)} '
+                        'usually also track:',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.outline,
                         ),
@@ -183,9 +200,22 @@ class _CompanionSuggestionSheetState extends State<CompanionSuggestionSheet> {
             ),
             const SizedBox(height: 16),
 
+            // Drag handle so the sheet is clearly dismissible by gesture.
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.outlineVariant,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Lazy builder over a flattened pool-header/item index: only the
+            // visible portion of the suggestion list is built.
             Flexible(
-              // Lazy builder over a flattened pool-header/item index: only
-              // the visible portion of the suggestion list is built.
               child: Builder(
                 builder: (_) {
                   final flat = <Widget>[];
@@ -230,11 +260,22 @@ class _CompanionSuggestionSheetState extends State<CompanionSuggestionSheet> {
             ),
             const SizedBox(height: 8),
 
+            // Action row: cancel or add the selected companions.
+            //
+            // Both branches return a List<DocumentType> so the pop matches the
+            // modal's typed result (ModalBottomSheetRoute<List<DocumentType>>).
+            // Popping with the untyped empty list was throwing a route-result
+            // type mismatch and could leave the sheet looking “frozen”.
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context, const []),
+                    onPressed: () {
+                      Navigator.of(
+                        widget.rootNavigatorContext,
+                        rootNavigator: true,
+                      ).pop(<DocumentType>[]);
+                    },
                     child: const Text('Not now'),
                   ),
                 ),
@@ -243,12 +284,16 @@ class _CompanionSuggestionSheetState extends State<CompanionSuggestionSheet> {
                   child: FilledButton.icon(
                     onPressed: _selected.isEmpty
                         ? null
-                        : () => Navigator.pop(context, _selected.toList()),
+                        : () => Navigator.of(
+                          widget.rootNavigatorContext,
+                          rootNavigator: true,
+                        ).pop(_selected.toList()),
                     icon: const Icon(Icons.add_rounded, size: 18),
                     label: Text(
                       _selected.isEmpty
                           ? 'Add selected'
-                          : 'Add ${_selected.length} document${_selected.length == 1 ? '' : 's'}',
+                          : 'Add ${_selected.length} document'
+                              '${_selected.length == 1 ? '' : 's'}',
                     ),
                   ),
                 ),
