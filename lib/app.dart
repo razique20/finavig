@@ -60,3 +60,4 @@ class _FinavigAppState extends State<FinavigApp> {
     );
   }
 }
+

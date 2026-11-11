@@ -30,6 +30,29 @@ class AppConstants {
   static const String supabaseAnonKey = isStaging
       ? stagingSupabaseAnonKey
       : prodSupabaseAnonKey;
+
+  // ── PostHog Analytics ──────────────────────────────────────────────────────
+  // TODO: Replace these placeholders with your PostHog project API key from
+  //       https://us.posthog.com/settings/project#variables (or EU equivalent).
+  //       The API key is safe to ship in client code (it is a write-only,
+  //       publishable key — equivalent to the Supabase anon key).
+
+  /// PostHog project API key for staging.
+  static const String stagingPosthogApiKey =
+      'phc_nBFub4QyFf6AfKGNmcfHPkWbCgBtB7kAtVcvFTgbNqB9';
+
+  /// PostHog project API key for production.
+  static const String prodPosthogApiKey =
+      'phc_nBFub4QyFf6AfKGNmcfHPkWbCgBtB7kAtVcvFTgbNqB9';
+
+  /// Active PostHog API key based on [isStaging].
+  static const String posthogApiKey = isStaging
+      ? stagingPosthogApiKey
+      : prodPosthogApiKey;
+
+  /// PostHog ingest host. Change to 'https://eu.i.posthog.com' if your
+  /// PostHog project is in the EU region.
+  static const String posthogHost = 'https://us.i.posthog.com';
 }
 
 /// Top-level constant aliases for convenience.

@@ -21,6 +21,7 @@ import 'services/theme_service.dart';
 import 'services/urgency_engine.dart';
 import 'services/notification_service.dart';
 import 'services/perf_tracing_service.dart';
+import 'services/posthog_service.dart';
 import 'services/rating_prompt_ui.dart';
 import 'services/storage_migration_service.dart';
 import 'services/pending_transaction_service.dart';
@@ -54,6 +55,10 @@ void main() async {
   // Credentials come from AppCredentials (lib/config/app_credentials.dart).
   // Without them the app runs in local-only mode.
   await SupabaseService.initialize();
+
+  // PostHog product analytics — must run after WidgetsFlutterBinding but can
+  // overlap with other init. Non-blocking: the app works without analytics.
+  await PosthogService.instance.init();
 
   // Local app-lock state must be known before the first frame so a cold start
   // with a passcode set is already protected (see AppLockGate).
@@ -104,6 +109,20 @@ Future<void> _prewarmServices() async {
   ]);
 
   if (AuthService.instance.isSignedIn) {
+    // Identify the user in PostHog so all events, feature flags, and session
+    // replays are attributed to the correct account from cold start onward.
+    final uid = AuthService.instance.currentUserId;
+    if (uid != null) {
+      await PosthogService.instance.identify(
+        userId: uid,
+        userProperties: {
+          if (AuthService.instance.userEmail != null)
+            'email': AuthService.instance.userEmail!,
+          'display_name': AuthService.instance.displayName,
+        },
+      );
+    }
+
     // Custom types must load before documents: rows are decoded into
     // ExpiryItems during init and need the registry to resolve doc_type keys.
     await CustomDocumentTypeService.instance.init();

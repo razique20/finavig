@@ -32,6 +32,8 @@ import 'screens/ai_budget_plan_screen.dart';
 import 'screens/alerts_screen.dart';
 import 'screens/alerts_reminders_screen.dart';
 import 'services/auth_service.dart';
+import 'services/posthog_service.dart';
+import 'package:posthog_flutter/posthog_flutter.dart';
 import 'widgets/dialogs/quick_action_sheet.dart';
 import 'widgets/indicators/offline_banner.dart';
 
@@ -44,6 +46,9 @@ final _profileShellKey = GlobalKey<NavigatorState>();
 final router = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: '/',
+  observers: [
+    PosthogObserver(),
+  ],
   // Auth gate: when Supabase is configured, every route except /login and /
   // requires a session. In local-only mode (no credentials) the gate is off.
   redirect: (context, state) {
@@ -242,6 +247,7 @@ class _AppShellState extends State<_AppShell> {
   @override
   void initState() {
     super.initState();
+    PosthogService.instance.screen('Home');
     _loadItems();
     DocumentScannerService.instance.addListener(_onItemsChanged);
     FinanceService.instance.addListener(_onFinanceChanged);
@@ -386,6 +392,10 @@ class _AppShellState extends State<_AppShell> {
   }
 
   void _goBranch(int index) {
+    const tabNames = ['Home', 'Money', 'Documents', 'Profile'];
+    if (index >= 0 && index < tabNames.length && index != widget.navigationShell.currentIndex) {
+      PosthogService.instance.screen(tabNames[index]);
+    }
     PerfTracingService.trace(PerfTracingService.flowTabSwitch, () {
       final isCurrent = index == widget.navigationShell.currentIndex;
       if (isCurrent) {

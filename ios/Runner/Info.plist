@@ -91,5 +91,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<!-- PostHog: disable native auto-init; SDK is initialised from Dart
+	     (PosthogService.init) so credentials stay in AppConstants. -->
+	<key>com.posthog.posthog.AUTO_INIT</key>
+	<false/>
 </dict>
 </plist>

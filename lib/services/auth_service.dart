@@ -8,6 +8,7 @@ import 'custom_document_type_service.dart';
 import 'document_scanner_service.dart';
 import 'entitlement_service.dart';
 import 'finance_service.dart';
+import 'posthog_service.dart';
 import '../services/supabase_service.dart';
 
 /// Thin wrapper around Supabase Auth.
@@ -122,6 +123,8 @@ class AuthService {
     CustomDocumentTypeService.instance.reset();
     EntitlementService.instance.reset();
     await AppLockService.instance.disable();
+    // Clear PostHog identity so subsequent events are anonymous.
+    await PosthogService.instance.reset();
   }
 
   /// Permanently delete the signed-in user's account and all their data.
@@ -183,6 +186,8 @@ class AuthService {
     await CustomDocumentTypeService.instance.reset();
     await DocumentCollectionService.instance.reset();
     await AppLockService.instance.disable();
+    // Clear PostHog identity for deleted account.
+    await PosthogService.instance.reset();
   }
 
   /// Listen to auth changes (sign-in, sign-out, token refresh). Used by the
