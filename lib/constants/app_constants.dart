@@ -53,6 +53,12 @@ class AppConstants {
   /// PostHog ingest host. Change to 'https://eu.i.posthog.com' if your
   /// PostHog project is in the EU region.
   static const String posthogHost = 'https://us.i.posthog.com';
+
+  // ── Sentry Error Monitoring ───────────────────────────────────────────────
+  /// Sentry DSN for crash reporting and performance tracing.
+  /// Safe to compile into client code (public ingest key).
+  static const String sentryDsn =
+      'https://b853020e8eca8d14e86ecb1258b4c5ae@o4512412836364288.ingest.de.sentry.io/4512412925558864';
 }
 
 /// Top-level constant aliases for convenience.

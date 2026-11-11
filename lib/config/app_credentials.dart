@@ -23,4 +23,8 @@ class AppCredentials {
 
   /// Your Supabase anon (publishable) key, referenced from [AppConstants].
   static const String supabaseAnonKey = AppConstants.supabaseAnonKey;
+
+  // ── Sentry ───────────────────────────────────────────────────────────────
+  /// Your Sentry project DSN, referenced from [AppConstants].
+  static const String sentryDsn = AppConstants.sentryDsn;
 }

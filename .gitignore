@@ -54,3 +54,5 @@ app.*.map.json
 
 # Test artifacts
 test/failures/
+
+sentry.properties

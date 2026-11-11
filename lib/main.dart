@@ -4,6 +4,9 @@ import 'package:flutter/services.dart';
 import 'dart:async';
 
 import 'app.dart';
+import 'config/app_credentials.dart';
+import 'constants/app_constants.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'services/alert_preferences_service.dart';
 import 'services/app_lock_service.dart';
 import 'services/auth_service.dart';
@@ -29,10 +32,22 @@ import 'services/streak_service.dart';
 import 'services/transaction_notification_listener.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  await SentryFlutter.init(
+    (options) {
+      options.dsn = AppCredentials.sentryDsn;
+      options.tracesSampleRate = 1.0;
+      options.attachScreenshot = true;
+      options.attachViewHierarchy = true;
+      options.environment = kIsStaging ? 'staging' : 'production';
+    },
+    appRunner: () async {
+      WidgetsFlutterBinding.ensureInitialized();
 
-  // Global error hooks first, so even startup crashes are captured.
-  ErrorCaptureService.instance.install();
+      // Global error hooks first, so even startup crashes are captured.
+      ErrorCaptureService.instance.install();
+
+      // Sentry verification log
+      Sentry.logger.fmt.info("Finavig app started with %s", ["Sentry"]);
 
   // Wire the native in-app review sheet into the soft rating prompt.
   RatingPromptUi.register();
@@ -94,7 +109,9 @@ void main() async {
   // tap is stashed as pendingDocumentId and consumed by the app shell.
   unawaited(NotificationTapService.instance.init());
 
-  runApp(const FinavigApp());
+      runApp(const FinavigApp());
+    },
+  );
 }
 
 /// Initialise the services that don't depend on auth first, then the
@@ -121,6 +138,13 @@ Future<void> _prewarmServices() async {
           'display_name': AuthService.instance.displayName,
         },
       );
+      await Sentry.configureScope((scope) {
+        scope.setUser(SentryUser(
+          id: uid,
+          email: AuthService.instance.userEmail,
+          username: AuthService.instance.displayName,
+        ));
+      });
     }
 
     // Custom types must load before documents: rows are decoded into

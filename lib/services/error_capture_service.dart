@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/app_version_service.dart';
 import '../services/supabase_service.dart';
@@ -118,6 +119,17 @@ class ErrorCaptureService {
       unawaited(_persist());
       unawaited(_submitToAdmin(entry));
       debugPrint('[ErrorCapture] ($context) ${entry.message}');
+
+      // Forward to Sentry
+      unawaited(
+        Sentry.captureException(
+          error,
+          stackTrace: stack,
+          withScope: (scope) {
+            scope.setTag('error_context', context);
+          },
+        ),
+      );
     } catch (_) {
       // Never let the error recorder itself crash the app.
     }

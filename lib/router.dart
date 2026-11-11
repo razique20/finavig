@@ -34,6 +34,7 @@ import 'screens/alerts_reminders_screen.dart';
 import 'services/auth_service.dart';
 import 'services/posthog_service.dart';
 import 'package:posthog_flutter/posthog_flutter.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'widgets/dialogs/quick_action_sheet.dart';
 import 'widgets/indicators/offline_banner.dart';
 
@@ -48,6 +49,7 @@ final router = GoRouter(
   initialLocation: '/',
   observers: [
     PosthogObserver(),
+    SentryNavigatorObserver(),
   ],
   // Auth gate: when Supabase is configured, every route except /login and /
   // requires a session. In local-only mode (no credentials) the gate is off.

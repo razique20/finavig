@@ -1,3 +1,4 @@
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../config/app_credentials.dart';
@@ -34,6 +35,7 @@ class SupabaseService {
     _instance ??= await Supabase.initialize(
       url: AppCredentials.supabaseUrl,
       publishableKey: AppCredentials.supabaseAnonKey,
+      httpClient: SentryHttpClient(),
     );
   }
 
